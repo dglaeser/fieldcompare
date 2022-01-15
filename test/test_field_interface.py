@@ -37,3 +37,7 @@ def test_field_interface():
     assert check_if_field_interface(CustomField())
     assert check_if_field_interface(NonInheritingField())
     assert not check_if_field_interface(float())
+
+if __name__ == "__main__":
+    test_field_construction()
+    test_field_interface()
