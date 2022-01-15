@@ -73,7 +73,11 @@ class FuzzyArrayEquality:
         unequals = find_first_fuzzy_unequal(first, second, self._rel_tol, self._abs_tol)
         if unequals is not None:
             val1, val2 = unequals
-            return PredicateResult(False, _get_equality_fail_message(val1, val2))
+            return PredicateResult(
+                False,
+                _get_equality_fail_message(val1, val2)
+                + f"\nUsed tolerances: relative={self._rel_tol}, absolute={self._abs_tol}"
+            )
         return PredicateResult(True)
 
 
