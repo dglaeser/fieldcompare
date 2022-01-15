@@ -15,4 +15,4 @@ def _get_as_string(obj) -> str:
     return str(obj)
 
 def _default_base_tolerance() -> float:
-    return 1e-8
+    return 1e-9
