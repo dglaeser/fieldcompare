@@ -2,8 +2,10 @@
 
 from abc import abstractmethod
 
-from fieldcompare._common import Array, eq_exact, eq_bitset_exact, first_false_index
-from fieldcompare.field import FieldInterface
+from fieldcompare._common import Array
+from fieldcompare._common import eq_exact, eq_bitset_exact
+from fieldcompare._common import first_false_index, sub_array
+from fieldcompare.field import FieldInterface, Field
 
 class PredicateResult:
     def __init__(self, value: bool, report: str = "") -> None:
@@ -30,8 +32,14 @@ class FieldPredicate:
         self._ignore_length_mismatch = ignore_length_mismatch
 
     def __call__(self, first: FieldInterface, second: FieldInterface) -> PredicateResult:
-        if not self._ignore_length_mismatch and len(first.values) != len(second.values):
-            return PredicateResult(False, "Lengths do not match")
+        if len(first.values) != len(second.values):
+            if not self._ignore_length_mismatch:
+                return PredicateResult(False, "Lengths do not match")
+            min_len = min(len(first.values), len(second.values))
+            return self._check_field_values(
+                Field(first.name, sub_array(first.values, 0, min_len)),
+                Field(second.name, sub_array(second.values, 0, min_len))
+            )
         if not self._ignore_names_mismatch and first.name != second.name:
             return PredicateResult(False, "Names do not match")
         return self._check_field_values(first, second)

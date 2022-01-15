@@ -1,6 +1,6 @@
 """Commonly used classes and functions"""
 
-from typing import Iterable
+from typing import Iterable, Sequence
 
 import numpy
 from numpy import ndarray as Array
@@ -9,6 +9,13 @@ numpy.set_printoptions(floatmode="unique")
 
 def make_array(input_array: Iterable) -> Array:
     return numpy.array(input_array)
+
+def sub_array(input_array: Iterable, start: int, end: int) -> Array:
+    if isinstance(input_array, Array):
+        return input_array[start:end]
+    if isinstance(input_array, Sequence):
+        return make_array(input_array[start:end])
+    return make_array(input_array)[start:end]
 
 def eq_bitset_exact(first: Array, second: Array) -> Array:
     return numpy.equal(first, second)

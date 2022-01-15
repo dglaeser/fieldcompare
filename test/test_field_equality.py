@@ -23,6 +23,18 @@ def test_scalar_field_exact_equality():
     assert not check(field1, field2)
     assert "3" in check(field1, field2).report.lower()
 
+def test_field_predicate_ignore_names_mismatch():
+    field1 = Field("field1", [0, 1])
+    field2 = Field("field2", [0, 1])
+    check = ExactFieldEquality(ignore_names_mismatch=True)
+    assert check(field1, field2)
+
+def test_field_predicate_ignore_length_mismatch():
+    field1 = Field("field1", [0, 1])
+    field2 = Field("field1", [0, 1, 2])
+    check = ExactFieldEquality(ignore_length_mismatch=True)
+    assert check(field1, field2)
+
 def test_vector_field_exact_equality():
     field1 = Field("field_name", [[0, 0], [1, 2]])
 
