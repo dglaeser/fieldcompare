@@ -1,7 +1,7 @@
 """Class that represents a field of values"""
 
 from abc import ABC, abstractmethod
-from typing import Iterable
+from typing import Iterable, Collection
 
 from fieldcompare._common import Array
 from fieldcompare._common import make_array
@@ -14,7 +14,7 @@ class FieldInterface(ABC):
 
     @property
     @abstractmethod
-    def values(self) -> Iterable:
+    def values(self) -> Collection:
         """Return the underlying field values"""
 
 
@@ -22,9 +22,7 @@ class Field(FieldInterface):
     """Class to represents a field of values"""
     def __init__(self, name: str, values: Iterable):
         self._name = name
-        self._values = values
-        if not isinstance(self._values, Array):
-            self._values = make_array(self._values)
+        self._values = make_array(values) if not isinstance(values, Array) else values
 
     @property
     def name(self) -> str:
@@ -32,6 +30,6 @@ class Field(FieldInterface):
         return self._name
 
     @property
-    def values(self) -> Iterable:
+    def values(self) -> Array:
         """Return the field values"""
         return self._values
