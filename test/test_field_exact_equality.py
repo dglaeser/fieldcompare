@@ -46,6 +46,15 @@ def test_vector_field_exact_equality():
     assert not check(field1, field2)
     assert "2" in check(field1, field2).report.lower()
 
+def test_field_exact_equality_mixed_types():
+    field1 = Field("something", [0, 1, 2, True, "hello"])
+    field2 = Field("something", [0, 1, 2, True, "hello"])
+    check = ExactFieldEquality()
+    assert check(field1, field2)
+
 if __name__ == "__main__":
     test_scalar_field_exact_equality()
+    test_field_predicate_ignore_names_mismatch()
+    test_field_predicate_ignore_length_mismatch()
     test_vector_field_exact_equality()
+    test_field_exact_equality_mixed_types()
