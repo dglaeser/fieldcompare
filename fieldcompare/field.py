@@ -3,8 +3,7 @@
 from abc import ABC, abstractmethod
 from typing import Iterable, Collection
 
-from fieldcompare._common import Array
-from fieldcompare._common import make_array
+from fieldcompare.array import Array, make_array
 
 class FieldInterface(ABC):
     @property
@@ -14,7 +13,7 @@ class FieldInterface(ABC):
 
     @property
     @abstractmethod
-    def values(self) -> Collection:
+    def values(self) -> Array:
         """Return the underlying field values"""
 
 

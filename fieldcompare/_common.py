@@ -1,30 +1,15 @@
-"""Commonly used classes and functions"""
+"""Common functions and types"""
 
-from typing import Iterable, Sequence
+from numpy import floating as _numpy_float
+from numpy import ndarray as _numpy_array
+from numpy import format_float_scientific as _numpy_format_scientific
+from numpy import printoptions as _numpy_print_options
+from numpy import array2string as _numpy_array_to_string
 
-import numpy
-from numpy import ndarray as Array
-
-numpy.set_printoptions(floatmode="unique")
-
-def make_array(input_array: Iterable) -> Array:
-    return numpy.array(input_array)
-
-def sub_array(input_array: Iterable, start: int, end: int) -> Array:
-    if isinstance(input_array, Array):
-        return input_array[start:end]
-    if isinstance(input_array, Sequence):
-        return make_array(input_array[start:end])
-    return make_array(input_array)[start:end]
-
-def eq_bitset_exact(first: Array, second: Array) -> Array:
-    return numpy.equal(first, second)
-
-def eq_exact(first: Array, second: Array) -> bool:
-    return numpy.array_equal(first, second)
-
-def first_false_index(input_array: Array) -> int:
-    for idx, entry in enumerate(input_array):
-        if not numpy.all(entry):
-            return idx
-    raise ValueError("All entries evaluate to True")
+def _get_as_string(obj) -> str:
+    if isinstance(obj, (_numpy_float, float)):
+        return _numpy_format_scientific(obj, unique=True)
+    elif isinstance(obj, _numpy_array):
+        with _numpy_print_options(floatmode="unique") as opts:
+            return _numpy_array_to_string(obj)
+    return str(obj)
