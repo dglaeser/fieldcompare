@@ -1,10 +1,14 @@
 """Classes and functions related to predicates"""
 
 from typing import Iterable, Callable
+
 from fieldcompare._common import _get_as_string
+from fieldcompare._common import _default_base_tolerance
+
 from fieldcompare.array import Array, sub_array, is_array, make_array
-from fieldcompare.array import array_equal, get_first_non_equal
-from fieldcompare.field import Field, FieldInterface
+from fieldcompare.array import find_first_unequal
+from fieldcompare.array import find_first_fuzzy_unequal
+from fieldcompare.field import FieldInterface
 
 
 class PredicateResult:
@@ -30,10 +34,45 @@ ArrayPredicate = Callable[[Array, Array], PredicateResult]
 class ExactArrayEquality:
     """Compares two arrays for exact equality"""
     def __call__(self, first: Array, second: Array) -> PredicateResult:
+        first = make_array(first) if not is_array(first) else first
+        second = make_array(second) if not is_array(second) else second
+        unequals = find_first_unequal(first, second)
+        if unequals is not None:
+            val1, val2 = unequals
+            return PredicateResult(False, _get_equality_fail_message(val1, val2))
+        return PredicateResult(True)
+
+
+class FuzzyArrayEquality:
+    """Compares two arrays for fuzzy equality"""
+    def __init__(self,
+                 rel_tol: float = _default_base_tolerance(),
+                 abs_tol: float = _default_base_tolerance()) -> None:
+        self._rel_tol = rel_tol
+        self._abs_tol = abs_tol
+
+    @property
+    def relative_tolerance(self) -> float:
+        return self._rel_tol
+
+    @relative_tolerance.setter
+    def relative_tolerance(self, value: float) -> None:
+        self._rel_tol = value
+
+    @property
+    def absolute_tolerance(self) -> float:
+        return self._rel_tol
+
+    @relative_tolerance.setter
+    def absolute_tolerance(self, value: float) -> None:
+        self._abs_tol = value
+
+    def __call__(self, first: Array, second: Array) -> PredicateResult:
         if not is_array(first): first = make_array(first)
         if not is_array(second): second = make_array(second)
-        if not array_equal(first, second):
-            val1, val2 = get_first_non_equal(first, second)
+        unequals = find_first_fuzzy_unequal(first, second, self._rel_tol, self._abs_tol)
+        if unequals is not None:
+            val1, val2 = unequals
             return PredicateResult(False, _get_equality_fail_message(val1, val2))
         return PredicateResult(True)
 
@@ -66,6 +105,18 @@ class ExactFieldEquality(FieldPredicate):
     """Compare two fields for exact equality"""
     def __init__(self, *args, **kwargs) -> None:
         FieldPredicate.__init__(self, ExactArrayEquality(), *args, **kwargs)
+
+
+class FuzzyFieldEquality(FieldPredicate):
+    """Compare two fields for fuzzy equality"""
+    def __init__(self, *args, **kwargs) -> None:
+        FieldPredicate.__init__(self, FuzzyArrayEquality(), *args, **kwargs)
+
+    def set_relative_tolerance(self, rel_tol: float) -> None:
+        self._array_predicate.relative_tolerance = rel_tol
+
+    def set_absolute_tolerance(self, abs_tol: float) -> None:
+        self._array_predicate.absolute_tolerance = abs_tol
 
 
 def _get_equality_fail_message(val1, val2) -> str:

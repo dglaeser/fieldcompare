@@ -1,19 +1,20 @@
 """Arrays representing field values"""
 
-from multiprocessing.sharedctypes import Value
-from typing import Iterable, Sequence, Tuple
+from typing import Iterable, Sequence, Tuple, Optional
 
+import numpy as np
 from numpy import ndarray as Array
-from numpy import array as _array
-from numpy import array_equal as _array_equal
-from numpy import equal as _equal
-from numpy import all as _all_true
+
+from fieldcompare._common import _default_base_tolerance
+
 
 def is_array(input_array) -> bool:
     return isinstance(input_array, Array)
 
+
 def make_array(input_array: Iterable) -> Array:
-    return _array(input_array)
+    return np.array(input_array)
+
 
 def sub_array(input_array: Iterable, start: int, end: int) -> Array:
     if isinstance(input_array, Array):
@@ -22,12 +23,39 @@ def sub_array(input_array: Iterable, start: int, end: int) -> Array:
         return make_array(input_array[start:end])
     return make_array(input_array)[start:end]
 
-def array_equal(first: Array, second: Array) -> bool:
-    return _array_equal(first, second)
 
-def get_first_non_equal(first: Array, second: Array) -> Tuple:
-    bitset = _equal(first, second)
-    for idx, is_equal in enumerate(bitset):
-        if not _all_true(is_equal):
+def find_first_unequal(first: Array, second: Array) -> Optional[Tuple]:
+    try:
+        bitset = np.equal(first, second)
+        if not np.all(bitset):
+            return _get_first_false_pair(bitset, first, second)
+    except Exception:
+        for val1, val2 in zip(first, second):
+            if not np.array_equal(val1, val2):
+                return (val1, val2)
+    return None
+
+
+def find_first_fuzzy_unequal(first: Array,
+                             second: Array,
+                             rel_tol: float = _default_base_tolerance(),
+                             abs_tol: float = _default_base_tolerance()) -> Optional[Tuple]:
+    try:
+        bitset = np.isclose(first, second, rtol=rel_tol, atol=abs_tol)
+        if not np.all(bitset):
+            return _get_first_false_pair(bitset, first, second)
+    except Exception:
+        try:
+            for val1, val2 in zip(first, second):
+                if not np.allclose(val1, val2, rtol=rel_tol, atol=abs_tol):
+                    return (val1, val2)
+        except Exception:
+            raise ValueError("Could not fuzzy-compare the given arrays.")
+    return None
+
+
+def _get_first_false_pair(bool_array: Array, first: Array, second: Array) -> Tuple:
+    for idx, predicate_result in enumerate(bool_array):
+        if not np.all(predicate_result):
             return first[idx], second[idx]
-    raise ValueError("Input arrays contain no non-equal values.")
+    raise ValueError("Boolean array contains no False entry.")

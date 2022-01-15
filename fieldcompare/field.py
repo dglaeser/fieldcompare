@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 from typing import Iterable, Collection
 
-from fieldcompare.array import Array, make_array
+from fieldcompare.array import Array, is_array, make_array
 
 class FieldInterface(ABC):
     @property
@@ -21,7 +21,7 @@ class Field(FieldInterface):
     """Class to represents a field of values"""
     def __init__(self, name: str, values: Iterable):
         self._name = name
-        self._values = make_array(values) if not isinstance(values, Array) else values
+        self._values = make_array(values) if not is_array(values) else values
 
     @property
     def name(self) -> str:

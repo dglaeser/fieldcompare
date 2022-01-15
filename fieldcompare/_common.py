@@ -13,3 +13,6 @@ def _get_as_string(obj) -> str:
         with _numpy_print_options(floatmode="unique") as opts:
             return _numpy_array_to_string(obj)
     return str(obj)
+
+def _default_base_tolerance() -> float:
+    return 1e-8
