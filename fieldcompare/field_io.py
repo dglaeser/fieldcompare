@@ -7,7 +7,12 @@ from json import load
 from csv import reader
 from numpy import isscalar
 
-from fieldcompare import Field
+from meshio import Mesh
+from meshio import read as meshio_read
+from meshio import extension_to_filetype as meshio_supported_extensions
+
+from fieldcompare import Field, make_array
+from fieldcompare.mesh_fields import MeshFields
 
 
 class CSVFieldReader:
@@ -36,7 +41,7 @@ class CSVFieldReader:
         idx = self._names.index(name)
         if idx >= len(self._names):
             raise ValueError(f"Could not find the field with name {name}")
-        return Field(name, [row[idx] for row in self._data])
+        return Field(name, make_array([row[idx] for row in self._data]))
 
     def field_names(self):
         return self._names
@@ -70,7 +75,7 @@ class JSONFieldReader:
                 self._load_fields(fdata, field_entry_key)
             else:
                 fdata = [fdata] if not isinstance(fdata, list) else fdata
-                if not _is_correct_field_data_format(fdata):
+                if not _is_supported_field_data_format(fdata):
                     raise IOError("Unsupported JSON file layout")
                 self._fields[field_entry_key] = fdata
 
@@ -94,10 +99,15 @@ def read_fields(filename: str) -> List[Field]:
         if ext == ".csv":
             csv_reader = CSVFieldReader(file_stream)
             return [csv_reader.field(name) for name in csv_reader.field_names()]
+        if ext in meshio_supported_extensions:
+            if _is_time_series_compatible_format(ext):
+                raise NotImplementedError("Time series")
+            return _extract_from_meshio_mesh(meshio_read(filename))
+
     raise NotImplementedError("Unsupported file type")
 
 
-def _is_correct_field_data_format(field_values: Iterable) -> bool:
+def _is_supported_field_data_format(field_values: Iterable) -> bool:
     return all(isscalar(value) for value in field_values)
 
 
@@ -117,3 +127,14 @@ def _string_to_float(input: str):
 
 def _convertible_to_float(input: str) -> bool:
     return _string_to_float(input) is not None
+
+
+def _is_time_series_compatible_format(file_ext: str) -> bool:
+    return file_ext in [".xmf", ".xdmf"]
+
+
+def _extract_from_meshio_mesh(mesh: Mesh) -> MeshFields:
+    return MeshFields(
+        mesh.points,
+        ((block.type, block.data) for block in mesh.cells)
+    )
