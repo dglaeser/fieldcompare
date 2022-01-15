@@ -19,7 +19,7 @@ class FieldInterface(ABC):
 
 class Field(FieldInterface):
     """Class to represents a field of values"""
-    def __init__(self, name: str, values: Iterable):
+    def __init__(self, name: str, values: Array):
         self._name = name
         self._values = make_array(values) if not is_array(values) else values
 
