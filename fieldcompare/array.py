@@ -16,6 +16,13 @@ def make_array(input_array: Iterable) -> Array:
     return np.array(input_array)
 
 
+def lex_sort(input_array: Array) -> Array:
+    dimension = len(input_array[0])
+    return np.lexsort(
+        tuple(input_array[:,i] for i in reversed(range(dimension)))
+    )
+
+
 def sub_array(input_array: Iterable, start: int, end: int) -> Array:
     if isinstance(input_array, Array):
         return input_array[start:end]
