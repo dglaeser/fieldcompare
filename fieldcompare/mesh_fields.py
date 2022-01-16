@@ -5,7 +5,7 @@ from typing import Iterable, Tuple, List, Iterator
 from ._common import _default_base_tolerance
 from .array import Array, make_array, lex_sort
 from .array import min_element, max_element
-from .field import Field, FieldInterface
+from .field import Field
 
 class MeshFields:
     """Stores fields defined on a mesh. Points & cells are sorted to get a unique representation"""
