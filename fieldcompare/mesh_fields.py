@@ -32,10 +32,12 @@ class MeshFields:
             )
 
     def add_point_data(self, name: str, values: Array) -> None:
+        """Add point data values. Expects the ordering to follow the points given to __init__."""
         values = make_array(values)
         self._fields.append(Field(name, self._permute_point_data(values)))
 
     def add_cell_data(self, name: str, values: Iterable[Tuple[str, Array]]) -> None:
+        """Add cell data values. Expects an iterable over (cell_type, cell_values)."""
         for cell_type, cell_type_values in values:
             cell_type_values = make_array(cell_type_values)
             self._fields.append(Field(
@@ -44,6 +46,7 @@ class MeshFields:
             ))
 
     def remove_field(self, name: str) -> bool:
+        """Remove the field with the given name"""
         for field in self._fields:
             if field.name == name:
                 self._fields.remove(field)
@@ -120,16 +123,16 @@ class TimeSeriesMeshFields:
         return len(self._base_field_names)
 
     def _prepare_time_step_fields(self, time_step_index: int) -> None:
-        pd, cd = self._time_series_reader.read_time_step(time_step_index)
+        point_data, cell_data = self._time_series_reader.read_time_step(time_step_index)
 
         def _add_suffix(array_name) -> str:
             return f"{array_name}_timestep_{time_step_index}"
 
-        for array_name, values in pd:
+        for array_name, values in point_data:
             self._mesh_fields.add_point_data(
                 _add_suffix(array_name), values
             )
-        for array_name, cell_type_values_tuple_range in cd:
+        for array_name, cell_type_values_tuple_range in cell_data:
             self._mesh_fields.add_cell_data(
                 _add_suffix(array_name),
                 cell_type_values_tuple_range
@@ -163,7 +166,7 @@ def _sorting_points_indices(points) -> Array:
                     return False
             return False
 
-    pre_sort = [idx for idx in lex_sort(points)]
+    pre_sort = list(lex_sort(points))
     pre_sort.sort(key=lambda idx: _FuzzySortHelper(idx))
     return make_array(pre_sort)
 
