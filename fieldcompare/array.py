@@ -23,6 +23,14 @@ def lex_sort(input_array: Array) -> Array:
     )
 
 
+def min_element(input_array: Array):
+    return input_array[np.argmin(input_array)]
+
+
+def max_element(input_array: Array):
+    return input_array[np.argmax(input_array)]
+
+
 def sub_array(input_array: Iterable, start: int, end: int) -> Array:
     if isinstance(input_array, Array):
         return input_array[start:end]
