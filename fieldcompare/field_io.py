@@ -1,6 +1,5 @@
 """Readers of fields from various data formats"""
 
-from array import array
 from typing import TextIO, Iterable, Tuple
 from os.path import splitext
 from json import load
@@ -39,25 +38,18 @@ class CSVFieldReader:
         assert len(set(self._names)) == len(self._names)
 
     def field(self, name: str) -> Field:
+        """Return the field with the given name"""
         idx = self._names.index(name)
         if idx >= len(self._names):
             raise ValueError(f"Could not find the field with name {name}")
         return Field(name, make_array([row[idx] for row in self._data]))
 
     def field_names(self):
+        """Return all field names read from the csv file"""
         return self._names
 
     def _append_data_row(self, row: list) -> None:
-        self._data.append([self._convert(v) for v in row])
-
-    def _convert(self, input: str):
-        value = _string_to_int(input)
-        if value is not None:
-            return value
-        value = _string_to_float(input)
-        if value is not None:
-            return value
-        return input
+        self._data.append([_convert(v) for v in row])
 
 
 class JSONFieldReader:
@@ -81,12 +73,14 @@ class JSONFieldReader:
                 self._fields[field_entry_key] = fdata
 
     def field(self, name: str):
+        """Return the field with the given name"""
         for field_name, values in self._fields.items():
             if field_name == name:
                 return Field(field_name, values)
         raise ValueError(f"Could not find a field with name {name}")
 
     def field_names(self):
+        """Return all fields read from the json file"""
         return list(self._fields.keys())
 
 
@@ -104,7 +98,6 @@ def read_fields(filename: str) -> Iterable[Field]:
             if _is_time_series_compatible_format(ext):
                 return _extract_from_meshio_time_series(TimeSeriesReader(filename))
             return _extract_from_meshio_mesh(meshio_read(filename))
-
     raise NotImplementedError("Unsupported file type")
 
 
@@ -112,22 +105,31 @@ def _is_supported_field_data_format(field_values: Iterable) -> bool:
     return all(isscalar(value) for value in field_values)
 
 
-def _string_to_int(input: str):
+def _convert(value_string: str):
+    value = _string_to_int(value_string)
+    if value is not None:
+        return value
+    value = _string_to_float(value_string)
+    if value is not None:
+        return value
+    return value_string
+
+def _string_to_int(value_string: str):
     try:
-        return int(input)
+        return int(value_string)
     except ValueError:
         return None
 
 
-def _string_to_float(input: str):
+def _string_to_float(value_string: str):
     try:
-        return float(input)
+        return float(value_string)
     except ValueError:
         return None
 
 
-def _convertible_to_float(input: str) -> bool:
-    return _string_to_float(input) is not None
+def _convertible_to_float(value_string: str) -> bool:
+    return _string_to_float(value_string) is not None
 
 
 def _is_time_series_compatible_format(file_ext: str) -> bool:
@@ -144,7 +146,10 @@ def _extract_from_meshio_mesh(mesh: Mesh) -> MeshFields:
     for array_name in mesh.cell_data:
         result.add_cell_data(
             array_name,
-            ((cell_block.type, values) for cell_block, values in zip(mesh.cells, mesh.cell_data[array_name]))
+            (
+                (cell_block.type, values)
+                for cell_block, values in zip(mesh.cells, mesh.cell_data[array_name])
+            )
         )
     return result
 
@@ -159,20 +164,28 @@ def _extract_from_meshio_time_series(time_series_reader) -> TimeSeriesMeshFields
     )
 
 class _MeshioTimeStepReader:
-    def __init__(self, mesh: Mesh, reader: TimeSeriesReader) -> None:
+    def __init__(self, mesh: Mesh, meshio_reader: TimeSeriesReader) -> None:
         self._mesh = mesh
-        self._reader = reader
-        self._num_time_steps = reader.num_steps
+        self._reader = meshio_reader
+        self._num_time_steps = meshio_reader.num_steps
 
     @property
     def num_time_steps(self) -> int:
+        """Return the number of time steps that can be read"""
         return self._num_time_steps
 
     def read_time_step(self, time_step_index: int) -> Tuple:
+        """Read the time step with the given index"""
         _, point_data, cell_data = self._reader.read_data(time_step_index)
-        pd = [(name, point_data[name]) for name in point_data]
-        cd = [
-            (name, [(cell_block.type, values) for cell_block, values in zip(self._mesh.cells, cell_data[name])])
+        point_data = [(name, point_data[name]) for name in point_data]
+        cell_data = [
+            (
+                name,
+                [
+                    (cell_block.type, values)
+                    for cell_block, values in zip(self._mesh.cells, cell_data[name])
+                ]
+            )
             for name in cell_data
         ]
-        return pd, cd
+        return point_data, cell_data
