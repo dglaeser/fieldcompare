@@ -1,14 +1,14 @@
-"""Classes and functions related to predicates"""
+"""Classes and functions related to predicates on fields & arrays"""
 
-from typing import Iterable, Callable
+from typing import Callable
 
-from fieldcompare._common import _get_as_string
-from fieldcompare._common import _default_base_tolerance
+from ._common import _get_as_string
+from ._common import _default_base_tolerance
 
-from fieldcompare.array import Array, sub_array, is_array, make_array
-from fieldcompare.array import find_first_unequal
-from fieldcompare.array import find_first_fuzzy_unequal
-from fieldcompare.field import FieldInterface
+from .array import Array, sub_array, is_array, make_array
+from .array import find_first_unequal
+from .array import find_first_fuzzy_unequal
+from .field import FieldInterface
 
 
 class PredicateResult:
@@ -22,10 +22,12 @@ class PredicateResult:
 
     @property
     def report(self) -> str:
+        """Return a report of the predicate evaluation."""
         return self._report
 
     @property
     def value(self) -> bool:
+        """Return the underlying boolean value"""
         return self._value
 
 
@@ -53,18 +55,22 @@ class FuzzyArrayEquality:
 
     @property
     def relative_tolerance(self) -> float:
+        """Return the relative tolerance used for fuzzy comparisons."""
         return self._rel_tol
 
     @relative_tolerance.setter
     def relative_tolerance(self, value: float) -> None:
+        """Set the relative tolerance to be used for fuzzy comparisons."""
         self._rel_tol = value
 
     @property
     def absolute_tolerance(self) -> float:
+        """Return the absolute tolerance used for fuzzy comparisons."""
         return self._rel_tol
 
-    @relative_tolerance.setter
+    @absolute_tolerance.setter
     def absolute_tolerance(self, value: float) -> None:
+        """Set the absolute tolerance to be used for fuzzy comparisons."""
         self._abs_tol = value
 
     def __call__(self, first: Array, second: Array) -> PredicateResult:
@@ -117,9 +123,11 @@ class FuzzyFieldEquality(FieldPredicate):
         FieldPredicate.__init__(self, FuzzyArrayEquality(), *args, **kwargs)
 
     def set_relative_tolerance(self, rel_tol: float) -> None:
+        """Set the relative tolerance to be used for fuzzy comparisons."""
         self._array_predicate.relative_tolerance = rel_tol
 
     def set_absolute_tolerance(self, abs_tol: float) -> None:
+        """Set the absolute tolerance to be used for fuzzy comparisons."""
         self._array_predicate.absolute_tolerance = abs_tol
 
 
