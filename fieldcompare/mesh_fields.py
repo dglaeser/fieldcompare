@@ -33,16 +33,15 @@ class MeshFields:
 
     def add_point_data(self, name: str, values: Array) -> None:
         values = make_array(values)
-        self._fields.append(
-            Field(name, values[self._point_index_map])
-        )
+        self._fields.append(Field(name, self._permute_point_data(values)))
 
     def add_cell_data(self, name: str, values: Iterable[Tuple[str, Array]]) -> None:
         for cell_type, cell_type_values in values:
             cell_type_values = make_array(cell_type_values)
-            self._fields.append(
-                Field(f"{cell_type}_{name}", cell_type_values[self._cell_index_maps[cell_type]])
-            )
+            self._fields.append(Field(
+                f"{cell_type}_{name}",
+                self._permute_cell_data(cell_type, cell_type_values)
+            ))
 
     def remove_field(self, name: str) -> bool:
         for field in self._fields:
@@ -59,6 +58,12 @@ class MeshFields:
 
     def __getitem__(self, index: int):
         return self._fields[index]
+
+    def _permute_point_data(self, point_data: Array) -> Array:
+        return point_data[self._point_index_map]
+
+    def _permute_cell_data(self, cell_type: str, cell_data: Array) -> Array:
+        return cell_data[self._cell_index_maps[cell_type]]
 
 
 class TimeSeriesMeshFields:
