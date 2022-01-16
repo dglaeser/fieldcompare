@@ -67,6 +67,7 @@ class MeshFields:
 
 
 class TimeSeriesMeshFields:
+    """Allows iteration over fields defined on a mesh over multiple time steps."""
     class FieldIterator:
         def __init__(self, time_series_mesh_fields) -> None:
             self._ts_mf = time_series_mesh_fields
@@ -80,9 +81,9 @@ class TimeSeriesMeshFields:
                 self._field_index += 1
                 return result
 
-            self._time_step_index += 1
-            if self._has_time_step():
+            if self._has_next_time_step():
                 self._ts_mf._remove_time_step_fields()
+                self._time_step_index += 1
                 self._ts_mf._prepare_time_step_fields(self._time_step_index)
                 self._field_index = self._ts_mf._get_index_after_base_fields()
                 result = self._get_current_field()
@@ -96,8 +97,8 @@ class TimeSeriesMeshFields:
         def _num_accessible_fields(self) -> int:
             return len(self._ts_mf._mesh_fields)
 
-        def _has_time_step(self) -> bool:
-            return self._time_step_index < self._ts_mf._time_series_reader.num_time_steps
+        def _has_next_time_step(self) -> bool:
+            return self._time_step_index + 1 < self._ts_mf._time_series_reader.num_time_steps
 
     def __init__(self,
                  points: Array,
