@@ -1,11 +1,11 @@
 """Class that represents a field of values"""
 
 from abc import ABC, abstractmethod
-from typing import Iterable, Collection
-
 from fieldcompare.array import Array, is_array, make_array
 
 class FieldInterface(ABC):
+    """Defines the interface of fields"""
+
     @property
     @abstractmethod
     def name(self) -> str:
@@ -19,6 +19,7 @@ class FieldInterface(ABC):
 
 class Field(FieldInterface):
     """Class to represents a field of values"""
+
     def __init__(self, name: str, values: Array):
         self._name = name
         self._values = make_array(values) if not is_array(values) else values
