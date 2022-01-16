@@ -87,6 +87,19 @@ class FuzzyArrayEquality:
         return PredicateResult(True)
 
 
+class DefaultArrayEquality(FuzzyArrayEquality):
+    """Default implementation for array equality checks. Chooses algorithms depending on the data type."""
+    def __init__(self, *args, **kwargs) -> None:
+        FuzzyArrayEquality.__init__(self, *args, **kwargs)
+
+    def __call__(self, first: Array, second: Array) -> PredicateResult:
+        def _is_float(arr: Array) -> bool:
+            return "float" in arr.dtype.name
+        if _is_float(first) and _is_float(second):
+            return FuzzyArrayEquality.__call__(self, first, second)
+        return ExactArrayEquality()(first, second)
+
+
 class FieldPredicate:
     """Evaluates a predicate on two fields"""
     def __init__(self,
@@ -130,6 +143,19 @@ class FuzzyFieldEquality(FieldPredicate):
         """Set the absolute tolerance to be used for fuzzy comparisons."""
         self._array_predicate.absolute_tolerance = abs_tol
 
+
+class DefaultFieldEquality(FieldPredicate):
+    """Default implementation for field equality. Chooses algorithms based on the data type."""
+    def __init__(self, *args, **kwargs) -> None:
+        FieldPredicate.__init__(self, DefaultArrayEquality(), *args, **kwargs)
+
+    def set_relative_tolerance(self, rel_tol: float) -> None:
+        """Set the relative tolerance to be used for fuzzy comparisons."""
+        self._array_predicate.relative_tolerance = rel_tol
+
+    def set_absolute_tolerance(self, abs_tol: float) -> None:
+        """Set the absolute tolerance to be used for fuzzy comparisons."""
+        self._array_predicate.absolute_tolerance = abs_tol
 
 def _get_equality_fail_message(val1, val2) -> str:
     return "{} and {} have compared unequal".format(
