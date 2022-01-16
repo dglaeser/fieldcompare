@@ -101,9 +101,14 @@ class TimeSeriesMeshFields:
         self._mesh_fields = MeshFields(points, cells)
         self._base_field_names = [field.name for field in self._mesh_fields]
         self._time_series_reader = time_series_reader
+        self._field_iterator = None
 
-    def __iter__(self) -> FieldIterator:
-        return self.FieldIterator(self)
+    def __iter__(self):
+        self._field_iterator = self.FieldIterator(self)
+        return self
+
+    def __next__(self):
+        return next(self._field_iterator)
 
     def _get_index_after_base_fields(self) -> int:
         return len(self._base_field_names)
