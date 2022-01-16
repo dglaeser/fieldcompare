@@ -111,33 +111,46 @@ def _perturb_mesh(mesh, max_perturbation=1e-9):
 
 
 def _get_time_series_point_data_values(mesh, num_time_steps, max_perturbation=0.0):
+    result = []
+    for ts in range(num_time_steps-1):
+        result.append({
+            "point_data": np.array([float(i*ts) for i in range(len(mesh.points))])
+        })
+
+    # perturb the last time step
     seed = 1
     random_instance = random.Random(seed)
+    result.append({
+        "point_data": np.array([
+            float(i*ts) + random_instance.uniform(0, max_perturbation)
+            for i in range(len(mesh.points))
+        ])
+    })
 
-    result = []
-    for ts in range(num_time_steps):
-        result.append({
-            "point_data": np.array([
-                float(i*ts) + random_instance.uniform(0, max_perturbation)
-                for i in range(len(mesh.points))
-            ])
-        })
     return result
 
 
 def _get_time_series_cell_data_values(mesh, num_time_steps, max_perturbation=0.0):
-    seed = 1
-    random_instance = random.Random(seed)
-
     result = []
-    for ts in range(num_time_steps):
+    for ts in range(num_time_steps-1):
         result.append({"cell_data": []})
         cell_idx = 0
         for cell_block in mesh.cells:
             result[-1]["cell_data"].append(np.array([
-                float(cell_idx*ts) + random_instance.uniform(0, max_perturbation)
-                for i in range(len(cell_block.data))
+                float(cell_idx*ts) for i in range(len(cell_block.data))
             ]))
+
+    # perturb the last time step
+    seed = 1
+    random_instance = random.Random(seed)
+    result.append({"cell_data": []})
+    cell_idx = 0
+    for cell_block in mesh.cells:
+        result[-1]["cell_data"].append(np.array([
+            float(cell_idx*ts) + random_instance.uniform(0, max_perturbation)
+            for i in range(len(cell_block.data))
+        ]))
+
     return result
 
 

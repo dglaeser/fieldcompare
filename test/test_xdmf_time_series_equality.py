@@ -8,7 +8,19 @@ from fieldcompare import FuzzyFieldEquality
 
 TEST_DATA_PATH = Path(__file__).resolve().parent / Path("data")
 
-def _compare_time_series_files(file1, file2, predicate=FuzzyFieldEquality()) -> bool:
+class CheckResult:
+    def __init__(self, value: bool, msg: str = "") -> None:
+        self._value = value
+        self._msg = msg
+
+    def __bool__(self) -> bool:
+        return self._value
+
+    @property
+    def report(self) -> str:
+        return self._msg
+
+def _compare_time_series_files(file1, file2, predicate=FuzzyFieldEquality()) -> CheckResult:
     print("Start xdfm comparison")
     fields1 = read_fields(file1)
     fields2 = read_fields(file2)
@@ -22,9 +34,10 @@ def _compare_time_series_files(file1, file2, predicate=FuzzyFieldEquality()) -> 
     for field1 in fields1:
         field2 = _get_field2(field1.name)
         print(f" -- comparing field {field1.name}")
-        if not predicate(field1, field2):
-            return False
-    return True
+        check = predicate(field1, field2)
+        if not check:
+            return CheckResult(False, f"Field {field1.name} has compared unequal")
+    return CheckResult(True)
 
 def test_identical_time_series_files():
     assert _compare_time_series_files(
@@ -49,11 +62,13 @@ def test_perturbed_time_series_files():
 
     predicate.set_relative_tolerance(1e-20)
     predicate.set_absolute_tolerance(1e-20)
-    assert not _compare_time_series_files(
+    test_result = _compare_time_series_files(
         TEST_DATA_PATH / Path("test_time_series.xdmf"),
         TEST_DATA_PATH / Path("test_time_series_perturbed.xdmf"),
         predicate
     )
+    assert not test_result
+    assert "timestep_2" in test_result.report
 
 if __name__ == "__main__":
     test_identical_time_series_files()
