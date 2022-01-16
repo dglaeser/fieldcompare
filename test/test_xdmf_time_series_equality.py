@@ -4,7 +4,7 @@ from pathlib import Path
 
 from context import fieldcompare
 from fieldcompare import read_fields
-from fieldcompare import FuzzyFieldEquality
+from fieldcompare import FuzzyFieldEquality, DefaultFieldEquality
 
 TEST_DATA_PATH = Path(__file__).resolve().parent / Path("data")
 
@@ -44,20 +44,39 @@ def test_identical_time_series_files():
         TEST_DATA_PATH / Path("test_time_series.xdmf"),
         TEST_DATA_PATH / Path("test_time_series.xdmf")
     )
+    assert _compare_time_series_files(
+        TEST_DATA_PATH / Path("test_time_series.xdmf"),
+        TEST_DATA_PATH / Path("test_time_series.xdmf"),
+        DefaultFieldEquality()
+    )
 
     assert _compare_time_series_files(
         TEST_DATA_PATH / Path("test_time_series_perturbed.xdmf"),
         TEST_DATA_PATH / Path("test_time_series_perturbed.xdmf")
     )
+    assert _compare_time_series_files(
+        TEST_DATA_PATH / Path("test_time_series_perturbed.xdmf"),
+        TEST_DATA_PATH / Path("test_time_series_perturbed.xdmf"),
+        DefaultFieldEquality()
+    )
 
 def test_perturbed_time_series_files():
     predicate = FuzzyFieldEquality()
+    default_predicate = DefaultFieldEquality()
     predicate.set_relative_tolerance(1e-5)
     predicate.set_absolute_tolerance(1e-5)
+    default_predicate.set_relative_tolerance(1e-5)
+    default_predicate.set_absolute_tolerance(1e-5)
+
     assert _compare_time_series_files(
         TEST_DATA_PATH / Path("test_time_series.xdmf"),
         TEST_DATA_PATH / Path("test_time_series_perturbed.xdmf"),
         predicate
+    )
+    assert _compare_time_series_files(
+        TEST_DATA_PATH / Path("test_time_series.xdmf"),
+        TEST_DATA_PATH / Path("test_time_series_perturbed.xdmf"),
+        default_predicate
     )
 
     predicate.set_relative_tolerance(1e-20)
@@ -66,6 +85,16 @@ def test_perturbed_time_series_files():
         TEST_DATA_PATH / Path("test_time_series.xdmf"),
         TEST_DATA_PATH / Path("test_time_series_perturbed.xdmf"),
         predicate
+    )
+    assert not test_result
+    assert "timestep_2" in test_result.report
+
+    default_predicate.set_relative_tolerance(1e-20)
+    default_predicate.set_absolute_tolerance(1e-20)
+    test_result = _compare_time_series_files(
+        TEST_DATA_PATH / Path("test_time_series.xdmf"),
+        TEST_DATA_PATH / Path("test_time_series_perturbed.xdmf"),
+        default_predicate
     )
     assert not test_result
     assert "timestep_2" in test_result.report

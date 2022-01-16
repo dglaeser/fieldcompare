@@ -4,7 +4,7 @@ from pathlib import Path
 
 from context import fieldcompare
 from fieldcompare import predicates, read_fields
-from fieldcompare import FuzzyFieldEquality
+from fieldcompare import FuzzyFieldEquality, DefaultFieldEquality
 from fieldcompare.predicates import PredicateResult
 
 TEST_DATA_PATH = Path(__file__).resolve().parent / Path("data")
@@ -14,7 +14,7 @@ def _get_field_from_list(name, fields_list):
     assert len(element_list) == 1
     return element_list[0]
 
-def _compare_vtk_files(file1, file2, predicate=FuzzyFieldEquality) -> PredicateResult:
+def _compare_vtk_files(file1, file2, predicate=FuzzyFieldEquality()) -> PredicateResult:
     fields1 = read_fields(file1)
     fields2 = read_fields(file2)
     for field1 in fields1:
@@ -30,10 +30,20 @@ def test_identical_vtk_files():
         TEST_DATA_PATH / Path("test_mesh.vtu"),
         TEST_DATA_PATH / Path("test_mesh.vtu")
     )
+    assert _compare_vtk_files(
+        TEST_DATA_PATH / Path("test_mesh.vtu"),
+        TEST_DATA_PATH / Path("test_mesh.vtu"),
+        DefaultFieldEquality()
+    )
 
     assert _compare_vtk_files(
         TEST_DATA_PATH / Path("test_mesh_permutated.vtu"),
         TEST_DATA_PATH / Path("test_mesh_permutated.vtu")
+    )
+    assert _compare_vtk_files(
+        TEST_DATA_PATH / Path("test_mesh_permutated.vtu"),
+        TEST_DATA_PATH / Path("test_mesh_permutated.vtu"),
+        DefaultFieldEquality()
     )
 
 def test_vtk_files_permutated():
@@ -41,34 +51,64 @@ def test_vtk_files_permutated():
         TEST_DATA_PATH / Path("test_mesh.vtu"),
         TEST_DATA_PATH / Path("test_mesh_permutated.vtu")
     )
+    assert _compare_vtk_files(
+        TEST_DATA_PATH / Path("test_mesh.vtu"),
+        TEST_DATA_PATH / Path("test_mesh_permutated.vtu"),
+        DefaultFieldEquality()
+    )
 
 def test_vtk_files_perturbed():
     predicate = FuzzyFieldEquality()
+    default_predicate = DefaultFieldEquality()
     predicate.set_relative_tolerance(1e-5)
+    default_predicate.set_relative_tolerance(1e-5)
+
     assert _compare_vtk_files(
         TEST_DATA_PATH / Path("test_mesh.vtu"),
         TEST_DATA_PATH / Path("test_mesh_permutated_perturbed.vtu"),
         predicate
+    )
+    assert _compare_vtk_files(
+        TEST_DATA_PATH / Path("test_mesh.vtu"),
+        TEST_DATA_PATH / Path("test_mesh_permutated_perturbed.vtu"),
+        default_predicate
     )
 
     assert _compare_vtk_files(
         TEST_DATA_PATH / Path("test_mesh_permutated.vtu"),
         TEST_DATA_PATH / Path("test_mesh_permutated_perturbed.vtu"),
         predicate
+    )
+    assert _compare_vtk_files(
+        TEST_DATA_PATH / Path("test_mesh_permutated.vtu"),
+        TEST_DATA_PATH / Path("test_mesh_permutated_perturbed.vtu"),
+        default_predicate
     )
 
     predicate.set_relative_tolerance(1e-20)
     predicate.set_absolute_tolerance(0.0)
+    default_predicate.set_relative_tolerance(1e-20)
+    default_predicate.set_absolute_tolerance(0.0)
     assert not _compare_vtk_files(
         TEST_DATA_PATH / Path("test_mesh.vtu"),
         TEST_DATA_PATH / Path("test_mesh_permutated_perturbed.vtu"),
         predicate
+    )
+    assert not _compare_vtk_files(
+        TEST_DATA_PATH / Path("test_mesh.vtu"),
+        TEST_DATA_PATH / Path("test_mesh_permutated_perturbed.vtu"),
+        default_predicate
     )
 
     assert not _compare_vtk_files(
         TEST_DATA_PATH / Path("test_mesh_permutated.vtu"),
         TEST_DATA_PATH / Path("test_mesh_permutated_perturbed.vtu"),
         predicate
+    )
+    assert not _compare_vtk_files(
+        TEST_DATA_PATH / Path("test_mesh_permutated.vtu"),
+        TEST_DATA_PATH / Path("test_mesh_permutated_perturbed.vtu"),
+        default_predicate
     )
 
 if __name__ == "__main__":
