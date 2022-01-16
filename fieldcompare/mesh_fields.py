@@ -1,49 +1,58 @@
 """Class to store fields defined on a mesh"""
 
-from typing import Iterable, Tuple, List
+from typing import Iterable, Tuple, List, Iterator
 
-from fieldcompare._common import _default_base_tolerance
-from fieldcompare.array import Array, make_array, lex_sort
-from fieldcompare.field import Field
+from ._common import _default_base_tolerance
+from .array import Array, make_array, lex_sort
+from .array import min_element, max_element
+from .field import Field, FieldInterface
 
 class MeshFields:
     """Stores fields defined on a mesh. Points & cells are sorted to get a unique representation"""
     def __init__(self,
-                 points: Iterable,
-                 cells: Iterable[Tuple[str, Iterable]]) -> None:
+                 points: Array,
+                 cells: Iterable[Tuple[str, List]]) -> None:
         points = make_array(points)
-        point_index_map = _sorting_points_indices(points)
-        point_index_map_inverse = _make_inverse_index_map(point_index_map)
+        self._point_index_map = _sorting_points_indices(points)
+        self._fields: list = [
+            Field("point_coordinates", points[self._point_index_map])
+        ]
 
+        point_index_map_inverse = _make_inverse_index_map(self._point_index_map)
         def _map_and_sort_cell_corners(corner_list):
             return sorted([point_index_map_inverse[c] for c in corner_list])
-        cells = {
-            cell_type: make_array([_map_and_sort_cell_corners(c) for c in corners])
-            for cell_type, corners in cells
-        }
-        cell_index_maps = {
-            cell_type: _sorting_cell_indices(corners)
-            for cell_type, corners in cells.items()
-        }
 
-        self._point_index_map = point_index_map
-        self._cell_index_maps = cell_index_maps
-
-        self._fields: list = []
-        self._fields.append(
-            Field("point_coordinates", points[point_index_map])
-        )
-        for cell_type, corners in cells.items():
+        self._cell_index_maps: dict = {}
+        for cell_type, corners in cells:
+            for idx, corner_list in enumerate(corners):
+                corners[idx] = _map_and_sort_cell_corners(corner_list)
+            self._cell_index_maps[cell_type] = _sorting_cell_indices(corners)
             self._fields.append(
-                Field(f"{cell_type}_corners", corners[cell_index_maps[cell_type]])
+                Field(f"{cell_type}_corners", corners[self._cell_index_maps[cell_type]])
             )
 
-    def __iter__(self):
-        self._iter = iter(self._fields)
-        return self
+    def add_point_data(self, name: str, values: Array) -> None:
+        values = make_array(values)
+        self._fields.append(
+            Field(name, values[self._point_index_map])
+        )
 
-    def __next__(self) -> Field:
-        return next(self._iter)
+    def add_cell_data(self, name: str, values: Iterable[Tuple[str, Array]]) -> None:
+        for cell_type, cell_type_values in values:
+            cell_type_values = make_array(cell_type_values)
+            self._fields.append(
+                Field(f"{cell_type}_{name}", cell_type_values[self._cell_index_maps[cell_type]])
+            )
+
+    def remove_field(self, name: str) -> bool:
+        for field in self._fields:
+            if field.name == name:
+                self._fields.remove(field)
+                return True
+        raise ValueError(f"No field with name {name}")
+
+    def __iter__(self) -> Iterator[Field]:
+        return iter(self._fields)
 
     def __len__(self) -> int:
         return len(self._fields)
@@ -52,31 +61,104 @@ class MeshFields:
         return self._fields[index]
 
 
-def _sorting_points_indices(points) -> Array:
-    class _FuzzySortHelper:
-        def __init__(self, value: float, tolerance: float) -> None:
-            self._value = value
-            self._tolerance = tolerance
+class TimeSeriesMeshFields:
+    class FieldIterator:
+        def __init__(self, time_series_mesh_fields) -> None:
+            self._ts_mf = time_series_mesh_fields
+            self._field_index = 0
+            self._time_step_index = 0
+            self._ts_mf._prepare_time_step_fields(self._time_step_index)
 
-        def __eq__(self, other) -> bool:
-            abs_diff = abs(self._value - other._value)
-            return abs_diff <= self._tolerance
+        def __next__(self):
+            if self._field_index < self._num_accessible_fields():
+                result = self._get_current_field()
+                self._field_index += 1
+                return result
+
+            self._time_step_index += 1
+            if self._has_time_step():
+                self._ts_mf._remove_time_step_fields()
+                self._ts_mf._prepare_time_step_fields(self._time_step_index)
+                self._field_index = self._ts_mf._get_index_after_base_fields()
+                result = self._get_current_field()
+                self._field_index += 1
+                return result
+            raise StopIteration
+
+        def _get_current_field(self) -> Field:
+            return self._ts_mf._mesh_fields[self._field_index]
+
+        def _num_accessible_fields(self) -> int:
+            return len(self._ts_mf._mesh_fields)
+
+        def _has_time_step(self) -> bool:
+            return self._time_step_index < self._ts_mf._time_series_reader.num_time_steps
+
+    def __init__(self,
+                 points: Array,
+                 cells: Iterable[Tuple[str, List]],
+                 time_series_reader) -> None:
+        self._mesh_fields = MeshFields(points, cells)
+        self._base_field_names = [field.name for field in self._mesh_fields]
+        self._time_series_reader = time_series_reader
+
+    def __iter__(self) -> FieldIterator:
+        return self.FieldIterator(self)
+
+    def _get_index_after_base_fields(self) -> int:
+        return len(self._base_field_names)
+
+    def _prepare_time_step_fields(self, time_step_index: int) -> None:
+        import time
+        t1 = time.time()
+        pd, cd = self._time_series_reader.read_time_step(time_step_index)
+
+        def _add_suffix(array_name) -> str:
+            return f"{array_name}_timestep_{time_step_index}"
+
+        for array_name, values in pd:
+            self._mesh_fields.add_point_data(
+                _add_suffix(array_name), values
+            )
+        for array_name, cell_type_values_tuple_range in cd:
+            self._mesh_fields.add_cell_data(
+                _add_suffix(array_name),
+                cell_type_values_tuple_range
+            )
+
+        t2 = time.time()
+
+    def _remove_time_step_fields(self) -> None:
+        for field in self._mesh_fields:
+            if field.name not in self._base_field_names:
+                self._mesh_fields.remove_field(field.name)
+
+
+
+def _sorting_points_indices(points) -> Array:
+    tolerance = _get_point_cloud_tolerance(points)
+    def _fuzzy_lt(val1, val2) -> bool:
+        return val1 < val2 - tolerance
+    def _fuzzy_gt(val1, val2) -> bool:
+        return val1 > val2 + tolerance
+
+    class _FuzzySortHelper:
+        def __init__(self, idx: int) -> None:
+            self._idx = idx
 
         def __lt__(self, other) -> bool:
-            if not self.__eq__(other):
-                return self._value < other._value
+            my_point = points[self._idx]
+            other_point = points[other._idx]
+            for v1, v2 in zip(my_point, other_point):
+                if _fuzzy_lt(v1, v2):
+                    return True
+                elif _fuzzy_gt(v1, v2):
+                    return False
             return False
 
-    tolerance = _get_point_cloud_tolerance(points)
-    def _make_fuzzy_sortable_point(point):
-        return make_array([_FuzzySortHelper(v, tolerance) for v in point])
-
-    pre_sort = lex_sort(points)
-    pre_sorted_fuzzy_comparable = make_array([
-        _make_fuzzy_sortable_point(points[idx]) for idx in pre_sort
-    ])
-    fuzzy_sort = lex_sort(pre_sorted_fuzzy_comparable)
-    return make_array([pre_sort[idx] for idx in fuzzy_sort])
+    pre_sort = [idx for idx in lex_sort(points)]
+    pre_sort.sort(key=lambda idx: _FuzzySortHelper(idx))
+    return make_array(pre_sort)
 
 
 def _sorting_cell_indices(cell_corner_list) -> Array:
@@ -85,12 +167,8 @@ def _sorting_cell_indices(cell_corner_list) -> Array:
 
 def _get_point_cloud_tolerance(points):
     dim = len(points[0])
-    _min = [1e20]*dim
-    _max = [-1e20]*dim
-    for p in points:
-        for i, coord in enumerate(p):
-            _min[i] = min(coord, _min[i])
-            _max[i] = max(coord, _max[i])
+    _min = [min_element(points[:, i]) for i in range(dim)]
+    _max = [max_element(points[:, i]) for i in range(dim)]
     max_delta = max([_max[i] - _min[i] for i in range(dim)])
     return max_delta*_default_base_tolerance()
 

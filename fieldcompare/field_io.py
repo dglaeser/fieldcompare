@@ -1,7 +1,7 @@
 """Readers of fields from various data formats"""
 
-from multiprocessing.sharedctypes import Value
-from typing import TextIO, Iterable, List
+from array import array
+from typing import TextIO, Iterable, Tuple
 from os.path import splitext
 from json import load
 from csv import reader
@@ -10,9 +10,10 @@ from numpy import isscalar
 from meshio import Mesh
 from meshio import read as meshio_read
 from meshio import extension_to_filetype as meshio_supported_extensions
+from meshio.xdmf import TimeSeriesReader
 
 from fieldcompare import Field, make_array
-from fieldcompare.mesh_fields import MeshFields
+from fieldcompare.mesh_fields import MeshFields, TimeSeriesMeshFields
 
 
 class CSVFieldReader:
@@ -89,7 +90,7 @@ class JSONFieldReader:
         return list(self._fields.keys())
 
 
-def read_fields(filename: str) -> List[Field]:
+def read_fields(filename: str) -> Iterable[Field]:
     """Read in the fields from the file with the given name"""
     ext = splitext(filename)[1]
     with open(filename, "r") as file_stream:
@@ -101,7 +102,7 @@ def read_fields(filename: str) -> List[Field]:
             return [csv_reader.field(name) for name in csv_reader.field_names()]
         if ext in meshio_supported_extensions:
             if _is_time_series_compatible_format(ext):
-                raise NotImplementedError("Time series")
+                return _extract_from_meshio_time_series(TimeSeriesReader(filename))
             return _extract_from_meshio_mesh(meshio_read(filename))
 
     raise NotImplementedError("Unsupported file type")
@@ -134,7 +135,44 @@ def _is_time_series_compatible_format(file_ext: str) -> bool:
 
 
 def _extract_from_meshio_mesh(mesh: Mesh) -> MeshFields:
-    return MeshFields(
+    result = MeshFields(
         mesh.points,
         ((block.type, block.data) for block in mesh.cells)
     )
+    for array_name in mesh.point_data:
+        result.add_point_data(array_name, mesh.point_data[array_name])
+    for array_name in mesh.cell_data:
+        result.add_cell_data(
+            array_name,
+            ((cell_block.type, values) for cell_block, values in zip(mesh.cells, mesh.cell_data[array_name]))
+        )
+    return result
+
+def _extract_from_meshio_time_series(time_series_reader) -> TimeSeriesMeshFields:
+    points, cells = time_series_reader.read_points_cells()
+    mesh = Mesh(points, cells)
+    time_steps_reader = _MeshioTimeStepReader(mesh, time_series_reader)
+    return TimeSeriesMeshFields(
+        mesh.points,
+        ((block.type, block.data) for block in mesh.cells),
+        time_steps_reader
+    )
+
+class _MeshioTimeStepReader:
+    def __init__(self, mesh: Mesh, reader: TimeSeriesReader) -> None:
+        self._mesh = mesh
+        self._reader = reader
+        self._num_time_steps = reader.num_steps
+
+    @property
+    def num_time_steps(self) -> int:
+        return self._num_time_steps
+
+    def read_time_step(self, time_step_index: int) -> Tuple:
+        _, point_data, cell_data = self._reader.read_data(time_step_index)
+        pd = [(name, point_data[name]) for name in point_data]
+        cd = [
+            (name, [(cell_block.type, values) for cell_block, values in zip(self._mesh.cells, cell_data[name])])
+            for name in cell_data
+        ]
+        return pd, cd
