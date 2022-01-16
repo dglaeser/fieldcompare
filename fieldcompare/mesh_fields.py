@@ -114,8 +114,6 @@ class TimeSeriesMeshFields:
         return len(self._base_field_names)
 
     def _prepare_time_step_fields(self, time_step_index: int) -> None:
-        import time
-        t1 = time.time()
         pd, cd = self._time_series_reader.read_time_step(time_step_index)
 
         def _add_suffix(array_name) -> str:
@@ -130,8 +128,6 @@ class TimeSeriesMeshFields:
                 _add_suffix(array_name),
                 cell_type_values_tuple_range
             )
-
-        t2 = time.time()
 
     def _remove_time_step_fields(self) -> None:
         for field in self._mesh_fields:
