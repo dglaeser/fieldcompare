@@ -4,7 +4,6 @@ from typing import TextIO, Iterable, Tuple
 from os.path import splitext
 from json import load
 from csv import reader
-from numpy import isscalar
 
 from meshio import Mesh
 from meshio import read as meshio_read
@@ -13,6 +12,7 @@ from meshio.xdmf import TimeSeriesReader
 
 from fieldcompare import Field, make_array
 from fieldcompare.mesh_fields import MeshFields, TimeSeriesMeshFields
+from ._common import _is_scalar
 
 
 class CSVFieldReader:
@@ -49,7 +49,7 @@ class CSVFieldReader:
         return self._names
 
     def _append_data_row(self, row: list) -> None:
-        self._data.append([_convert(v) for v in row])
+        self._data.append([_convert_string(v) for v in row])
 
 
 class JSONFieldReader:
@@ -102,10 +102,10 @@ def read_fields(filename: str) -> Iterable[Field]:
 
 
 def _is_supported_field_data_format(field_values: Iterable) -> bool:
-    return all(isscalar(value) for value in field_values)
+    return all(_is_scalar(value) for value in field_values)
 
 
-def _convert(value_string: str):
+def _convert_string(value_string: str):
     value = _string_to_int(value_string)
     if value is not None:
         return value
@@ -113,6 +113,7 @@ def _convert(value_string: str):
     if value is not None:
         return value
     return value_string
+
 
 def _string_to_int(value_string: str):
     try:
