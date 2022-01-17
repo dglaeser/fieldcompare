@@ -73,6 +73,11 @@ def sort_array(input_array: Array) -> Array:
     return np.argsort(input_array)
 
 
+def abs_array(input_array: Array) -> Array:
+    """Return a copy of the array with the absolute values of the given array."""
+    return np.fabs(input_array)
+
+
 def min_element(input_array: Array):
     """Return the minimum value within the array. Expects arrays of scalars."""
     return input_array[np.argmin(input_array)]
