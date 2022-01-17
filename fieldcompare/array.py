@@ -68,6 +68,11 @@ def lex_sort_array_columns(input_array: Array) -> Array:
     )
 
 
+def sort_array(input_array: Array) -> Array:
+    """Sort an array."""
+    return np.argsort(input_array)
+
+
 def min_element(input_array: Array):
     """Return the minimum value within the array. Expects arrays of scalars."""
     return input_array[np.argmin(input_array)]
