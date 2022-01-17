@@ -7,6 +7,27 @@ from copy import deepcopy
 from meshio import Mesh
 from meshio.xdmf import TimeSeriesWriter
 
+def _make_non_conforming_test_mesh(refinement: int = 1):
+    num_cells_x = int(pow(2, refinement))
+    num_cells_y = int(pow(2, refinement))
+
+    dx = 1.0/num_cells_x
+    dy = 1.0/num_cells_y
+
+    points: list = []
+    cells: list = [("quad", [])]
+    for i in range(num_cells_x):
+        for j in range(num_cells_y):
+            p0_idx = len(points)
+            p0 = [i*dx, j*dy, 0.0]
+            points.append(p0)
+            points.append([p0[0] + dx,  p0[1] + 0.0, 0.0])
+            points.append([p0[0] + dx,  p0[1] + dy, 0.0])
+            points.append([p0[0] + 0.0, p0[1] + dy, 0.0])
+            cells[0][1].append([p0_idx, p0_idx+1, p0_idx+2, p0_idx+3])
+    return Mesh(points, cells)
+
+
 def _make_test_mesh():
     points = [
         [0.0, 0.0, 0.0],
@@ -176,3 +197,10 @@ if __name__ == "__main__":
     point_values = _get_time_series_point_data_values(test_mesh, 3, 1e-8)
     cell_values = _get_time_series_cell_data_values(test_mesh, 3, 1e-8)
     _write_time_series("test_time_series_perturbed.xdmf", test_mesh, point_values, cell_values, 3)
+
+    non_conforming = _make_non_conforming_test_mesh()
+    non_conforming.write("test_non_conforming_mesh.vtu", binary=False)
+    non_conforming_permuted = _permutate_mesh(non_conforming)
+    non_conforming_permuted.write("test_non_conforming_mesh_permutated.vtu", binary=False)
+    non_conforming_permuted_perturbed = _perturb_mesh(non_conforming_permuted)
+    non_conforming_permuted_perturbed.write("test_non_conforming_mesh_permutated_perturbed.vtu", binary=False)
