@@ -31,6 +31,11 @@ def adjacent_difference(input_array: Array, axis: int = -1) -> Array:
     return np.diff(input_array, axis=axis)
 
 
+def all_true(input_array: Array, axis: int = None):
+    """Check whether all entries of a boolean array are true along the given axis."""
+    return np.all(input_array, axis=axis)
+
+
 def sub_array(input_array: Iterable, start: int, end: int) -> Array:
     """Return the subset of the given array in the range [start, end)"""
     if isinstance(input_array, Array):
