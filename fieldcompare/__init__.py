@@ -6,7 +6,7 @@ This can be used e.g. in regression testing simulation software, comparing simul
 results against previously obtained results.
 """
 
-from .array import Array, make_array, sub_array
+from .array import Array, sub_array, make_array, make_initialized_array, make_uninitialized_array
 from .field import Field, FieldInterface
 from .predicates import ExactArrayEquality, FuzzyArrayEquality, DefaultArrayEquality
 from .predicates import ExactFieldEquality, FuzzyFieldEquality, DefaultFieldEquality
