@@ -1,5 +1,6 @@
 stages:
   - test
+  - coverage
 
 workflow:
   rules:
@@ -9,12 +10,15 @@ workflow:
 default:
   image: ubuntu:20.04
 
-.default:
-  stage: test
+.install_dependencies:
   before_script:
-    - apt-get update && apt-get install --no-install-recommends --yes python$PYVERSION python3-pip
-    - ln -s /usr/bin/python$PYVERSION /usr/bin/python
-    - python -m pip install pytest meshio[all]
+      - apt-get update && apt-get install --no-install-recommends --yes python$PYVERSION python3-pip
+      - ln -sf /usr/bin/python$PYVERSION /usr/bin/python
+      - python -m pip install pytest meshio[all]
+
+.test_base:
+  extends: .install_dependencies
+  stage: test
   script: cd test && pytest --verbose --junit-xml test_report.xml
   artifacts:
     reports:
@@ -23,9 +27,24 @@ default:
 test_python_3_8:
   variables:
     PYVERSION: "3.8"
-  extends: .default
+  extends: .test_base
 
 test_python_3_9:
   variables:
     PYVERSION: "3.9"
-  extends: .default
+  extends: .test_base
+
+test_coverage_report:
+  variables:
+      PYVERSION: "3.9"
+  stage: coverage
+  extends: .install_dependencies
+  script:
+    - python -m pip install pytest-cov
+    - cd test && python -m pytest --cov-report xml:coverage.xml --cov-report html:cov_report --cov=fieldcompare
+  artifacts:
+    reports:
+      cobertura: test/coverage.xml
+    paths:
+      - test/cov_report
+    expire_in: 30 minutes
