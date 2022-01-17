@@ -152,7 +152,7 @@ def _filter_out_ghost_vertices(mesh: Mesh) -> Tuple[Mesh, Array]:
             is_ghost[p_idx] = False
 
     num_ghosts = accumulate(is_ghost)
-    first_ghost_index_after_sort = len(is_ghost) - num_ghosts
+    first_ghost_index_after_sort = int(len(is_ghost) - num_ghosts)
 
     ghost_filter_map = sort_array(is_ghost)
     ghost_filter_map = sub_array(ghost_filter_map, 0, first_ghost_index_after_sort)
