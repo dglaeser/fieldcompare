@@ -1,6 +1,7 @@
 stages:
   - test
   - coverage
+  - pages
 
 workflow:
   rules:
