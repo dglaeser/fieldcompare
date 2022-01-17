@@ -1,3 +1,4 @@
+"""Test exact equality checks on fields"""
 
 from context import fieldcompare
 
