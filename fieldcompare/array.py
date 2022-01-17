@@ -8,6 +8,16 @@ from numpy import ndarray as Array
 from fieldcompare._common import _default_base_tolerance
 
 
+def make_uninitialized_array(size: int, dtype) -> Array:
+    return Array(shape=(size,), dtype=dtype)
+
+
+def make_initialized_array(size: int, dtype, init_value) -> Array:
+    result: Array = Array(shape=(size,), dtype=dtype)
+    result.fill(init_value)
+    return result
+
+
 def make_array(input_array: Iterable) -> Array:
     """Make an array from the given iterable"""
     return np.array(input_array)
