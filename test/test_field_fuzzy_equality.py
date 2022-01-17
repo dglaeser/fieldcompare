@@ -1,3 +1,5 @@
+"""Test fuzzy equality checks on fields"""
+
 from pytest import raises
 from context import fieldcompare
 

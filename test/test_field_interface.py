@@ -1,3 +1,4 @@
+"""Test the field interface class"""
 
 from context import fieldcompare
 from fieldcompare import Field, FieldInterface
