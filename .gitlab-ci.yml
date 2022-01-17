@@ -4,7 +4,7 @@ stages:
 workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: '$CI_COMMIT_BRANCH =~ /^(master|releases\/)/'
+    - if: '$CI_COMMIT_BRANCH =~ /^(main|releases\/)/'
 
 default:
   image: ubuntu:20.04
