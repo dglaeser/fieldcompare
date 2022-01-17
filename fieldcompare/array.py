@@ -41,6 +41,11 @@ def append_to_array(input_array: Array, values) -> Array:
     return np.append(input_array, values)
 
 
+def elements_less(first: Array, second: Array) -> Array:
+    """Return a boolean array indicating entries of first that smaller than those of second."""
+    return np.less(first, second)
+
+
 def sub_array(input_array: Iterable, start: int, end: int) -> Array:
     """Return the subset of the given array in the range [start, end)"""
     if isinstance(input_array, Array):
