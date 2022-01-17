@@ -27,6 +27,10 @@ def accumulate(input_array: Array, axis = None) -> Array:
     return np.sum(input_array, axis=axis)
 
 
+def adjacent_difference(input_array: Array, axis: int = -1) -> Array:
+    return np.diff(input_array, axis=axis)
+
+
 def sub_array(input_array: Iterable, start: int, end: int) -> Array:
     """Return the subset of the given array in the range [start, end)"""
     if isinstance(input_array, Array):
