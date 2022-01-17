@@ -7,6 +7,11 @@ from copy import deepcopy
 from meshio import Mesh
 from meshio.xdmf import TimeSeriesWriter
 
+def _add_ghost_points(mesh):
+    num_points = len(mesh.points)
+    mesh.points = np.append(mesh.points, mesh.points[0:int(num_points/2)], axis=0)
+    return mesh
+
 def _make_non_conforming_test_mesh(refinement: int = 1):
     num_cells_x = int(pow(2, refinement))
     num_cells_y = int(pow(2, refinement))
@@ -204,3 +209,6 @@ if __name__ == "__main__":
     non_conforming_permuted.write("test_non_conforming_mesh_permutated.vtu", binary=False)
     non_conforming_permuted_perturbed = _perturb_mesh(non_conforming_permuted)
     non_conforming_permuted_perturbed.write("test_non_conforming_mesh_permutated_perturbed.vtu", binary=False)
+
+    non_conforming = _add_ghost_points(non_conforming)
+    non_conforming.write("test_non_conforming_mesh_with_ghost_points.vtu", binary=False)
