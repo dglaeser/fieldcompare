@@ -62,7 +62,7 @@ pages:
       artifacts: true
   script:
     - mkdir public
-    - mv cov_report/* public/
+    - mv test/cov_report/* public/
   artifacts:
     paths:
       - public
