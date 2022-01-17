@@ -157,6 +157,7 @@ class DefaultFieldEquality(FieldPredicate):
         """Set the absolute tolerance to be used for fuzzy comparisons."""
         self._array_predicate.absolute_tolerance = abs_tol
 
+
 def _get_equality_fail_message(val1, val2) -> str:
     return "{} and {} have compared unequal".format(
         _get_as_string(val1),

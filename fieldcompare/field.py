@@ -3,6 +3,7 @@
 from abc import ABC, abstractmethod
 from fieldcompare.array import Array, is_array, make_array
 
+
 class FieldInterface(ABC):
     """Defines the interface of fields"""
 
