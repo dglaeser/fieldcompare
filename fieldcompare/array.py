@@ -1,6 +1,6 @@
 """Arrays representing field values"""
 
-from typing import Sequence, Tuple, Optional
+from typing import Sequence, Tuple, Optional, Union
 
 import numpy as np
 from numpy import ndarray as Array
@@ -18,9 +18,23 @@ def make_initialized_array(size: int, dtype, init_value) -> Array:
     return result
 
 
-def make_array(input_array: Sequence) -> Array:
+def make_array(input_array: Union[Array, Sequence]) -> Array:
     """Make an array from the given sequence"""
     return np.array(input_array)
+
+
+def sub_array(input_array: Array, start: int, end: int) -> Array:
+    """Return the subset of the given array in the range [start, end)"""
+    if isinstance(input_array, Array):
+        return input_array[start:end]
+    if isinstance(input_array, Sequence):
+        return make_array(input_array[start:end])
+    raise ValueError("Provided type is neither array nor sequence")
+
+
+def is_array(input_array) -> bool:
+    """Return true if the given object is an Array"""
+    return isinstance(input_array, Array)
 
 
 def accumulate(input_array: Array, axis = None) -> Array:
@@ -44,20 +58,6 @@ def append_to_array(input_array: Array, values) -> Array:
 def elements_less(first: Array, second: Array) -> Array:
     """Return a boolean array indicating entries of first that smaller than those of second."""
     return np.less(first, second)
-
-
-def sub_array(input_array: Array, start: int, end: int) -> Array:
-    """Return the subset of the given array in the range [start, end)"""
-    if isinstance(input_array, Array):
-        return input_array[start:end]
-    if isinstance(input_array, Sequence):
-        return make_array(input_array[start:end])
-    raise ValueError("Provided type is neither array nor sequence")
-
-
-def is_array(input_array) -> bool:
-    """Return true if the given object is an Array"""
-    return isinstance(input_array, Array)
 
 
 def lex_sort_array_columns(input_array: Array) -> Array:
