@@ -6,6 +6,7 @@ This can be used e.g. in regression testing simulation software, comparing simul
 results against previously obtained results.
 """
 
+from .__about__ import __version__
 from .array import Array, sub_array, make_array, make_initialized_array, make_uninitialized_array
 from .field import Field, FieldInterface
 from .predicates import ExactArrayEquality, FuzzyArrayEquality, DefaultArrayEquality
