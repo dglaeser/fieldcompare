@@ -7,6 +7,14 @@ from context import fieldcompare
 from fieldcompare import read_fields
 from fieldcompare import Field, ExactFieldEquality
 
+def _write_fields_to_csv_no_names(filename: str, values) -> None:
+    with open(filename, "w") as csv_file:
+        csv_writer = writer(csv_file)
+        num_cols = len(values[0])
+        assert all(len(vals) == num_cols for vals in values)
+        for i in range(num_cols):
+            csv_writer.writerow(vals[i] for vals in values)
+
 def _write_fields_to_csv(filename: str, names, values) -> None:
     with open(filename, "w") as csv_file:
         csv_writer = writer(csv_file)
@@ -43,5 +51,23 @@ def test_csv_field_extraction():
     remove(test_csv_file_name)
 
 
+def test_csv_field_extraction_no_names():
+    ref_data = get_reference_data()
+    test_csv_file_name = "test_csv_field_extraction_data_no_names.csv"
+    _write_fields_to_csv_no_names(
+        test_csv_file_name,
+        [d["values"] for d in ref_data.values()]
+    )
+
+    for field in read_fields(test_csv_file_name):
+        assert any(
+            ExactFieldEquality(ignore_names_mismatch=True)(
+                field,
+                Field(field_name, ref_data.get(field_name)["values"])
+            ) for field_name in ref_data.keys()
+        )
+    remove(test_csv_file_name)
+
 if __name__ == "__main__":
     test_csv_field_extraction()
+    test_csv_field_extraction_no_names()
