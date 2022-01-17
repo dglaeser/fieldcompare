@@ -18,9 +18,9 @@ def make_initialized_array(size: int, dtype, init_value) -> Array:
     return result
 
 
-def make_array(input_array: Union[Array, Sequence]) -> Array:
+def make_array(input_array: Union[Array, Sequence], dtype = None) -> Array:
     """Make an array from the given sequence"""
-    return np.array(input_array)
+    return np.array(input_array, dtype=dtype)
 
 
 def sub_array(input_array: Array, start: int, end: int) -> Array:
