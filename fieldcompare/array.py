@@ -37,7 +37,7 @@ def is_array(input_array) -> bool:
     return isinstance(input_array, Array)
 
 
-def lex_sort(input_array: Array) -> Array:
+def lex_sort_array_columns(input_array: Array) -> Array:
     """Sort an array lexicographically. This expects multi-dimensional arrays."""
     dimension = len(input_array[0])
     return np.lexsort(

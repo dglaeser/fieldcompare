@@ -3,7 +3,7 @@
 from typing import Iterable, Tuple, List, Iterator
 
 from ._common import _default_base_tolerance
-from .array import Array, make_array, lex_sort
+from .array import Array, make_array, lex_sort_array_columns
 from .array import min_element, max_element
 from .field import Field
 
@@ -166,13 +166,13 @@ def _sorting_points_indices(points) -> Array:
                     return False
             return False
 
-    pre_sort = list(lex_sort(points))
+    pre_sort = list(lex_sort_array_columns(points))
     pre_sort.sort(key=lambda idx: _FuzzySortHelper(idx))
     return make_array(pre_sort)
 
 
 def _sorting_cell_indices(cell_corner_list) -> Array:
-    return lex_sort(cell_corner_list)
+    return lex_sort_array_columns(cell_corner_list)
 
 
 def _get_point_cloud_tolerance(points):
