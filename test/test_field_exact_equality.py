@@ -62,6 +62,11 @@ def test_field_exact_equality_mixed_types():
     check = DefaultFieldEquality()
     assert check(field1, field2)
 
+    field2 = Field("something", [0, 1, 2, True, "hello22"])
+    assert not check(field1, field2)
+    assert not check(field1, field2)
+
+
 if __name__ == "__main__":
     test_scalar_field_exact_equality()
     test_field_predicate_ignore_names_mismatch()
