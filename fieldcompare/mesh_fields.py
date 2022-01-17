@@ -88,8 +88,8 @@ class TimeSeriesMeshFields:
                 self._field_index += 1
                 return result
 
+            self._ts_mf._remove_time_step_fields()
             if self._has_next_time_step():
-                self._ts_mf._remove_time_step_fields()
                 self._time_step_index += 1
                 self._ts_mf._prepare_time_step_fields(self._time_step_index)
                 self._field_index = self._ts_mf._get_index_after_base_fields()
