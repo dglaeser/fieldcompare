@@ -1,0 +1,31 @@
+stages:
+  - test
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: '$CI_COMMIT_BRANCH =~ /^(master|releases\/)/'
+
+default:
+  image: ubuntu:20.04
+
+.default:
+  stage: test
+  before_script:
+    - apt-get update && apt-get install --no-install-recommends --yes python$PYVERSION python3-pip
+    - ln -s /usr/bin/python$PYVERSION /usr/bin/python
+    - python -m pip install pytest meshio[all]
+  script: cd test && pytest --verbose --junit-xml test_report.xml
+  artifacts:
+    reports:
+      junit: test/test_report.xml
+
+test_python_3_8:
+  variables:
+    PYVERSION: "3.8"
+  extends: .default
+
+test_python_3_9:
+  variables:
+    PYVERSION: "3.9"
+  extends: .default
