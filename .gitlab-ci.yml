@@ -44,7 +44,11 @@ test_coverage_report:
   extends: .install_dependencies
   script:
     - python -m pip install pytest-cov
-    - cd test && python -m pytest --cov-report xml:coverage.xml --cov-report html:cov_report --cov=fieldcompare
+    - |
+      cd test && python -m pytest --cov-report xml:coverage.xml \
+                                  --cov-report html:cov_report \
+                                  --cov-report term \
+                                  --cov=fieldcompare
   artifacts:
     reports:
       cobertura: test/coverage.xml

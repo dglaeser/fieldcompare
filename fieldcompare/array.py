@@ -8,11 +8,11 @@ from numpy import ndarray as Array
 from fieldcompare._common import _default_base_tolerance
 
 
-def make_uninitialized_array(size: int, dtype) -> Array:
+def make_uninitialized_array(size: int, dtype=None) -> Array:
     return Array(shape=(size,), dtype=dtype)
 
 
-def make_initialized_array(size: int, dtype, init_value) -> Array:
+def make_initialized_array(size: int, init_value, dtype=None) -> Array:
     result: Array = Array(shape=(size,), dtype=dtype)
     result.fill(init_value)
     return result
