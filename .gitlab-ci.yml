@@ -24,6 +24,7 @@ default:
     reports:
       junit: test/test_report.xml
 
+# test jobs
 test_python_3_8:
   variables:
     PYVERSION: "3.8"
@@ -34,6 +35,7 @@ test_python_3_9:
     PYVERSION: "3.9"
   extends: .test_base
 
+# coverage report
 test_coverage_report:
   variables:
       PYVERSION: "3.9"
@@ -47,4 +49,20 @@ test_coverage_report:
       cobertura: test/coverage.xml
     paths:
       - test/cov_report
+    expire_in: 30 minutes
+
+# coverage report html page on main
+pages:
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  stage: deploy
+  needs:
+    - job: test_coverage_report
+      artifacts: true
+  script:
+    - mkdir public
+    - mv cov_report/* public/
+  artifacts:
+    paths:
+      - public
     expire_in: 30 minutes
