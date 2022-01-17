@@ -36,6 +36,11 @@ def all_true(input_array: Array, axis: int = None):
     return np.all(input_array, axis=axis)
 
 
+def append_to_array(input_array: Array, values) -> Array:
+    """Append the given value(s) to the given array and return the result."""
+    return np.append(input_array, values)
+
+
 def sub_array(input_array: Iterable, start: int, end: int) -> Array:
     """Return the subset of the given array in the range [start, end)"""
     if isinstance(input_array, Array):
