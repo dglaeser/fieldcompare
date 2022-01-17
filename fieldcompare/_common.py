@@ -2,6 +2,9 @@
 
 import numpy as np
 
+def _is_scalar(obj) -> bool:
+    return np.isscalar(obj)
+
 def _get_as_string(obj) -> str:
     if isinstance(obj, (np.floating, float)):
         return np.format_float_scientific(obj, unique=True)
