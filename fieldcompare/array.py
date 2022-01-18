@@ -100,6 +100,11 @@ def rel_diff(first: Array, second: Array) -> Array:
     return rdiff
 
 
+def abs_diff(first: Array, second: Array) -> Array:
+    """Return the absolute difference between the two given arrays."""
+    return np.abs(second - first)
+
+
 def find_first_unequal(first: Array, second: Array) -> Optional[Tuple]:
     """Search for the first unequal pair of values in the given array."""
     try:
