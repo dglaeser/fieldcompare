@@ -88,6 +88,18 @@ def max_element(input_array: Array):
     return input_array[np.argmax(input_array)]
 
 
+def max_column_elements(input_array: Array):
+    """Return the maximum values of the array columns. For scalar arrays, returns max_element()."""
+    if len(input_array) == 0:
+        return None
+    if np.isscalar(input_array[0]):
+        return max_element(input_array)
+    return make_array([
+        max_element(input_array[:, i])
+        for i in range(len(input_array[0]))
+    ])
+
+
 def rel_diff(first: Array, second: Array) -> Array:
     """Return the relative difference (w.r.t first array) between the two given arrays."""
     zeros = np.equal(first, 0.0)
