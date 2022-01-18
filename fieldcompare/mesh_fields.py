@@ -143,10 +143,12 @@ class TimeSeriesMeshFields:
             )
 
     def _remove_time_step_fields(self) -> None:
-        for field in self._mesh_fields:
-            if field.name not in self._base_field_names:
-                self._mesh_fields.remove_field(field.name)
-
+        fields_to_remove = filter(
+            lambda n: n not in self._base_field_names,
+            [f.name for f in self._mesh_fields]
+        )
+        for field_name in fields_to_remove:
+            self._mesh_fields.remove_field(field_name)
 
 
 def _sorting_points_indices(points, cells) -> Array:
