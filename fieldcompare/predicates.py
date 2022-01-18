@@ -1,6 +1,6 @@
 """Classes and functions related to predicates on fields & arrays"""
 
-from typing import Callable
+from typing import Callable, Optional
 
 from ._common import _get_as_string
 from ._common import _default_base_tolerance
@@ -8,14 +8,19 @@ from ._common import _default_base_tolerance
 from .array import Array, sub_array, is_array, make_array
 from .array import find_first_unequal
 from .array import find_first_fuzzy_unequal
+from .array import rel_diff, abs_diff, max_column_elements
 from .field import FieldInterface
 
 
 class PredicateResult:
     """Stores the result of a predicate evaluation"""
-    def __init__(self, value: bool, report: str = "") -> None:
+    def __init__(self,
+                 value: bool,
+                 report: str = "",
+                 predicate_info: str = None) -> None:
         self._value = value
         self._report = report
+        self._predicate_info = predicate_info
 
     def __bool__(self) -> bool:
         return self._value
@@ -24,6 +29,11 @@ class PredicateResult:
     def report(self) -> str:
         """Return a report of the predicate evaluation."""
         return self._report
+
+    @property
+    def predicate_info(self) -> Optional[str]:
+        """Return info string about the predicate that was used."""
+        return self._predicate_info
 
     @property
     def value(self) -> bool:
@@ -39,8 +49,19 @@ class ExactArrayEquality:
         unequals = find_first_unequal(first, second)
         if unequals is not None:
             val1, val2 = unequals
-            return PredicateResult(False, _get_equality_fail_message(val1, val2))
-        return PredicateResult(True)
+            return PredicateResult(
+                value=False,
+                report=_get_equality_fail_message(val1, val2),
+                predicate_info=self._get_info()
+            )
+        return PredicateResult(
+            value=True,
+            predicate_info=self._get_info(),
+            report="All field values have compared equal"
+        )
+
+    def _get_info(self) -> str:
+        return "ExactEquality"
 
 
 class FuzzyArrayEquality:
@@ -64,7 +85,7 @@ class FuzzyArrayEquality:
     @property
     def absolute_tolerance(self) -> float:
         """Return the absolute tolerance used for fuzzy comparisons."""
-        return self._rel_tol
+        return self._abs_tol
 
     @absolute_tolerance.setter
     def absolute_tolerance(self, value: float) -> None:
@@ -77,12 +98,39 @@ class FuzzyArrayEquality:
         unequals = find_first_fuzzy_unequal(first, second, self._rel_tol, self._abs_tol)
         if unequals is not None:
             val1, val2 = unequals
+            deviation_in_percent = self._compute_deviation_in_percent(val1, val2)
             return PredicateResult(
-                False,
-                _get_equality_fail_message(val1, val2)
-                + f"\nUsed tolerances: relative={self._rel_tol}, absolute={self._abs_tol}"
+                value=False,
+                report=_get_equality_fail_message(val1, val2, deviation_in_percent),
+                predicate_info=self._get_info()
             )
-        return PredicateResult(True)
+
+        max_abs_diffs = self._compute_max_abs_diffs(first, second)
+        if max_abs_diffs is not None:
+            diff_suffix = "s" if is_array(max_abs_diffs) else ""
+            return PredicateResult(
+                value=True,
+                report="Maximum absolute difference{}: {}".format(diff_suffix, max_abs_diffs),
+                predicate_info=self._get_info()
+            )
+        return PredicateResult(True, predicate_info=self._get_info())
+
+    def _get_info(self) -> str:
+        return "FuzzyEquality (abs_tol: {}, rel_tol: {})".format(
+                    self.absolute_tolerance,
+                    self.relative_tolerance
+                )
+    def _compute_deviation_in_percent(self, val1, val2):
+        try:
+            return rel_diff(val1, val2)*100.0
+        except Exception:
+            return None
+
+    def _compute_max_abs_diffs(self, first, second):
+        try:
+            return max_column_elements(abs_diff(first, second))
+        except Exception:
+            return None
 
 
 class DefaultArrayEquality(FuzzyArrayEquality):
@@ -112,11 +160,20 @@ class FieldPredicate:
 
     def __call__(self, first: FieldInterface, second: FieldInterface) -> PredicateResult:
         if not self._ignore_names_mismatch and first.name != second.name:
-            return PredicateResult(False, "Names do not match")
+            return PredicateResult(
+                False,
+                f"Field name mismatch: {first.name} - {second.name}"
+            )
+
         if len(first.values) == len(second.values):
             return self._array_predicate(first.values, second.values)
+
         if not self._ignore_length_mismatch:
-            return PredicateResult(False, "Lengths do not match")
+            return PredicateResult(
+                False,
+                f"Field length mismatch: {len(first.values)} - {len(second.values)}"
+            )
+
         min_len = min(len(first.values), len(second.values))
         return self._array_predicate(
             sub_array(first.values, 0, min_len),
@@ -158,8 +215,15 @@ class DefaultFieldEquality(FieldPredicate):
         self._array_predicate.absolute_tolerance = abs_tol
 
 
-def _get_equality_fail_message(val1, val2) -> str:
-    return "{} and {} have compared unequal".format(
-        _get_as_string(val1),
-        _get_as_string(val2)
+def _get_equality_fail_message(val1, val2, deviation_in_percent = None) -> str:
+    result = str(
+        "Deviation above threshold detected:\n"
+        "- First field entry: {}\n"
+        "- Second field entry: {}".format(
+            _get_as_string(val1),
+            _get_as_string(val2)
+        )
     )
+    if deviation_in_percent is not None:
+        result += f"\n- Deviation in [%]: {deviation_in_percent}"
+    return result
