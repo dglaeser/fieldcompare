@@ -88,6 +88,18 @@ def max_element(input_array: Array):
     return input_array[np.argmax(input_array)]
 
 
+def rel_diff(first: Array, second: Array) -> Array:
+    """Return the relative difference (w.r.t first array) between the two given arrays."""
+    zeros = np.equal(first, 0.0)
+    non_computables = np.logical_or(zeros, np.logical_not(np.isfinite(first)))
+    computables = np.logical_not(non_computables)
+    rdiff = make_array(first)
+    rdiff[computables] = np.abs(second[computables] - first[computables])/first[computables]
+    rdiff[non_computables] = np.nan
+    rdiff[zeros] = np.inf
+    return rdiff
+
+
 def find_first_unequal(first: Array, second: Array) -> Optional[Tuple]:
     """Search for the first unequal pair of values in the given array."""
     try:
