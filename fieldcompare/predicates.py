@@ -31,8 +31,6 @@ class PredicateResult:
         return self._value
 
 
-ArrayPredicate = Callable[[Array, Array], PredicateResult]
-
 class ExactArrayEquality:
     """Compares two arrays for exact equality"""
     def __call__(self, first: Array, second: Array) -> PredicateResult:
@@ -88,7 +86,7 @@ class FuzzyArrayEquality:
 
 
 class DefaultArrayEquality(FuzzyArrayEquality):
-    """Default implementation for array equality checks. Chooses algorithms depending on the data type."""
+    """Default choice of array equality checks. Checks fuzzy or exact depending on data type."""
     def __init__(self, *args, **kwargs) -> None:
         FuzzyArrayEquality.__init__(self, *args, **kwargs)
 
@@ -99,6 +97,8 @@ class DefaultArrayEquality(FuzzyArrayEquality):
             return FuzzyArrayEquality.__call__(self, first, second)
         return ExactArrayEquality()(first, second)
 
+
+ArrayPredicate = Callable[[Array, Array], PredicateResult]
 
 class FieldPredicate:
     """Evaluates a predicate on two fields"""
@@ -145,7 +145,7 @@ class FuzzyFieldEquality(FieldPredicate):
 
 
 class DefaultFieldEquality(FieldPredicate):
-    """Default implementation for field equality. Chooses algorithms based on the data type."""
+    """Default implementation for field equality. Checks fuzzy or exact depending on data type."""
     def __init__(self, *args, **kwargs) -> None:
         FieldPredicate.__init__(self, DefaultArrayEquality(), *args, **kwargs)
 
