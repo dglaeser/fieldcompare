@@ -192,7 +192,7 @@ def _sorting_points_indices(points, cells) -> Array:
             for point_index in cell_corners:
                 cells_around_points[cell_type][point_index].append(idx)
 
-    class FuzzyPointSortHelper:
+    class _FuzzyPointSortHelper:
         def __init__(self, point):
             self._point = point
         def __lt__(self, other) -> bool:
@@ -212,7 +212,7 @@ def _sorting_points_indices(points, cells) -> Array:
         for cell_type in cells_around_points:
             if cells_around_points[cell_type][point_idx] is not None:
                 for cell_index in cells_around_points[cell_type][point_idx]:
-                    centers.append(FuzzyPointSortHelper(
+                    centers.append(_FuzzyPointSortHelper(
                         _compute_current_cell_center(cell_type, cell_index)
                     ))
         return min(centers)
