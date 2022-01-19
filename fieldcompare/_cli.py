@@ -27,6 +27,13 @@ def main(argv=None):
     )
     args = vars(parser.parse_args(argv))
 
+    # TODO(Dennis): Maybe make signature as 'fieldcompare somefile --reference referencefile
+    # TODO(Dennis): Change reporting mechanism in 'compare_fields' to use streams and use stdout here
+    # TODO(Dennis): add value-chop option (maybe not necessary due to combo of atol/rtol)
+    # TODO(Dennis): Allow comparison & predicate maps to be passed
+    # TODO(Dennis): Option to treat missing references as error
+    # TODO(Dennis): Put this in sub-command and add one for automatic file selection from folder
+
     fields1 = _read_file(args["file"])
     fields2 = _read_file(args["reference"])
     success, report = compare_fields(
