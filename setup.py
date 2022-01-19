@@ -12,7 +12,7 @@ setup(
     url="https://gitlab.com/dglaeser/fieldcompare",
     packages=["fieldcompare"],
     python_requires=">3.8.0",
-    install_requires=["meshio[all]>=5.1"],
+    install_requires=["meshio[all]>=4.4", "colorama>=0.4.3"],
     entry_points = {
         'console_scripts': ['fieldcompare=fieldcompare._cli:main'],
     }

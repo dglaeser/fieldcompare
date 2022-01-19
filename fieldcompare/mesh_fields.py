@@ -1,22 +1,24 @@
 """Class to store fields defined on a mesh"""
 
-from typing import Iterable, Tuple, List, Iterator
+from typing import Iterable, Tuple, Iterator
 
 from ._common import _default_base_tolerance
-from .array import Array, make_array, make_uninitialized_array, append_to_array
+from .array import Array, is_array, make_array, make_uninitialized_array, append_to_array
 from .array import adjacent_difference, elements_less, accumulate
 from .array import sort_array, lex_sort_array_columns
 from .array import min_element, max_element, abs_array, all_true
 from .field import Field
 
 
+MeshCells = Iterable[Tuple[str, Array]]
+
 class MeshFields:
     """Stores fields defined on a mesh. Points & cells are sorted to get a unique representation"""
     def __init__(self,
                  points: Array,
-                 cells: Iterable[Tuple[str, List]]) -> None:
+                 cells: MeshCells) -> None:
         cells = {cell_type: corners for cell_type, corners in cells}
-        points = make_array(points)
+        points = make_array(points) if not is_array(points) else points
         self._point_index_map = _sorting_points_indices(points, cells)
         self._fields: list = [
             Field("point_coordinates", points[self._point_index_map])
@@ -109,7 +111,7 @@ class TimeSeriesMeshFields:
 
     def __init__(self,
                  points: Array,
-                 cells: Iterable[Tuple[str, List]],
+                 cells: MeshCells,
                  time_series_reader) -> None:
         self._mesh_fields = MeshFields(points, cells)
         self._base_field_names = [field.name for field in self._mesh_fields]

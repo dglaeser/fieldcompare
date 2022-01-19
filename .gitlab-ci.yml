@@ -11,11 +11,15 @@ workflow:
 default:
   image: ubuntu:20.04
 
+variables:
+  PY_VERSION: "3.9"
+  MESHIO_VERSION: "5.2.2"
+
 .install_dependencies:
   before_script:
-      - apt-get update && apt-get install --no-install-recommends --yes python$PYVERSION python3-pip
-      - ln -sf /usr/bin/python$PYVERSION /usr/bin/python
-      - python -m pip install pytest meshio[all]
+      - apt-get update && apt-get install --no-install-recommends --yes python$PY_VERSION python3-pip
+      - ln -sf /usr/bin/python$PY_VERSION /usr/bin/python
+      - python -m pip install pytest colorama meshio[all]==$MESHIO_VERSION
 
 .test_base:
   extends: .install_dependencies
@@ -25,21 +29,14 @@ default:
     reports:
       junit: test/test_report.xml
 
-# test jobs
-test_python_3_8:
-  variables:
-    PYVERSION: "3.8"
+test:
   extends: .test_base
+  parallel:
+    matrix:
+      - PY_VERSION: ["3.8", "3.9"]
+        MESHIO_VERSION: ["4.4", "5.2.2"]
 
-test_python_3_9:
-  variables:
-    PYVERSION: "3.9"
-  extends: .test_base
-
-# coverage report
 test_coverage_report:
-  variables:
-      PYVERSION: "3.9"
   stage: coverage
   extends: .install_dependencies
   script:
@@ -56,7 +53,6 @@ test_coverage_report:
       - test/cov_report
     expire_in: 30 minutes
 
-# coverage report html page on main
 pages:
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
