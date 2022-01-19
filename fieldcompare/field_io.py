@@ -147,8 +147,8 @@ def _is_time_series_compatible_format(file_ext: str) -> bool:
 
 def _filter_out_ghost_vertices(mesh: Mesh) -> Tuple[Mesh, Array]:
     is_ghost = make_initialized_array(size=len(mesh.points), dtype=bool, init_value=True)
-    for block in mesh.cells:
-        for p_idx in block.data.flatten():
+    for _, corners in _cells(mesh):
+        for p_idx in corners.flatten():
             is_ghost[p_idx] = False
 
     num_ghosts = accumulate(is_ghost)
@@ -167,7 +167,7 @@ def _filter_out_ghost_vertices(mesh: Mesh) -> Tuple[Mesh, Array]:
 
     return Mesh(
         points=mesh.points[ghost_filter_map],
-        cells=[(cell_block.type, _map_corners(cell_block.data)) for cell_block in mesh.cells],
+        cells=[(cell_type, _map_corners(corners)) for cell_type, corners in _cells(mesh)],
         point_data={name: mesh.point_data[name][ghost_filter_map] for name in mesh.point_data},
         cell_data=mesh.cell_data
     ), ghost_filter_map
@@ -176,18 +176,15 @@ def _filter_out_ghost_vertices(mesh: Mesh) -> Tuple[Mesh, Array]:
 def _extract_from_meshio_mesh(mesh: Mesh, remove_ghost_points: bool) -> MeshFields:
     if remove_ghost_points:
         mesh, _ = _filter_out_ghost_vertices(mesh)
-    result = MeshFields(
-        mesh.points,
-        ((block.type, block.data) for block in mesh.cells)
-    )
+    result = MeshFields(mesh.points, _cells(mesh))
     for array_name in mesh.point_data:
         result.add_point_data(array_name, mesh.point_data[array_name])
     for array_name in mesh.cell_data:
         result.add_cell_data(
             array_name,
             (
-                (cell_block.type, values)
-                for cell_block, values in zip(mesh.cells, mesh.cell_data[array_name])
+                (cell_type, values)
+                for (cell_type, _), values in zip(_cells(mesh), mesh.cell_data[array_name])
             )
         )
     return result
@@ -200,11 +197,7 @@ def _extract_from_meshio_time_series(time_series_reader, remove_ghost_points: bo
     if remove_ghost_points:
         mesh, ghost_point_filter = _filter_out_ghost_vertices(mesh)
     time_steps_reader = _MeshioTimeStepReader(mesh, time_series_reader, ghost_point_filter)
-    return TimeSeriesMeshFields(
-        mesh.points,
-        ((block.type, block.data) for block in mesh.cells),
-        time_steps_reader
-    )
+    return TimeSeriesMeshFields(mesh.points, _cells(mesh), time_steps_reader)
 
 
 class _MeshioTimeStepReader:
@@ -233,8 +226,8 @@ class _MeshioTimeStepReader:
             (
                 name,
                 [
-                    (cell_block.type, values)
-                    for cell_block, values in zip(self._mesh.cells, cell_data[name])
+                    (cell_type, values)
+                    for (cell_type, _), values in zip(_cells(self._mesh), cell_data[name])
                 ]
             )
             for name in cell_data
@@ -245,3 +238,7 @@ class _MeshioTimeStepReader:
         if self._ghost_point_filter is not None:
             return point_data[self._ghost_point_filter]
         return point_data
+
+
+def _cells(mesh: Mesh) -> Iterable[Tuple[str, Array]]:
+    return ((cell_block.type, cell_block.data) for cell_block in mesh.cells)
