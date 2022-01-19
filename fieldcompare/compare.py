@@ -26,24 +26,6 @@ def matching_names_map(first: Iterable[Field],
     return {name: [name] for name in considered}
 
 
-def _remove_duplicates(field_comparisons: dict) -> dict:
-    duplicates: dict = {}
-    for field_name in field_comparisons:
-        references = field_comparisons[field_name]
-        unique_references = list(set(field_comparisons[field_name]))
-        if len(unique_references) != len(references):
-            duplicates[field_name] = [
-                ref for ref in unique_references if references.count(ref) > 1
-            ]
-            field_comparisons[field_name] = unique_references
-    if duplicates:
-        warn(RuntimeWarning(
-            "Found and removed duplicates in the given field comparison map: {}"
-            .format([(n, ref) for n in duplicates for ref in duplicates[n]])
-        ), stacklevel=1)
-    return field_comparisons
-
-
 def compare_fields(first: Iterable[Field],
                    second: Iterable[Field],
                    field_comparisons: FieldComparisonMap = None,
@@ -97,11 +79,22 @@ def _default_predicate_map(field1_name: str, field2_name: str) -> FieldPredicate
     return DefaultFieldEquality(require_equal_names=False)
 
 
-def _get_field(fields: Iterable[Field], name: str) -> Field:
-    for field in fields:
-        if field.name == name:
-            return field
-    raise ValueError(f"Could not find the field with name {name} in the given input.")
+def _remove_duplicates(field_comparisons: dict) -> dict:
+    duplicates: dict = {}
+    for field_name in field_comparisons:
+        references = field_comparisons[field_name]
+        unique_references = list(set(field_comparisons[field_name]))
+        if len(unique_references) != len(references):
+            duplicates[field_name] = [
+                ref for ref in unique_references if references.count(ref) > 1
+            ]
+            field_comparisons[field_name] = unique_references
+    if duplicates:
+        warn(RuntimeWarning(
+            "Found and removed duplicates in the given field comparison map: {}"
+            .format([(n, ref) for n in duplicates for ref in duplicates[n]])
+        ), stacklevel=1)
+    return field_comparisons
 
 
 def _compare_field(first: Field,
