@@ -152,14 +152,14 @@ class FieldPredicate:
     """Evaluates a predicate on two fields"""
     def __init__(self,
                  array_predicate: ArrayPredicate,
-                 ignore_names_mismatch: bool = False,
-                 ignore_length_mismatch: bool = False) -> None:
+                 require_equal_names: bool = False,
+                 require_equal_lengths: bool = True) -> None:
         self._array_predicate = array_predicate
-        self._ignore_names_mismatch = ignore_names_mismatch
-        self._ignore_length_mismatch = ignore_length_mismatch
+        self._require_equal_names = require_equal_names
+        self._require_equal_lengths = require_equal_lengths
 
     def __call__(self, first: FieldInterface, second: FieldInterface) -> PredicateResult:
-        if not self._ignore_names_mismatch and first.name != second.name:
+        if self._require_equal_names and first.name != second.name:
             return PredicateResult(
                 False,
                 f"Field name mismatch: {first.name} - {second.name}"
@@ -168,7 +168,7 @@ class FieldPredicate:
         if len(first.values) == len(second.values):
             return self._array_predicate(first.values, second.values)
 
-        if not self._ignore_length_mismatch:
+        if self._require_equal_lengths:
             return PredicateResult(
                 False,
                 f"Field length mismatch: {len(first.values)} - {len(second.values)}"
@@ -183,14 +183,22 @@ class FieldPredicate:
 
 class ExactFieldEquality(FieldPredicate):
     """Compare two fields for exact equality"""
-    def __init__(self, *args, **kwargs) -> None:
-        FieldPredicate.__init__(self, ExactArrayEquality(), *args, **kwargs)
+    def __init__(self,
+                 require_equal_names: bool = True,
+                 require_equal_lengths: bool = True) -> None:
+        FieldPredicate.__init__(
+            self, ExactArrayEquality(), require_equal_names, require_equal_lengths
+        )
 
 
 class FuzzyFieldEquality(FieldPredicate):
     """Compare two fields for fuzzy equality"""
-    def __init__(self, *args, **kwargs) -> None:
-        FieldPredicate.__init__(self, FuzzyArrayEquality(), *args, **kwargs)
+    def __init__(self,
+                 require_equal_names: bool = True,
+                 require_equal_lengths: bool = True) -> None:
+        FieldPredicate.__init__(
+            self, FuzzyArrayEquality(), require_equal_names, require_equal_lengths
+        )
 
     def set_relative_tolerance(self, rel_tol: float) -> None:
         """Set the relative tolerance to be used for fuzzy comparisons."""
@@ -203,8 +211,12 @@ class FuzzyFieldEquality(FieldPredicate):
 
 class DefaultFieldEquality(FieldPredicate):
     """Default implementation for field equality. Checks fuzzy or exact depending on data type."""
-    def __init__(self, *args, **kwargs) -> None:
-        FieldPredicate.__init__(self, DefaultArrayEquality(), *args, **kwargs)
+    def __init__(self,
+                 require_equal_names: bool = True,
+                 require_equal_lengths: bool = True) -> None:
+        FieldPredicate.__init__(
+            self, DefaultArrayEquality(), require_equal_names, require_equal_lengths
+        )
 
     def set_relative_tolerance(self, rel_tol: float) -> None:
         """Set the relative tolerance to be used for fuzzy comparisons."""

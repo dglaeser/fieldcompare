@@ -27,17 +27,17 @@ def test_scalar_field_exact_equality():
 def test_field_predicate_ignore_names_mismatch():
     field1 = Field("field1", [0, 1])
     field2 = Field("field2", [0, 1])
-    check = ExactFieldEquality(ignore_names_mismatch=True)
+    check = ExactFieldEquality(require_equal_names=False)
     assert check(field1, field2)
-    check = DefaultFieldEquality(ignore_names_mismatch=True)
+    check = DefaultFieldEquality(require_equal_names=False)
     assert check(field1, field2)
 
 def test_field_predicate_ignore_length_mismatch():
     field1 = Field("field1", [0, 1])
     field2 = Field("field1", [0, 1, 2])
-    check = ExactFieldEquality(ignore_length_mismatch=True)
+    check = ExactFieldEquality(require_equal_lengths=False)
     assert check(field1, field2)
-    check = DefaultFieldEquality(ignore_length_mismatch=True)
+    check = DefaultFieldEquality(require_equal_lengths=False)
     assert check(field1, field2)
 
 def test_vector_field_exact_equality():

@@ -12,3 +12,4 @@ from .field import Field, FieldInterface
 from .predicates import ExactArrayEquality, FuzzyArrayEquality, DefaultArrayEquality
 from .predicates import ExactFieldEquality, FuzzyFieldEquality, DefaultFieldEquality
 from .field_io import read_fields
+from .compare import compare_fields

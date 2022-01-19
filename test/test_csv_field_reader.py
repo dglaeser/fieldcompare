@@ -61,7 +61,7 @@ def test_csv_field_extraction_no_names():
 
     for field in read_fields(test_csv_file_name):
         assert any(
-            ExactFieldEquality(ignore_names_mismatch=True)(
+            ExactFieldEquality(require_equal_names=False)(
                 field,
                 Field(field_name, ref_data.get(field_name)["values"])
             ) for field_name in ref_data.keys()
