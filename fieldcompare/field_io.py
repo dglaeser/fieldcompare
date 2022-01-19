@@ -5,6 +5,7 @@ from os.path import splitext
 from json import load
 from csv import reader
 
+from meshio import __version__ as meshio_version
 from meshio import Mesh
 from meshio import read as meshio_read
 from meshio import extension_to_filetype as meshio_supported_extensions
@@ -241,4 +242,8 @@ class _MeshioTimeStepReader:
 
 
 def _cells(mesh: Mesh) -> Iterable[Tuple[str, Array]]:
-    return ((cell_block.type, cell_block.data) for cell_block in mesh.cells)
+    major, minor, _ = meshio_version.split(".")
+    major, minor = int(major), int(minor)
+    if major == 5 and minor > 0:
+        return ((cell_block.type, cell_block.data) for cell_block in mesh.cells)
+    return mesh.cells
