@@ -46,3 +46,16 @@ class StandardOutputLogger(StreamLogger):
     """Logging to standard out"""
     def __init__(self, verbosity_level: int = None) -> None:
         StreamLogger.__init__(self, stdout, verbosity_level)
+
+
+class ModifiedVerbosityLoggerFacade(Logger):
+    """Wrapper around a logger to write to it with modified verbosity"""
+    def __init__(self, logger: Logger, verbosity_change: int) -> None:
+        self._logger = logger
+        self._verbosity_change = verbosity_change
+        Logger.__init__(self, logger.verbosity_level)
+        if logger.verbosity_level:
+            self.verbosity_level = logger.verbosity_level + verbosity_change
+
+    def _log(self, message: str) -> None:
+        self._logger.log(message)
