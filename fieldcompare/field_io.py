@@ -17,3 +17,10 @@ def read_fields(filename: str, remove_ghost_points: bool = True) -> Iterable[Fie
     if reader is None:
         raise NotImplementedError(f"No reader found for files with the extension {ext}")
     return reader(filename, remove_ghost_points)
+
+
+def is_supported_file(filename: str) -> bool:
+    """Return true if field I/O from the given file(type) is supported"""
+    ext = splitext(filename)[1]
+    reader = _get_reader_for_extension(ext)
+    return reader is not None
