@@ -81,7 +81,7 @@ def compare_fields(result_fields: Iterable[Field],
                 log = ComparisonLog(
                     result_field_name=result_field.name,
                     reference_field_name=reference_field.name,
-                    predicate=str(predicate),
+                    predicate=str(result.predicate_info),
                     predicate_log=result.report,
                     passed=bool(result)
                 )
