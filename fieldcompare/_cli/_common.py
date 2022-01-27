@@ -61,3 +61,6 @@ def _get_missing_results(skip_logs: List[SkipLog]) -> List[SkipLog]:
 
 def _get_missing_references(skip_logs: List[SkipLog]) -> List[SkipLog]:
     return list(filter(lambda log: _has_missing_reference(log), skip_logs))
+
+def _bool_to_exit_code(value: bool) -> int:
+    return int(not value)

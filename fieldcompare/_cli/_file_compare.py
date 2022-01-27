@@ -1,13 +1,12 @@
-"""Command-line interface for fieldcompare"""
+"""Command-line interface for comparing a pair of files"""
 
 from argparse import ArgumentParser
 from textwrap import indent
 
-from fieldcompare import __version__
-from fieldcompare.compare import compare_matching_fields_equal, ComparisonLog
-from fieldcompare.logging import Logger
+from ..compare import compare_matching_fields_equal, ComparisonLog
+from ..logging import Logger
 
-from ._common import _read_fields_from_file
+from ._common import _read_fields_from_file, _bool_to_exit_code
 from ._common import _get_comparison_message_string, _get_predicate_report_string
 from ._common import _get_missing_results, _get_missing_references
 from ._common import _style_as_error, _style_as_warning, _make_list_string, _get_status_string
@@ -52,17 +51,46 @@ def _add_arguments(parser: ArgumentParser):
 
 
 def _run(args: dict, logger: Logger) -> int:
-    comparisons, skips = compare_matching_fields_equal(
-        _read_fields_from_file(args["file"], logger),
-        _read_fields_from_file(args["reference"], logger),
-        ComparisonLogCallBack(logger)
+    passed = _run_file_compare(
+        args["file"],
+        args["reference"],
+        args["ignore_missing_results"],
+        args["ignore_missing_references"],
+        logger
     )
+    return _bool_to_exit_code(passed)
+
+
+def _run_file_compare(res_file: str,
+                      ref_file: str,
+                      ignore_missing_results: bool,
+                      ignore_missing_references: bool,
+                      logger: Logger) -> bool:
+    try:  # read in results file
+        res_fields = _read_fields_from_file(res_file, logger)
+    except IOError as e:
+        logger.log(f"An error occurred when reading {res_file}: {e}", verbosity_level=1)
+        return False
+
+    try:  # read in reference file
+        ref_fields = _read_fields_from_file(ref_file, logger)
+    except IOError as e:
+        logger.log(f"An error occurred when reading {ref_file}: {e}", verbosity_level=1)
+        return False
+
+    try:  # do actual comparison
+        comparisons, skips = compare_matching_fields_equal(
+            res_fields, ref_fields, ComparisonLogCallBack(logger)
+        )
+    except Exception as e:
+        logger.log(f"Could not compare the files. Exception:\n{e}", verbosity_level=1)
+        return False
 
     passed = bool(comparisons)
     missing_results = _get_missing_results(skips)
     if missing_results:
         not_been_found = _style_as_warning("not been found")
-        if not args["ignore_missing_results"]:
+        if not ignore_missing_results:
             passed = False
             not_been_found = _style_as_error(not_been_found)
         logger.log(
@@ -77,7 +105,7 @@ def _run(args: dict, logger: Logger) -> int:
     missing_references = _get_missing_references(skips)
     if missing_references:
         not_been_found = _style_as_warning("not been found")
-        if args["ignore_missing_references"]:
+        if ignore_missing_references:
             passed = False
             not_been_found = _style_as_error(not_been_found)
         logger.log(
@@ -90,5 +118,4 @@ def _run(args: dict, logger: Logger) -> int:
         )
 
     logger.log("File comparison {}\n".format(_get_status_string(passed)))
-
-    return int(not bool(passed))
+    return passed
