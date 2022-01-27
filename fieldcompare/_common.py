@@ -70,6 +70,7 @@ class TextColor(Enum):
     red = "red"
     green = "green"
     blue = "blue"
+    magenta = "magenta"
 
     def __str__(self) -> str:
         return str(self.value)
