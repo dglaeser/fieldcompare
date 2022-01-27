@@ -59,3 +59,28 @@ class ModifiedVerbosityLoggerFacade(Logger):
 
     def _log(self, message: str) -> None:
         self._logger.log(message)
+
+
+class IndentedLoggingFacade(Logger):
+    """Wrapper around a logger to write indented (useful for logging of sub-routines)"""
+    def __init__(self, logger: Logger, first_line_prefix: str) -> None:
+        self._logger = logger
+        self._first_line_prefix = first_line_prefix
+        Logger.__init__(self, logger.verbosity_level)
+
+    def _log(self, message: str) -> None:
+        self._logger.log(self._indent(message))
+
+    def _indent(self, message: str) -> str:
+        if not message:
+            return message
+
+        lines = message.split("\n")
+        last_is_empty = not lines[-1]
+        lines[0] = self._first_line_prefix + lines[0]
+        if len(lines) > 1:
+            indentation = " "*len(self._first_line_prefix)
+            lines[1:-1] = [indentation + line for line in lines[1:-1]]
+            if not last_is_empty:
+                lines[-1] = indentation + lines[-1]
+        return "\n".join(lines)
