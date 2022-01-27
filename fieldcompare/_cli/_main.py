@@ -10,6 +10,9 @@ from fieldcompare.logging import StandardOutputLogger
 from ._file_compare import _add_arguments as _file_mode_add_arguments
 from ._file_compare import _run as _run_file_mode
 
+from ._dir_compare import _add_arguments as _dir_mode_add_arguments
+from ._dir_compare import _run as _run_dir_mode
+
 def main(argv=None):
     parser = ArgumentParser(description="Compare fields in files of various formats")
     parser.add_argument(
@@ -33,6 +36,12 @@ def main(argv=None):
     )
     _file_mode_add_arguments(file_mode_parser)
     file_mode_parser.set_defaults(func=_run_file_mode)
+
+    dir_mode_parser = sub_parsers.add_parser(
+        "dir", help="Compare the files in two directories", aliases=["d"]
+    )
+    _dir_mode_add_arguments(dir_mode_parser)
+    dir_mode_parser.set_defaults(func=_run_dir_mode)
 
     args = parser.parse_args(argv)
     logger = StandardOutputLogger(verbosity_level=args.verbosity)
