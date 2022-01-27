@@ -16,8 +16,8 @@ class MeshFields:
     """Stores fields defined on a mesh. Points & cells are sorted to get a unique representation"""
     def __init__(self,
                  points: Array,
-                 cells: MeshCells) -> None:
-        cells = {cell_type: corners for cell_type, corners in cells}
+                 cells_type_corners_tuples: MeshCells) -> None:
+        cells: dict = {cell_type: corners for cell_type, corners in cells_type_corners_tuples}
         points = make_array(points) if not is_array(points) else points
         self._point_index_map = _sorting_points_indices(points, cells)
         self._fields: list = [
@@ -82,6 +82,7 @@ class TimeSeriesMeshFields:
             self._ts_mf = time_series_mesh_fields
             self._field_index = 0
             self._time_step_index = 0
+            self._ts_mf._remove_time_step_fields()
             self._ts_mf._prepare_time_step_fields(self._time_step_index)
 
         def __next__(self):
@@ -116,7 +117,7 @@ class TimeSeriesMeshFields:
         self._mesh_fields = MeshFields(points, cells)
         self._base_field_names = [field.name for field in self._mesh_fields]
         self._time_series_reader = time_series_reader
-        self._field_iterator = None
+        self._field_iterator = self.FieldIterator(self)
 
     def __iter__(self):
         self._field_iterator = self.FieldIterator(self)
@@ -244,7 +245,7 @@ def _sorting_points_indices(points, cells) -> Array:
                 for orig_pidx in equal_orig_point_indices
             }
             equal_orig_point_indices.sort(key=lambda orig_pidx: min_cell_centers[orig_pidx])
-            pre_sort[start:stop+1] = [pre_sort[orig_pidx] for orig_pidx in equal_orig_point_indices]
+            pre_sort[start:stop+1] = [pre_sort[orig_idx] for orig_idx in equal_orig_point_indices]
             equal_orig_point_indices = []
     return make_array(pre_sort)
 
