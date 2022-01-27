@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 
 from fieldcompare import __version__
 from fieldcompare.field_io import read_fields
-from fieldcompare.compare import compare_fields
+from fieldcompare.compare import compare_matching_fields_equal
 
 def main(argv=None):
     parser = ArgumentParser(description="Compare fields in files of various formats")
@@ -36,14 +36,8 @@ def main(argv=None):
 
     fields1 = _read_file(args["file"])
     fields2 = _read_file(args["reference"])
-    success, report = compare_fields(
-        fields1,
-        fields2,
-        report_verbosity_level=args["verbosity"]
-    )
-
-    print(report)
-    return success
+    result, _ = compare_matching_fields_equal(fields1, fields2)
+    return int(not bool(result))
 
 
 def _read_file(filename: str):

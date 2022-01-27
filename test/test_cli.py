@@ -10,7 +10,7 @@ def test_cli():
     assert _cli.main([
         str(TEST_DATA_PATH / Path("test_mesh.vtu")),
         str(TEST_DATA_PATH / Path("test_mesh.vtu"))
-    ])
+    ]) == 0
 
 if __name__ == "__main__":
     test_cli()
