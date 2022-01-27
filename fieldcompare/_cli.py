@@ -3,10 +3,45 @@
 from sys import version_info
 from datetime import datetime
 from argparse import ArgumentParser
+from textwrap import indent
 
 from fieldcompare import __version__
+from fieldcompare._common import _style_text, TextStyle, TextColor
 from fieldcompare.field_io import read_fields
-from fieldcompare.compare import compare_matching_fields_equal
+from fieldcompare.compare import compare_matching_fields_equal, ComparisonLog
+from fieldcompare.logging import Logger, StandardOutputLogger
+
+
+def _get_status_string(passed: bool) -> str:
+    if passed:
+        return _style_text("PASSED", color=TextColor.green)
+    return _style_text("FAILED", color=TextColor.red)
+
+def _get_comparison_message_string(comparison_log: ComparisonLog) -> str:
+    return "Comparison of the fields '{}' and '{}': {}\n".format(
+        _style_text(comparison_log.result_field_name, style=TextStyle.bright),
+        _style_text(comparison_log.reference_field_name, style=TextStyle.bright),
+        _get_status_string(comparison_log.passed)
+    )
+
+def _get_predicate_report(comparison_log: ComparisonLog) -> str:
+    return "Predicate: {}\nReport: {}\n".format(
+        comparison_log.predicate,
+        comparison_log.predicate_log
+    )
+
+
+class ComparisonLogCallBack:
+    def __init__(self, logger: Logger) -> None:
+        self._logger = logger
+
+    def __call__(self, comparison_log: ComparisonLog) -> None:
+        self._logger.log(_get_comparison_message_string(comparison_log), verbosity_level=1)
+        self._logger.log(
+            indent(_get_predicate_report(comparison_log), " -- "),
+            verbosity_level=2
+        )
+
 
 def main(argv=None):
     parser = ArgumentParser(description="Compare fields in files of various formats")
@@ -21,7 +56,7 @@ def main(argv=None):
     parser.add_argument(
         "--verbosity",
         required=False,
-        default=1,
+        default=2,
         type=int,
         help="Set the verbosity level"
     )
@@ -34,14 +69,16 @@ def main(argv=None):
     # TODO(Dennis): Option to treat missing references as error
     # TODO(Dennis): Put this in sub-command and add one for automatic file selection from folder
 
-    fields1 = _read_file(args["file"])
-    fields2 = _read_file(args["reference"])
-    result, _ = compare_matching_fields_equal(fields1, fields2)
+    logger = StandardOutputLogger(verbosity_level=args["verbosity"])
+    fields1 = _read_file(args["file"], logger)
+    fields2 = _read_file(args["reference"], logger)
+    log_call_back = ComparisonLogCallBack(logger)
+    result, _ = compare_matching_fields_equal(fields1, fields2, log_call_back)
     return int(not bool(result))
 
 
-def _read_file(filename: str):
-    print(f"Reading fields from '{filename}'")
+def _read_file(filename: str, logger):
+    logger.log(f"Reading fields from '{filename}'\n", verbosity_level=1)
     return read_fields(filename)
 
 
