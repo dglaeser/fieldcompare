@@ -21,7 +21,7 @@ def _get_status_string(passed: bool) -> str:
 
 
 def _style_as_warning(text: str) -> str:
-    return _style_text(text, color=TextColor.magenta)
+    return _style_text(text, color=TextColor.yellow)
 
 
 def _style_as_error(text: str) -> str:
