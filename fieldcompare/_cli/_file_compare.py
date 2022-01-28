@@ -37,13 +37,13 @@ def _add_arguments(parser: ArgumentParser):
         help="The reference file against which to compare"
     )
     parser.add_argument(
-        "-i", "--ignore-missing-results",
+        "-i", "--ignore-missing-result-fields",
         required=False,
         action="store_true",
         help="Use this flag to suppress errors from missing result fields"
     )
     parser.add_argument(
-        "-m", "--ignore-missing-references",
+        "-m", "--ignore-missing-reference-fields",
         required=False,
         action="store_true",
         help="Use this flag to suppress errors from missing reference fields"
@@ -54,8 +54,8 @@ def _run(args: dict, logger: Logger) -> int:
     passed = _run_file_compare(
         args["file"],
         args["reference"],
-        args["ignore_missing_results"],
-        args["ignore_missing_references"],
+        args["ignore_missing_result_fields"],
+        args["ignore_missing_reference_fields"],
         logger
     )
     return _bool_to_exit_code(passed)
