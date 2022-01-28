@@ -22,15 +22,19 @@ def _read_fields_from_mesh_file(filename: str,
                                 remove_ghost_points: bool) -> Iterable[Field]:
     ext = splitext(filename)[1]
     assert ext in meshio_supported_extensions
-    if _is_time_series_compatible_format(ext):
-        return _extract_from_meshio_time_series(
+
+    try:
+        if _is_time_series_compatible_format(ext):
+            return _extract_from_meshio_time_series(
                 MeshIOTimeSeriesReader(filename),
                 remove_ghost_points
             )
-    return _extract_from_meshio_mesh(
+        return _extract_from_meshio_mesh(
             meshio_read(filename),
             remove_ghost_points
         )
+    except Exception as e:
+        raise IOError(str(e))
 
 for ext in meshio_supported_extensions:
     _register_reader_for_extension(ext, _read_fields_from_mesh_file)

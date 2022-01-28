@@ -184,7 +184,7 @@ def test_vtk_with_ghost_points():
         default_predicate
     )
 
-    with raises(ValueError):
+    with raises(IOError):
         _compare_vtk_files(
             TEST_DATA_PATH / Path("test_non_conforming_mesh.vtu"),
             TEST_DATA_PATH / Path("test_non_conforming_mesh_with_ghost_points.vtu"),
@@ -192,7 +192,7 @@ def test_vtk_with_ghost_points():
             remove_ghost_points=False
         )
 
-    with raises(ValueError):
+    with raises(IOError):
         _compare_vtk_files(
             TEST_DATA_PATH / Path("test_non_conforming_mesh.vtu"),
             TEST_DATA_PATH / Path("test_non_conforming_mesh_with_ghost_points.vtu"),
