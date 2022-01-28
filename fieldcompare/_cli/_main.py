@@ -39,12 +39,8 @@ def main(argv=None, logger: Logger = StandardOutputLogger()):
     args = parser.parse_args(argv)
     return args.func(vars(args), logger)
 
-    # TODO(Dennis): Maybe make signature as 'fieldcompare somefile --reference referencefile
-    # TODO(Dennis): Change reporting mechanism in 'compare_fields' to use streams and use stdout here
     # TODO(Dennis): add value-chop option (maybe not necessary due to combo of atol/rtol)
     # TODO(Dennis): Allow comparison & predicate maps to be passed
-    # TODO(Dennis): Option to treat missing references as error
-    # TODO(Dennis): Put this in sub-command and add one for automatic file selection from folder
 
 
 def _get_version_info() -> str:
