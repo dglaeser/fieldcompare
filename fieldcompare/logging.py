@@ -48,6 +48,15 @@ class StandardOutputLogger(StreamLogger):
         StreamLogger.__init__(self, stdout, verbosity_level)
 
 
+class NullDeviceLogger(Logger):
+    """Logger interface that does no logging"""
+    def __init__(self, verbosity_level: int = None) -> None:
+        Logger.__init__(self, verbosity_level)
+
+    def _log(self, message: str) -> None:
+        pass
+
+
 class ModifiedVerbosityLoggerFacade(Logger):
     """Wrapper around a logger to write to it with modified verbosity"""
     def __init__(self, logger: Logger, verbosity_change: int) -> None:
