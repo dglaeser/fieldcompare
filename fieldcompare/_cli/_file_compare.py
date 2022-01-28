@@ -69,13 +69,13 @@ def _run_file_compare(res_file: str,
     try:  # read in results file
         res_fields = _read_fields_from_file(res_file, logger)
     except IOError as e:
-        logger.log(f"An error occurred when reading {res_file}: {e}", verbosity_level=1)
+        logger.log(_read_error_message(res_file, str(e)), verbosity_level=1)
         return False
 
     try:  # read in reference file
         ref_fields = _read_fields_from_file(ref_file, logger)
     except IOError as e:
-        logger.log(f"An error occurred when reading {ref_file}: {e}", verbosity_level=1)
+        logger.log(_read_error_message(ref_file, str(e)), verbosity_level=1)
         return False
 
     try:  # do actual comparison
@@ -83,39 +83,50 @@ def _run_file_compare(res_file: str,
             res_fields, ref_fields, ComparisonLogCallBack(logger)
         )
     except Exception as e:
-        logger.log(f"Could not compare the files. Exception:\n{e}", verbosity_level=1)
+        logger.log(f"Could not compare the files. Exception:\n{e}\n", verbosity_level=1)
         return False
 
     passed = bool(comparisons)
     missing_results = _get_missing_results(skips)
     if missing_results:
-        not_been_found = _style_as_warning("not been found")
-        if not ignore_missing_results:
-            passed = False
-            not_been_found = _style_as_error(not_been_found)
+        should_fail = not ignore_missing_results
+        passed = False if should_fail else passed
         logger.log(
-            f"The following reference fields have {not_been_found} in the results:\n",
+            "{}\n".format(_missing_res_or_ref_message("result", should_fail)),
             verbosity_level=1
         )
         logger.log(
-            _make_list_string([str(r.reference_field_name) for r in missing_results]),
+            "{}\n".format(_make_list_string([str(r.result_field_name) for r in missing_results])),
             verbosity_level=1
         )
 
     missing_references = _get_missing_references(skips)
     if missing_references:
-        not_been_found = _style_as_warning("not been found")
-        if ignore_missing_references:
-            passed = False
-            not_been_found = _style_as_error(not_been_found)
+        should_fail = not ignore_missing_references
+        passed = False if should_fail else passed
         logger.log(
-            f"The following result fields have {not_been_found} in the references:\n",
+            "{}\n".format(_missing_res_or_ref_message("reference", should_fail)),
             verbosity_level=1
         )
         logger.log(
-            _make_list_string([str(r.result_field_name) for r in missing_references]),
+            "{}\n".format(_make_list_string([str(r.result_field_name) for r in missing_references])),
             verbosity_level=1
         )
 
     logger.log("File comparison {}\n".format(_get_status_string(passed)))
     return passed
+
+
+def _read_error_message(filename: str, except_str: str) -> str:
+    if not except_str.endswith("\n"):
+        except_str = f"{except_str}\n"
+    return _style_as_error("Error") + f" reading '{filename}':\n" + indent(except_str, " "*4)
+
+
+def _missing_res_or_ref_message(res_or_ref: str, is_error: bool) -> str:
+    result = f"missing {res_or_ref} fields"
+    if is_error:
+        result = _style_as_error(f"Error: {result}")
+    else:
+        result = "Ignored the following " + _style_as_warning(result)
+    return result
