@@ -60,21 +60,27 @@ def _run(args: dict, logger: Logger) -> int:
         _style_text(ref_dir, style=TextStyle.bright)),
         verbosity_level=1
     )
+    if logger.verbosity_level and logger.verbosity_level == 1:
+        logger.log("\n")
 
     passed = True
 
-    # decrease verbosity level for the file comparisons
+    # Use decreased verbosity level in the file comparisons
     # s.t. level=1 does not include all the file-test output
     lower_verbosity_logger = ModifiedVerbosityLoggerFacade(logger, verbosity_change=-1)
-    indented_logger = IndentedLoggingFacade(lower_verbosity_logger, first_line_prefix=" -- ")
+    indented_logger = IndentedLoggingFacade(lower_verbosity_logger, first_line_prefix=" "*4)
     for match in filter(lambda f: is_supported_file(join(res_dir, f)), search_result.matches):
         res_file = join(res_dir, match)
         ref_file = join(ref_dir, match)
-        logger.log("\nComparing the files '{}' and '{}'\n".format(
+
+        if logger.verbosity_level and logger.verbosity_level > 1:
+            logger.log("\n")
+        logger.log("Comparing the files '{}' and '{}'\n".format(
             _style_text(res_file, style=TextStyle.bright),
             _style_text(ref_file, style=TextStyle.bright)),
             verbosity_level=1
         )
+
         _passed = _run_file_compare(
             res_file,
             ref_file,
@@ -86,27 +92,29 @@ def _run(args: dict, logger: Logger) -> int:
 
     orphan_results = search_result.orphan_results
     if orphan_results:
-        not_been_found = _style_as_warning("not been found")
-        if not args["ignore_missing_result_files"]:
-            passed = False
-            not_been_found = _style_as_error(not_been_found)
+        should_fail = not args["ignore_missing_result_files"]
+        passed = False if should_fail else passed
         logger.log(
-            f"\nThe following reference files have {not_been_found} in the results:\n",
+            "\n{}:\n".format(_missing_res_or_ref_message("result", should_fail)),
             verbosity_level=1
         )
-        logger.log(f"{_make_list_string(orphan_results)}\n", verbosity_level=1)
+        logger.log(
+            "{}\n".format(_make_list_string([join(ref_dir, f) for f in orphan_results])),
+            verbosity_level=1
+        )
 
     orphan_references = search_result.orphan_references
     if orphan_references:
-        not_been_found = _style_as_warning("not been found")
-        if args["ignore_missing_reference_files"]:
-            passed = False
-            not_been_found = _style_as_error(not_been_found)
+        should_fail = not args["ignore_missing_reference_files"]
+        passed = False if should_fail else passed
         logger.log(
-            f"\nThe following result files have {not_been_found} in the references:\n",
+            "\n{}:\n".format(_missing_res_or_ref_message("reference", should_fail)),
             verbosity_level=1
         )
-        logger.log(f"{_make_list_string(orphan_references)}\n", verbosity_level=1)
+        logger.log(
+            "{}\n".format(_make_list_string([join(res_dir, f) for f in orphan_references])),
+            verbosity_level=1
+        )
 
     unsupported_files = list(filter(
         lambda f: not is_supported_file(join(res_dir, f)),
@@ -122,3 +130,12 @@ def _run(args: dict, logger: Logger) -> int:
 
     logger.log("\nDirectory comparison {}\n".format(_get_status_string(passed)))
     return _bool_to_exit_code(passed)
+
+
+def _missing_res_or_ref_message(res_or_ref: str, is_error: bool) -> str:
+    result = f"missing {res_or_ref} files"
+    if is_error:
+        result = "Could not process " + _style_as_error(result)
+    else:
+        result = "Ignored the following " + _style_as_warning(result)
+    return result
