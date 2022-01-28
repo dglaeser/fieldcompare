@@ -4,6 +4,7 @@ from typing import TextIO, Iterable
 from json import load
 
 from ..field import Field
+from ..logging import Logger, NullDeviceLogger
 from ._common import _is_supported_field_data_format
 from ._reader_map import _register_reader_for_extension
 
@@ -11,11 +12,13 @@ from ._reader_map import _register_reader_for_extension
 class JSONFieldReader:
     """Read fields from json files"""
 
-    def __init__(self, stream: TextIO):
+    def __init__(self, stream: TextIO, logger: Logger = NullDeviceLogger()):
         self._fields: dict = {}
         self._load_fields(load(stream))
 
-    def _load_fields(self, data: dict, key_prefix: str = None) -> None:
+    def _load_fields(self,
+                     data: dict,
+                     key_prefix: str = None) -> None:
         """Read in fields recursively from sub-dictionaries"""
         for key in data:
             field_entry_key = f"{key_prefix}/{key}" if key_prefix is not None else key
@@ -40,9 +43,11 @@ class JSONFieldReader:
         return list(self._fields.keys())
 
 
-def _read_fields_from_json_file(filename: str, remove_ghost_points: bool) -> Iterable[Field]:
+def _read_fields_from_json_file(filename: str,
+                                remove_ghost_points: bool = None,
+                                logger: Logger = NullDeviceLogger()) -> Iterable[Field]:
     with open(filename) as file_stream:
-        json_reader = JSONFieldReader(file_stream)
+        json_reader = JSONFieldReader(file_stream, logger)
         return [json_reader.field(name) for name in json_reader.field_names()]
 
 _register_reader_for_extension(".json", _read_fields_from_json_file)
