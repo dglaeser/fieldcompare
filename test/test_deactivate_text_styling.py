@@ -1,4 +1,4 @@
-"""Test equality of fields read from vtk files"""
+"""Test text styling facilities"""
 
 from context import fieldcompare
 from fieldcompare._common import deactivate_colored_output, _style_text, TextColor
