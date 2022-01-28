@@ -1,6 +1,6 @@
 """Interface & implementations for loggers"""
 
-from sys import stdout
+import sys
 from typing import TextIO, Optional
 from abc import ABC, abstractmethod
 
@@ -45,7 +45,7 @@ class StreamLogger(Logger):
 class StandardOutputLogger(StreamLogger):
     """Logging to standard out"""
     def __init__(self, verbosity_level: int = None) -> None:
-        StreamLogger.__init__(self, stdout, verbosity_level)
+        StreamLogger.__init__(self, sys.stdout, verbosity_level)
 
 
 class NullDeviceLogger(Logger):
