@@ -1,6 +1,7 @@
 """Class that represents a field of values"""
 
 from abc import ABC, abstractmethod
+from typing import Union, Sequence
 from fieldcompare.array import Array, is_array, make_array
 
 
@@ -21,7 +22,7 @@ class FieldInterface(ABC):
 class Field(FieldInterface):
     """Class to represents a field of values"""
 
-    def __init__(self, name: str, values: Array):
+    def __init__(self, name: str, values: Union[Array, Sequence]):
         self._name = name
         self._values = make_array(values) if not is_array(values) else values
 

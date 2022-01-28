@@ -14,7 +14,7 @@ setup(
     packages=find_packages(where="."),
     python_requires=">3.8.0",
     install_requires=["meshio[all]>=4.4", "colorama>=0.4.3"],
-    entry_points = {
+    entry_points={
         'console_scripts': ['fieldcompare=fieldcompare._cli:main'],
     }
 )

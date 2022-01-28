@@ -18,7 +18,7 @@ def make_initialized_array(size: int, init_value, dtype=None) -> Array:
     return result
 
 
-def make_array(input_array: Union[Array, Sequence], dtype = None) -> Array:
+def make_array(input_array: Union[Array, Sequence], dtype=None) -> Array:
     """Make an array from the given sequence"""
     return np.array(input_array, dtype=dtype)
 
@@ -37,7 +37,7 @@ def is_array(input_array) -> bool:
     return isinstance(input_array, Array)
 
 
-def accumulate(input_array: Array, axis = None) -> Array:
+def accumulate(input_array: Array, axis=None) -> Array:
     return np.sum(input_array, axis=axis)
 
 

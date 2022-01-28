@@ -1,7 +1,6 @@
 """Common helper functions for field-io operations"""
 
 from typing import Iterable
-
 from .._common import _is_scalar
 
 
