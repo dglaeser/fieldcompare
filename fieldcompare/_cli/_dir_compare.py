@@ -49,9 +49,19 @@ def _add_arguments(parser: ArgumentParser):
         action="store_true",
         help="Use this flag to suppress errors from missing reference fields"
     )
+    parser.add_argument(
+        "--verbosity",
+        required=False,
+        default=3,
+        type=int,
+        help="Set the verbosity level"
+    )
 
 
 def _run(args: dict, logger: Logger) -> int:
+    if not logger.verbosity_level:
+        logger.verbosity_level = args["verbosity"]
+
     res_dir = args["dir"]
     ref_dir = args["reference_dir"]
     search_result = find_matching_file_names(res_dir, ref_dir)

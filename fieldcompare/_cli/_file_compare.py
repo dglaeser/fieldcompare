@@ -48,9 +48,19 @@ def _add_arguments(parser: ArgumentParser):
         action="store_true",
         help="Use this flag to suppress errors from missing reference fields"
     )
+    parser.add_argument(
+        "--verbosity",
+        required=False,
+        default=2,
+        type=int,
+        help="Set the verbosity level"
+    )
 
 
 def _run(args: dict, logger: Logger) -> int:
+    if not logger.verbosity_level:
+        logger.verbosity_level = args["verbosity"]
+
     passed = _run_file_compare(
         args["file"],
         args["reference"],
