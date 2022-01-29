@@ -26,8 +26,8 @@ def _make_non_conforming_test_mesh(refinement: int = 1):
             p0_idx = len(points)
             p0 = [i*dx, j*dy, 0.0]
             points.append(p0)
-            points.append([p0[0] + dx,  p0[1] + 0.0, 0.0])
-            points.append([p0[0] + dx,  p0[1] + dy, 0.0])
+            points.append([p0[0] + dx, p0[1] + 0.0, 0.0])
+            points.append([p0[0] + dx, p0[1] + dy, 0.0])
             points.append([p0[0] + 0.0, p0[1] + dy, 0.0])
             cells[0][1].append([p0_idx, p0_idx+1, p0_idx+2, p0_idx+3])
     return Mesh(points, cells)
@@ -111,7 +111,10 @@ def _permutate_mesh(mesh):
             ))
 
     return Mesh(
-        new_points, new_cells, point_data=new_point_data, cell_data=new_cell_data
+        new_points,
+        new_cells,
+        point_data=new_point_data,
+        cell_data=new_cell_data
     )
 
 
@@ -142,6 +145,7 @@ def _get_time_series_point_data_values(mesh, num_time_steps, max_perturbation=0.
         result.append({
             "point_data": np.array([float(i*ts) for i in range(len(mesh.points))])
         })
+    ts = num_time_steps - 1
 
     # perturb the last time step
     seed = 1
@@ -165,6 +169,7 @@ def _get_time_series_cell_data_values(mesh, num_time_steps, max_perturbation=0.0
             result[-1]["cell_data"].append(np.array([
                 float(cell_idx*ts) for i in range(len(cell_block.data))
             ]))
+    ts = num_time_steps - 1
 
     # perturb the last time step
     seed = 1
