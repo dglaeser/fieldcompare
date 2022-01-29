@@ -102,10 +102,10 @@ def _run(args: dict, logger: Logger) -> int:
 
     orphan_results = search_result.orphan_results
     if orphan_results:
-        should_fail = not args["ignore_missing_result_files"]
+        should_fail = not args["ignore_missing_reference_files"]
         passed = False if should_fail else passed
         logger.log(
-            "\n{}:\n".format(_missing_res_or_ref_message("result", should_fail)),
+            "\n{}:\n".format(_missing_res_or_ref_message("reference", should_fail)),
             verbosity_level=1
         )
         logger.log(
@@ -115,10 +115,10 @@ def _run(args: dict, logger: Logger) -> int:
 
     orphan_references = search_result.orphan_references
     if orphan_references:
-        should_fail = not args["ignore_missing_reference_files"]
+        should_fail = not args["ignore_missing_result_files"]
         passed = False if should_fail else passed
         logger.log(
-            "\n{}:\n".format(_missing_res_or_ref_message("reference", should_fail)),
+            "\n{}:\n".format(_missing_res_or_ref_message("result", should_fail)),
             verbosity_level=1
         )
         logger.log(
