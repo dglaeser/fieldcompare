@@ -5,6 +5,7 @@ from csv import reader
 
 from ..field import Field
 from ..array import make_array
+from ..logging import Logger, NullDeviceLogger
 from ._common import _convert_string, _convertible_to_float
 from ._reader_map import _register_reader_for_extension
 
@@ -12,7 +13,7 @@ from ._reader_map import _register_reader_for_extension
 class CSVFieldReader:
     """Read fields from csv files"""
 
-    def __init__(self, file_stream: TextIO):
+    def __init__(self, file_stream: TextIO, logger: Logger = NullDeviceLogger()):
         self._names: list = []
         self._data: list = []
 
@@ -21,8 +22,10 @@ class CSVFieldReader:
             row_values = list(row)
             if row_idx == 0:
                 if not any(_convertible_to_float(v) for v in row_values):
+                    logger.log("Using first row as field names\n", verbosity_level=2)
                     self._names = row_values
                 else:
+                    logger.log("Could not use first row as field names, using 'field_i'\n", verbosity_level=2)
                     self._names = [f"field_{i}" for i in range(len(row))]
                     self._append_data_row(row_values)
             else:
@@ -46,9 +49,11 @@ class CSVFieldReader:
         self._data.append([_convert_string(v) for v in row])
 
 
-def _read_fields_from_csv_file(filename: str, remove_ghost_points: bool) -> Iterable[Field]:
+def _read_fields_from_csv_file(filename: str,
+                               remove_ghost_points: bool = None,
+                               logger: Logger = NullDeviceLogger()) -> Iterable[Field]:
     with open(filename) as file_stream:
-        csv_reader = CSVFieldReader(file_stream)
+        csv_reader = CSVFieldReader(file_stream, logger)
         return [csv_reader.field(name) for name in csv_reader.field_names()]
 
 _register_reader_for_extension(".csv", _read_fields_from_csv_file)

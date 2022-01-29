@@ -1,138 +1,151 @@
-"""Functions for comparing fields."""
+"""Functions for comparing lists of fields."""
 
-from warnings import warn
-from typing import Callable, Iterable, Tuple, List, Dict
+from typing import Optional, Callable, Iterable, List, Dict, Tuple
+from dataclasses import dataclass
 
 from .field import Field
+from .matching import find_matching_field_names
 from .predicates import DefaultFieldEquality, PredicateResult
-from ._common import _style_text, TextColor, TextStyle
+
+
+@dataclass
+class ComparisonLog:
+    result_field_name: str
+    reference_field_name: str
+    predicate: str
+    predicate_log: str
+    passed: bool
+
+
+class ComparisonResult:
+    def __init__(self, logs: List[ComparisonLog]):
+        self._comparison_logs = logs
+        self._iter = iter(self._comparison_logs)
+
+    def __bool__(self):
+        return self.num_passed_comparisons == self.num_comparisons
+
+    def __iter__(self):
+        self._iter = iter(self._comparison_logs)
+        return self
+
+    def __next__(self):
+        return next(self._iter)
+
+    @property
+    def comparison_logs(self) -> List[ComparisonLog]:
+        return self._comparison_logs
+
+    @property
+    def num_comparisons(self) -> int:
+        return len(self._comparison_logs)
+
+    @property
+    def passed_comparison_logs(self) -> Iterable[ComparisonLog]:
+        return filter(lambda log: log.passed, self._comparison_logs)
+
+    @property
+    def num_passed_comparisons(self) -> int:
+        return len(list(self.passed_comparison_logs))
+
+    @property
+    def failed_comparison_logs(self) -> Iterable[ComparisonLog]:
+        return filter(lambda log: not log.passed, self._comparison_logs)
+
+    @property
+    def num_failed_comparisons(self) -> int:
+        return len(list(self.failed_comparison_logs))
 
 
 FieldPredicate = Callable[[Field, Field], PredicateResult]
 PredicateMap = Callable[[str, str], FieldPredicate]
 FieldComparisonMap = Dict[str, List[str]]
+LogCallBack = Callable[[ComparisonLog], None]
 
+def _null_logger(log: ComparisonLog) -> None:
+    pass
 
-def matching_names_map(first: Iterable[Field],
-                       second: Iterable[Field]) -> dict:
-    names1 = [f.name for f in first]
-    names2 = [f.name for f in second]
-    ignoreds = list(filter(lambda n: n not in names2, names1))
-    if ignoreds:
-        warn(RuntimeWarning(
-            f"Some fields are not present in the second list and will be ignored: {ignoreds}",
-        ))
-    considered = list(filter(lambda n: n not in ignoreds, names1))
-    return {name: [name] for name in considered}
-
-
-def compare_fields(first: Iterable[Field],
-                   second: Iterable[Field],
-                   field_comparisons: FieldComparisonMap = None,
-                   predicate_map: PredicateMap = None,
-                   report_verbosity_level: int = 1) -> Tuple[bool, str]:
-    if field_comparisons is None:
-        field_comparisons = matching_names_map(first, second)
-    if predicate_map is None:
-        predicate_map = _default_predicate_map
-
-    todo_comparisons = _remove_duplicates({
-        name: field_comparisons[name] for name in field_comparisons
-    })
-
-    report = ""
-    fail_count = 0
-    for field1 in first:
-        if field1.name not in field_comparisons:
+def compare_fields(result_fields: Iterable[Field],
+                   reference_fields: Iterable[Field],
+                   field_comparison_map: FieldComparisonMap,
+                   predicate_map: PredicateMap,
+                   log_call_back: LogCallBack = _null_logger) -> ComparisonResult:
+    logs: list = []
+    for result_field in result_fields:
+        if result_field.name not in field_comparison_map:
             continue
-        for field2 in second:
-            if field2.name in field_comparisons[field1.name]:
-                passed, sub_report = _compare_field(
-                    field1,
-                    field2,
-                    predicate_map(field1.name, field2.name),
-                    report_verbosity_level
+        for reference_field in reference_fields:
+            if reference_field.name in field_comparison_map[result_field.name]:
+                predicate = predicate_map(result_field.name, reference_field.name)
+                result = predicate(result_field, reference_field)
+                log = ComparisonLog(
+                    result_field_name=result_field.name,
+                    reference_field_name=reference_field.name,
+                    predicate=str(result.predicate_info),
+                    predicate_log=result.report,
+                    passed=bool(result)
                 )
-                todo_comparisons[field1.name].remove(field2.name)
-                if report_verbosity_level > 0:
-                    report += sub_report + "\n"
-                if not passed:
-                    fail_count += 1
 
-    passed = True
-    if any(refs for refs in todo_comparisons.values()):
-        passed = False
-        report += "The following field pairs have not been found:\n"
-        report += "\n".join([
-            str((name, ref)) for name in todo_comparisons for ref in todo_comparisons[name]
-        ])
-        report += "\n"
+                logs.append(log)
+                log_call_back(log)
+    return ComparisonResult(logs)
 
-    if fail_count > 0:
-        passed = False
-        report += f"{fail_count} out of {len(field_comparisons)} comparisons failed\n"
-    report += "Overall status: {}".format(_get_comparison_result_status_message(passed))
-    return passed, report
-
-
-def _default_predicate_map(field1_name: str, field2_name: str) -> FieldPredicate:
-    return DefaultFieldEquality(require_equal_names=False)
-
-
-def _remove_duplicates(field_comparisons: dict) -> dict:
-    duplicates: dict = {}
-    for field_name in field_comparisons:
-        references = field_comparisons[field_name]
-        unique_references = list(set(field_comparisons[field_name]))
-        if len(unique_references) != len(references):
-            duplicates[field_name] = [
-                ref for ref in unique_references if references.count(ref) > 1
-            ]
-            field_comparisons[field_name] = unique_references
-    if duplicates:
-        warn(RuntimeWarning(
-            "Found and removed duplicates in the given field comparison map: {}"
-            .format([(n, ref) for n in duplicates for ref in duplicates[n]])
-        ), stacklevel=1)
-    return field_comparisons
-
-
-def _compare_field(first: Field,
-                   second: Field,
-                   predicate: FieldPredicate,
-                   report_verbosity_level: int) -> Tuple[bool, str]:
-    def _make_bright(text: str) -> str:
-        return _style_text(text, style=TextStyle.bright)
-
-    result = predicate(first, second)
-    report = "Comparison of fields '{}' and '{}' ... {}".format(
-        _make_bright(first.name),
-        _make_bright(second.name),
-        _get_comparison_result_status_message(bool(result))
+def compare_fields_equal(result_fields: Iterable[Field],
+                         reference_fields: Iterable[Field],
+                         field_comparison_map: FieldComparisonMap,
+                         log_call_back: LogCallBack = _null_logger) -> ComparisonResult:
+    return compare_fields(
+        result_fields,
+        reference_fields,
+        field_comparison_map,
+        lambda n1, n2: DefaultFieldEquality(require_equal_names=False),
+        log_call_back
     )
 
-    def _indent_after_first_line(text: str, ind_level: int) -> str:
-        lines = text.split("\n")
-        lines[1:] = [" "*ind_level + _line for _line in lines[1:]]
-        return "\n".join(lines)
 
-    def _get_report_info_string(attribute: str, message: str) -> str:
-        attr_length = len(attribute)
-        return " -- {}: {}".format(
-            _make_bright(attribute),
-            _indent_after_first_line(message, 6 + attr_length)
-        )
+@dataclass
+class SkipLog:
+    result_field_name: Optional[str]
+    reference_field_name: Optional[str]
+    reason: str
 
-    if not result or report_verbosity_level > 1:
-        if result.predicate_info:
-            report += "\n" + _get_report_info_string("Predicate", result.predicate_info)
-        if result.report:
-            report += "\n" + _get_report_info_string("Report", result.report)
+def compare_matching_fields(
+        result_fields: Iterable[Field],
+        reference_fields: Iterable[Field],
+        predicate_map: PredicateMap,
+        log_call_back: LogCallBack = _null_logger) -> Tuple[ComparisonResult, List[SkipLog]]:
+    search_result = find_matching_field_names(result_fields, reference_fields)
+    comparison_logs = compare_fields(
+        result_fields,
+        reference_fields,
+        {m: [m] for m in search_result.matches},
+        predicate_map,
+        log_call_back
+    )
 
-    return bool(result), report
+    skipped_logs: list = []
+    for skipped_result_field in search_result.orphan_results:
+        skipped_logs.append(SkipLog(
+            result_field_name=skipped_result_field,
+            reference_field_name=None,
+            reason="Field not present in the references"
+        ))
+    for skipped_reference_field in search_result.orphan_references:
+        skipped_logs.append(SkipLog(
+            result_field_name=None,
+            reference_field_name=skipped_reference_field,
+            reason="Reference field not present in the result fields"
+        ))
 
+    return comparison_logs, skipped_logs
 
-def _get_comparison_result_status_message(result: bool) -> str:
-    if result:
-        return _style_text("PASSED", color=TextColor.green, style=TextStyle.bright)
-    return _style_text("FAILED", color=TextColor.red, style=TextStyle.bright)
+def compare_matching_fields_equal(
+        result_fields: Iterable[Field],
+        reference_fields: Iterable[Field],
+        log_call_back: LogCallBack = _null_logger) -> Tuple[ComparisonResult, List[SkipLog]]:
+    return compare_matching_fields(
+        result_fields,
+        reference_fields,
+        lambda n1, n2: DefaultFieldEquality(),
+        log_call_back
+    )

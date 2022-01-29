@@ -10,6 +10,7 @@ from meshio.xdmf import TimeSeriesReader as MeshIOTimeSeriesReader
 from meshio import __version__ as meshio_version
 
 from ..field import Field
+from ..logging import Logger, NullDeviceLogger
 from ..array import Array, sub_array
 from ..array import make_initialized_array, make_uninitialized_array
 from ..array import sort_array, accumulate
@@ -19,18 +20,25 @@ from ._reader_map import _register_reader_for_extension
 
 
 def _read_fields_from_mesh_file(filename: str,
-                                remove_ghost_points: bool) -> Iterable[Field]:
+                                remove_ghost_points: bool,
+                                logger: Logger = NullDeviceLogger()) -> Iterable[Field]:
     ext = splitext(filename)[1]
     assert ext in meshio_supported_extensions
-    if _is_time_series_compatible_format(ext):
-        return _extract_from_meshio_time_series(
+
+    try:
+        if _is_time_series_compatible_format(ext):
+            return _extract_from_meshio_time_series(
                 MeshIOTimeSeriesReader(filename),
-                remove_ghost_points
+                remove_ghost_points,
+                logger
             )
-    return _extract_from_meshio_mesh(
+        return _extract_from_meshio_mesh(
             meshio_read(filename),
-            remove_ghost_points
+            remove_ghost_points,
+            logger
         )
+    except Exception as e:
+        raise IOError(str(e))
 
 for ext in meshio_supported_extensions:
     _register_reader_for_extension(ext, _read_fields_from_mesh_file)
@@ -40,7 +48,8 @@ def _is_time_series_compatible_format(file_ext: str) -> bool:
     return file_ext in [".xmf", ".xdmf"]
 
 
-def _filter_out_ghost_vertices(mesh: Mesh) -> Tuple[Mesh, Array]:
+def _filter_out_ghost_points(mesh: Mesh, logger: Logger) -> Tuple[Mesh, Array]:
+    logger.log("Removing ghost points\n", verbosity_level=1)
     is_ghost = make_initialized_array(size=len(mesh.points), dtype=bool, init_value=True)
     for _, corners in _cells(mesh):
         for p_idx in corners.flatten():
@@ -68,10 +77,13 @@ def _filter_out_ghost_vertices(mesh: Mesh) -> Tuple[Mesh, Array]:
     ), ghost_filter_map
 
 
-def _extract_from_meshio_mesh(mesh: Mesh, remove_ghost_points: bool) -> MeshFields:
+def _extract_from_meshio_mesh(mesh: Mesh,
+                              remove_ghost_points: bool,
+                              logger: Logger) -> MeshFields:
+    logger.log("Extracting fields from mesh file\n", verbosity_level=1)
     if remove_ghost_points:
-        mesh, _ = _filter_out_ghost_vertices(mesh)
-    result = MeshFields(mesh.points, _cells(mesh))
+        mesh, _ = _filter_out_ghost_points(mesh, logger)
+    result = MeshFields(mesh.points, _cells(mesh), logger)
     for array_name in mesh.point_data:
         result.add_point_data(array_name, mesh.point_data[array_name])
     for array_name in mesh.cell_data:
@@ -85,14 +97,17 @@ def _extract_from_meshio_mesh(mesh: Mesh, remove_ghost_points: bool) -> MeshFiel
     return result
 
 
-def _extract_from_meshio_time_series(time_series_reader, remove_ghost_points: bool) -> TimeSeriesMeshFields:
+def _extract_from_meshio_time_series(time_series_reader,
+                                     remove_ghost_points: bool,
+                                     logger: Logger) -> TimeSeriesMeshFields:
+    logger.log("Extracting points/cells from time series file\n", verbosity_level=1)
     points, cells = time_series_reader.read_points_cells()
     mesh = Mesh(points, cells)
     ghost_point_filter = None
     if remove_ghost_points:
-        mesh, ghost_point_filter = _filter_out_ghost_vertices(mesh)
+        mesh, ghost_point_filter = _filter_out_ghost_points(mesh, logger)
     time_steps_reader = _MeshioTimeStepReader(mesh, time_series_reader, ghost_point_filter)
-    return TimeSeriesMeshFields(mesh.points, _cells(mesh), time_steps_reader)
+    return TimeSeriesMeshFields(mesh.points, _cells(mesh), time_steps_reader, logger)
 
 
 class _MeshioTimeStepReader:

@@ -8,6 +8,7 @@ from .array import adjacent_difference, elements_less, accumulate
 from .array import sort_array, lex_sort_array_columns
 from .array import min_element, max_element, abs_array, all_true
 from .field import Field
+from .logging import Logger, NullDeviceLogger
 
 
 MeshCells = Iterable[Tuple[str, Array]]
@@ -16,10 +17,11 @@ class MeshFields:
     """Stores fields defined on a mesh. Points & cells are sorted to get a unique representation"""
     def __init__(self,
                  points: Array,
-                 cells_type_corners_tuples: MeshCells) -> None:
+                 cells_type_corners_tuples: MeshCells,
+                 logger: Logger = NullDeviceLogger()) -> None:
         cells: dict = {cell_type: corners for cell_type, corners in cells_type_corners_tuples}
         points = make_array(points) if not is_array(points) else points
-        self._point_index_map = _sorting_points_indices(points, cells)
+        self._point_index_map = _sorting_points_indices(points, cells, logger)
         self._fields: list = [
             Field("point_coordinates", points[self._point_index_map])
         ]
@@ -32,7 +34,7 @@ class MeshFields:
         for cell_type, corners in cells.items():
             for idx, corner_list in enumerate(corners):
                 corners[idx] = _map_and_sort_cell_corners(corner_list)
-            self._cell_index_maps[cell_type] = _sorting_cell_indices(corners)
+            self._cell_index_maps[cell_type] = _sorting_cell_indices(corners, cell_type, logger)
             self._fields.append(
                 Field(f"{cell_type}_corners", corners[self._cell_index_maps[cell_type]])
             )
@@ -113,8 +115,9 @@ class TimeSeriesMeshFields:
     def __init__(self,
                  points: Array,
                  cells: MeshCells,
-                 time_series_reader) -> None:
-        self._mesh_fields = MeshFields(points, cells)
+                 time_series_reader,
+                 logger: Logger = NullDeviceLogger()) -> None:
+        self._mesh_fields = MeshFields(points, cells, logger)
         self._base_field_names = [field.name for field in self._mesh_fields]
         self._time_series_reader = time_series_reader
         self._field_iterator = self.FieldIterator(self)
@@ -154,7 +157,8 @@ class TimeSeriesMeshFields:
             self._mesh_fields.remove_field(field_name)
 
 
-def _sorting_points_indices(points, cells) -> Array:
+def _sorting_points_indices(points, cells, logger: Logger = NullDeviceLogger()) -> Array:
+    logger.log("Sorting point coordinates lexicographically\n", verbosity_level=1)
     tolerance = _get_point_cloud_tolerance(points)
     def _fuzzy_lt(val1, val2) -> bool:
         return val1 < val2 - tolerance
@@ -231,6 +235,8 @@ def _sorting_points_indices(points, cells) -> Array:
     is_zero_diff = append_to_array(is_zero_diff, False)
 
     equal_orig_point_indices = []
+    if any(is_zero_diff):
+        logger.log("Uniquely sorting identical coordinates\n", verbosity_level=2)
     for list_idx, is_zero in enumerate(is_zero_diff):
         if is_zero:
             equal_orig_point_indices.append(list_idx)
@@ -250,7 +256,8 @@ def _sorting_points_indices(points, cells) -> Array:
     return make_array(pre_sort)
 
 
-def _sorting_cell_indices(cell_corner_list) -> Array:
+def _sorting_cell_indices(cell_corner_list, cell_type: str, logger: Logger) -> Array:
+    logger.log(f"Sorting cells of type '{cell_type}'\n", verbosity_level=1)
     return lex_sort_array_columns(cell_corner_list)
 
 

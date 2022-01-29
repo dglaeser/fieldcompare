@@ -108,18 +108,21 @@ class FuzzyArrayEquality:
         max_abs_diffs = self._compute_max_abs_diffs(first, second)
         if max_abs_diffs is not None:
             diff_suffix = "s" if is_array(max_abs_diffs) else ""
+            max_abs_diff_str = _get_as_string(max_abs_diffs)
+            max_abs_diff_str = max_abs_diff_str.replace("\n", " ")
             return PredicateResult(
                 value=True,
-                report="Maximum absolute difference{}: {}".format(diff_suffix, max_abs_diffs),
+                report="Maximum absolute difference{}: {}".format(diff_suffix, max_abs_diff_str),
                 predicate_info=self._get_info()
             )
         return PredicateResult(True, predicate_info=self._get_info())
 
     def _get_info(self) -> str:
         return "FuzzyEquality (abs_tol: {}, rel_tol: {})".format(
-                    self.absolute_tolerance,
-                    self.relative_tolerance
-                )
+            self.absolute_tolerance,
+            self.relative_tolerance
+        )
+
     def _compute_deviation_in_percent(self, val1, val2):
         try:
             return rel_diff(val1, val2)*100.0
