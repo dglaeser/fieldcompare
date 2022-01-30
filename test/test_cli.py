@@ -4,9 +4,11 @@ from os import remove, listdir
 from os.path import isfile, join, splitext
 from shutil import rmtree, copytree
 from pathlib import Path
+from io import StringIO
 
 from context import fieldcompare
 from fieldcompare._cli import main
+from fieldcompare.logging import StreamLogger
 from data.generate_test_meshes import _make_test_mesh, _perturb_mesh
 from data.generate_test_meshes import _get_time_series_point_data_values
 from data.generate_test_meshes import _get_time_series_cell_data_values
@@ -127,6 +129,31 @@ def test_cli_directory_mode_missing_reference_file():
 
     rmtree(tmp_reference_path)
 
+def test_cli_directory_mode_regex():
+    # check that the normal run has xdmf in the output
+    with StringIO() as stream:
+        logger = StreamLogger(stream)
+        main(["dir", str(TEST_DATA_PATH), "--reference-dir", str(TEST_DATA_PATH)], logger)
+        assert ".xdmf" in stream.getvalue()
+    # check that the normal run has xdmf in the output with verbosity=1 (which should remove filter output)
+    with StringIO() as stream:
+        logger = StreamLogger(stream)
+        main([
+            "dir", str(TEST_DATA_PATH),
+            "--reference-dir", str(TEST_DATA_PATH),
+            "--verbosity=1"], logger)
+        assert ".xdmf" in stream.getvalue()
+    # check that xdmf disappears with regex
+    with StringIO() as stream:
+        logger = StreamLogger(stream)
+        main([
+            "dir", str(TEST_DATA_PATH),
+            "--reference-dir", str(TEST_DATA_PATH),
+            "--regex",
+            "*.vtu",
+            "--verbosity=1"], logger)
+        assert ".xdmf" not in stream.getvalue()
+
 
 if __name__ == "__main__":
     test_cli_file_mode_pass()
@@ -136,3 +163,4 @@ if __name__ == "__main__":
     test_cli_directory_mode()
     test_cli_directory_mode_missing_result_file()
     test_cli_directory_mode_missing_reference_file()
+    test_cli_directory_mode_regex()
