@@ -2,6 +2,7 @@
 
 from argparse import ArgumentParser
 from os.path import join
+from re import compile
 
 from ..matching import find_matching_file_names
 from ..logging import Logger, ModifiedVerbosityLoggerFacade, IndentedLoggingFacade
@@ -50,6 +51,13 @@ def _add_arguments(parser: ArgumentParser):
         help="Use this flag to suppress errors from missing reference fields"
     )
     parser.add_argument(
+        "--regex",
+        required=False,
+        action="append",
+        help="Pass a regular expression used to filter files to be compared. This option can "
+             "be used multiple times. Files that match any of the pattersn are considered."
+    )
+    parser.add_argument(
         "--verbosity",
         required=False,
         default=3,
@@ -75,11 +83,24 @@ def _run(args: dict, logger: Logger) -> int:
 
     passed = True
 
+    def _filter_using_regex():
+        result = []
+        for regex in args["regex"]:
+            # support unix bash wildcard patterns
+            if regex.startswith("*") or regex.startswith("?"):
+                regex = f".{regex}"
+            pattern = compile(regex)
+            result.extend(list(filter(lambda f: pattern.match(f), search_result.matches)))
+        return list(set(result))
+
+    filtered_matches = search_result.matches if not args["regex"] else _filter_using_regex()
+    dropped_matches = list(filter(lambda f: f not in filtered_matches, search_result.matches))
+
     # Use decreased verbosity level in the file comparisons
     # s.t. level=1 does not include all the file-test output
     lower_verbosity_logger = ModifiedVerbosityLoggerFacade(logger, verbosity_change=-1)
     indented_logger = IndentedLoggingFacade(lower_verbosity_logger, first_line_prefix=" "*4)
-    for match in filter(lambda f: is_supported_file(join(res_dir, f)), search_result.matches):
+    for match in filter(lambda f: is_supported_file(join(res_dir, f)), filtered_matches):
         res_file = join(res_dir, match)
         ref_file = join(ref_dir, match)
 
@@ -126,14 +147,19 @@ def _run(args: dict, logger: Logger) -> int:
             verbosity_level=1
         )
 
-    unsupported_files = list(filter(
-        lambda f: not is_supported_file(join(res_dir, f)),
-        search_result.matches
-    ))
+    unsupported_files = list(filter(lambda f: not is_supported_file(join(res_dir, f)), filtered_matches))
     if unsupported_files:
         logger.log(
             "\nThe following files have been skipped due to unsupported format:\n{}\n".format(
                 _make_list_string([join(res_dir, f) for f in unsupported_files])
+            ),
+            verbosity_level=2
+        )
+
+    if dropped_matches:
+        logger.log(
+            "\nThe following files have been filtered out by the given regular expressions:\n{}\n".format(
+                _make_list_string([join(res_dir, f) for f in dropped_matches])
             ),
             verbosity_level=2
         )
