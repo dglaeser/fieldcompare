@@ -6,7 +6,7 @@ from os.path import join
 from ..matching import find_matching_file_names
 from ..logging import Logger, ModifiedVerbosityLoggerFacade, IndentedLoggingFacade
 from ..field_io import is_supported_file
-from .._common import _style_text, TextStyle
+from ..colors import make_colored, TextStyle
 
 from ._common import _bool_to_exit_code
 from ._common import _style_as_error, _style_as_warning, _make_list_string, _get_status_string
@@ -66,8 +66,8 @@ def _run(args: dict, logger: Logger) -> int:
     ref_dir = args["reference_dir"]
     search_result = find_matching_file_names(res_dir, ref_dir)
     logger.log("Comparing the files in the directories '{}' and '{}'\n".format(
-        _style_text(res_dir, style=TextStyle.bright),
-        _style_text(ref_dir, style=TextStyle.bright)),
+        make_colored(res_dir, style=TextStyle.bright),
+        make_colored(ref_dir, style=TextStyle.bright)),
         verbosity_level=1
     )
     if logger.verbosity_level and logger.verbosity_level == 1:
@@ -86,8 +86,8 @@ def _run(args: dict, logger: Logger) -> int:
         if logger.verbosity_level and logger.verbosity_level > 1:
             logger.log("\n")
         logger.log("Comparing the files '{}' and '{}'\n".format(
-            _style_text(res_file, style=TextStyle.bright),
-            _style_text(ref_file, style=TextStyle.bright)),
+            make_colored(res_file, style=TextStyle.bright),
+            make_colored(ref_file, style=TextStyle.bright)),
             verbosity_level=1
         )
 
