@@ -3,7 +3,7 @@
 from typing import List
 from textwrap import indent
 
-from .._common import _style_text, TextStyle, TextColor
+from ..colors import make_colored, TextStyle, TextColor
 from ..compare import ComparisonLog, SkipLog
 from ..logging import Logger, ModifiedVerbosityLoggerFacade, IndentedLoggingFacade
 from ..field_io import read_fields
@@ -18,22 +18,22 @@ def _read_fields_from_file(filename: str, logger: Logger):
 
 def _get_status_string(passed: bool) -> str:
     if passed:
-        return _style_text("PASSED", color=TextColor.green)
-    return _style_text("FAILED", color=TextColor.red)
+        return make_colored("PASSED", color=TextColor.green)
+    return make_colored("FAILED", color=TextColor.red)
 
 
 def _style_as_warning(text: str) -> str:
-    return _style_text(text, color=TextColor.yellow)
+    return make_colored(text, color=TextColor.yellow)
 
 
 def _style_as_error(text: str) -> str:
-    return _style_text(text, color=TextColor.red)
+    return make_colored(text, color=TextColor.red)
 
 
 def _get_comparison_message_string(comparison_log: ComparisonLog) -> str:
     return "Comparison of the fields '{}' and '{}': {}\n".format(
-        _style_text(comparison_log.result_field_name, style=TextStyle.bright),
-        _style_text(comparison_log.reference_field_name, style=TextStyle.bright),
+        make_colored(comparison_log.result_field_name, style=TextStyle.bright),
+        make_colored(comparison_log.reference_field_name, style=TextStyle.bright),
         _get_status_string(comparison_log.passed)
     )
 
