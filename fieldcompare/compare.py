@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 from .field import Field
 from .matching import find_matching_field_names
-from .predicates import DefaultFieldEquality, PredicateResult
+from .predicates import Predicate, DefaultEquality
 
 
 @dataclass
@@ -57,8 +57,7 @@ class ComparisonResult:
         return len(list(self.failed_comparison_logs))
 
 
-FieldPredicate = Callable[[Field, Field], PredicateResult]
-PredicateMap = Callable[[str, str], FieldPredicate]
+PredicateMap = Callable[[str, str], Predicate]
 FieldComparisonMap = Dict[str, List[str]]
 LogCallBack = Callable[[ComparisonLog], None]
 
@@ -77,7 +76,7 @@ def compare_fields(result_fields: Iterable[Field],
         for reference_field in reference_fields:
             if reference_field.name in field_comparison_map[result_field.name]:
                 predicate = predicate_map(result_field.name, reference_field.name)
-                result = predicate(result_field, reference_field)
+                result = predicate(result_field.values, reference_field.values)
                 log = ComparisonLog(
                     result_field_name=result_field.name,
                     reference_field_name=reference_field.name,
@@ -98,7 +97,7 @@ def compare_fields_equal(result_fields: Iterable[Field],
         result_fields,
         reference_fields,
         field_comparison_map,
-        lambda n1, n2: DefaultFieldEquality(require_equal_names=False),
+        lambda n1, n2: DefaultEquality(),
         log_call_back
     )
 
@@ -146,6 +145,6 @@ def compare_matching_fields_equal(
     return compare_matching_fields(
         result_fields,
         reference_fields,
-        lambda n1, n2: DefaultFieldEquality(),
+        lambda n1, n2: DefaultEquality(),
         log_call_back
     )
