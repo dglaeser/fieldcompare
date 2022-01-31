@@ -1,5 +1,6 @@
 """Common functions and types"""
 
+from typing import Iterable
 import numpy as np
 
 
@@ -18,3 +19,7 @@ def _get_as_string(obj) -> str:
 
 def _default_base_tolerance() -> float:
     return 1e-9
+
+
+def _is_iterable(thing) -> bool:
+    return isinstance(thing, Iterable)
