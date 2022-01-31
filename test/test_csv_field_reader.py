@@ -5,7 +5,9 @@ from csv import writer
 
 from context import fieldcompare
 from fieldcompare import read_fields
-from fieldcompare import Field, ExactFieldEquality
+from fieldcompare import Field, ExactEquality
+from _common import ExactFieldEquality
+
 
 def _write_fields_to_csv_no_names(filename: str, values) -> None:
     with open(filename, "w") as csv_file:

@@ -1,9 +1,9 @@
 """Classes and functions related to predicates on fields & arrays"""
 
-from typing import Callable, Optional
+from typing import Callable, Optional, TypeVar
+from numpy import allclose
 
-from ._common import _get_as_string
-from ._common import _default_base_tolerance
+from ._common import _get_as_string, _default_base_tolerance, _is_iterable
 
 from .array import Array, sub_array, is_array, make_array
 from .array import find_first_unequal
@@ -41,11 +41,41 @@ class PredicateResult:
         return self._value
 
 
-class ExactArrayEquality:
-    """Compares two arrays for exact equality"""
-    def __call__(self, first: Array, second: Array) -> PredicateResult:
-        first = make_array(first) if not is_array(first) else first
-        second = make_array(second) if not is_array(second) else second
+class ExactEquality:
+    """Compares the given arguments for exact equality"""
+    def __call__(self, first, second) -> PredicateResult:
+        first_is_iterable = _is_iterable(first)
+        second_is_iterable = _is_iterable(second)
+        if first_is_iterable and second_is_iterable:
+            return self._array_equal(
+                first if is_array(first) else make_array(first),
+                second if is_array(second) else make_array(second)
+            )
+        try:
+            if first != second:
+                return PredicateResult(
+                    value=False,
+                    predicate_info=self._get_info(),
+                    report=_get_equality_fail_message(first, second)
+                )
+            return PredicateResult(
+                value=True,
+                predicate_info=self._get_info(),
+                report=f"{first} and {second} have compared equal"
+            )
+        except Exception as e:
+            raise ValueError(f"Could not check the given values for equality. Caught exception: {e}")
+
+    def _get_info(self) -> str:
+        return "ExactEquality"
+
+    def _array_equal(self, first: Array, second: Array) -> PredicateResult:
+        if len(first) != len(second):
+            return PredicateResult(
+                value=False,
+                report="Array lengths not equal",
+                predicate_info=self._get_info()
+            )
         unequals = find_first_unequal(first, second)
         if unequals is not None:
             val1, val2 = unequals
@@ -60,12 +90,9 @@ class ExactArrayEquality:
             report="All field values have compared equal"
         )
 
-    def _get_info(self) -> str:
-        return "ExactEquality"
 
-
-class FuzzyArrayEquality:
-    """Compares two arrays for fuzzy equality"""
+class FuzzyEquality:
+    """Compares the given arguments for fuzzy equality"""
     def __init__(self,
                  rel_tol: float = _default_base_tolerance(),
                  abs_tol: float = _default_base_tolerance()) -> None:
@@ -92,9 +119,37 @@ class FuzzyArrayEquality:
         """Set the absolute tolerance to be used for fuzzy comparisons."""
         self._abs_tol = value
 
-    def __call__(self, first: Array, second: Array) -> PredicateResult:
-        if not is_array(first): first = make_array(first)
-        if not is_array(second): second = make_array(second)
+    def __call__(self, first, second) -> PredicateResult:
+        first_is_iterable = _is_iterable(first)
+        second_is_iterable = _is_iterable(second)
+        if first_is_iterable and second_is_iterable:
+            return self._array_fuzzy_equal(
+                first if is_array(first) else make_array(first),
+                second if is_array(second) else make_array(second)
+            )
+        try:
+            if _is_fuzzy_equal(first, second, self.absolute_tolerance, self.relative_tolerance):
+                return PredicateResult(
+                    value=True,
+                    report=f"{first} and {second} have compared equal",
+                    predicate_info=self._get_info()
+                )
+            deviation_in_percent = self._compute_deviation_in_percent(first, second)
+            return PredicateResult(
+                value=False,
+                report=_get_equality_fail_message(first, second, deviation_in_percent),
+                predicate_info=self._get_info()
+            )
+        except Exception as e:
+            raise ValueError(f"Could not fuzzy-compare the given values. Caught exception: {e}")
+
+    def _array_fuzzy_equal(self, first: Array, second: Array) -> PredicateResult:
+        if len(first) != len(second):
+            return PredicateResult(
+                value=False,
+                report="Array lengths not equal",
+                predicate_info=self._get_info()
+            )
         unequals = find_first_fuzzy_unequal(first, second, self._rel_tol, self._abs_tol)
         if unequals is not None:
             val1, val2 = unequals
@@ -136,101 +191,33 @@ class FuzzyArrayEquality:
             return None
 
 
-class DefaultArrayEquality(FuzzyArrayEquality):
-    """Default choice of array equality checks. Checks fuzzy or exact depending on data type."""
+class DefaultEquality(FuzzyEquality):
+    """Default choice of quality checks. Checks fuzzy or exact depending on data type."""
     def __init__(self, *args, **kwargs) -> None:
-        FuzzyArrayEquality.__init__(self, *args, **kwargs)
+        FuzzyEquality.__init__(self, *args, **kwargs)
 
-    def __call__(self, first: Array, second: Array) -> PredicateResult:
-        def _is_float(arr: Array) -> bool:
-            return "float" in arr.dtype.name
-        if _is_float(first) and _is_float(second):
-            return FuzzyArrayEquality.__call__(self, first, second)
-        return ExactArrayEquality()(first, second)
+    def __call__(self, first, second) -> PredicateResult:
+        if _is_float(first) or _is_float(second):
+            return FuzzyEquality.__call__(self, first, second)
+        return ExactEquality()(first, second)
 
 
-ArrayPredicate = Callable[[Array, Array], PredicateResult]
-
-class FieldPredicate:
-    """Evaluates a predicate on two fields"""
-    def __init__(self,
-                 array_predicate: ArrayPredicate,
-                 require_equal_names: bool = False,
-                 require_equal_lengths: bool = True) -> None:
-        self._array_predicate = array_predicate
-        self._require_equal_names = require_equal_names
-        self._require_equal_lengths = require_equal_lengths
-
-    def __call__(self, first: FieldInterface, second: FieldInterface) -> PredicateResult:
-        if self._require_equal_names and first.name != second.name:
-            return PredicateResult(
-                False,
-                f"Field name mismatch: {first.name} - {second.name}"
-            )
-
-        if len(first.values) == len(second.values):
-            return self._array_predicate(first.values, second.values)
-
-        if self._require_equal_lengths:
-            return PredicateResult(
-                False,
-                f"Field length mismatch: {len(first.values)} - {len(second.values)}"
-            )
-
-        min_len = min(len(first.values), len(second.values))
-        return self._array_predicate(
-            sub_array(first.values, 0, min_len),
-            sub_array(second.values, 0, min_len)
-        )
+T1 = TypeVar("T1")
+T2 = TypeVar("T2")
+Predicate = Callable[[T1, T2], PredicateResult]
 
 
-class ExactFieldEquality(FieldPredicate):
-    """Compare two fields for exact equality"""
-    def __init__(self,
-                 require_equal_names: bool = True,
-                 require_equal_lengths: bool = True) -> None:
-        FieldPredicate.__init__(
-            self, ExactArrayEquality(), require_equal_names, require_equal_lengths
-        )
+def _is_float(value) -> bool:
+    if _is_iterable(value):
+        return any(_is_float(v) for v in value)
+    return isinstance(value, float)
 
 
-class FuzzyFieldEquality(FieldPredicate):
-    """Compare two fields for fuzzy equality"""
-    def __init__(self,
-                 require_equal_names: bool = True,
-                 require_equal_lengths: bool = True) -> None:
-        FieldPredicate.__init__(
-            self, FuzzyArrayEquality(), require_equal_names, require_equal_lengths
-        )
-
-    def set_relative_tolerance(self, rel_tol: float) -> None:
-        """Set the relative tolerance to be used for fuzzy comparisons."""
-        self._array_predicate.relative_tolerance = rel_tol
-
-    def set_absolute_tolerance(self, abs_tol: float) -> None:
-        """Set the absolute tolerance to be used for fuzzy comparisons."""
-        self._array_predicate.absolute_tolerance = abs_tol
+def _is_fuzzy_equal(first, second, abs_tol, rel_tol) -> bool:
+    return allclose(first, second, rtol=rel_tol, atol=abs_tol)
 
 
-class DefaultFieldEquality(FieldPredicate):
-    """Default implementation for field equality. Checks fuzzy or exact depending on data type."""
-    def __init__(self,
-                 require_equal_names: bool = True,
-                 require_equal_lengths: bool = True) -> None:
-        FieldPredicate.__init__(
-            self, DefaultArrayEquality(), require_equal_names, require_equal_lengths
-        )
-
-    def set_relative_tolerance(self, rel_tol: float) -> None:
-        """Set the relative tolerance to be used for fuzzy comparisons."""
-        self._array_predicate.relative_tolerance = rel_tol
-
-    def set_absolute_tolerance(self, abs_tol: float) -> None:
-        """Set the absolute tolerance to be used for fuzzy comparisons."""
-        self._array_predicate.absolute_tolerance = abs_tol
-
-
-def _get_equality_fail_message(val1, val2, deviation_in_percent = None) -> str:
+def _get_equality_fail_message(val1, val2, deviation_in_percent=None) -> str:
     result = str(
         "Deviation above threshold detected:\n"
         "- First field entry: {}\n"

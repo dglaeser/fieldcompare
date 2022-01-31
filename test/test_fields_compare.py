@@ -1,7 +1,7 @@
 """Test the compare function for sets of fields."""
 
 from context import fieldcompare
-from fieldcompare import Field, FuzzyFieldEquality
+from fieldcompare import Field, FuzzyEquality
 from fieldcompare import (
     compare_fields_equal,
     compare_matching_fields,
@@ -41,11 +41,8 @@ def test_compare_fields_default_custom_predicate_map():
     assert not bool(result)
     assert not bool(skipped)
 
-    def _predicate_map(f1: str, f2: str) -> FuzzyFieldEquality:
-        predicate = FuzzyFieldEquality()
-        predicate.set_absolute_tolerance(1e-3)
-        predicate.set_relative_tolerance(1e-3)
-        return predicate
+    def _predicate_map(f1: str, f2: str) -> FuzzyEquality:
+        return FuzzyEquality(rel_tol=1e-3, abs_tol=1e-3)
 
     result, skipped = compare_matching_fields(field, reference, predicate_map=_predicate_map)
     assert bool(result)

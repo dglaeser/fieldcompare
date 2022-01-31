@@ -4,7 +4,7 @@ from pathlib import Path
 
 from context import fieldcompare
 from fieldcompare import read_fields
-from fieldcompare import FuzzyFieldEquality, DefaultFieldEquality
+from _common import FuzzyFieldEquality, DefaultFieldEquality
 
 TEST_DATA_PATH = Path(__file__).resolve().parent / Path("data")
 
