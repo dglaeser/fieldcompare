@@ -5,8 +5,7 @@ from pytest import raises
 
 from context import fieldcompare
 from fieldcompare import predicates, read_fields
-from fieldcompare import FuzzyFieldEquality, DefaultFieldEquality
-from fieldcompare.predicates import PredicateResult
+from _common import FuzzyFieldEquality, DefaultFieldEquality
 
 TEST_DATA_PATH = Path(__file__).resolve().parent / Path("data")
 
@@ -18,17 +17,15 @@ def _get_field_from_list(name, fields_list):
 def _compare_vtk_files(file1,
                        file2,
                        predicate=FuzzyFieldEquality(),
-                       remove_ghost_points: bool = True) -> PredicateResult:
+                       remove_ghost_points: bool = True) -> bool:
     print("Comparing vtk files")
     fields1 = read_fields(file1, remove_ghost_points)
     fields2 = read_fields(file2, remove_ghost_points)
     for field1 in fields1:
         field2 = _get_field_from_list(field1.name, fields2)
         print(f" -- checking field {field1.name}")
-        pred_result = predicate(field1, field2)
-        if not pred_result:
-            return pred_result
-    return PredicateResult(True)
+        return predicate(field1, field2)
+    return True
 
 
 def test_identical_vtk_files():

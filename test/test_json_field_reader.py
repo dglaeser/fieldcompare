@@ -6,7 +6,7 @@ from json import dump
 from pytest import raises
 from context import fieldcompare
 from fieldcompare import read_fields, Field
-from fieldcompare import ExactFieldEquality
+from _common import ExactFieldEquality
 
 class TestData:
     def __init__(self):
