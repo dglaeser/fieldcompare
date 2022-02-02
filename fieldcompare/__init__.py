@@ -1,8 +1,8 @@
 """
 The fieldcompare module
 
-Prodives a framework fields of values for relational properties as e.g. equality.
-This can be used e.g. in regression testing simulation software, comparing simulation
+Prodives a framework to compare fields of values for relational properties as e.g. equality.
+This can be useful, for instance, in regression-testing simulation software, comparing simulation
 results against previously obtained results.
 """
 
