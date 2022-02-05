@@ -9,27 +9,35 @@ workflow:
     - if: '$CI_COMMIT_BRANCH =~ /^(main|releases\/)/'
 
 default:
-  image: ubuntu:20.04
+  image: docker.io/python:3.9
+
+cache:
+  paths:
+    - .cache/pip
 
 variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   PY_VERSION: "3.9"
   MESHIO_VERSION: "5.2.2"
 
 .install_dependencies:
   before_script:
-      - apt-get update && apt-get install --no-install-recommends --yes python$PY_VERSION python3-pip
-      - ln -sf /usr/bin/python$PY_VERSION /usr/bin/python
-      - python -m pip install pytest colorama meshio[all]==$MESHIO_VERSION
+      - python --version
+      - pip install --upgrade pip
+      - pip install -r requirements.txt
+      - pip install -e .[full]
 
 .test_base:
   extends: .install_dependencies
   stage: test
-  script: cd test && pytest --verbose --junit-xml test_report.xml
+  script:
+    - pytest --verbose --junit-xml test_report.xml
   artifacts:
     reports:
-      junit: test/test_report.xml
+      junit: test_report.xml
 
 test:
+  image: python:$PY_VERSION
   extends: .test_base
   parallel:
     matrix:
@@ -42,15 +50,15 @@ test_coverage_report:
   script:
     - python -m pip install pytest-cov
     - |
-      cd test && python -m pytest --cov-report xml:coverage.xml \
-                                  --cov-report html:cov_report \
-                                  --cov-report term \
-                                  --cov=fieldcompare
+      pytest --cov-report xml:coverage.xml \
+             --cov-report html:cov_report \
+             --cov-report term \
+             --cov=fieldcompare
   artifacts:
     reports:
-      cobertura: test/coverage.xml
+      cobertura: coverage.xml
     paths:
-      - test/cov_report
+      - cov_report
     expire_in: 30 minutes
 
 pages:
@@ -62,7 +70,7 @@ pages:
       artifacts: true
   script:
     - mkdir public
-    - mv test/cov_report/* public/
+    - mv cov_report/* public/
   artifacts:
     paths:
       - public
