@@ -17,6 +17,7 @@ cache:
 
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  FIELDCOMPARE_EXTRA: "[full]"
   PY_VERSION: "3.9"
   MESHIO_VERSION: "5.2.2"
 
@@ -27,29 +28,28 @@ variables:
       - source venv/bin/activate
       - pip install --upgrade pip
       - pip install -r requirements.txt
-      - pip install -e .[full]
-
-.test_base:
-  extends: .install_dependencies
-  stage: test
-  script:
-    - pytest --verbose --junit-xml test_report.xml
-  artifacts:
-    reports:
-      junit: test_report.xml
 
 test:
   image: python:$PY_VERSION
-  extends: .test_base
+  extends: .install_dependencies
+  stage: test
+  artifacts:
+    reports:
+      junit: test_report.xml
+  script:
+    - pip install -e .$FIELDCOMPARE_EXTRA
+    - pytest --verbose --junit-xml test_report.xml
   parallel:
     matrix:
       - PY_VERSION: ["3.8", "3.9"]
         MESHIO_VERSION: ["4.4", "5.2.2"]
+        FIELDCOMPARE_EXTRA: ["", "[full]"]
 
 test_coverage_report:
   stage: coverage
   extends: .install_dependencies
   script:
+    - pip install -e .$FIELDCOMPARE_EXTRA
     - python -m pip install pytest-cov
     - |
       pytest --cov-report xml:coverage.xml \
