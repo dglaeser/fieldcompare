@@ -9,7 +9,7 @@ workflow:
     - if: '$CI_COMMIT_BRANCH =~ /^(main|releases\/)/'
 
 default:
-  image: docker.io/python:3.9
+  image: python:3.9
 
 cache:
   paths:
@@ -23,6 +23,8 @@ variables:
 .install_dependencies:
   before_script:
       - python --version
+      - python -m venv venv
+      - source venv/bin/activate
       - pip install --upgrade pip
       - pip install -r requirements.txt
       - pip install -e .[full]
