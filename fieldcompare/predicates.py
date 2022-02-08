@@ -3,7 +3,7 @@
 from typing import Callable, Optional, TypeVar
 from numpy import allclose
 
-from ._common import _get_as_string, _default_base_tolerance, _is_iterable
+from ._common import _get_as_string, _default_base_tolerance, _is_iterable, _is_scalar
 
 from .array import Array, sub_array, is_array, make_array
 from .array import find_first_unequal
@@ -208,9 +208,11 @@ Predicate = Callable[[T1, T2], PredicateResult]
 
 
 def _is_float(value) -> bool:
-    if _is_iterable(value):
+    if _is_scalar(value):
+        return isinstance(value, float)
+    elif _is_iterable(value):
         return any(_is_float(v) for v in value)
-    return isinstance(value, float)
+    return False
 
 
 def _is_fuzzy_equal(first, second, abs_tol, rel_tol) -> bool:
