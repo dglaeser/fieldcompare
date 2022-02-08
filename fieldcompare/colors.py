@@ -99,4 +99,4 @@ class TextStyle(Enum):
 def make_colored(text: str,
                  color: TextColor = None,
                  style: TextStyle = None) -> str:
-    return _COLOR_BACKEND.make_colored(text, color, style)
+    return _COLOR_BACKEND.make_colored(text, color, style)  # type: ignore

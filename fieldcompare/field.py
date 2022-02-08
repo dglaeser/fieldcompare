@@ -24,7 +24,7 @@ class Field(FieldInterface):
 
     def __init__(self, name: str, values: Union[Array, Sequence]):
         self._name = name
-        self._values = make_array(values) if not is_array(values) else values
+        self._values = _make_array(values)
 
     @property
     def name(self) -> str:
@@ -35,3 +35,7 @@ class Field(FieldInterface):
     def values(self) -> Array:
         """Return the field values"""
         return self._values
+
+
+def _make_array(values) -> Array:
+    return values if is_array(values) else make_array(values)
