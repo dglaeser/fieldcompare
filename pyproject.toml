@@ -1,0 +1,40 @@
+[project]
+name = "fieldcompare"
+description = "Comparison of data fields in files"
+version = "1.0"
+authors = [
+  {email = "dennis.glaeser@iws.uni-stuttgart.de"},
+  {name = "Dennis Gläser"}
+]
+readme = "README.md"
+license = {file = "LICENSE.txt"}
+keywords = ["data comparison", "regression test"]
+requires-python = ">=3.8"
+dependencies = ["meshio[all]>=4.4, <5.3"]
+classifiers = [
+  "Development Status :: 1 - Alpha",
+  "Programming Language :: Python"
+]
+
+[project.optional-dependencies]
+full = ["colorama>=0.4.3"]
+
+[project.urls]
+homepage = "https://gitlab.com/dglaeser/fieldcompare"
+repository = "https://gitlab.com/dglaeser/fieldcompare"
+
+[project.entry-points.console_scripts]
+meshio = "fieldcompare._cli:main"
+
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.mypy]
+[[tool.mypy.overrides]]
+    module = ["colorama", "meshio", "meshio.xdmf"]
+    ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+junit_family = "xunit2"
+python_classes = "*Test"
