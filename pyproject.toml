@@ -50,4 +50,5 @@ deps = -rrequirements.txt
 commands =
   pytest
   flake8
+  mypy fieldcompare
 """
