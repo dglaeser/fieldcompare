@@ -15,19 +15,17 @@ cache:
   paths:
     - .cache/pip
 
+.install_dependencies:
+  before_script:
+      - python --version
+      - pip install --upgrade pip
+      - pip install tox
+
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   FIELDCOMPARE_EXTRA: "[full]"
   PY_VERSION: "3.9"
   MESHIO_VERSION: "5.2.2"
-
-.install_dependencies:
-  before_script:
-      - python --version
-      - python -m venv venv
-      - source venv/bin/activate
-      - pip install --upgrade pip
-      - pip install -r requirements.txt
 
 test:
   image: python:$PY_VERSION
@@ -37,11 +35,10 @@ test:
     reports:
       junit: test_report.xml
   script:
-    - pip install -e .$FIELDCOMPARE_EXTRA
-    - pytest --verbose --junit-xml test_report.xml
+    - tox -e py${PY_VERSION/./}
   parallel:
     matrix:
-      - PY_VERSION: ["3.8", "3.9"]
+      - PY_VERSION: ["3.8", "3.9", "3.10"]
         MESHIO_VERSION: ["4.4", "5.2.2"]
         FIELDCOMPARE_EXTRA: ["", "[full]"]
 
@@ -49,13 +46,7 @@ test_coverage_report:
   stage: coverage
   extends: .install_dependencies
   script:
-    - pip install -e .$FIELDCOMPARE_EXTRA
-    - python -m pip install pytest-cov
-    - |
-      pytest --cov-report xml:coverage.xml \
-             --cov-report html:cov_report \
-             --cov-report term \
-             --cov=fieldcompare
+    - tox -e coverage
   artifacts:
     reports:
       cobertura: coverage.xml
