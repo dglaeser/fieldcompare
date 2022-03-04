@@ -5,9 +5,8 @@ from os.path import splitext
 
 from meshio import Mesh
 from meshio import read as meshio_read
-from meshio import extension_to_filetype as meshio_supported_extensions
+from meshio import extension_to_filetypes as meshio_supported_extensions
 from meshio.xdmf import TimeSeriesReader as MeshIOTimeSeriesReader
-from meshio import __version__ as meshio_version
 
 from ..field import Field
 from ..logging import Logger, NullDeviceLogger
@@ -151,8 +150,4 @@ class _MeshioTimeStepReader:
 
 
 def _cells(mesh: Mesh) -> Iterable[Tuple[str, Array]]:
-    major, minor, _ = meshio_version.split(".")
-    major, minor = int(major), int(minor)
-    if major == 5 and minor > 0:
-        return ((cell_block.type, cell_block.data) for cell_block in mesh.cells)
-    return mesh.cells
+    return ((cell_block.type, cell_block.data) for cell_block in mesh.cells)
