@@ -9,48 +9,49 @@ workflow:
     - if: '$CI_COMMIT_BRANCH =~ /^(main|releases\/)/'
 
 default:
-  image: ubuntu:20.04
+  image: python:3.9
 
-variables:
-  PY_VERSION: "3.9"
-  MESHIO_VERSION: "5.2.2"
+cache:
+  paths:
+    - .cache/pip
 
 .install_dependencies:
   before_script:
-      - apt-get update && apt-get install --no-install-recommends --yes python$PY_VERSION python3-pip
-      - ln -sf /usr/bin/python$PY_VERSION /usr/bin/python
-      - python -m pip install pytest colorama meshio[all]==$MESHIO_VERSION
+      - python --version
+      - pip install --upgrade pip
+      - pip install tox
 
-.test_base:
-  extends: .install_dependencies
-  stage: test
-  script: cd test && pytest --verbose --junit-xml test_report.xml
-  artifacts:
-    reports:
-      junit: test/test_report.xml
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  FIELDCOMPARE_EXTRA: "[full]"
+  PY_VERSION: "3.9"
+  MESHIO_VERSION: "5.2.2"
 
 test:
-  extends: .test_base
+  image: python:$PY_VERSION
+  extends: .install_dependencies
+  stage: test
+  artifacts:
+    reports:
+      junit: test_report.xml
+  script:
+    - tox -e py${PY_VERSION/./}
   parallel:
     matrix:
-      - PY_VERSION: ["3.8", "3.9"]
+      - PY_VERSION: ["3.8", "3.9", "3.10"]
         MESHIO_VERSION: ["4.4", "5.2.2"]
+        FIELDCOMPARE_EXTRA: ["", "[full]"]
 
 test_coverage_report:
   stage: coverage
   extends: .install_dependencies
   script:
-    - python -m pip install pytest-cov
-    - |
-      cd test && python -m pytest --cov-report xml:coverage.xml \
-                                  --cov-report html:cov_report \
-                                  --cov-report term \
-                                  --cov=fieldcompare
+    - tox -e coverage
   artifacts:
     reports:
-      cobertura: test/coverage.xml
+      cobertura: coverage.xml
     paths:
-      - test/cov_report
+      - cov_report
     expire_in: 30 minutes
 
 pages:
@@ -62,7 +63,7 @@ pages:
       artifacts: true
   script:
     - mkdir public
-    - mv test/cov_report/* public/
+    - mv cov_report/* public/
   artifacts:
     paths:
       - public

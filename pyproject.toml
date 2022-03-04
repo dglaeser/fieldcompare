@@ -48,7 +48,16 @@ isolated_build = True
 [testenv]
 deps = -rrequirements.txt
 commands =
-  pytest
+  pytest --verbose --junit-xml test_report.xml
   flake8
   mypy fieldcompare
+
+[testenv:coverage]
+deps =
+  pytest-cov
+commands =
+  pytest --cov-report xml:coverage.xml \
+         --cov-report html:cov_report \
+         --cov-report term \
+         --cov=fieldcompare
 """
