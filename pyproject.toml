@@ -10,7 +10,7 @@ readme = "README.md"
 license = {file = "LICENSE.txt"}
 keywords = ["data comparison", "regression test"]
 requires-python = ">=3.8"
-dependencies = ["meshio[all]>=5.3"]
+dependencies = ["meshio[all]>=5.3", "colorama"]
 classifiers = [
   "Development Status :: 1 - Alpha",
   "Programming Language :: Python"
