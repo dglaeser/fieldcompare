@@ -106,11 +106,13 @@ def _run(args: dict, logger: Logger) -> int:
 
         if logger.verbosity_level and logger.verbosity_level > 1:
             logger.log("\n")
-        logger.log("Comparing the files '{}' and '{}'\n".format(
+        logger.log("Comparing the files '{}' and '{}'".format(
             make_colored(res_file, style=TextStyle.bright),
             make_colored(ref_file, style=TextStyle.bright)),
             verbosity_level=1
         )
+        if logger.verbosity_level and logger.verbosity_level != 1:
+            logger.log("\n")
 
         _passed = _run_file_compare(
             res_file,
@@ -119,6 +121,9 @@ def _run(args: dict, logger: Logger) -> int:
             args["ignore_missing_reference_fields"],
             indented_logger
         )
+
+        if logger.verbosity_level and logger.verbosity_level == 1:
+            logger.log(": {}\n".format(_get_status_string(_passed)))
         passed = False if not _passed else passed
 
     orphan_results = search_result.orphan_results
