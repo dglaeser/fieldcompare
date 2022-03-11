@@ -1,7 +1,7 @@
 """Classes and functions related to predicates on fields & arrays"""
 
 from typing import Callable, Optional, TypeVar
-from numpy import allclose
+from numpy import allclose, floating
 
 from ._common import _get_as_string, _default_base_tolerance, _is_iterable, _is_scalar
 
@@ -208,7 +208,7 @@ Predicate = Callable[[T1, T2], PredicateResult]
 
 def _is_float(value) -> bool:
     if _is_scalar(value):
-        return isinstance(value, float)
+        return isinstance(value, floating) or isinstance(value, float)
     elif _is_iterable(value):
         return any(_is_float(v) for v in value)
     return False
