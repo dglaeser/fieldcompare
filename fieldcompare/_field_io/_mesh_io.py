@@ -1,6 +1,6 @@
-"""Reader using meshio to support various mesh formats"""
+"""Reader for mesh file formats using meshio under the hood"""
 
-from typing import Iterable, Tuple
+from typing import Iterable, Tuple, Optional
 from os.path import splitext
 
 from meshio import Mesh
@@ -18,29 +18,60 @@ from ..mesh_fields import MeshFields, TimeSeriesMeshFields
 from ._reader_map import _register_reader_for_extension
 
 
-def _read_fields_from_mesh_file(filename: str,
-                                remove_ghost_points: bool,
-                                logger: Logger = NullDeviceLogger()) -> Iterable[Field]:
-    ext = splitext(filename)[1]
-    assert ext in meshio_supported_extensions
+class MeshFieldReader:
+    def __init__(self,
+                 permute_uniquely: bool = True,
+                 remove_ghost_points: bool = True,
+                 logger: Logger = NullDeviceLogger()) -> None:
+        self._do_permutation = permute_uniquely
+        self._remove_ghost_points = remove_ghost_points
+        self._logger = logger
 
-    try:
-        if _is_time_series_compatible_format(ext):
+    def attach_logger(self, logger: Logger) -> None:
+        self._logger = logger
+
+    @property
+    def remove_ghost_points(self) -> bool:
+        return self._remove_ghost_points
+
+    @remove_ghost_points.setter
+    def remove_ghost_points(self, value: bool) -> None:
+        self._remove_ghost_points = value
+
+    @property
+    def permute_uniquely(self) -> bool:
+        return self._do_permutation
+
+    @permute_uniquely.setter
+    def permute_uniquely(self, value: bool) -> None:
+        self._do_permutation = value
+
+    def read(self, filename: str) -> Iterable[Field]:
+        assert splitext(filename)[1] in meshio_supported_extensions
+
+        try:
+            return self._read(filename)
+        except Exception as e:
+            raise IOError(f"Caught exception during reading of the mesh:\n{e}")
+
+    def _read(self, filename: str) -> Iterable[Field]:
+        extension = splitext(filename)[1]
+        if _is_time_series_compatible_format(extension):
             return _extract_from_meshio_time_series(
                 MeshIOTimeSeriesReader(filename),
-                remove_ghost_points,
-                logger
+                self.remove_ghost_points,
+                self.permute_uniquely,
+                self._logger
             )
         return _extract_from_meshio_mesh(
             meshio_read(filename),
-            remove_ghost_points,
-            logger
+            self.remove_ghost_points,
+            self.permute_uniquely,
+            self._logger
         )
-    except Exception as e:
-        raise IOError(str(e))
 
 for ext in meshio_supported_extensions:
-    _register_reader_for_extension(ext, _read_fields_from_mesh_file)
+    _register_reader_for_extension(ext, MeshFieldReader())
 
 
 def _is_time_series_compatible_format(file_ext: str) -> bool:
@@ -78,11 +109,16 @@ def _filter_out_ghost_points(mesh: Mesh, logger: Logger) -> Tuple[Mesh, Array]:
 
 def _extract_from_meshio_mesh(mesh: Mesh,
                               remove_ghost_points: bool,
+                              permute_uniquely: bool,
                               logger: Logger) -> MeshFields:
     logger.log("Extracting fields from mesh file\n", verbosity_level=1)
     if remove_ghost_points:
         mesh, _ = _filter_out_ghost_points(mesh, logger)
-    result = MeshFields(mesh.points, _cells(mesh), logger)
+    result = MeshFields(
+        (mesh.points, _cells(mesh)),
+        permute_uniquely,
+        logger
+    )
     for array_name in mesh.point_data:
         result.add_point_data(array_name, mesh.point_data[array_name])
     for array_name in mesh.cell_data:
@@ -98,6 +134,7 @@ def _extract_from_meshio_mesh(mesh: Mesh,
 
 def _extract_from_meshio_time_series(time_series_reader,
                                      remove_ghost_points: bool,
+                                     permute_uniquely: bool,
                                      logger: Logger) -> TimeSeriesMeshFields:
     logger.log("Extracting points/cells from time series file\n", verbosity_level=1)
     points, cells = time_series_reader.read_points_cells()
@@ -106,14 +143,19 @@ def _extract_from_meshio_time_series(time_series_reader,
     if remove_ghost_points:
         mesh, ghost_point_filter = _filter_out_ghost_points(mesh, logger)
     time_steps_reader = _MeshioTimeStepReader(mesh, time_series_reader, ghost_point_filter)
-    return TimeSeriesMeshFields(mesh.points, _cells(mesh), time_steps_reader, logger)
+    return TimeSeriesMeshFields(
+        (mesh.points, _cells(mesh)),
+        time_steps_reader,
+        permute_uniquely,
+        logger
+    )
 
 
 class _MeshioTimeStepReader:
     def __init__(self,
                  mesh: Mesh,
                  meshio_reader: MeshIOTimeSeriesReader,
-                 ghost_point_filter: Array = None) -> None:
+                 ghost_point_filter: Optional[Array] = None) -> None:
         self._mesh = mesh
         self._reader = meshio_reader
         self._num_time_steps = meshio_reader.num_steps

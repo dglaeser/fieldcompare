@@ -1,6 +1,6 @@
 """Class to store fields defined on a mesh"""
 
-from typing import Iterable, Tuple, Iterator
+from typing import Iterable, Tuple, Iterator, Dict
 
 from ._common import _default_base_tolerance
 from .array import Array, is_array, make_array, make_uninitialized_array, append_to_array
@@ -11,32 +11,52 @@ from .field import Field
 from .logging import Logger, NullDeviceLogger
 
 
-MeshCells = Iterable[Tuple[str, Array]]
+MeshPoints = Array
+CellCorners = Array
+MeshCells = Iterable[Tuple[str, CellCorners]]
+Mesh = Tuple[MeshPoints, MeshCells]
+
 
 class MeshFields:
-    """Stores fields defined on a mesh. Points & cells are sorted to get a unique representation"""
+    """
+        Represents fields defined on a mesh.
+        Allows sorting of points & cells to get a unique
+        representation of a mesh independent of the order.
+    """
     def __init__(self,
-                 points: Array,
-                 cells_type_corners_tuples: MeshCells,
+                 mesh: Mesh,
+                 do_sorting: bool = True,
                  logger: Logger = NullDeviceLogger()) -> None:
-        cells: dict = {cell_type: corners for cell_type, corners in cells_type_corners_tuples}
-        points = make_array(points) if not is_array(points) else points
-        self._point_index_map = _sorting_points_indices(points, cells, logger)
+        self._do_sorting = do_sorting
+        self._point_index_map = make_array([])
+        self._cell_index_maps: dict = {}
+
+        points = _get_mesh_points(mesh)
+        cells = _get_mesh_cells_dict(mesh)
+
+        if do_sorting:
+            self._point_index_map = _sorting_points_indices(points, cells, logger)
+            point_index_map_inverse = _make_inverse_index_map(self._point_index_map)
         self._fields: list = [
-            Field("point_coordinates", points[self._point_index_map])
+            Field(
+                "point_coordinates",
+                points[self._point_index_map] if do_sorting else points
+            )
         ]
 
-        point_index_map_inverse = _make_inverse_index_map(self._point_index_map)
         def _map_and_sort_cell_corners(corner_list):
             return sort_array(point_index_map_inverse[corner_list])
 
-        self._cell_index_maps: dict = {}
         for cell_type, corners in cells.items():
             for idx, corner_list in enumerate(corners):
                 corners[idx] = _map_and_sort_cell_corners(corner_list)
-            self._cell_index_maps[cell_type] = _sorting_cell_indices(corners, cell_type, logger)
+            if do_sorting:
+                self._cell_index_maps[cell_type] = _sorting_cell_indices(corners, cell_type, logger)
             self._fields.append(
-                Field(f"{cell_type}_corners", corners[self._cell_index_maps[cell_type]])
+                Field(
+                    f"{cell_type}_corners",
+                    corners[self._cell_index_maps[cell_type]] if do_sorting else corners
+                )
             )
 
     def add_point_data(self, name: str, values: Array) -> None:
@@ -71,10 +91,14 @@ class MeshFields:
         return self._fields[index]
 
     def _permute_point_data(self, point_data: Array) -> Array:
-        return point_data[self._point_index_map]
+        if self._do_sorting:
+            return point_data[self._point_index_map]
+        return point_data
 
     def _permute_cell_data(self, cell_type: str, cell_data: Array) -> Array:
-        return cell_data[self._cell_index_maps[cell_type]]
+        if self._do_sorting:
+            return cell_data[self._cell_index_maps[cell_type]]
+        return cell_data
 
 
 class TimeSeriesMeshFields:
@@ -113,11 +137,11 @@ class TimeSeriesMeshFields:
             return self._time_step_index + 1 < self._ts_mf._time_series_reader.num_time_steps
 
     def __init__(self,
-                 points: Array,
-                 cells: MeshCells,
+                 mesh: Mesh,
                  time_series_reader,
+                 sort_by_coordinates: bool = True,
                  logger: Logger = NullDeviceLogger()) -> None:
-        self._mesh_fields = MeshFields(points, cells, logger)
+        self._mesh_fields = MeshFields(mesh, sort_by_coordinates, logger)
         self._base_field_names = [field.name for field in self._mesh_fields]
         self._time_series_reader = time_series_reader
         self._field_iterator = self.FieldIterator(self)
@@ -155,6 +179,18 @@ class TimeSeriesMeshFields:
         )
         for field_name in fields_to_remove:
             self._mesh_fields.remove_field(field_name)
+
+
+def _get_mesh_points(mesh: Mesh) -> Array:
+    mesh_points, _ = mesh
+    if is_array(mesh_points):
+        return mesh_points
+    return make_array(mesh_points)
+
+
+def _get_mesh_cells_dict(mesh: Mesh) -> Dict[str, CellCorners]:
+    _, mesh_cells = mesh
+    return {cell_type: corners for cell_type, corners in mesh_cells}
 
 
 def _sorting_points_indices(points, cells, logger: Logger = NullDeviceLogger()) -> Array:
