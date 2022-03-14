@@ -4,9 +4,10 @@ import sys
 from typing import TextIO, Optional
 from abc import ABC, abstractmethod
 
+
 class Logger(ABC):
     """Interface for loggers"""
-    def __init__(self, verbosity_level: int = None) -> None:
+    def __init__(self, verbosity_level: Optional[int] = None) -> None:
         self._verbosity_level = verbosity_level
 
     @property
@@ -17,7 +18,7 @@ class Logger(ABC):
     def verbosity_level(self, level: int) -> None:
         self._verbosity_level = level
 
-    def log(self, message: str, verbosity_level: int = None) -> None:
+    def log(self, message: str, verbosity_level: Optional[int] = None) -> None:
         if self._verbosity_level is None:
             self._log(message)
         elif verbosity_level is None and self._verbosity_level > 0:
@@ -34,7 +35,7 @@ class StreamLogger(Logger):
     """Logging into output streams"""
     def __init__(self,
                  ostream: TextIO,
-                 verbosity_level: int = None) -> None:
+                 verbosity_level: Optional[int] = None) -> None:
         self._ostream = ostream
         Logger.__init__(self, verbosity_level)
 
@@ -44,13 +45,13 @@ class StreamLogger(Logger):
 
 class StandardOutputLogger(StreamLogger):
     """Logging to standard out"""
-    def __init__(self, verbosity_level: int = None) -> None:
+    def __init__(self, verbosity_level: Optional[int] = None) -> None:
         StreamLogger.__init__(self, sys.stdout, verbosity_level)
 
 
 class NullDeviceLogger(Logger):
     """Logger interface that does no logging"""
-    def __init__(self, verbosity_level: int = None) -> None:
+    def __init__(self, verbosity_level: Optional[int] = None) -> None:
         Logger.__init__(self, verbosity_level)
 
     def _log(self, message: str) -> None:
