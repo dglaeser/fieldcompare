@@ -18,29 +18,55 @@ from ..mesh_fields import MeshFields, TimeSeriesMeshFields
 from ._reader_map import _register_reader_for_extension
 
 
-def _read_fields_from_mesh_file(filename: str,
-                                remove_ghost_points: bool,
-                                logger: Logger = NullDeviceLogger()) -> Iterable[Field]:
-    ext = splitext(filename)[1]
-    assert ext in meshio_supported_extensions
+class MeshFieldReader:
+    def __init__(self,
+                 sort_by_coordinates: bool = True,
+                 remove_ghost_points: bool = True,
+                 logger: Logger = NullDeviceLogger()) -> None:
+        self._sort_by_coordinates = sort_by_coordinates
+        self._remove_ghost_points = remove_ghost_points
+        self._logger = logger
 
-    try:
-        if _is_time_series_compatible_format(ext):
-            return _extract_from_meshio_time_series(
-                MeshIOTimeSeriesReader(filename),
-                remove_ghost_points,
-                logger
+    def attach_logger(self, logger: Logger) -> None:
+        self._logger = logger
+
+    @property
+    def remove_ghost_points(self) -> bool:
+        return self._remove_ghost_points
+
+    @remove_ghost_points.setter
+    def remove_ghost_points(self, value: bool) -> None:
+        self._remove_ghost_points = value
+
+    @property
+    def sort_by_coordinates(self) -> bool:
+        return self._sort_by_coordinates
+
+    @sort_by_coordinates.setter
+    def sort_by_coordinates(self, value: bool) -> None:
+        self._sort_by_coordinates = value
+
+    def read(self, filename: str) -> Iterable[Field]:
+        ext = splitext(filename)[1]
+        assert ext in meshio_supported_extensions
+
+        try:
+            if _is_time_series_compatible_format(ext):
+                return _extract_from_meshio_time_series(
+                    MeshIOTimeSeriesReader(filename),
+                    self.remove_ghost_points,
+                    self._logger
+                )
+            return _extract_from_meshio_mesh(
+                meshio_read(filename),
+                self.remove_ghost_points,
+                self._logger
             )
-        return _extract_from_meshio_mesh(
-            meshio_read(filename),
-            remove_ghost_points,
-            logger
-        )
-    except Exception as e:
-        raise IOError(str(e))
+        except Exception as e:
+            raise IOError(f"Caught exception during reading of the mesh:\n{e}")
 
 for ext in meshio_supported_extensions:
-    _register_reader_for_extension(ext, _read_fields_from_mesh_file)
+    _register_reader_for_extension(ext, MeshFieldReader())
 
 
 def _is_time_series_compatible_format(file_ext: str) -> bool:

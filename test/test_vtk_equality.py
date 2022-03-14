@@ -4,7 +4,7 @@ from pathlib import Path
 from pytest import raises
 
 from context import fieldcompare
-from fieldcompare import predicates, read_fields
+from fieldcompare import MeshFieldReader
 from _common import FuzzyFieldEquality, DefaultFieldEquality
 
 TEST_DATA_PATH = Path(__file__).resolve().parent / Path("data")
@@ -19,8 +19,10 @@ def _compare_vtk_files(file1,
                        predicate=FuzzyFieldEquality(),
                        remove_ghost_points: bool = True) -> bool:
     print("Comparing vtk files")
-    fields1 = read_fields(file1, remove_ghost_points)
-    fields2 = read_fields(file2, remove_ghost_points)
+    reader = MeshFieldReader()
+    reader.remove_ghost_points = remove_ghost_points
+    fields1 = reader.read(file1)
+    fields2 = reader.read(file2)
     for field1 in fields1:
         field2 = _get_field_from_list(field1.name, fields2)
         print(f" -- checking field {field1.name}")
