@@ -1,7 +1,7 @@
 """Interface & implementations for loggers"""
 
 import sys
-from typing import TextIO, Optional
+from typing import TextIO, Optional, Protocol
 from abc import ABC, abstractmethod
 
 
@@ -29,6 +29,12 @@ class Logger(ABC):
     @abstractmethod
     def _log(self, message: str) -> None:
         """Implementation-defined message logging"""
+
+
+class Loggable(Protocol):
+    """Interface for classes that allow attaching a logger."""
+    def attach_logger(self, logger: Logger) -> None:
+        ...
 
 
 class StreamLogger(Logger):
