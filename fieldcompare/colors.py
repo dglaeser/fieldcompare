@@ -1,5 +1,6 @@
 """Wrap text in escape characters to produce colored output on terminals"""
 
+from typing import Optional
 from warnings import warn
 from enum import Enum
 from contextlib import contextmanager
@@ -49,11 +50,11 @@ class _NullColorBackend:
 
 _COLOR_BACKEND = _AnsiiColorBackend() if _COLORAMA_FOUND else _NullColorBackend()
 
-def deactivate_colored_output() -> None:
+def _deactivate_colored_output() -> None:
     global _COLOR_BACKEND
     _COLOR_BACKEND = _NullColorBackend()
 
-def activate_colored_output() -> None:
+def _activate_colored_output() -> None:
     if not _COLORAMA_FOUND:
         warn(RuntimeWarning("Cannot activate colored output, colorama package not found"))
     else:
@@ -67,9 +68,9 @@ def text_color_options(use_colors=True, use_styles=True):
     if not _COLORAMA_FOUND:
         if use_styles or use_styles:
             warn(RuntimeWarning("Cannot use colored options, colorama package not found"))
-        deactivate_colored_output()
+        _deactivate_colored_output()
     else:
-        activate_colored_output()
+        _activate_colored_output()
         _COLOR_BACKEND = _AnsiiColorBackend(use_colors, use_styles)
 
     try:
@@ -97,6 +98,6 @@ class TextStyle(Enum):
         return str(self.value)
 
 def make_colored(text: str,
-                 color: TextColor = None,
-                 style: TextStyle = None) -> str:
+                 color: Optional[TextColor] = None,
+                 style: Optional[TextStyle] = None) -> str:
     return _COLOR_BACKEND.make_colored(text, color, style)  # type: ignore
