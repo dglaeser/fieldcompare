@@ -3,14 +3,14 @@
 from os.path import splitext, exists
 from typing import Iterable
 
-from .field import Field
+from .field import FieldInterface
 from ._field_io import _get_reader_for_extension
 from .logging import Logger, NullDeviceLogger
 
 
 def read_fields(filename: str,
                 remove_ghost_points: bool = True,
-                logger: Logger = NullDeviceLogger()) -> Iterable[Field]:
+                logger: Logger = NullDeviceLogger()) -> Iterable[FieldInterface]:
     """Read in the fields from the file with the given name"""
     if not exists(filename):
         raise IOError(f"Given file '{filename}' does not exist")

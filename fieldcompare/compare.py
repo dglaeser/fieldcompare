@@ -3,7 +3,7 @@
 from typing import Optional, Callable, Iterable, List, Dict, Tuple
 from dataclasses import dataclass
 
-from .field import Field
+from .field import FieldInterface
 from .matching import find_matching_field_names
 from .predicates import Predicate, DefaultEquality
 
@@ -64,8 +64,8 @@ LogCallBack = Callable[[ComparisonLog], None]
 def _null_logger(log: ComparisonLog) -> None:
     pass
 
-def compare_fields(result_fields: Iterable[Field],
-                   reference_fields: Iterable[Field],
+def compare_fields(result_fields: Iterable[FieldInterface],
+                   reference_fields: Iterable[FieldInterface],
                    field_comparison_map: FieldComparisonMap,
                    predicate_map: PredicateMap,
                    log_call_back: LogCallBack = _null_logger) -> ComparisonResult:
@@ -89,8 +89,8 @@ def compare_fields(result_fields: Iterable[Field],
                 log_call_back(log)
     return ComparisonResult(logs)
 
-def compare_fields_equal(result_fields: Iterable[Field],
-                         reference_fields: Iterable[Field],
+def compare_fields_equal(result_fields: Iterable[FieldInterface],
+                         reference_fields: Iterable[FieldInterface],
                          field_comparison_map: FieldComparisonMap,
                          log_call_back: LogCallBack = _null_logger) -> ComparisonResult:
     return compare_fields(
@@ -109,8 +109,8 @@ class SkipLog:
     reason: str
 
 def compare_matching_fields(
-        result_fields: Iterable[Field],
-        reference_fields: Iterable[Field],
+        result_fields: Iterable[FieldInterface],
+        reference_fields: Iterable[FieldInterface],
         predicate_map: PredicateMap,
         log_call_back: LogCallBack = _null_logger) -> Tuple[ComparisonResult, List[SkipLog]]:
     search_result = find_matching_field_names(result_fields, reference_fields)
@@ -139,8 +139,8 @@ def compare_matching_fields(
     return comparison_logs, skipped_logs
 
 def compare_matching_fields_equal(
-        result_fields: Iterable[Field],
-        reference_fields: Iterable[Field],
+        result_fields: Iterable[FieldInterface],
+        reference_fields: Iterable[FieldInterface],
         log_call_back: LogCallBack = _null_logger) -> Tuple[ComparisonResult, List[SkipLog]]:
     return compare_matching_fields(
         result_fields,

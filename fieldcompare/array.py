@@ -1,6 +1,6 @@
 """Arrays representing field values"""
 
-from typing import Sequence, Tuple, Optional, Union
+from typing import Sequence, Tuple, Optional, Union, SupportsIndex
 
 import numpy as np
 from numpy import ndarray as Array
@@ -37,7 +37,7 @@ def is_array(input_array) -> bool:
     return isinstance(input_array, Array)
 
 
-def accumulate(input_array: Array, axis=None) -> Array:
+def accumulate(input_array: Array, axis: SupportsIndex = 0) -> Array:
     return np.sum(input_array, axis=axis)
 
 
@@ -45,7 +45,7 @@ def adjacent_difference(input_array: Array, axis: int = -1) -> Array:
     return np.diff(input_array, axis=axis)
 
 
-def all_true(input_array: Array, axis: int = None):
+def all_true(input_array: Array, axis: Optional[SupportsIndex] = None):
     """Check whether all entries of a boolean array are true along the given axis."""
     return np.all(input_array, axis=axis)
 
