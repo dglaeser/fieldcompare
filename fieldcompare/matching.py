@@ -5,7 +5,7 @@ from typing import List, Iterable
 from os.path import join, relpath
 from os import walk
 
-from .field import Field
+from .field import FieldInterface
 
 @dataclass
 class MatchResult:
@@ -15,8 +15,8 @@ class MatchResult:
     orphan_references: List[str]
 
 
-def find_matching_field_names(result_fields: Iterable[Field],
-                              reference_fields: Iterable[Field]) -> MatchResult:
+def find_matching_field_names(result_fields: Iterable[FieldInterface],
+                              reference_fields: Iterable[FieldInterface]) -> MatchResult:
     """Looks for matching field names in the provided results & reference field lists"""
     res_names = [f.name for f in result_fields]
     ref_names = [f.name for f in reference_fields]
