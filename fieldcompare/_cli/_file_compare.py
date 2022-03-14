@@ -3,25 +3,13 @@
 from argparse import ArgumentParser
 from textwrap import indent
 
-from ..compare import compare_matching_fields_equal, ComparisonLog
+from ..colors import make_colored, TextStyle
+from ..matching import find_matching_field_names
+from ..predicates import DefaultEquality
 from ..logging import Logger
 
 from ._common import _read_fields_from_file, _bool_to_exit_code
-from ._common import _get_comparison_message_string, _get_predicate_report_string
-from ._common import _get_missing_results, _get_missing_references
 from ._common import _style_as_error, _style_as_warning, _make_list_string, _get_status_string
-
-
-class ComparisonLogCallBack:
-    def __init__(self, logger: Logger) -> None:
-        self._logger = logger
-
-    def __call__(self, comparison_log: ComparisonLog) -> None:
-        self._logger.log(_get_comparison_message_string(comparison_log), verbosity_level=1)
-        self._logger.log(
-            indent(_get_predicate_report_string(comparison_log), " -- "),
-            verbosity_level=2
-        )
 
 
 def _add_arguments(parser: ArgumentParser):
@@ -88,16 +76,29 @@ def _run_file_compare(res_file: str,
         logger.log(_read_error_message(ref_file, str(e)), verbosity_level=1)
         return False
 
+    passed = True
     try:  # do actual comparison
-        comparisons, skips = compare_matching_fields_equal(
-            res_fields, ref_fields, ComparisonLogCallBack(logger)
-        )
+        match_result = find_matching_field_names(res_fields, ref_fields)
+        missing_references = match_result.orphan_results
+        missing_results = match_result.orphan_references
+        res_field_dict: dict = {field.name: field.values for field in res_fields}
+        ref_field_dict: dict = {field.name: field.values for field in ref_fields}
+        for name in match_result.matches:
+            result = DefaultEquality()(res_field_dict[name], ref_field_dict[name])
+            if not result:
+                passed = False
+            logger.log(
+                _get_comparison_message_string(name, bool(result)),
+                verbosity_level=1
+            )
+            logger.log(
+                indent(_get_predicate_report_string(result.predicate_info, result.report), " -- "),
+                verbosity_level=2
+            )
     except Exception as e:
         logger.log(f"Could not compare the files. Exception:\n{e}\n", verbosity_level=1)
         return False
 
-    passed = bool(comparisons)
-    missing_results = _get_missing_results(skips)
     if missing_results:
         should_fail = not ignore_missing_results
         passed = False if should_fail else passed
@@ -106,11 +107,10 @@ def _run_file_compare(res_file: str,
             verbosity_level=1
         )
         logger.log(
-            "{}\n".format(_make_list_string([str(r.result_field_name) for r in missing_results])),
+            "{}\n".format(_make_list_string(missing_results)),
             verbosity_level=1
         )
 
-    missing_references = _get_missing_references(skips)
     if missing_references:
         should_fail = not ignore_missing_references
         passed = False if should_fail else passed
@@ -119,7 +119,7 @@ def _run_file_compare(res_file: str,
             verbosity_level=1
         )
         logger.log(
-            "{}\n".format(_make_list_string([str(r.result_field_name) for r in missing_references])),
+            "{}\n".format(_make_list_string(missing_references)),
             verbosity_level=1
         )
 
@@ -140,3 +140,15 @@ def _missing_res_or_ref_message(res_or_ref: str, is_error: bool) -> str:
     else:
         result = "Ignored the following " + _style_as_warning(result)
     return result
+
+
+def _get_comparison_message_string(field_name: str, status: bool) -> str:
+    return "Comparison of the fields '{}' and '{}': {}\n".format(
+        make_colored(field_name, style=TextStyle.bright),
+        make_colored(field_name, style=TextStyle.bright),
+        _get_status_string(status)
+    )
+
+
+def _get_predicate_report_string(pred_info: str, pred_log: str) -> str:
+    return f"Predicate: {pred_info}\nReport: {pred_log}\n"

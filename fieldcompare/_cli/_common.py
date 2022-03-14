@@ -3,8 +3,7 @@
 from typing import List
 from textwrap import indent
 
-from ..colors import make_colored, TextStyle, TextColor
-from ..compare import ComparisonLog, SkipLog
+from ..colors import make_colored, TextColor
 from ..logging import Logger, ModifiedVerbosityLoggerFacade, IndentedLoggingFacade
 from ..field_io import read_fields
 
@@ -30,39 +29,9 @@ def _style_as_error(text: str) -> str:
     return make_colored(text, color=TextColor.red)
 
 
-def _get_comparison_message_string(comparison_log: ComparisonLog) -> str:
-    return "Comparison of the fields '{}' and '{}': {}\n".format(
-        make_colored(comparison_log.result_field_name, style=TextStyle.bright),
-        make_colored(comparison_log.reference_field_name, style=TextStyle.bright),
-        _get_status_string(comparison_log.passed)
-    )
-
-
-def _get_predicate_report_string(comparison_log: ComparisonLog) -> str:
-    return "Predicate: {}\nReport: {}\n".format(
-        comparison_log.predicate,
-        comparison_log.predicate_log
-    )
-
-
 def _make_list_string(missing_fields: List[str]) -> str:
     return indent("\n".join(missing_fields), "- ")
 
-
-def _has_missing_result(skip_log: SkipLog) -> bool:
-    return skip_log.result_field_name is None and skip_log.reference_field_name is not None
-
-
-def _has_missing_reference(skip_log: SkipLog) -> bool:
-    return skip_log.reference_field_name is None and skip_log.result_field_name is not None
-
-
-def _get_missing_results(skip_logs: List[SkipLog]) -> List[SkipLog]:
-    return list(filter(lambda log: _has_missing_result(log), skip_logs))
-
-
-def _get_missing_references(skip_logs: List[SkipLog]) -> List[SkipLog]:
-    return list(filter(lambda log: _has_missing_reference(log), skip_logs))
 
 def _bool_to_exit_code(value: bool) -> int:
     return int(not value)
