@@ -2,11 +2,13 @@
 
 from argparse import ArgumentParser
 from textwrap import indent
+from typing import List, Iterable
 
 from ..colors import make_colored, TextStyle
 from ..matching import find_matching_field_names
 from ..predicates import DefaultEquality
 from ..logging import Logger
+from ..field import FieldInterface
 
 from ._common import _read_fields_from_file, _bool_to_exit_code
 from ._common import _style_as_error, _style_as_warning, _make_list_string, _get_status_string
@@ -76,32 +78,45 @@ def _run_file_compare(res_file: str,
         logger.log(_read_error_message(ref_file, str(e)), verbosity_level=1)
         return False
 
-    passed = True
-    try:  # do actual comparison
-        match_result = find_matching_field_names(res_fields, ref_fields)
-        missing_references = match_result.orphan_results
-        missing_results = match_result.orphan_references
-        res_field_dict: dict = {field.name: field.values for field in res_fields}
-        ref_field_dict: dict = {field.name: field.values for field in ref_fields}
-        for name in match_result.matches:
-            result = DefaultEquality()(res_field_dict[name], ref_field_dict[name])
-            if not result:
-                passed = False
-            logger.log(
-                _get_comparison_message_string(name, bool(result)),
-                verbosity_level=1
-            )
-            logger.log(
-                indent(_get_predicate_report_string(result.predicate_info, result.report), " -- "),
-                verbosity_level=2
-            )
+    match_result = find_matching_field_names(res_fields, ref_fields)
+    try:
+        passed = _do_field_comparisons(res_fields, ref_fields, match_result.matches, logger)
     except Exception as e:
         logger.log(f"Could not compare the files. Exception:\n{e}\n", verbosity_level=1)
         return False
 
+    missing_results = match_result.orphan_references
+    missing_references = match_result.orphan_results
+    _log_missing_results(missing_results, ignore_missing_results, logger)
+    _log_missing_references(missing_references, ignore_missing_references, logger)
+    passed = False if missing_results and not ignore_missing_results else passed
+    passed = False if missing_references and not ignore_missing_references else passed
+
+    logger.log("File comparison {}\n".format(_get_status_string(passed)))
+    return passed
+
+
+def _do_field_comparisons(res_fields: Iterable[FieldInterface],
+                          ref_fields: Iterable[FieldInterface],
+                          field_names: Iterable[str],
+                          logger: Logger) -> bool:
+    res_field_dict: dict = {field.name: field.values for field in res_fields}
+    ref_field_dict: dict = {field.name: field.values for field in ref_fields}
+    predicate = DefaultEquality()
+    passed = True
+    for name in field_names:
+        result = predicate(res_field_dict[name], ref_field_dict[name])
+        msg = _get_comparison_message_string(name, bool(result))
+        report = _get_predicate_report_string(result.predicate_info, result.report)
+        passed = False if not result else passed
+        logger.log(msg, verbosity_level=1)
+        logger.log(indent(report, " -- "), verbosity_level=2)
+    return passed
+
+
+def _log_missing_results(missing_results: List[str], ignore_missing_res: bool, logger: Logger) -> None:
     if missing_results:
-        should_fail = not ignore_missing_results
-        passed = False if should_fail else passed
+        should_fail = not ignore_missing_res
         logger.log(
             "{}\n".format(_missing_res_or_ref_message("result", should_fail)),
             verbosity_level=1
@@ -111,9 +126,10 @@ def _run_file_compare(res_file: str,
             verbosity_level=1
         )
 
+
+def _log_missing_references(missing_references: List[str], ignore_missing_ref: bool, logger: Logger) -> None:
     if missing_references:
-        should_fail = not ignore_missing_references
-        passed = False if should_fail else passed
+        should_fail = not ignore_missing_ref
         logger.log(
             "{}\n".format(_missing_res_or_ref_message("reference", should_fail)),
             verbosity_level=1
@@ -122,9 +138,6 @@ def _run_file_compare(res_file: str,
             "{}\n".format(_make_list_string(missing_references)),
             verbosity_level=1
         )
-
-    logger.log("File comparison {}\n".format(_get_status_string(passed)))
-    return passed
 
 
 def _read_error_message(filename: str, except_str: str) -> str:
