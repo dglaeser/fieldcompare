@@ -21,35 +21,41 @@ class PredicateResult:
     def __bool__(self) -> bool:
         return self.value
 
+
+T1 = TypeVar("T1")
+T2 = TypeVar("T2")
+Predicate = Callable[[T1, T2], PredicateResult]
+
+
 class ExactEquality:
     """Compares the given arguments for exact equality"""
     def __call__(self, first, second) -> PredicateResult:
-        first_is_iterable = _is_iterable(first)
-        second_is_iterable = _is_iterable(second)
-        if first_is_iterable and second_is_iterable:
-            return self._array_equal(
-                first if is_array(first) else make_array(first),
-                second if is_array(second) else make_array(second)
-            )
         try:
-            if first != second:
-                return PredicateResult(
-                    value=False,
-                    predicate_info=self._get_info(),
-                    report=_get_equality_fail_message(first, second)
-                )
-            return PredicateResult(
-                value=True,
-                predicate_info=self._get_info(),
-                report=f"{first} and {second} have compared equal"
-            )
+            return self._check(first, second)
         except Exception as e:
-            raise ValueError(f"Could not check the given values for equality. Caught exception: {e}")
+            raise ValueError(f"Exact equality check failed. Caught exception: {e}")
+
+    def _check(self, first, second) -> PredicateResult:
+        if _is_iterable(first) and _is_iterable(second):
+            return self._array_equal(first, second)
+        if first != second:
+            return PredicateResult(
+                value=False,
+                predicate_info=self._get_info(),
+                report=_get_equality_fail_message(first, second)
+            )
+        return PredicateResult(
+            value=True,
+            predicate_info=self._get_info(),
+            report=f"{first} and {second} have compared equal"
+        )
 
     def _get_info(self) -> str:
         return "ExactEquality"
 
-    def _array_equal(self, first: Array, second: Array) -> PredicateResult:
+    def _array_equal(self, first, second) -> PredicateResult:
+        first = make_array(first) if not is_array(first) else first
+        second = make_array(second) if not is_array(second) else second
         if len(first) != len(second):
             return PredicateResult(
                 value=False,
@@ -100,30 +106,30 @@ class FuzzyEquality:
         self._abs_tol = value
 
     def __call__(self, first, second) -> PredicateResult:
-        first_is_iterable = _is_iterable(first)
-        second_is_iterable = _is_iterable(second)
-        if first_is_iterable and second_is_iterable:
-            return self._array_fuzzy_equal(
-                first if is_array(first) else make_array(first),
-                second if is_array(second) else make_array(second)
-            )
         try:
-            if _is_fuzzy_equal(first, second, self.absolute_tolerance, self.relative_tolerance):
-                return PredicateResult(
-                    value=True,
-                    report=f"{first} and {second} have compared equal",
-                    predicate_info=self._get_info()
-                )
-            deviation_in_percent = self._compute_deviation_in_percent(first, second)
+            return self._check(first, second)
+        except Exception as e:
+            raise ValueError(f"Fuzzy comparison failed. Caught exception: {e}")
+
+    def _check(self, first, second) -> PredicateResult:
+        if _is_iterable(first) and _is_iterable(second):
+            return self._array_fuzzy_equal(first, second)
+        if _is_fuzzy_equal(first, second, self.absolute_tolerance, self.relative_tolerance):
             return PredicateResult(
-                value=False,
-                report=_get_equality_fail_message(first, second, deviation_in_percent),
+                value=True,
+                report=f"{first} and {second} have compared equal",
                 predicate_info=self._get_info()
             )
-        except Exception as e:
-            raise ValueError(f"Could not fuzzy-compare the given values. Caught exception: {e}")
+        deviation_in_percent = _compute_deviation_in_percent(first, second)
+        return PredicateResult(
+            value=False,
+            report=_get_equality_fail_message(first, second, deviation_in_percent),
+            predicate_info=self._get_info()
+        )
 
     def _array_fuzzy_equal(self, first: Array, second: Array) -> PredicateResult:
+        first = make_array(first) if not is_array(first) else first
+        second = make_array(second) if not is_array(second) else second
         if len(first) != len(second):
             return PredicateResult(
                 value=False,
@@ -133,14 +139,13 @@ class FuzzyEquality:
         unequals = find_first_fuzzy_unequal(first, second, self._rel_tol, self._abs_tol)
         if unequals is not None:
             val1, val2 = unequals
-            deviation_in_percent = self._compute_deviation_in_percent(val1, val2)
+            deviation_in_percent = _compute_deviation_in_percent(val1, val2)
             return PredicateResult(
                 value=False,
                 report=_get_equality_fail_message(val1, val2, deviation_in_percent),
                 predicate_info=self._get_info()
             )
-
-        max_abs_diffs = self._compute_max_abs_diffs(first, second)
+        max_abs_diffs = _compute_max_abs_diffs(first, second)
         if max_abs_diffs is not None:
             diff_suffix = "s" if is_array(max_abs_diffs) else ""
             max_abs_diff_str = _get_as_string(max_abs_diffs)
@@ -158,18 +163,6 @@ class FuzzyEquality:
             self.relative_tolerance
         )
 
-    def _compute_deviation_in_percent(self, val1, val2):
-        try:
-            return rel_diff(val1, val2)*100.0
-        except Exception:
-            return None
-
-    def _compute_max_abs_diffs(self, first, second):
-        try:
-            return max_column_elements(abs_diff(first, second))
-        except Exception:
-            return None
-
 
 class DefaultEquality(FuzzyEquality):
     """Default choice of quality checks. Checks fuzzy or exact depending on data type."""
@@ -180,11 +173,6 @@ class DefaultEquality(FuzzyEquality):
         if _is_float(first) or _is_float(second):
             return FuzzyEquality.__call__(self, first, second)
         return ExactEquality()(first, second)
-
-
-T1 = TypeVar("T1")
-T2 = TypeVar("T2")
-Predicate = Callable[[T1, T2], PredicateResult]
 
 
 def _is_float(value) -> bool:
@@ -211,3 +199,17 @@ def _get_equality_fail_message(val1, val2, deviation_in_percent=None) -> str:
     if deviation_in_percent is not None:
         result += f"\n- Deviation in [%]: {deviation_in_percent}"
     return result
+
+
+def _compute_deviation_in_percent(val1, val2):
+    try:
+        return rel_diff(val1, val2)*100.0
+    except Exception:
+        return None
+
+
+def _compute_max_abs_diffs(first, second):
+    try:
+        return max_column_elements(abs_diff(first, second))
+    except Exception:
+        return None
