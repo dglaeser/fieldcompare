@@ -4,8 +4,7 @@ from pathlib import Path
 from pytest import raises
 
 from context import fieldcompare
-from fieldcompare import MeshFieldReader
-from _common import FuzzyFieldEquality, DefaultFieldEquality
+from fieldcompare import MeshFieldReader, FuzzyEquality, DefaultEquality
 
 TEST_DATA_PATH = Path(__file__).resolve().parent / Path("data")
 
@@ -16,7 +15,7 @@ def _get_field_from_list(name, fields_list):
 
 def _compare_vtk_files(file1,
                        file2,
-                       predicate=FuzzyFieldEquality(),
+                       predicate=FuzzyEquality(),
                        remove_ghost_points: bool = True) -> bool:
     print("Comparing vtk files")
     reader = MeshFieldReader()
@@ -26,7 +25,7 @@ def _compare_vtk_files(file1,
     for field1 in fields1:
         field2 = _get_field_from_list(field1.name, fields2)
         print(f" -- checking field {field1.name}")
-        return predicate(field1, field2)
+        return bool(predicate(field1.values, field2.values))
     return True
 
 
@@ -38,7 +37,7 @@ def test_identical_vtk_files():
     assert _compare_vtk_files(
         TEST_DATA_PATH / Path("test_mesh.vtu"),
         TEST_DATA_PATH / Path("test_mesh.vtu"),
-        DefaultFieldEquality()
+        DefaultEquality()
     )
 
     assert _compare_vtk_files(
@@ -48,7 +47,7 @@ def test_identical_vtk_files():
     assert _compare_vtk_files(
         TEST_DATA_PATH / Path("test_mesh_permutated.vtu"),
         TEST_DATA_PATH / Path("test_mesh_permutated.vtu"),
-        DefaultFieldEquality()
+        DefaultEquality()
     )
 
 def test_vtk_files_permutated():
@@ -59,14 +58,14 @@ def test_vtk_files_permutated():
     assert _compare_vtk_files(
         TEST_DATA_PATH / Path("test_mesh.vtu"),
         TEST_DATA_PATH / Path("test_mesh_permutated.vtu"),
-        DefaultFieldEquality()
+        DefaultEquality()
     )
 
 def test_vtk_files_perturbed():
-    predicate = FuzzyFieldEquality()
-    default_predicate = DefaultFieldEquality()
-    predicate.set_relative_tolerance(1e-5)
-    default_predicate.set_relative_tolerance(1e-5)
+    predicate = FuzzyEquality()
+    default_predicate = DefaultEquality()
+    predicate.relative_tolerance = 1e-5
+    default_predicate.relative_tolerance = 1e-5
 
     assert _compare_vtk_files(
         TEST_DATA_PATH / Path("test_mesh.vtu"),
@@ -90,10 +89,10 @@ def test_vtk_files_perturbed():
         default_predicate
     )
 
-    predicate.set_relative_tolerance(1e-20)
-    predicate.set_absolute_tolerance(0.0)
-    default_predicate.set_relative_tolerance(1e-20)
-    default_predicate.set_absolute_tolerance(0.0)
+    predicate.relative_tolerance = 1e-20
+    predicate.absolute_tolerance = 0.0
+    default_predicate.relative_tolerance = 1e-20
+    default_predicate.absolute_tolerance = 0.0
     assert not _compare_vtk_files(
         TEST_DATA_PATH / Path("test_mesh.vtu"),
         TEST_DATA_PATH / Path("test_mesh_permutated_perturbed.vtu"),
@@ -117,8 +116,8 @@ def test_vtk_files_perturbed():
     )
 
 def test_non_conforming_vtk_files():
-    predicate = FuzzyFieldEquality()
-    default_predicate = DefaultFieldEquality()
+    predicate = FuzzyEquality()
+    default_predicate = DefaultEquality()
 
     assert _compare_vtk_files(
         TEST_DATA_PATH / Path("test_non_conforming_mesh.vtu"),
@@ -153,10 +152,10 @@ def test_non_conforming_vtk_files():
         default_predicate
     )
 
-    predicate.set_absolute_tolerance(1e-20)
-    predicate.set_relative_tolerance(1e-20)
-    default_predicate.set_absolute_tolerance(1e-20)
-    default_predicate.set_relative_tolerance(1e-20)
+    predicate.absolute_tolerance = 1e-20
+    predicate.relative_tolerance = 1e-20
+    default_predicate.absolute_tolerance = 1e-20
+    default_predicate.relative_tolerance = 1e-20
     assert not _compare_vtk_files(
         TEST_DATA_PATH / Path("test_non_conforming_mesh.vtu"),
         TEST_DATA_PATH / Path("test_non_conforming_mesh_permutated_perturbed.vtu"),
@@ -169,8 +168,8 @@ def test_non_conforming_vtk_files():
     )
 
 def test_vtk_with_ghost_points():
-    predicate = FuzzyFieldEquality()
-    default_predicate = DefaultFieldEquality()
+    predicate = FuzzyEquality()
+    default_predicate = DefaultEquality()
 
     assert _compare_vtk_files(
         TEST_DATA_PATH / Path("test_non_conforming_mesh.vtu"),
