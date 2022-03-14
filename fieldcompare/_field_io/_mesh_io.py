@@ -1,4 +1,4 @@
-"""Reader using meshio to support various mesh formats"""
+"""Reader for mesh file formats using meshio under the hood"""
 
 from typing import Iterable, Tuple, Optional
 from os.path import splitext
@@ -47,25 +47,28 @@ class MeshFieldReader:
         self._do_permutation = value
 
     def read(self, filename: str) -> Iterable[Field]:
-        ext = splitext(filename)[1]
-        assert ext in meshio_supported_extensions
+        assert splitext(filename)[1] in meshio_supported_extensions
 
         try:
-            if _is_time_series_compatible_format(ext):
-                return _extract_from_meshio_time_series(
-                    MeshIOTimeSeriesReader(filename),
-                    self.remove_ghost_points,
-                    self.permute_uniquely,
-                    self._logger
-                )
-            return _extract_from_meshio_mesh(
-                meshio_read(filename),
+            return self._read(filename)
+        except Exception as e:
+            raise IOError(f"Caught exception during reading of the mesh:\n{e}")
+
+    def _read(self, filename: str) -> Iterable[Field]:
+        extension = splitext(filename)[1]
+        if _is_time_series_compatible_format(extension):
+            return _extract_from_meshio_time_series(
+                MeshIOTimeSeriesReader(filename),
                 self.remove_ghost_points,
                 self.permute_uniquely,
                 self._logger
             )
-        except Exception as e:
-            raise IOError(f"Caught exception during reading of the mesh:\n{e}")
+        return _extract_from_meshio_mesh(
+            meshio_read(filename),
+            self.remove_ghost_points,
+            self.permute_uniquely,
+            self._logger
+        )
 
 for ext in meshio_supported_extensions:
     _register_reader_for_extension(ext, MeshFieldReader())
