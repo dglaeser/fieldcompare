@@ -1,6 +1,8 @@
 """Command-line interface for comparing a pair of folders"""
 
+from typing import Sequence, Iterable
 from argparse import ArgumentParser
+from typing import List
 from os.path import join
 from re import compile
 
@@ -18,7 +20,7 @@ def _add_arguments(parser: ArgumentParser):
     parser.add_argument(
         "dir",
         type=str,
-        help="The directory containing the fieles to be compared against references"
+        help="The directory containing the files to be compared against references"
     )
     parser.add_argument(
         "-r", "--reference-dir",
@@ -73,89 +75,31 @@ def _run(args: dict, logger: Logger) -> int:
     res_dir = args["dir"]
     ref_dir = args["reference_dir"]
     search_result = find_matching_file_names(res_dir, ref_dir)
-    logger.log("Comparing the files in the directories '{}' and '{}'\n".format(
+    logger.log("Comparing files in the directories '{}' and '{}'\n\n".format(
         make_colored(res_dir, style=TextStyle.bright),
         make_colored(ref_dir, style=TextStyle.bright)),
         verbosity_level=1
     )
-    if logger.verbosity_level and logger.verbosity_level == 1:
-        logger.log("\n")
 
-    passed = True
+    filtered_matches = search_result.matches
+    if args["regex"]:
+        filtered_matches = _filter_using_regex(filtered_matches, args["regex"])
 
-    def _filter_using_regex():
-        result = []
-        for regex in args["regex"]:
-            # support unix bash wildcard patterns
-            if regex.startswith("*") or regex.startswith("?"):
-                regex = f".{regex}"
-            pattern = compile(regex)
-            result.extend(list(filter(lambda f: pattern.match(f), search_result.matches)))
-        return list(set(result))
-
-    filtered_matches = search_result.matches if not args["regex"] else _filter_using_regex()
-    dropped_matches = list(filter(lambda f: f not in filtered_matches, search_result.matches))
-
-    # Use decreased verbosity level in the file comparisons
-    # s.t. level=1 does not include all the file-test output
-    lower_verbosity_logger = ModifiedVerbosityLoggerFacade(logger, verbosity_change=-1)
-    indented_logger = IndentedLoggingFacade(lower_verbosity_logger, first_line_prefix=" "*4)
-    for match in filter(lambda f: is_supported_file(join(res_dir, f)), filtered_matches):
-        res_file = join(res_dir, match)
-        ref_file = join(ref_dir, match)
-
-        if logger.verbosity_level and logger.verbosity_level > 1:
-            logger.log("\n")
-        logger.log("Comparing the files '{}' and '{}'".format(
-            make_colored(res_file, style=TextStyle.bright),
-            make_colored(ref_file, style=TextStyle.bright)),
-            verbosity_level=1
-        )
-        if logger.verbosity_level and logger.verbosity_level != 1:
-            logger.log("\n")
-
-        _passed = _run_file_compare(
-            res_file,
-            ref_file,
-            args["ignore_missing_result_fields"],
-            args["ignore_missing_reference_fields"],
-            indented_logger
-        )
-
-        if logger.verbosity_level and logger.verbosity_level == 1:
-            logger.log(": {}\n".format(_get_status_string(_passed)))
-        passed = False if not _passed else passed
-
-    orphan_results = search_result.orphan_results
-    if orphan_results:
-        should_fail = not args["ignore_missing_reference_files"]
-        passed = False if should_fail else passed
-        logger.log(
-            "\n{}:\n".format(_missing_res_or_ref_message("reference", should_fail)),
-            verbosity_level=1
-        )
-        logger.log(
-            "{}\n".format(_make_list_string([join(ref_dir, f) for f in orphan_results])),
-            verbosity_level=1
-        )
-
-    orphan_references = search_result.orphan_references
-    if orphan_references:
-        should_fail = not args["ignore_missing_result_files"]
-        passed = False if should_fail else passed
-        logger.log(
-            "\n{}:\n".format(_missing_res_or_ref_message("result", should_fail)),
-            verbosity_level=1
-        )
-        logger.log(
-            "{}\n".format(_make_list_string([join(res_dir, f) for f in orphan_references])),
-            verbosity_level=1
-        )
-
+    supported_files = list(filter(lambda f: is_supported_file(join(res_dir, f)), filtered_matches))
     unsupported_files = list(filter(lambda f: not is_supported_file(join(res_dir, f)), filtered_matches))
+    dropped_matches = list(filter(lambda f: f not in filtered_matches, search_result.matches))
+    missing_results = search_result.orphan_references
+    missing_references = search_result.orphan_results
+
+    passed = _do_file_comparisons(args, supported_files, logger)
+    _log_missing_results(args, missing_results, logger)
+    _log_missing_references(args, missing_references, logger)
+    passed = False if missing_results and not args["ignore_missing_result_files"] else passed
+    passed = False if missing_references and not args["ignore_missing_reference_files"] else passed
+
     if unsupported_files:
         logger.log(
-            "\nThe following files have been skipped due to unsupported format:\n{}\n".format(
+            "The following files have been skipped due to unsupported format:\n{}\n".format(
                 _make_list_string([join(res_dir, f) for f in unsupported_files])
             ),
             verbosity_level=2
@@ -171,6 +115,77 @@ def _run(args: dict, logger: Logger) -> int:
 
     logger.log("\nDirectory comparison {}\n".format(_get_status_string(passed)))
     return _bool_to_exit_code(passed)
+
+
+def _filter_using_regex(filenames: Sequence[str], regexes: Iterable[str]):
+    result = []
+    for regex in regexes:
+        # support unix bash wildcard patterns
+        if regex.startswith("*") or regex.startswith("?"):
+            regex = f".{regex}"
+        pattern = compile(regex)
+        result.extend(list(filter(lambda f: pattern.match(f), filenames)))
+    return list(set(result))
+
+
+def _do_file_comparisons(args,
+                         filenames: Iterable[str],
+                         logger: Logger) -> bool:
+    passed = True
+    _quiet_logger = ModifiedVerbosityLoggerFacade(logger, verbosity_change=-1)
+    _sub_logger = IndentedLoggingFacade(_quiet_logger, first_line_prefix=" "*4)
+    for filename in filenames:
+        res_file = join(args["dir"], filename)
+        ref_file = join(args["reference_dir"], filename)
+        logger.log("Comparing the files '{}' and '{}'\n".format(
+            make_colored(res_file, style=TextStyle.bright),
+            make_colored(ref_file, style=TextStyle.bright)),
+            verbosity_level=1
+        )
+
+        _passed = _run_file_compare(
+            res_file,
+            ref_file,
+            args["ignore_missing_result_fields"],
+            args["ignore_missing_reference_fields"],
+            _sub_logger
+        )
+
+        if _sub_logger.verbosity_level is not None and _sub_logger.verbosity_level == 0:
+            logger.log(
+                " "*4 + f"File comparison {_get_status_string(_passed)}",
+                verbosity_level=1
+            )
+        logger.log("\n", verbosity_level=1)
+
+        passed = False if not _passed else passed
+    return passed
+
+
+def _log_missing_results(args, filenames: List[str], logger: Logger) -> None:
+    if filenames:
+        should_fail = not args["ignore_missing_result_files"]
+        logger.log(
+            "\n{}:\n".format(_missing_res_or_ref_message("result", should_fail)),
+            verbosity_level=1
+        )
+        logger.log(
+            "{}\n".format(_make_list_string([join(args["dir"], f) for f in filenames])),
+            verbosity_level=1
+        )
+
+
+def _log_missing_references(args, filenames: List[str], logger: Logger) -> None:
+    if filenames:
+        should_fail = not args["ignore_missing_reference_files"]
+        logger.log(
+            "\n{}:\n".format(_missing_res_or_ref_message("reference", should_fail)),
+            verbosity_level=1
+        )
+        logger.log(
+            "{}\n".format(_make_list_string([join(args["reference_dir"], f) for f in filenames])),
+            verbosity_level=1
+        )
 
 
 def _missing_res_or_ref_message(res_or_ref: str, is_error: bool) -> str:
