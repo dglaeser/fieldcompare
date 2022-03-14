@@ -1,6 +1,7 @@
 """Classes and functions related to predicates on fields & arrays"""
 
-from typing import Callable, Optional, TypeVar
+from typing import Callable, TypeVar
+from dataclasses import dataclass
 from numpy import allclose, floating
 
 from ._common import _get_as_string, _default_base_tolerance, _is_iterable, _is_scalar
@@ -11,34 +12,14 @@ from .array import find_first_fuzzy_unequal
 from .array import rel_diff, abs_diff, max_column_elements
 
 
+@dataclass
 class PredicateResult:
-    """Stores the result of a predicate evaluation"""
-    def __init__(self,
-                 value: bool,
-                 report: str = "",
-                 predicate_info: str = None) -> None:
-        self._value = value
-        self._report = report
-        self._predicate_info = predicate_info
+    value: bool
+    report: str = ""
+    predicate_info: str = ""
 
     def __bool__(self) -> bool:
-        return self._value
-
-    @property
-    def report(self) -> str:
-        """Return a report of the predicate evaluation."""
-        return self._report
-
-    @property
-    def predicate_info(self) -> Optional[str]:
-        """Return info string about the predicate that was used."""
-        return self._predicate_info
-
-    @property
-    def value(self) -> bool:
-        """Return the underlying boolean value"""
-        return self._value
-
+        return self.value
 
 class ExactEquality:
     """Compares the given arguments for exact equality"""
