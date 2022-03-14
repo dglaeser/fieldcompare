@@ -5,8 +5,7 @@ from csv import writer
 
 from context import fieldcompare
 from fieldcompare import read_fields
-from fieldcompare import Field, ExactEquality
-from _common import ExactFieldEquality
+from fieldcompare import ExactEquality
 
 
 def _write_fields_to_csv_no_names(filename: str, values) -> None:
@@ -46,9 +45,9 @@ def test_csv_field_extraction():
 
     for field in read_fields(test_csv_file_name):
         assert ref_data.get(field.name) is not None
-        assert ExactFieldEquality()(
-            field,
-            Field(field.name, ref_data.get(field.name)["values"])
+        assert ExactEquality()(
+            field.values,
+            ref_data[field.name]["values"]
         )
     remove(test_csv_file_name)
 
@@ -63,9 +62,9 @@ def test_csv_field_extraction_no_names():
 
     for field in read_fields(test_csv_file_name):
         assert any(
-            ExactFieldEquality(require_equal_names=False)(
-                field,
-                Field(field_name, ref_data.get(field_name)["values"])
+            ExactEquality()(
+                field.values,
+                ref_data[field_name]["values"]
             ) for field_name in ref_data.keys()
         )
     remove(test_csv_file_name)
