@@ -23,7 +23,7 @@ def read_fields(filename: str,
 
 
 def make_reader(file_extension: str) -> Optional[FieldReader]:
-    """Returng a further configurable reader suitable for the file extension"""
+    """Returng a further configurable reader suitable for the given file extension"""
     if not file_extension.startswith("."):
         file_extension = f".{file_extension}"
     return _get_reader_for_extension(file_extension)

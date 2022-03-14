@@ -1,6 +1,6 @@
 """Reader using meshio to support various mesh formats"""
 
-from typing import Iterable, Tuple
+from typing import Iterable, Tuple, Optional
 from os.path import splitext
 
 from meshio import Mesh
@@ -55,11 +55,13 @@ class MeshFieldReader:
                 return _extract_from_meshio_time_series(
                     MeshIOTimeSeriesReader(filename),
                     self.remove_ghost_points,
+                    self.sort_by_coordinates,
                     self._logger
                 )
             return _extract_from_meshio_mesh(
                 meshio_read(filename),
                 self.remove_ghost_points,
+                self.sort_by_coordinates,
                 self._logger
             )
         except Exception as e:
@@ -104,11 +106,16 @@ def _filter_out_ghost_points(mesh: Mesh, logger: Logger) -> Tuple[Mesh, Array]:
 
 def _extract_from_meshio_mesh(mesh: Mesh,
                               remove_ghost_points: bool,
+                              sort_by_coordinates: bool,
                               logger: Logger) -> MeshFields:
     logger.log("Extracting fields from mesh file\n", verbosity_level=1)
     if remove_ghost_points:
         mesh, _ = _filter_out_ghost_points(mesh, logger)
-    result = MeshFields(mesh.points, _cells(mesh), logger)
+    result = MeshFields(
+        (mesh.points, _cells(mesh)),
+        sort_by_coordinates,
+        logger
+    )
     for array_name in mesh.point_data:
         result.add_point_data(array_name, mesh.point_data[array_name])
     for array_name in mesh.cell_data:
@@ -124,6 +131,7 @@ def _extract_from_meshio_mesh(mesh: Mesh,
 
 def _extract_from_meshio_time_series(time_series_reader,
                                      remove_ghost_points: bool,
+                                     sort_by_coordinates: bool,
                                      logger: Logger) -> TimeSeriesMeshFields:
     logger.log("Extracting points/cells from time series file\n", verbosity_level=1)
     points, cells = time_series_reader.read_points_cells()
@@ -132,14 +140,19 @@ def _extract_from_meshio_time_series(time_series_reader,
     if remove_ghost_points:
         mesh, ghost_point_filter = _filter_out_ghost_points(mesh, logger)
     time_steps_reader = _MeshioTimeStepReader(mesh, time_series_reader, ghost_point_filter)
-    return TimeSeriesMeshFields(mesh.points, _cells(mesh), time_steps_reader, logger)
+    return TimeSeriesMeshFields(
+        (mesh.points, _cells(mesh)),
+        time_steps_reader,
+        sort_by_coordinates,
+        logger
+    )
 
 
 class _MeshioTimeStepReader:
     def __init__(self,
                  mesh: Mesh,
                  meshio_reader: MeshIOTimeSeriesReader,
-                 ghost_point_filter: Array = None) -> None:
+                 ghost_point_filter: Optional[Array] = None) -> None:
         self._mesh = mesh
         self._reader = meshio_reader
         self._num_time_steps = meshio_reader.num_steps
