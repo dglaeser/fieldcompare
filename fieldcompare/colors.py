@@ -1,18 +1,11 @@
 """Wrap text in escape characters to produce colored output on terminals"""
 
 from typing import Optional
-from warnings import warn
 from enum import Enum
 from contextlib import contextmanager
 from copy import deepcopy
-
-try:
-    import colorama
-    colorama.init()
-    _COLORAMA_FOUND = True
-except ImportError:
-    _COLORAMA_FOUND = False
-
+import colorama
+colorama.init()
 
 class _AnsiiColorBackend:
     def __init__(self, use_colors=True, use_styles=True):
@@ -43,35 +36,13 @@ class _AnsiiColorBackend:
         assert self._reset_key in self._style_map
 
 
-class _NullColorBackend:
-    def make_colored(self, text: str, color, style) -> str:
-        return text
-
-
-_COLOR_BACKEND = _AnsiiColorBackend() if _COLORAMA_FOUND else _NullColorBackend()
-
-def _deactivate_colored_output() -> None:
-    global _COLOR_BACKEND
-    _COLOR_BACKEND = _NullColorBackend()
-
-def _activate_colored_output() -> None:
-    if not _COLORAMA_FOUND:
-        warn(RuntimeWarning("Cannot activate colored output, colorama package not found"))
-    else:
-        global _COLOR_BACKEND
-        _COLOR_BACKEND = _AnsiiColorBackend()
+_COLOR_BACKEND = _AnsiiColorBackend()
 
 @contextmanager
 def text_color_options(use_colors=True, use_styles=True):
     global _COLOR_BACKEND
     backend = deepcopy(_COLOR_BACKEND)
-    if not _COLORAMA_FOUND:
-        if use_styles or use_styles:
-            warn(RuntimeWarning("Cannot use colored options, colorama package not found"))
-        _deactivate_colored_output()
-    else:
-        _activate_colored_output()
-        _COLOR_BACKEND = _AnsiiColorBackend(use_colors, use_styles)
+    _COLOR_BACKEND = _AnsiiColorBackend(use_colors, use_styles)
 
     try:
         yield {"use_colors": use_colors, "use_styles": use_styles}
