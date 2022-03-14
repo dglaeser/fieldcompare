@@ -20,10 +20,10 @@ from ._reader_map import _register_reader_for_extension
 
 class MeshFieldReader:
     def __init__(self,
-                 sort_by_coordinates: bool = True,
+                 permute_uniquely: bool = True,
                  remove_ghost_points: bool = True,
                  logger: Logger = NullDeviceLogger()) -> None:
-        self._sort_by_coordinates = sort_by_coordinates
+        self._do_permutation = permute_uniquely
         self._remove_ghost_points = remove_ghost_points
         self._logger = logger
 
@@ -39,12 +39,12 @@ class MeshFieldReader:
         self._remove_ghost_points = value
 
     @property
-    def sort_by_coordinates(self) -> bool:
-        return self._sort_by_coordinates
+    def permute_uniquely(self) -> bool:
+        return self._do_permutation
 
-    @sort_by_coordinates.setter
-    def sort_by_coordinates(self, value: bool) -> None:
-        self._sort_by_coordinates = value
+    @permute_uniquely.setter
+    def permute_uniquely(self, value: bool) -> None:
+        self._do_permutation = value
 
     def read(self, filename: str) -> Iterable[Field]:
         ext = splitext(filename)[1]
@@ -55,13 +55,13 @@ class MeshFieldReader:
                 return _extract_from_meshio_time_series(
                     MeshIOTimeSeriesReader(filename),
                     self.remove_ghost_points,
-                    self.sort_by_coordinates,
+                    self.permute_uniquely,
                     self._logger
                 )
             return _extract_from_meshio_mesh(
                 meshio_read(filename),
                 self.remove_ghost_points,
-                self.sort_by_coordinates,
+                self.permute_uniquely,
                 self._logger
             )
         except Exception as e:
@@ -106,14 +106,14 @@ def _filter_out_ghost_points(mesh: Mesh, logger: Logger) -> Tuple[Mesh, Array]:
 
 def _extract_from_meshio_mesh(mesh: Mesh,
                               remove_ghost_points: bool,
-                              sort_by_coordinates: bool,
+                              permute_uniquely: bool,
                               logger: Logger) -> MeshFields:
     logger.log("Extracting fields from mesh file\n", verbosity_level=1)
     if remove_ghost_points:
         mesh, _ = _filter_out_ghost_points(mesh, logger)
     result = MeshFields(
         (mesh.points, _cells(mesh)),
-        sort_by_coordinates,
+        permute_uniquely,
         logger
     )
     for array_name in mesh.point_data:
@@ -131,7 +131,7 @@ def _extract_from_meshio_mesh(mesh: Mesh,
 
 def _extract_from_meshio_time_series(time_series_reader,
                                      remove_ghost_points: bool,
-                                     sort_by_coordinates: bool,
+                                     permute_uniquely: bool,
                                      logger: Logger) -> TimeSeriesMeshFields:
     logger.log("Extracting points/cells from time series file\n", verbosity_level=1)
     points, cells = time_series_reader.read_points_cells()
@@ -143,7 +143,7 @@ def _extract_from_meshio_time_series(time_series_reader,
     return TimeSeriesMeshFields(
         (mesh.points, _cells(mesh)),
         time_steps_reader,
-        sort_by_coordinates,
+        permute_uniquely,
         logger
     )
 

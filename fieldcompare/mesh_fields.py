@@ -18,25 +18,29 @@ Mesh = Tuple[MeshPoints, MeshCells]
 
 
 class MeshFields:
-    """Represents fields defined on a mesh. Allows sorting by coordinates to get a unique representation."""
+    """
+        Represents fields defined on a mesh.
+        Allows sorting of points & cells to get a unique
+        representation of a mesh independent of the order.
+    """
     def __init__(self,
                  mesh: Mesh,
-                 sort_by_coordinates: bool = True,
+                 do_sorting: bool = True,
                  logger: Logger = NullDeviceLogger()) -> None:
-        self._sort_by_coordinates = sort_by_coordinates
+        self._do_sorting = do_sorting
         self._point_index_map = make_array([])
         self._cell_index_maps: dict = {}
 
         points = _get_mesh_points(mesh)
         cells = _get_mesh_cells_dict(mesh)
 
-        if sort_by_coordinates:
+        if do_sorting:
             self._point_index_map = _sorting_points_indices(points, cells, logger)
             point_index_map_inverse = _make_inverse_index_map(self._point_index_map)
         self._fields: list = [
             Field(
                 "point_coordinates",
-                points[self._point_index_map] if sort_by_coordinates else points
+                points[self._point_index_map] if do_sorting else points
             )
         ]
 
@@ -46,12 +50,12 @@ class MeshFields:
         for cell_type, corners in cells.items():
             for idx, corner_list in enumerate(corners):
                 corners[idx] = _map_and_sort_cell_corners(corner_list)
-            if sort_by_coordinates:
+            if do_sorting:
                 self._cell_index_maps[cell_type] = _sorting_cell_indices(corners, cell_type, logger)
             self._fields.append(
                 Field(
                     f"{cell_type}_corners",
-                    corners[self._cell_index_maps[cell_type]] if sort_by_coordinates else corners
+                    corners[self._cell_index_maps[cell_type]] if do_sorting else corners
                 )
             )
 
@@ -87,12 +91,12 @@ class MeshFields:
         return self._fields[index]
 
     def _permute_point_data(self, point_data: Array) -> Array:
-        if self._sort_by_coordinates:
+        if self._do_sorting:
             return point_data[self._point_index_map]
         return point_data
 
     def _permute_cell_data(self, cell_type: str, cell_data: Array) -> Array:
-        if self._sort_by_coordinates:
+        if self._do_sorting:
             return cell_data[self._cell_index_maps[cell_type]]
         return cell_data
 
