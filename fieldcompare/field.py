@@ -1,28 +1,23 @@
 """Class that represents a field of values"""
 
-from abc import ABC, abstractmethod
-from typing import Union, Sequence
-from fieldcompare.array import Array, is_array, make_array
+from typing import Union, Sequence, Protocol
+from .array import Array, is_array, make_array
 
 
-class FieldInterface(ABC):
-    """Defines the interface of fields"""
-
+class FieldInterface(Protocol):
     @property
-    @abstractmethod
     def name(self) -> str:
         """Return the name of this field"""
+        ...
 
     @property
-    @abstractmethod
     def values(self) -> Array:
         """Return the underlying field values"""
+        ...
 
 
-class Field(FieldInterface):
-    """Class to represents a field of values"""
-
-    def __init__(self, name: str, values: Union[Array, Sequence]):
+class Field:
+    def __init__(self, name: str, values: Union[Array, Sequence]) -> None:
         self._name = name
         self._values = _make_array(values)
 
