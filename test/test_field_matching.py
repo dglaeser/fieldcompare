@@ -5,16 +5,17 @@ from context import fieldcompare
 from fieldcompare.field import Field
 from fieldcompare.matching import MatchResult, find_matching_field_names
 
+
 def empty_match_result():
     return MatchResult([], [], [])
 
 
 def field(name: str):
     return Field(name, np.empty(1))
-    
+
 
 def match_result_with_no_ophans(matches: List[str]):
-    return  MatchResult(matches, [], [])
+    return MatchResult(matches, [], [])
 
 
 def test_two_empty_lists__returns_an_empty_matchresult():
@@ -60,15 +61,14 @@ def test_one_matching_and_one_non_matching_result_and_reference__returns_include
     matching_reference_field = field(matching_name)
     non_matching_result_field = field(non_matching_result_name)
     non_matching_reference_field = field(non_matching_reference_name)
-    
 
     actual = find_matching_field_names(
         [matching_result_field, non_matching_result_field],
-        [matching_reference_field, non_matching_reference_field]
+        [matching_reference_field, non_matching_reference_field],
     )
 
     assert actual == MatchResult(
         [matching_name],
         [non_matching_result_name],
-        [non_matching_reference_name]
+        [non_matching_reference_name],
     )
