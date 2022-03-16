@@ -20,9 +20,9 @@ def find_matching_field_names(result_fields: Iterable[FieldInterface],
     """Looks for matching field names in the provided results & reference field lists"""
     res_names = [f.name for f in result_fields]
     ref_names = [f.name for f in reference_fields]
-    res_orphans = list(filter(lambda n: n not in ref_names, res_names))
-    ref_orphans = list(filter(lambda n: n not in res_names, ref_names))
-    matches = list(filter(lambda n: n not in res_orphans, res_names))
+    res_orphans = list(set(res_names).difference(ref_names))
+    ref_orphans = list(set(ref_names).difference(res_names))
+    matches = list(set(res_names).intersection(ref_names))
     return MatchResult(matches, res_orphans, ref_orphans)
 
 

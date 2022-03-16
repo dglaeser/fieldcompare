@@ -1,4 +1,4 @@
-meshio>=5.3
+meshio[all]>=5.3
 tox
 pytest
 flake8
