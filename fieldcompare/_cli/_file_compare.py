@@ -9,9 +9,35 @@ from ..matching import find_matching_field_names
 from ..predicates import DefaultEquality
 from ..logging import Logger
 from ..field import FieldInterface
+from .._common import _default_base_tolerance
 
 from ._common import _read_fields_from_file, _bool_to_exit_code
 from ._common import _style_as_error, _style_as_warning, _make_list_string, _get_status_string
+
+
+class _TestTolerance:
+    def __init__(self, tolerances: List[str]) -> None:
+        self._default_tolerance: float = _default_base_tolerance()
+        self._field_tolerances: dict = {}
+        for tol_string in tolerances:
+            self._update_tolerance(tol_string)
+
+    def get(self, field_name: str) -> float:
+        return self._field_tolerances.get(field_name, self._default_tolerance)
+
+    def _update_tolerance(self, tol_string: str) -> None:
+        if self._is_field_tolerance_string(tol_string):
+            self._update_field_tolerance(tol_string)
+        else:
+            self._default_tolerance = float(tol_string)
+
+    def _is_field_tolerance_string(self, tol_string: str) -> bool:
+        return ":" in tol_string
+
+    def _update_field_tolerance(self, tol_string: str) -> None:
+        value = tol_string.split(":")[0]
+        field_name = tol_string.split(":")[1]
+        self._field_tolerances[field_name] = float(value)
 
 
 def _add_arguments(parser: ArgumentParser):
@@ -39,6 +65,20 @@ def _add_arguments(parser: ArgumentParser):
         help="Use this flag to suppress errors from missing reference fields"
     )
     parser.add_argument(
+        "-rtol", "--relative-tolerance",
+        required=False,
+        nargs="*",
+        help="Specify the relative tolerance to be used. "
+             "Use e.g. '-rtol 1e-3:pressure' to set the tolerance for a field named 'pressure'"
+    )
+    parser.add_argument(
+        "-atol", "--absolute-tolerance",
+        required=False,
+        nargs="*",
+        help="Specify the absolute tolerance to be used. "
+             "Use e.g. '-atol 1e-3:pressure' to set the tolerance for a field named 'pressure'"
+    )
+    parser.add_argument(
         "--verbosity",
         required=False,
         default=2,
@@ -51,12 +91,18 @@ def _run(args: dict, logger: Logger) -> int:
     if not logger.verbosity_level:
         logger.verbosity_level = args["verbosity"]
 
+    rel_tol_args = args.get("relative_tolerance")
+    abs_tol_args = args.get("absolute_tolerance")
+    rel_tol = _TestTolerance(rel_tol_args if rel_tol_args is not None else [])
+    abs_tol = _TestTolerance(abs_tol_args if abs_tol_args is not None else [])
     passed = _run_file_compare(
         args["file"],
         args["reference"],
         args["ignore_missing_result_fields"],
         args["ignore_missing_reference_fields"],
-        logger
+        logger,
+        rel_tol,
+        abs_tol
     )
     return _bool_to_exit_code(passed)
 
@@ -65,7 +111,9 @@ def _run_file_compare(res_file: str,
                       ref_file: str,
                       ignore_missing_results: bool,
                       ignore_missing_references: bool,
-                      logger: Logger) -> bool:
+                      logger: Logger,
+                      rel_tol: _TestTolerance = _TestTolerance([]),
+                      abs_tol: _TestTolerance = _TestTolerance([])) -> bool:
     try:  # read in results file
         res_fields = _read_fields_from_file(res_file, logger)
     except IOError as e:
@@ -80,7 +128,9 @@ def _run_file_compare(res_file: str,
 
     match_result = find_matching_field_names(res_fields, ref_fields)
     try:
-        passed = _do_field_comparisons(res_fields, ref_fields, match_result.matches, logger)
+        passed = _do_field_comparisons(
+            res_fields, ref_fields, match_result.matches, logger, rel_tol, abs_tol
+        )
     except Exception as e:
         logger.log(f"Could not compare the files. Exception:\n{e}\n", verbosity_level=1)
         return False
@@ -99,12 +149,14 @@ def _run_file_compare(res_file: str,
 def _do_field_comparisons(res_fields: Iterable[FieldInterface],
                           ref_fields: Iterable[FieldInterface],
                           field_names: Iterable[str],
-                          logger: Logger) -> bool:
+                          logger: Logger,
+                          rel_tol: _TestTolerance,
+                          abs_tol: _TestTolerance) -> bool:
     res_field_dict: dict = {field.name: field.values for field in res_fields}
     ref_field_dict: dict = {field.name: field.values for field in ref_fields}
-    predicate = DefaultEquality()
     passed = True
     for name in field_names:
+        predicate = DefaultEquality(rel_tol=rel_tol.get(name), abs_tol=abs_tol.get(name))
         result = predicate(res_field_dict[name], ref_field_dict[name])
         msg = _get_comparison_message_string(name, bool(result))
         report = _get_predicate_report_string(result.predicate_info, result.report)
