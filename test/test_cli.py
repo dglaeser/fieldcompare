@@ -35,6 +35,82 @@ def test_cli_file_mode_fail():
     remove(_mesh_filename)
     remove(_perturbed_mesh_filename)
 
+def test_cli_file_mode_relative_tolerance_definition():
+    _mesh = _make_test_mesh()
+    _perturbed_mesh = _make_test_mesh()
+
+    _rel_perturbation = 1e-3
+    _func_values = _perturbed_mesh.point_data["function"]
+    _func_values[0] += _func_values[0]*_rel_perturbation
+    _perturbed_mesh.point_data["function"] = _func_values
+
+    _mesh_filename = "_test_mesh_cli_file_mode_default_rel_tol_fail.vtu"
+    _perturbed_mesh_filename = _mesh_filename.replace(".vtu", "_reference.vtu")
+    _mesh.write(_mesh_filename)
+    _perturbed_mesh.write(_perturbed_mesh_filename)
+    assert main([
+        "file", _mesh_filename,
+        "--reference", _perturbed_mesh_filename
+    ]) == 1
+    assert main([
+        "file", _mesh_filename,
+        "--reference", _perturbed_mesh_filename,
+        "--relative-tolerance", f"{str(_rel_perturbation*2.0)}:wrong_field"
+    ]) == 1
+    assert main([
+        "file", _mesh_filename,
+        "--reference", _perturbed_mesh_filename,
+        "--relative-tolerance", f"{str(_rel_perturbation*2.0)}:function"
+    ]) == 0
+    assert main([
+        "file", _mesh_filename,
+        "--reference", _perturbed_mesh_filename,
+        "--relative-tolerance", str(_rel_perturbation*2.0)
+    ]) == 0
+
+    remove(_mesh_filename)
+    remove(_perturbed_mesh_filename)
+
+def test_cli_file_mode_absolute_tolerance_definition():
+    _mesh = _make_test_mesh()
+    _perturbed_mesh = _make_test_mesh()
+
+    _abs_perturbation = 1e-3
+    _func_values = _perturbed_mesh.point_data["function"]
+    _func_values[0] += _abs_perturbation
+    _perturbed_mesh.point_data["function"] = _func_values
+
+    _mesh_filename = "_test_mesh_cli_file_mode_default_rel_tol_fail.vtu"
+    _perturbed_mesh_filename = _mesh_filename.replace(".vtu", "_reference.vtu")
+    _mesh.write(_mesh_filename)
+    _perturbed_mesh.write(_perturbed_mesh_filename)
+    assert main([
+        "file", _mesh_filename,
+        "--reference", _perturbed_mesh_filename,
+        "--relative-tolerance", "0",
+    ]) == 1
+    assert main([
+        "file", _mesh_filename,
+        "--reference", _perturbed_mesh_filename,
+        "--relative-tolerance", "0",
+        "--absolute-tolerance", f"{str(_abs_perturbation*2.0)}:wrong_field"
+    ]) == 1
+    assert main([
+        "file", _mesh_filename,
+        "--reference", _perturbed_mesh_filename,
+        "--relative-tolerance", "0",
+        "--absolute-tolerance", f"{str(_abs_perturbation*2.0)}:function"
+    ]) == 0
+    assert main([
+        "file", _mesh_filename,
+        "--reference", _perturbed_mesh_filename,
+        "--relative-tolerance", "0",
+        "--absolute-tolerance", str(_abs_perturbation*2.0)
+    ]) == 0
+
+    remove(_mesh_filename)
+    remove(_perturbed_mesh_filename)
+
 def test_cli_file_mode_missing_result_field():
     _mesh = _make_test_mesh()
     _point_data_1 = _get_time_series_point_data_values(_mesh, num_time_steps=2)
