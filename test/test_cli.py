@@ -55,12 +55,12 @@ def test_cli_file_mode_relative_tolerance_definition():
     assert main([
         "file", _mesh_filename,
         "--reference", _perturbed_mesh_filename,
-        "--relative-tolerance", f"{str(_rel_perturbation*2.0)}:wrong_field"
+        "--relative-tolerance", f"wrong_field:{str(_rel_perturbation*2.0)}"
     ]) == 1
     assert main([
         "file", _mesh_filename,
         "--reference", _perturbed_mesh_filename,
-        "--relative-tolerance", f"{str(_rel_perturbation*2.0)}:function"
+        "--relative-tolerance", f"function:{str(_rel_perturbation*2.0)}"
     ]) == 0
     assert main([
         "file", _mesh_filename,
@@ -93,13 +93,13 @@ def test_cli_file_mode_absolute_tolerance_definition():
         "file", _mesh_filename,
         "--reference", _perturbed_mesh_filename,
         "--relative-tolerance", "0",
-        "--absolute-tolerance", f"{str(_abs_perturbation*2.0)}:wrong_field"
+        "--absolute-tolerance", f"wrong_field:{str(_abs_perturbation*2.0)}"
     ]) == 1
     assert main([
         "file", _mesh_filename,
         "--reference", _perturbed_mesh_filename,
         "--relative-tolerance", "0",
-        "--absolute-tolerance", f"{str(_abs_perturbation*2.0)}:function"
+        "--absolute-tolerance", f"function:{str(_abs_perturbation*2.0)}"
     ]) == 0
     assert main([
         "file", _mesh_filename,

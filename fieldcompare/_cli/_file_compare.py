@@ -35,8 +35,8 @@ class _TestTolerance:
         return ":" in tol_string
 
     def _update_field_tolerance(self, tol_string: str) -> None:
-        value = tol_string.split(":")[0]
-        field_name = tol_string.split(":")[1]
+        field_name = tol_string.split(":")[0]
+        value = tol_string.split(":")[1]
         self._field_tolerances[field_name] = float(value)
 
 
