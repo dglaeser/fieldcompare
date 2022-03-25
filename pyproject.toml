@@ -12,7 +12,7 @@ keywords = ["data comparison", "regression test"]
 requires-python = ">=3.8"
 dependencies = ["meshio[all]>=5.3", "colorama"]
 classifiers = [
-  "Development Status :: 1 - Alpha",
+  "Development Status :: 3 - Alpha",
   "Programming Language :: Python"
 ]
 
