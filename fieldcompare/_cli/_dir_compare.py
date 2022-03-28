@@ -13,7 +13,10 @@ from ..colors import make_colored, TextStyle
 
 from ._common import _bool_to_exit_code
 from ._common import _style_as_error, _style_as_warning, _make_list_string, _get_status_string
-from ._file_compare import _run_file_compare
+from ._common import _parse_field_tolerances
+
+from ._file_compare import _add_tolerance_options_args, _add_field_options_args
+from ._file_compare import _run_file_compare, FileComparisonOptions
 
 
 def _add_arguments(parser: ArgumentParser):
@@ -29,28 +32,16 @@ def _add_arguments(parser: ArgumentParser):
         help="The directory with the reference files"
     )
     parser.add_argument(
-        "-i", "--ignore-missing-result-files",
+        "--ignore-missing-result-files",
         required=False,
         action="store_true",
         help="Use this flag to suppress errors from missing result files"
     )
     parser.add_argument(
-        "-if", "--ignore-missing-result-fields",
-        required=False,
-        action="store_true",
-        help="Use this flag to suppress errors from missing result fields"
-    )
-    parser.add_argument(
-        "-m", "--ignore-missing-reference-files",
+        "--ignore-missing-reference-files",
         required=False,
         action="store_true",
         help="Use this flag to suppress errors from missing reference files"
-    )
-    parser.add_argument(
-        "-mf", "--ignore-missing-reference-fields",
-        required=False,
-        action="store_true",
-        help="Use this flag to suppress errors from missing reference fields"
     )
     parser.add_argument(
         "--regex",
@@ -66,6 +57,8 @@ def _add_arguments(parser: ArgumentParser):
         type=int,
         help="Set the verbosity level"
     )
+    _add_field_options_args(parser)
+    _add_tolerance_options_args(parser)
 
 
 def _run(args: dict, logger: Logger) -> int:
@@ -134,6 +127,8 @@ def _do_file_comparisons(args,
     passed = True
     _quiet_logger = ModifiedVerbosityLoggerFacade(logger, verbosity_change=-1)
     _sub_logger = IndentedLoggingFacade(_quiet_logger, first_line_prefix=" "*4)
+    _rel_tol_map = _parse_field_tolerances(args.get("relative_tolerance"))
+    _abs_tol_map = _parse_field_tolerances(args.get("absolute_tolerance"))
     for filename in filenames:
         res_file = join(args["dir"], filename)
         ref_file = join(args["reference_dir"], filename)
@@ -143,13 +138,13 @@ def _do_file_comparisons(args,
             verbosity_level=1
         )
 
-        _passed = _run_file_compare(
-            res_file,
-            ref_file,
-            args["ignore_missing_result_fields"],
-            args["ignore_missing_reference_fields"],
-            _sub_logger
+        opts = FileComparisonOptions(
+            ignore_missing_result_fields=args["ignore_missing_result_fields"],
+            ignore_missing_reference_fields=args["ignore_missing_reference_fields"],
+            relative_tolerances=_rel_tol_map,
+            absolute_tolerances=_abs_tol_map
         )
+        _passed = _run_file_compare(res_file, ref_file, opts, _sub_logger)
 
         if _sub_logger.verbosity_level is not None and _sub_logger.verbosity_level == 0:
             logger.log(

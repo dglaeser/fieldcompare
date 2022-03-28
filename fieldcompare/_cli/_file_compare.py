@@ -3,6 +3,7 @@
 from argparse import ArgumentParser
 from textwrap import indent
 from typing import List, Iterable
+from dataclasses import dataclass
 
 from ..colors import make_colored, TextStyle
 from ..matching import find_matching_field_names
@@ -13,6 +14,46 @@ from ..field import FieldInterface
 from ._common import _read_fields_from_file, _bool_to_exit_code
 from ._common import _style_as_error, _style_as_warning, _make_list_string, _get_status_string
 from ._common import _parse_field_tolerances, FieldToleranceMap
+
+
+@dataclass
+class FileComparisonOptions:
+    ignore_missing_result_fields: bool = False
+    ignore_missing_reference_fields: bool = False
+    relative_tolerances: FieldToleranceMap = FieldToleranceMap()
+    absolute_tolerances: FieldToleranceMap = FieldToleranceMap()
+
+
+def _add_field_options_args(parser: ArgumentParser) -> None:
+    parser.add_argument(
+        "--ignore-missing-result-fields",
+        required=False,
+        action="store_true",
+        help="Use this flag to treat missing result fields as warnings only"
+    )
+    parser.add_argument(
+        "--ignore-missing-reference-fields",
+        required=False,
+        action="store_true",
+        help="Use this flag to treat missing reference fields as warnings only"
+    )
+
+
+def _add_tolerance_options_args(parser: ArgumentParser) -> None:
+    parser.add_argument(
+        "-rtol", "--relative-tolerance",
+        required=False,
+        nargs="*",
+        help="Specify the relative tolerance to be used. "
+             "Use e.g. '-rtol 1e-3:pressure' to set the tolerance for a field named 'pressure'"
+    )
+    parser.add_argument(
+        "-atol", "--absolute-tolerance",
+        required=False,
+        nargs="*",
+        help="Specify the absolute tolerance to be used. "
+             "Use e.g. '-atol 1e-3:pressure' to set the tolerance for a field named 'pressure'"
+    )
 
 
 def _add_arguments(parser: ArgumentParser):
@@ -28,65 +69,34 @@ def _add_arguments(parser: ArgumentParser):
         help="The reference file against which to compare"
     )
     parser.add_argument(
-        "-i", "--ignore-missing-result-fields",
-        required=False,
-        action="store_true",
-        help="Use this flag to suppress errors from missing result fields"
-    )
-    parser.add_argument(
-        "-m", "--ignore-missing-reference-fields",
-        required=False,
-        action="store_true",
-        help="Use this flag to suppress errors from missing reference fields"
-    )
-    parser.add_argument(
-        "-rtol", "--relative-tolerance",
-        required=False,
-        nargs="*",
-        help="Specify the relative tolerance to be used. "
-             "Use e.g. '-rtol 1e-3:pressure' to set the tolerance for a field named 'pressure'"
-    )
-    parser.add_argument(
-        "-atol", "--absolute-tolerance",
-        required=False,
-        nargs="*",
-        help="Specify the absolute tolerance to be used. "
-             "Use e.g. '-atol 1e-3:pressure' to set the tolerance for a field named 'pressure'"
-    )
-    parser.add_argument(
         "--verbosity",
         required=False,
         default=2,
         type=int,
         help="Set the verbosity level"
     )
+    _add_field_options_args(parser)
+    _add_tolerance_options_args(parser)
 
 
 def _run(args: dict, logger: Logger) -> int:
     if not logger.verbosity_level:
         logger.verbosity_level = args["verbosity"]
 
-    rel_tol = _parse_field_tolerances(args.get("relative_tolerance"))
-    abs_tol = _parse_field_tolerances(args.get("absolute_tolerance"))
-    passed = _run_file_compare(
-        args["file"],
-        args["reference"],
-        args["ignore_missing_result_fields"],
-        args["ignore_missing_reference_fields"],
-        logger,
-        rel_tol,
-        abs_tol
+    opts = FileComparisonOptions(
+        ignore_missing_result_fields=args["ignore_missing_result_fields"],
+        ignore_missing_reference_fields=args["ignore_missing_reference_fields"],
+        relative_tolerances=_parse_field_tolerances(args.get("relative_tolerance")),
+        absolute_tolerances=_parse_field_tolerances(args.get("absolute_tolerance"))
     )
+    passed = _run_file_compare(args["file"], args["reference"], opts, logger)
     return _bool_to_exit_code(passed)
 
 
 def _run_file_compare(res_file: str,
                       ref_file: str,
-                      ignore_missing_results: bool,
-                      ignore_missing_references: bool,
-                      logger: Logger,
-                      rel_tol: FieldToleranceMap = FieldToleranceMap(),
-                      abs_tol: FieldToleranceMap = FieldToleranceMap()) -> bool:
+                      options: FileComparisonOptions,
+                      logger: Logger) -> bool:
     try:  # read in results file
         res_fields = _read_fields_from_file(res_file, logger)
     except IOError as e:
@@ -102,18 +112,19 @@ def _run_file_compare(res_file: str,
     match_result = find_matching_field_names(res_fields, ref_fields)
     try:
         passed = _do_field_comparisons(
-            res_fields, ref_fields, match_result.matches, logger, rel_tol, abs_tol
+            res_fields, ref_fields, match_result.matches, logger,
+            options.relative_tolerances, options.absolute_tolerances
         )
     except Exception as e:
-        logger.log(f"Could not compare the files. Exception:\n{e}\n", verbosity_level=1)
+        logger.log(f"Error upon field comparisons. Exception:\n{e}\n", verbosity_level=1)
         return False
 
     missing_results = match_result.orphan_references
     missing_references = match_result.orphan_results
-    _log_missing_results(missing_results, ignore_missing_results, logger)
-    _log_missing_references(missing_references, ignore_missing_references, logger)
-    passed = False if missing_results and not ignore_missing_results else passed
-    passed = False if missing_references and not ignore_missing_references else passed
+    _log_missing_results(missing_results, options.ignore_missing_result_fields, logger)
+    _log_missing_references(missing_references, options.ignore_missing_reference_fields, logger)
+    passed = False if missing_results and not options.ignore_missing_result_fields else passed
+    passed = False if missing_references and not options.ignore_missing_reference_fields else passed
 
     logger.log("File comparison {}\n".format(_get_status_string(passed)))
     return passed
