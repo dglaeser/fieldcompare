@@ -21,7 +21,7 @@ homepage = "https://gitlab.com/dglaeser/fieldcompare"
 repository = "https://gitlab.com/dglaeser/fieldcompare"
 
 [project.entry-points.console_scripts]
-meshio = "fieldcompare._cli:main"
+fieldcompare = "fieldcompare._cli:main"
 
 [build-system]
 requires = ["setuptools>=42", "wheel"]
