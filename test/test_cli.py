@@ -1,6 +1,6 @@
 """Test the command-line interface of fieldcompare"""
 
-from os import remove, listdir
+from os import remove, listdir, makedirs
 from os.path import isfile, join, splitext
 from shutil import rmtree, copytree
 from pathlib import Path
@@ -229,6 +229,96 @@ def test_cli_directory_mode_regex():
             "*.vtu",
             "--verbosity=1"], logger)
         assert ".xdmf" not in stream.getvalue()
+
+def test_cli_directory_mode_relative_tolerance_definition():
+    _mesh = _make_test_mesh()
+    _perturbed_mesh = _make_test_mesh()
+
+    _rel_perturbation = 1e-3
+    _func_values = _perturbed_mesh.point_data["function"]
+    print(_func_values)
+    _func_values[0] += _func_values[0]*_rel_perturbation
+    _perturbed_mesh.point_data["function"] = _func_values
+
+    res_dir = "test_cli_dir_mode_abs_tolerance_results"
+    ref_dir = "test_cli_dir_mode_abs_tolerance_references"
+    makedirs(res_dir, exist_ok=True)
+    makedirs(ref_dir, exist_ok=True)
+
+    _mesh_filename = "_test_mesh_cli_file_mode_default_rel_tol.vtu"
+    _mesh.write(join(res_dir, _mesh_filename))
+    _perturbed_mesh.write(join(ref_dir, _mesh_filename))
+    assert main([
+        "dir", res_dir,
+        "--reference-dir", ref_dir,
+        "--absolute-tolerance", "0",
+    ]) == 1
+    assert main([
+        "dir", res_dir,
+        "--reference-dir", ref_dir,
+        "--absolute-tolerance", "0",
+        "--relative-tolerance", f"wrong_field:{str(_rel_perturbation*2.0)}"
+    ]) == 1
+    assert main([
+        "dir", res_dir,
+        "--reference-dir", ref_dir,
+        "--relative-tolerance", "0",
+        "--relative-tolerance", f"function:{str(_rel_perturbation*2.0)}"
+    ]) == 0
+    assert main([
+        "dir", res_dir,
+        "--reference-dir", ref_dir,
+        "--absolute-tolerance", "0",
+        "--relative-tolerance", str(_rel_perturbation*2.0)
+    ]) == 0
+
+    rmtree(res_dir)
+    rmtree(ref_dir)
+
+def test_cli_directory_mode_absolute_tolerance_definition():
+    _mesh = _make_test_mesh()
+    _perturbed_mesh = _make_test_mesh()
+
+    _abs_perturbation = 1e-3
+    _func_values = _perturbed_mesh.point_data["function"]
+    print(_func_values)
+    _func_values[0] += _abs_perturbation
+    _perturbed_mesh.point_data["function"] = _func_values
+
+    res_dir = "test_cli_dir_mode_abs_tolerance_results"
+    ref_dir = "test_cli_dir_mode_abs_tolerance_references"
+    makedirs(res_dir, exist_ok=True)
+    makedirs(ref_dir, exist_ok=True)
+
+    _mesh_filename = "_test_mesh_cli_file_mode_default_rel_tol.vtu"
+    _mesh.write(join(res_dir, _mesh_filename))
+    _perturbed_mesh.write(join(ref_dir, _mesh_filename))
+    assert main([
+        "dir", res_dir,
+        "--reference-dir", ref_dir,
+        "--relative-tolerance", "0",
+    ]) == 1
+    assert main([
+        "dir", res_dir,
+        "--reference-dir", ref_dir,
+        "--relative-tolerance", "0",
+        "--absolute-tolerance", f"wrong_field:{str(_abs_perturbation*2.0)}"
+    ]) == 1
+    assert main([
+        "dir", res_dir,
+        "--reference-dir", ref_dir,
+        "--relative-tolerance", "0",
+        "--absolute-tolerance", f"function:{str(_abs_perturbation*2.0)}"
+    ]) == 0
+    assert main([
+        "dir", res_dir,
+        "--reference-dir", ref_dir,
+        "--relative-tolerance", "0",
+        "--absolute-tolerance", str(_abs_perturbation*2.0)
+    ]) == 0
+
+    rmtree(res_dir)
+    rmtree(ref_dir)
 
 
 if __name__ == "__main__":
