@@ -1,11 +1,44 @@
 """Common functions used in the command-line interface"""
 
-from typing import List
+from typing import List, Dict, Optional, Tuple
 from textwrap import indent
 
+from .._common import _default_base_tolerance
 from ..colors import make_colored, TextColor
 from ..logging import Logger, ModifiedVerbosityLoggerFacade, IndentedLoggingFacade
 from ..field_io import read_fields
+
+
+class FieldToleranceMap:
+    def __init__(self,
+                 default_tolerance: float = _default_base_tolerance(),
+                 tolerances: Dict[str, float] = {}) -> None:
+        self._default_tolerance = default_tolerance
+        self._field_tolerances = tolerances
+
+    def get(self, field_name: str) -> float:
+        return self._field_tolerances.get(field_name, self._default_tolerance)
+
+
+def _parse_field_tolerances(tolerance_strings: Optional[List[str]] = None) -> FieldToleranceMap:
+    def _is_field_tolerance_string(tol_string: str) -> bool:
+        return ":" in tol_string
+
+    def _get_field_name_tolerance_value_pair(tol_string: str) -> Tuple[str, float]:
+        name, tol_string = tol_string.split(":")
+        return name, float(tol_string)
+
+    if tolerance_strings is not None:
+        default_tol = _default_base_tolerance()
+        field_tols = {}
+        for tol_string in tolerance_strings:
+            if _is_field_tolerance_string(tol_string):
+                name, value = _get_field_name_tolerance_value_pair(tol_string)
+                field_tols[name] = value
+            else:
+                default_tol = float(tol_string)
+        return FieldToleranceMap(default_tol, field_tols)
+    return FieldToleranceMap()
 
 
 def _read_fields_from_file(filename: str, logger: Logger):
