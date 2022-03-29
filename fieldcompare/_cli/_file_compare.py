@@ -24,6 +24,34 @@ class FileComparisonOptions:
     absolute_tolerances: FieldToleranceMap = FieldToleranceMap()
 
 
+@dataclass
+class FieldComparison:
+    name: str
+    result_field: FieldInterface
+    reference_field: FieldInterface
+
+
+class FieldComparisonRange:
+    def __init__(self,
+                 res_fields: Iterable[FieldInterface],
+                 ref_fields: Iterable[FieldInterface],
+                 field_names: Iterable[str]) -> None:
+        self._res_fields_dict: dict = {field.name: field.values for field in res_fields}
+        self._ref_fields_dict: dict = {field.name: field.values for field in ref_fields}
+        self._field_names = field_names
+        self._field_name_iterator = iter(self._field_names)
+
+    def __iter__(self):
+        self._field_name_iterator = iter(self._field_names)
+        return self
+
+    def __next__(self) -> FieldComparison:
+        name = next(self._field_name_iterator)
+        res_field = self._res_fields_dict[name]
+        ref_field = self._ref_fields_dict[name]
+        return FieldComparison(name, res_field, ref_field)
+
+
 def _add_field_options_args(parser: ArgumentParser) -> None:
     parser.add_argument(
         "--ignore-missing-result-fields",
@@ -110,10 +138,13 @@ def _run_file_compare(res_file: str,
         return False
 
     match_result = find_matching_field_names(res_fields, ref_fields)
+    comparisons = FieldComparisonRange(res_fields, ref_fields, match_result.matches)
     try:
         passed = _do_field_comparisons(
-            res_fields, ref_fields, match_result.matches, logger,
-            options.relative_tolerances, options.absolute_tolerances
+            comparisons,
+            logger,
+            options.relative_tolerances,
+            options.absolute_tolerances
         )
     except Exception as e:
         logger.log(f"Error upon field comparisons. Exception:\n{e}\n", verbosity_level=1)
@@ -130,18 +161,15 @@ def _run_file_compare(res_file: str,
     return passed
 
 
-def _do_field_comparisons(res_fields: Iterable[FieldInterface],
-                          ref_fields: Iterable[FieldInterface],
-                          field_names: Iterable[str],
+def _do_field_comparisons(comparisons: FieldComparisonRange,
                           logger: Logger,
                           rel_tol: FieldToleranceMap,
                           abs_tol: FieldToleranceMap) -> bool:
-    res_field_dict: dict = {field.name: field.values for field in res_fields}
-    ref_field_dict: dict = {field.name: field.values for field in ref_fields}
     passed = True
-    for name in field_names:
+    for comp in comparisons:
+        name = comp.name
         predicate = DefaultEquality(rel_tol=rel_tol.get(name), abs_tol=abs_tol.get(name))
-        result = predicate(res_field_dict[name], ref_field_dict[name])
+        result = predicate(comp.result_field, comp.reference_field)
         msg = _get_comparison_message_string(name, bool(result))
         report = _get_predicate_report_string(result.predicate_info, result.report)
         passed = False if not result else passed
