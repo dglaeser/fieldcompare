@@ -10,7 +10,7 @@ from ..logging import Logger, ModifiedVerbosityLoggerFacade, IndentedLoggingFaca
 from ..field_io import read_fields
 
 
-class Filter:
+class InclusionFilter:
     def __init__(self, regexes: Optional[List[str]] = None) -> None:
         self._regexes = regexes
 
@@ -26,6 +26,18 @@ class Filter:
             pattern = compile(regex)
             result.extend(list(filter(lambda n: pattern.match(n), names)))
         return list(set(result))
+
+
+class ExclusionFilter:
+    def __init__(self, regexes: Optional[List[str]] = None) -> None:
+        self._regexes = regexes
+
+    def __call__(self, names: Sequence[str]) -> List[str]:
+        if not self._regexes:
+            return list(names)
+
+        matches = InclusionFilter(self._regexes)(names)
+        return list(set(names).difference(set(matches)))
 
 
 class FieldToleranceMap:

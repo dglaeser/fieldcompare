@@ -14,7 +14,7 @@ from ..field import FieldInterface
 from ._common import _read_fields_from_file, _bool_to_exit_code
 from ._common import _style_as_error, _style_as_warning, _make_list_string, _get_status_string
 from ._common import _parse_field_tolerances, FieldToleranceMap
-from ._common import Filter
+from ._common import InclusionFilter, ExclusionFilter
 
 
 @dataclass
@@ -23,8 +23,8 @@ class FileComparisonOptions:
     ignore_missing_reference_fields: bool = False
     relative_tolerances: FieldToleranceMap = FieldToleranceMap()
     absolute_tolerances: FieldToleranceMap = FieldToleranceMap()
-    field_inclusion_filter: Filter = Filter()
-    field_exclusion_filter: Filter = Filter()
+    field_inclusion_filter: InclusionFilter = InclusionFilter()
+    field_exclusion_filter: ExclusionFilter = ExclusionFilter()
 
 
 @dataclass
@@ -72,13 +72,23 @@ class FileComparison:
                                 res_fields: Iterable[FieldInterface],
                                 ref_fields: Iterable[FieldInterface]) -> None:
         match_result = find_matching_field_names(res_fields, ref_fields)
+
         self._fields_to_compare = self._apply_field_inclusion_filter(match_result.matches)
         self._missing_result_fields = self._apply_field_inclusion_filter(match_result.orphan_references)
         self._missing_reference_fields = self._apply_field_inclusion_filter(match_result.orphan_results)
 
+        self._fields_to_compare = self._apply_field_exclusion_filter(self._fields_to_compare)
+        self._missing_result_fields = self._apply_field_exclusion_filter(self._missing_result_fields)
+        self._missing_reference_fields = self._apply_field_exclusion_filter(self._missing_reference_fields)
+
     def _apply_field_inclusion_filter(self, fields: List[str]) -> List[str]:
         if self._options.field_inclusion_filter:
             fields = self._options.field_inclusion_filter(fields)
+        return fields
+
+    def _apply_field_exclusion_filter(self, fields: List[str]) -> List[str]:
+        if self._options.field_exclusion_filter:
+            fields = self._options.field_exclusion_filter(fields)
         return fields
 
     def _read_file(self, file_name: str) -> Iterable[FieldInterface]:
@@ -127,6 +137,13 @@ def _add_field_filter_options_args(parser: ArgumentParser) -> None:
         help="Pass a regular expression used to filter fields to be compared. This option can "
              "be used multiple times. Field names that match any of the patterns are considered. "
              "If this argument is not specified, all fields are considered."
+    )
+    parser.add_argument(
+        "--exclude-fields",
+        required=False,
+        action="append",
+        help="Pass a regular expression used to exclude fields from the comparisons. This option can "
+             "be used multiple times. Field names that match any of the patterns are excluded. "
     )
 
 
@@ -195,7 +212,8 @@ def _run(args: dict, logger: Logger) -> int:
         ignore_missing_reference_fields=args["ignore_missing_reference_fields"],
         relative_tolerances=_parse_field_tolerances(args.get("relative_tolerance")),
         absolute_tolerances=_parse_field_tolerances(args.get("absolute_tolerance")),
-        field_inclusion_filter=Filter(args["include_fields"])
+        field_inclusion_filter=InclusionFilter(args["include_fields"]),
+        field_exclusion_filter=ExclusionFilter(args["exclude_fields"])
     )
 
     try:

@@ -50,6 +50,20 @@ def test_cli_file_mode_field_filter():
         assert len(comparison_logs) == 1
         assert "function" in comparison_logs[0]
 
+def test_cli_file_mode_field_exclusion_filter():
+    with StringIO() as stream:
+        logger = StreamLogger(stream)
+        args = [
+            "file", str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+            "--reference", str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+            "--exclude-fields", "function"
+        ]
+        assert main(args, logger) == 0
+        comparison_logs = [
+            line for line in stream.getvalue().split("\n") if "Comparison of the fields" in line
+        ]
+        assert not any("function" in log for log in comparison_logs)
+
 def test_cli_file_mode_relative_tolerance_definition():
     _mesh = _make_test_mesh()
     _perturbed_mesh = _make_test_mesh()
@@ -183,6 +197,20 @@ def test_cli_folder_mode_field_filter():
             line for line in stream.getvalue().split("\n") if "Comparison of the fields" in line
         ]
         assert all("function" in log for log in comparison_logs)
+
+def test_cli_folder_mode_field_exclusion_filter():
+    with StringIO() as stream:
+        logger = StreamLogger(stream)
+        args = [
+            "dir", str(TEST_DATA_PATH),
+            "--reference-dir", str(TEST_DATA_PATH),
+            "--exclude-fields", "function"
+        ]
+        assert main(args, logger) == 0
+        comparison_logs = [
+            line for line in stream.getvalue().split("\n") if "Comparison of the fields" in line
+        ]
+        assert not any("function" in log for log in comparison_logs)
 
 def test_cli_directory_mode_missing_result_file():
     tmp_results_path = TEST_DATA_PATH.resolve().parent / Path("cli_dir_test_results_data")

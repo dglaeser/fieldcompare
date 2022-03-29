@@ -10,7 +10,7 @@ from ..logging import Logger, ModifiedVerbosityLoggerFacade, IndentedLoggingFaca
 from ..field_io import is_supported_file
 from ..colors import make_colored, TextStyle
 
-from ._common import _bool_to_exit_code, _parse_field_tolerances, Filter
+from ._common import _bool_to_exit_code, _parse_field_tolerances, InclusionFilter, ExclusionFilter
 from ._common import _style_as_error, _style_as_warning, _make_list_string, _get_status_string
 
 from ._file_compare import _add_tolerance_options_args, _add_field_options_args, _add_field_filter_options_args
@@ -74,7 +74,7 @@ def _run(args: dict, logger: Logger) -> int:
         verbosity_level=1
     )
 
-    filtered_matches = Filter(args["include_files"])(search_result.matches)
+    filtered_matches = InclusionFilter(args["include_files"])(search_result.matches)
 
     supported_files = list(filter(lambda f: is_supported_file(join(res_dir, f)), filtered_matches))
     unsupported_files = list(filter(lambda f: not is_supported_file(join(res_dir, f)), filtered_matches))
@@ -130,7 +130,8 @@ def _do_file_comparisons(args,
             ignore_missing_reference_fields=args["ignore_missing_reference_fields"],
             relative_tolerances=_rel_tol_map,
             absolute_tolerances=_abs_tol_map,
-            field_inclusion_filter=Filter(args["include_fields"])
+            field_inclusion_filter=InclusionFilter(args["include_fields"]),
+            field_exclusion_filter=ExclusionFilter(args["exclude_fields"])
         )
         try:
             comparison = FileComparison(res_file, ref_file, opts, _sub_logger)
