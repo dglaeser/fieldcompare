@@ -184,7 +184,7 @@ def test_cli_file_mode_missing_reference_field():
 def test_cli_directory_mode():
     assert main(["dir", str(TEST_DATA_PATH), "--reference-dir", str(TEST_DATA_PATH)]) == 0
 
-def test_cli_folder_mode_field_filter():
+def test_cli_directory_mode_field_filter():
     with StringIO() as stream:
         logger = StreamLogger(stream)
         args = [
@@ -198,7 +198,7 @@ def test_cli_folder_mode_field_filter():
         ]
         assert all("function" in log for log in comparison_logs)
 
-def test_cli_folder_mode_field_exclusion_filter():
+def test_cli_directory_mode_field_exclusion_filter():
     with StringIO() as stream:
         logger = StreamLogger(stream)
         args = [
@@ -381,9 +381,13 @@ def test_cli_directory_mode_absolute_tolerance_definition():
 if __name__ == "__main__":
     test_cli_file_mode_pass()
     test_cli_file_mode_fail()
+    test_cli_file_mode_field_filter()
+    test_cli_file_mode_field_exclusion_filter()
     test_cli_file_mode_missing_result_field()
     test_cli_file_mode_missing_reference_field()
     test_cli_directory_mode()
+    test_cli_directory_mode_field_filter()
+    test_cli_directory_mode_field_exclusion_filter()
     test_cli_directory_mode_missing_result_file()
     test_cli_directory_mode_missing_reference_file()
-    test_cli_directory_mode_regex()
+    test_cli_directory_mode_file_inclusion_filter()
