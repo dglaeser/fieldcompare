@@ -240,7 +240,7 @@ def test_cli_directory_mode_regex():
         main([
             "dir", str(TEST_DATA_PATH),
             "--reference-dir", str(TEST_DATA_PATH),
-            "--regex",
+            "--include-files",
             "*.vtu",
             "--verbosity=1"], logger)
         assert ".xdmf" not in stream.getvalue()
