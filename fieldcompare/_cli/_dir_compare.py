@@ -74,13 +74,14 @@ def _run(args: dict, logger: Logger) -> int:
         verbosity_level=1
     )
 
-    filtered_matches = InclusionFilter(args["include_files"])(search_result.matches)
+    include_filter = InclusionFilter(args["include_files"])
+    filtered_matches = include_filter(search_result.matches)
+    missing_results = include_filter(search_result.orphan_references)
+    missing_references = include_filter(search_result.orphan_results)
 
     supported_files = list(filter(lambda f: is_supported_file(join(res_dir, f)), filtered_matches))
     unsupported_files = list(filter(lambda f: not is_supported_file(join(res_dir, f)), filtered_matches))
     dropped_matches = list(filter(lambda f: f not in filtered_matches, search_result.matches))
-    missing_results = search_result.orphan_references
-    missing_references = search_result.orphan_results
 
     passed = _do_file_comparisons(args, supported_files, logger)
     _log_missing_results(args, missing_results, logger)
