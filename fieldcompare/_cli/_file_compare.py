@@ -14,6 +14,7 @@ from ..field import FieldInterface
 from ._common import _read_fields_from_file, _bool_to_exit_code
 from ._common import _style_as_error, _style_as_warning, _make_list_string, _get_status_string
 from ._common import _parse_field_tolerances, FieldToleranceMap
+from ._common import Filter
 
 
 @dataclass
@@ -22,6 +23,8 @@ class FileComparisonOptions:
     ignore_missing_reference_fields: bool = False
     relative_tolerances: FieldToleranceMap = FieldToleranceMap()
     absolute_tolerances: FieldToleranceMap = FieldToleranceMap()
+    field_inclusion_filter: Filter = Filter()
+    field_exclusion_filter: Filter = Filter()
 
 
 @dataclass
@@ -62,9 +65,21 @@ class FileComparison:
 
         res_fields = self._read_file(res_file)
         ref_fields = self._read_file(ref_file)
+        self._find_fields_to_compare(res_fields, ref_fields)
+        self._comparisons = FieldComparisonRange(res_fields, ref_fields, self._fields_to_compare)
 
-        self._match_result = find_matching_field_names(res_fields, ref_fields)
-        self._comparisons = FieldComparisonRange(res_fields, ref_fields, self._match_result.matches)
+    def _find_fields_to_compare(self,
+                                res_fields: Iterable[FieldInterface],
+                                ref_fields: Iterable[FieldInterface]) -> None:
+        match_result = find_matching_field_names(res_fields, ref_fields)
+        self._fields_to_compare = self._apply_field_inclusion_filter(match_result.matches)
+        self._missing_result_fields = self._apply_field_inclusion_filter(match_result.orphan_references)
+        self._missing_reference_fields = self._apply_field_inclusion_filter(match_result.orphan_results)
+
+    def _apply_field_inclusion_filter(self, fields: List[str]) -> List[str]:
+        if self._options.field_inclusion_filter:
+            fields = self._options.field_inclusion_filter(fields)
+        return fields
 
     def _read_file(self, file_name: str) -> Iterable[FieldInterface]:
         try:
@@ -79,8 +94,8 @@ class FileComparison:
             self._logger.log(f"Error upon field comparisons. Exception:\n{e}\n", verbosity_level=1)
             return False
 
-        missing_results = self._match_result.orphan_references
-        missing_references = self._match_result.orphan_results
+        missing_results = self._missing_result_fields
+        missing_references = self._missing_reference_fields
         _log_missing_results(missing_results, self._options.ignore_missing_result_fields, self._logger)
         _log_missing_references(missing_references, self._options.ignore_missing_reference_fields, self._logger)
         passed = False if missing_results and not self._options.ignore_missing_result_fields else passed
@@ -103,6 +118,17 @@ class FileComparison:
             self._logger.log(msg, verbosity_level=1)
             self._logger.log(indent(report, " -- "), verbosity_level=2)
         return passed
+
+def _add_field_filter_options_args(parser: ArgumentParser) -> None:
+    parser.add_argument(
+        "--include-fields",
+        required=False,
+        action="append",
+        help="Pass a regular expression used to filter fields to be compared. This option can "
+             "be used multiple times. Field names that match any of the patterns are considered. "
+             "If this argument is not specified, all fields are considered."
+    )
+
 
 def _add_field_options_args(parser: ArgumentParser) -> None:
     parser.add_argument(
@@ -157,6 +183,7 @@ def _add_arguments(parser: ArgumentParser):
     )
     _add_field_options_args(parser)
     _add_tolerance_options_args(parser)
+    _add_field_filter_options_args(parser)
 
 
 def _run(args: dict, logger: Logger) -> int:
@@ -167,7 +194,8 @@ def _run(args: dict, logger: Logger) -> int:
         ignore_missing_result_fields=args["ignore_missing_result_fields"],
         ignore_missing_reference_fields=args["ignore_missing_reference_fields"],
         relative_tolerances=_parse_field_tolerances(args.get("relative_tolerance")),
-        absolute_tolerances=_parse_field_tolerances(args.get("absolute_tolerance"))
+        absolute_tolerances=_parse_field_tolerances(args.get("absolute_tolerance")),
+        field_inclusion_filter=Filter(args["include_fields"])
     )
 
     try:

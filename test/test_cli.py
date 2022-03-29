@@ -35,6 +35,21 @@ def test_cli_file_mode_fail():
     remove(_mesh_filename)
     remove(_perturbed_mesh_filename)
 
+def test_cli_file_mode_field_filter():
+    with StringIO() as stream:
+        logger = StreamLogger(stream)
+        args = [
+            "file", str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+            "--reference", str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+            "--include-fields", "function"
+        ]
+        assert main(args, logger) == 0
+        comparison_logs = [
+            line for line in stream.getvalue().split("\n") if "Comparison of the fields" in line
+        ]
+        assert len(comparison_logs) == 1
+        assert "function" in comparison_logs[0]
+
 def test_cli_file_mode_relative_tolerance_definition():
     _mesh = _make_test_mesh()
     _perturbed_mesh = _make_test_mesh()
