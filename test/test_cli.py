@@ -170,6 +170,20 @@ def test_cli_file_mode_missing_reference_field():
 def test_cli_directory_mode():
     assert main(["dir", str(TEST_DATA_PATH), "--reference-dir", str(TEST_DATA_PATH)]) == 0
 
+def test_cli_folder_mode_field_filter():
+    with StringIO() as stream:
+        logger = StreamLogger(stream)
+        args = [
+            "dir", str(TEST_DATA_PATH),
+            "--reference-dir", str(TEST_DATA_PATH),
+            "--include-fields", "function"
+        ]
+        assert main(args, logger) == 0
+        comparison_logs = [
+            line for line in stream.getvalue().split("\n") if "Comparison of the fields" in line
+        ]
+        assert all("function" in log for log in comparison_logs)
+
 def test_cli_directory_mode_missing_result_file():
     tmp_results_path = TEST_DATA_PATH.resolve().parent / Path("cli_dir_test_results_data")
     copytree(TEST_DATA_PATH, tmp_results_path, dirs_exist_ok=True)
@@ -220,7 +234,7 @@ def test_cli_directory_mode_missing_reference_file():
 
     rmtree(tmp_reference_path)
 
-def test_cli_directory_mode_regex():
+def test_cli_directory_mode_file_inclusion_filter():
     # check that the normal run has xdmf in the output
     with StringIO() as stream:
         logger = StreamLogger(stream)

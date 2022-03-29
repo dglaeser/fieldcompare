@@ -13,7 +13,7 @@ from ..colors import make_colored, TextStyle
 from ._common import _bool_to_exit_code, _parse_field_tolerances, Filter
 from ._common import _style_as_error, _style_as_warning, _make_list_string, _get_status_string
 
-from ._file_compare import _add_tolerance_options_args, _add_field_options_args
+from ._file_compare import _add_tolerance_options_args, _add_field_options_args, _add_field_filter_options_args
 from ._file_compare import FileComparison, FileComparisonOptions
 
 
@@ -57,6 +57,7 @@ def _add_arguments(parser: ArgumentParser):
         help="Set the verbosity level"
     )
     _add_field_options_args(parser)
+    _add_field_filter_options_args(parser)
     _add_tolerance_options_args(parser)
 
 
@@ -128,7 +129,8 @@ def _do_file_comparisons(args,
             ignore_missing_result_fields=args["ignore_missing_result_fields"],
             ignore_missing_reference_fields=args["ignore_missing_reference_fields"],
             relative_tolerances=_rel_tol_map,
-            absolute_tolerances=_abs_tol_map
+            absolute_tolerances=_abs_tol_map,
+            field_inclusion_filter=Filter(args["include_fields"])
         )
         try:
             comparison = FileComparison(res_file, ref_file, opts, _sub_logger)
