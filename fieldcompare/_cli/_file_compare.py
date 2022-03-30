@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from ..colors import make_colored, TextStyle
 from ..matching import find_matching_field_names
 from ..predicates import DefaultEquality
-from ..logging import Logger
+from ..logging import Logger, StandardOutputLogger
 from ..field import FieldInterface
 
 from ._common import _read_fields_from_file, _bool_to_exit_code
@@ -51,10 +51,12 @@ class FieldComparisonRange:
         ref_field = self._ref_fields_dict[name]
         return FieldComparison(name, res_field, ref_field)
 
-
-
 class FileComparison:
-    def __init__(self, res_file: str, ref_file: str, options: FileComparisonOptions, logger):
+    def __init__(self,
+                 res_file: str,
+                 ref_file: str,
+                 options: FileComparisonOptions = FileComparisonOptions(),
+                 logger: Logger = StandardOutputLogger()):
         self._options = options
         self._logger = logger
 
@@ -88,7 +90,6 @@ class FileComparison:
         self._logger.log("File comparison {}\n".format(_get_status_string(passed)))
         return passed
 
-
     def _do_field_comparisons(self) -> bool:
         passed = True
         rel_tol = self._options.relative_tolerances
@@ -103,9 +104,6 @@ class FileComparison:
             self._logger.log(msg, verbosity_level=1)
             self._logger.log(indent(report, " -- "), verbosity_level=2)
         return passed
-
-
-
 
 def _add_field_options_args(parser: ArgumentParser) -> None:
     parser.add_argument(
