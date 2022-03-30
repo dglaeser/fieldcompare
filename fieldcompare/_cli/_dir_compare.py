@@ -16,7 +16,7 @@ from ._common import _style_as_error, _style_as_warning, _make_list_string, _get
 from ._common import _parse_field_tolerances
 
 from ._file_compare import _add_tolerance_options_args, _add_field_options_args
-from ._file_compare import _run_file_compare, FileComparisonOptions
+from ._file_compare import FileComparison, FileComparisonOptions
 
 
 def _add_arguments(parser: ArgumentParser):
@@ -144,7 +144,12 @@ def _do_file_comparisons(args,
             relative_tolerances=_rel_tol_map,
             absolute_tolerances=_abs_tol_map
         )
-        _passed = _run_file_compare(res_file, ref_file, opts, _sub_logger)
+        try:
+            comparison = FileComparison(res_file, ref_file, opts, logger)
+            _passed = comparison.run_file_compare()
+        except Exception as e:
+            logger.log(str(e), verbosity_level=1)
+            return False
 
         if _sub_logger.verbosity_level is not None and _sub_logger.verbosity_level == 0:
             logger.log(
