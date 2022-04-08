@@ -145,7 +145,7 @@ def _do_file_comparisons(args,
             absolute_tolerances=_abs_tol_map
         )
         try:
-            comparison = FileComparison(res_file, ref_file, opts, logger)
+            comparison = FileComparison(res_file, ref_file, opts, _sub_logger)
             _passed = comparison.run_file_compare()
         except Exception as e:
             logger.log(str(e), verbosity_level=1)
