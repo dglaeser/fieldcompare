@@ -149,7 +149,7 @@ def _do_file_comparisons(args,
             _passed = comparison.run_file_compare()
         except Exception as e:
             logger.log(str(e), verbosity_level=1)
-            return False
+            _passed = False
 
         if _sub_logger.verbosity_level is not None and _sub_logger.verbosity_level == 0:
             logger.log(
