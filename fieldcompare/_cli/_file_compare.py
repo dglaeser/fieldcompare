@@ -68,7 +68,7 @@ class FileComparison:
         self._comparisons = FieldComparisonRange(res_fields, ref_fields, self._match_result.matches)
 
     def _read_file(self, file_name: str) -> Iterable[FieldInterface]:
-        try:  # read in results file
+        try:
             return _read_fields_from_file(file_name, self._logger)
         except IOError as e:
             raise Exception(_read_error_message(file_name, str(e)))
