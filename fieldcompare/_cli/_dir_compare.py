@@ -146,7 +146,7 @@ def _do_file_comparisons(args,
         )
         try:
             comparison = FileComparison(res_file, ref_file, opts, _sub_logger)
-            _passed = comparison.run_file_compare()
+            _passed = comparison.run()
         except Exception as e:
             logger.log(str(e), verbosity_level=1)
             _passed = False

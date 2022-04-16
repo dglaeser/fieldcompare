@@ -72,7 +72,7 @@ class FileComparison:
         except IOError as e:
             raise Exception(_read_error_message(file_name, str(e)))
 
-    def run_file_compare(self) -> bool:
+    def run(self) -> bool:
         try:
             passed = self._do_field_comparisons()
         except Exception as e:
@@ -172,7 +172,7 @@ def _run(args: dict, logger: Logger) -> int:
 
     try:
         comparison = FileComparison(args["file"], args["reference"], opts, logger)
-        passed = comparison.run_file_compare()
+        passed = comparison.run()
     except Exception as e:
         logger.log(str(e), verbosity_level=1)
         return False
