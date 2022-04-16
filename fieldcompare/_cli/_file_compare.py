@@ -54,6 +54,7 @@ class FieldComparisonRange:
         ref_field = self._ref_fields_dict[name]
         return FieldComparison(name, res_field, ref_field)
 
+
 class FileComparison:
     def __init__(self,
                  res_file: str,
@@ -128,6 +129,7 @@ class FileComparison:
             self._logger.log(msg, verbosity_level=1)
             self._logger.log(indent(report, " -- "), verbosity_level=2)
         return passed
+
 
 def _add_field_filter_options_args(parser: ArgumentParser) -> None:
     parser.add_argument(
