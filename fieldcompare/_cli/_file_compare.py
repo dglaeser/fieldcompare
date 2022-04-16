@@ -64,7 +64,6 @@ class FileComparison:
         ref_fields = self._read_file(ref_file)
 
         self._match_result = find_matching_field_names(res_fields, ref_fields)
-
         self._comparisons = FieldComparisonRange(res_fields, ref_fields, self._match_result.matches)
 
     def _read_file(self, file_name: str) -> Iterable[FieldInterface]:
