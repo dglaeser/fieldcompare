@@ -18,6 +18,3 @@ def test_color_context_manager():
 
     test_string = make_colored("hello", color=TextColor.red)
     assert "[0m" in test_string
-
-if __name__ == "__main__":
-    test_color_context_manager()

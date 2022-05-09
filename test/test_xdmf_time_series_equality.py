@@ -96,7 +96,3 @@ def test_perturbed_time_series_files():
     )
     assert not test_result
     assert "timestep_2" in test_result.report
-
-if __name__ == "__main__":
-    test_identical_time_series_files()
-    test_perturbed_time_series_files()

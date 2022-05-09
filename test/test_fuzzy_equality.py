@@ -68,12 +68,3 @@ def test_scalar_field_fuzzy_equality_invalid_type():
     with raises(ValueError):
         check = FuzzyEquality()
         assert not check(field1.values, field2.values)
-
-if __name__ == "__main__":
-    test_fuzzy_equality_with_scalars()
-    test_fuzzy_equality_with_lists()
-    test_fuzzy_equality_with_arrays()
-    test_fuzzy_equality_with_field_values()
-    test_vector_field_fuzzy_equality()
-    test_vector_field_fuzzy_equality_mixed_shapes()
-    test_scalar_field_fuzzy_equality_invalid_type()

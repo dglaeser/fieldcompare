@@ -196,9 +196,3 @@ def test_vtk_with_ghost_points():
             default_predicate,
             remove_ghost_points=False
         )
-
-if __name__ == "__main__":
-    test_identical_vtk_files()
-    test_vtk_files_permutated()
-    test_vtk_files_perturbed()
-    test_non_conforming_vtk_files()

@@ -67,7 +67,3 @@ def test_csv_field_extraction_no_names():
             ) for field_name in ref_data.keys()
         )
     remove(test_csv_file_name)
-
-if __name__ == "__main__":
-    test_csv_field_extraction()
-    test_csv_field_extraction_no_names()

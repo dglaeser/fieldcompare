@@ -83,8 +83,3 @@ def test_collect_missing_references():
 
     _delete_folder(results_folder)
     _delete_folder(references_folder)
-
-if __name__ == "__main__":
-    test_collect_from_single_folder()
-    test_collect_missing_results()
-    test_collect_missing_references()

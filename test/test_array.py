@@ -30,8 +30,3 @@ def test_fixed_size_array_construction():
     assert all(v == 1.0 for v in arr1)
     arr1 = make_uninitialized_array(size=10, dtype="object")
     assert all(v is None for v in arr1)
-
-if __name__ == "__main__":
-    test_array_factory_functions()
-    test_sub_array_extraction()
-    test_fixed_size_array_construction()
