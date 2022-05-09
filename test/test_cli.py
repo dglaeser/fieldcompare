@@ -35,6 +35,35 @@ def test_cli_file_mode_fail():
     remove(_mesh_filename)
     remove(_perturbed_mesh_filename)
 
+def test_cli_file_mode_field_filter():
+    with StringIO() as stream:
+        logger = StreamLogger(stream)
+        args = [
+            "file", str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+            "--reference", str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+            "--include-fields", "function"
+        ]
+        assert main(args, logger) == 0
+        comparison_logs = [
+            line for line in stream.getvalue().split("\n") if "Comparison of the fields" in line
+        ]
+        assert len(comparison_logs) == 1
+        assert "function" in comparison_logs[0]
+
+def test_cli_file_mode_field_exclusion_filter():
+    with StringIO() as stream:
+        logger = StreamLogger(stream)
+        args = [
+            "file", str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+            "--reference", str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+            "--exclude-fields", "function"
+        ]
+        assert main(args, logger) == 0
+        comparison_logs = [
+            line for line in stream.getvalue().split("\n") if "Comparison of the fields" in line
+        ]
+        assert not any("function" in log for log in comparison_logs)
+
 def test_cli_file_mode_relative_tolerance_definition():
     _mesh = _make_test_mesh()
     _perturbed_mesh = _make_test_mesh()
@@ -155,6 +184,34 @@ def test_cli_file_mode_missing_reference_field():
 def test_cli_directory_mode():
     assert main(["dir", str(TEST_DATA_PATH), "--reference-dir", str(TEST_DATA_PATH)]) == 0
 
+def test_cli_directory_mode_field_filter():
+    with StringIO() as stream:
+        logger = StreamLogger(stream)
+        args = [
+            "dir", str(TEST_DATA_PATH),
+            "--reference-dir", str(TEST_DATA_PATH),
+            "--include-fields", "function"
+        ]
+        assert main(args, logger) == 0
+        comparison_logs = [
+            line for line in stream.getvalue().split("\n") if "Comparison of the fields" in line
+        ]
+        assert all("function" in log for log in comparison_logs)
+
+def test_cli_directory_mode_field_exclusion_filter():
+    with StringIO() as stream:
+        logger = StreamLogger(stream)
+        args = [
+            "dir", str(TEST_DATA_PATH),
+            "--reference-dir", str(TEST_DATA_PATH),
+            "--exclude-fields", "function"
+        ]
+        assert main(args, logger) == 0
+        comparison_logs = [
+            line for line in stream.getvalue().split("\n") if "Comparison of the fields" in line
+        ]
+        assert not any("function" in log for log in comparison_logs)
+
 def test_cli_directory_mode_missing_result_file():
     tmp_results_path = TEST_DATA_PATH.resolve().parent / Path("cli_dir_test_results_data")
     copytree(TEST_DATA_PATH, tmp_results_path, dirs_exist_ok=True)
@@ -205,7 +262,7 @@ def test_cli_directory_mode_missing_reference_file():
 
     rmtree(tmp_reference_path)
 
-def test_cli_directory_mode_regex():
+def test_cli_directory_mode_file_inclusion_filter():
     # check that the normal run has xdmf in the output
     with StringIO() as stream:
         logger = StreamLogger(stream)
@@ -225,7 +282,7 @@ def test_cli_directory_mode_regex():
         main([
             "dir", str(TEST_DATA_PATH),
             "--reference-dir", str(TEST_DATA_PATH),
-            "--regex",
+            "--include-files",
             "*.vtu",
             "--verbosity=1"], logger)
         assert ".xdmf" not in stream.getvalue()
@@ -324,9 +381,13 @@ def test_cli_directory_mode_absolute_tolerance_definition():
 if __name__ == "__main__":
     test_cli_file_mode_pass()
     test_cli_file_mode_fail()
+    test_cli_file_mode_field_filter()
+    test_cli_file_mode_field_exclusion_filter()
     test_cli_file_mode_missing_result_field()
     test_cli_file_mode_missing_reference_field()
     test_cli_directory_mode()
+    test_cli_directory_mode_field_filter()
+    test_cli_directory_mode_field_exclusion_filter()
     test_cli_directory_mode_missing_result_file()
     test_cli_directory_mode_missing_reference_file()
-    test_cli_directory_mode_regex()
+    test_cli_directory_mode_file_inclusion_filter()

@@ -1,12 +1,43 @@
 """Common functions used in the command-line interface"""
 
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Sequence
 from textwrap import indent
+from re import compile
 
 from .._common import _default_base_tolerance
 from ..colors import make_colored, TextColor
 from ..logging import Logger, ModifiedVerbosityLoggerFacade, IndentedLoggingFacade
 from ..field_io import read_fields
+
+
+class InclusionFilter:
+    def __init__(self, regexes: Optional[List[str]] = None) -> None:
+        self._regexes = regexes
+
+    def __call__(self, names: Sequence[str]) -> List[str]:
+        if not self._regexes:
+            return list(names)
+
+        result = []
+        for regex in self._regexes:
+            # support unix bash wildcard patterns
+            if regex.startswith("*") or regex.startswith("?"):
+                regex = f".{regex}"
+            pattern = compile(regex)
+            result.extend(list(filter(lambda n: pattern.match(n), names)))
+        return list(set(result))
+
+
+class ExclusionFilter:
+    def __init__(self, regexes: Optional[List[str]] = None) -> None:
+        self._regexes = regexes
+
+    def __call__(self, names: Sequence[str]) -> List[str]:
+        if not self._regexes:
+            return list(names)
+
+        matches = InclusionFilter(self._regexes)(names)
+        return list(set(names).difference(set(matches)))
 
 
 class FieldToleranceMap:

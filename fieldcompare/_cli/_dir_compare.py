@@ -1,21 +1,19 @@
 """Command-line interface for comparing a pair of folders"""
 
-from typing import Sequence, Iterable
+from typing import Iterable
 from argparse import ArgumentParser
 from typing import List
 from os.path import join
-from re import compile
 
 from ..matching import find_matching_file_names
 from ..logging import Logger, ModifiedVerbosityLoggerFacade, IndentedLoggingFacade
 from ..field_io import is_supported_file
 from ..colors import make_colored, TextStyle
 
-from ._common import _bool_to_exit_code
+from ._common import _bool_to_exit_code, _parse_field_tolerances, InclusionFilter, ExclusionFilter
 from ._common import _style_as_error, _style_as_warning, _make_list_string, _get_status_string
-from ._common import _parse_field_tolerances
 
-from ._file_compare import _add_tolerance_options_args, _add_field_options_args
+from ._file_compare import _add_tolerance_options_args, _add_field_options_args, _add_field_filter_options_args
 from ._file_compare import FileComparison, FileComparisonOptions
 
 
@@ -44,11 +42,12 @@ def _add_arguments(parser: ArgumentParser):
         help="Use this flag to suppress errors from missing reference files"
     )
     parser.add_argument(
-        "--regex",
+        "--include-files",
         required=False,
         action="append",
         help="Pass a regular expression used to filter files to be compared. This option can "
-             "be used multiple times. Files that match any of the pattersn are considered."
+             "be used multiple times. Files that match any of the patterns are considered. "
+             "If this option is not specified, all files found in the directories are considered."
     )
     parser.add_argument(
         "--verbosity",
@@ -58,6 +57,7 @@ def _add_arguments(parser: ArgumentParser):
         help="Set the verbosity level"
     )
     _add_field_options_args(parser)
+    _add_field_filter_options_args(parser)
     _add_tolerance_options_args(parser)
 
 
@@ -74,15 +74,14 @@ def _run(args: dict, logger: Logger) -> int:
         verbosity_level=1
     )
 
-    filtered_matches = search_result.matches
-    if args["regex"]:
-        filtered_matches = _filter_using_regex(filtered_matches, args["regex"])
+    include_filter = InclusionFilter(args["include_files"])
+    filtered_matches = include_filter(search_result.matches)
+    missing_results = include_filter(search_result.orphan_references)
+    missing_references = include_filter(search_result.orphan_results)
 
     supported_files = list(filter(lambda f: is_supported_file(join(res_dir, f)), filtered_matches))
     unsupported_files = list(filter(lambda f: not is_supported_file(join(res_dir, f)), filtered_matches))
     dropped_matches = list(filter(lambda f: f not in filtered_matches, search_result.matches))
-    missing_results = search_result.orphan_references
-    missing_references = search_result.orphan_results
 
     passed = _do_file_comparisons(args, supported_files, logger)
     _log_missing_results(args, missing_results, logger)
@@ -110,17 +109,6 @@ def _run(args: dict, logger: Logger) -> int:
     return _bool_to_exit_code(passed)
 
 
-def _filter_using_regex(filenames: Sequence[str], regexes: Iterable[str]):
-    result = []
-    for regex in regexes:
-        # support unix bash wildcard patterns
-        if regex.startswith("*") or regex.startswith("?"):
-            regex = f".{regex}"
-        pattern = compile(regex)
-        result.extend(list(filter(lambda f: pattern.match(f), filenames)))
-    return list(set(result))
-
-
 def _do_file_comparisons(args,
                          filenames: Iterable[str],
                          logger: Logger) -> bool:
@@ -142,7 +130,9 @@ def _do_file_comparisons(args,
             ignore_missing_result_fields=args["ignore_missing_result_fields"],
             ignore_missing_reference_fields=args["ignore_missing_reference_fields"],
             relative_tolerances=_rel_tol_map,
-            absolute_tolerances=_abs_tol_map
+            absolute_tolerances=_abs_tol_map,
+            field_inclusion_filter=InclusionFilter(args["include_fields"]),
+            field_exclusion_filter=ExclusionFilter(args["exclude_fields"])
         )
         try:
             comparison = FileComparison(res_file, ref_file, opts, _sub_logger)
