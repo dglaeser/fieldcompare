@@ -167,7 +167,7 @@ class FuzzyEquality:
 class DefaultEquality(FuzzyEquality):
     """Default choice of quality checks. Checks fuzzy or exact depending on data type."""
     def __init__(self, *args, **kwargs) -> None:
-        FuzzyEquality.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def __call__(self, first, second) -> PredicateResult:
         if _is_float(first) or _is_float(second):

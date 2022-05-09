@@ -43,7 +43,7 @@ class StreamLogger(Logger):
                  ostream: TextIO,
                  verbosity_level: Optional[int] = None) -> None:
         self._ostream = ostream
-        Logger.__init__(self, verbosity_level)
+        super().__init__(verbosity_level)
 
     def _log(self, message: str) -> None:
         self._ostream.write(message)
@@ -52,13 +52,13 @@ class StreamLogger(Logger):
 class StandardOutputLogger(StreamLogger):
     """Logging to standard out"""
     def __init__(self, verbosity_level: Optional[int] = None) -> None:
-        StreamLogger.__init__(self, sys.stdout, verbosity_level)
+        super().__init__(sys.stdout, verbosity_level)
 
 
 class NullDeviceLogger(Logger):
     """Logger interface that does no logging"""
     def __init__(self, verbosity_level: Optional[int] = None) -> None:
-        Logger.__init__(self, verbosity_level)
+        super().__init__(verbosity_level)
 
     def _log(self, message: str) -> None:
         pass
@@ -69,7 +69,7 @@ class ModifiedVerbosityLoggerFacade(Logger):
     def __init__(self, logger: Logger, verbosity_change: int) -> None:
         self._logger = logger
         self._verbosity_change = verbosity_change
-        Logger.__init__(self, logger.verbosity_level)
+        super().__init__(logger.verbosity_level)
         if logger.verbosity_level:
             self.verbosity_level = logger.verbosity_level + verbosity_change
 
@@ -82,7 +82,7 @@ class IndentedLoggingFacade(Logger):
     def __init__(self, logger: Logger, first_line_prefix: str) -> None:
         self._logger = logger
         self._first_line_prefix = first_line_prefix
-        Logger.__init__(self, logger.verbosity_level)
+        super().__init__(logger.verbosity_level)
 
     def _log(self, message: str) -> None:
         self._logger.log(self._indent(message))
