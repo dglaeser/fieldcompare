@@ -1,6 +1,5 @@
 """Test exact equality checks on values/arrays"""
 
-from context import fieldcompare
 from fieldcompare import Field
 from fieldcompare import make_array
 from fieldcompare import ExactEquality, DefaultEquality
@@ -63,12 +62,3 @@ def test_exact_equality_mixed_types():
         assert check(make_array(list1), make_array(list2))
         assert not check(list1, list3)
         assert not check(make_array(list1), make_array(list3))
-
-
-if __name__ == "__main__":
-    test_exact_equality_with_scalars()
-    test_exact_equality_with_lists()
-    test_exact_equality_with_arrays()
-    test_exact_equality_with_field_values()
-    test_vector_field_exact_equality()
-    test_exact_equality_mixed_types()

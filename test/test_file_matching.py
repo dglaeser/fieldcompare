@@ -4,7 +4,6 @@ from os import makedirs, remove, walk, rmdir
 from os.path import join, exists, isdir
 from typing import List
 
-from context import fieldcompare
 from fieldcompare.matching import find_matching_file_names
 
 def _touch(file_path: str) -> None:
@@ -84,8 +83,3 @@ def test_collect_missing_references():
 
     _delete_folder(results_folder)
     _delete_folder(references_folder)
-
-if __name__ == "__main__":
-    test_collect_from_single_folder()
-    test_collect_missing_results()
-    test_collect_missing_references()

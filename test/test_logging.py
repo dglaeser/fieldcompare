@@ -3,7 +3,6 @@
 from io import StringIO
 from contextlib import redirect_stdout
 
-from context import fieldcompare
 from fieldcompare.logging import StreamLogger, StandardOutputLogger
 from fieldcompare.logging import ModifiedVerbosityLoggerFacade, IndentedLoggingFacade
 
@@ -36,10 +35,3 @@ def test_indented_logger():
         mod_logger = IndentedLoggingFacade(logger, first_line_prefix=" --")
         mod_logger.log("hello", verbosity_level=1)
         assert " --hello" in stream.getvalue()
-
-
-if __name__ == "__main__":
-    test_stdout_logger()
-    test_stream_logger()
-    test_modified_verbosity_logger()
-    test_indented_logger()

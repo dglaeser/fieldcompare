@@ -1,7 +1,6 @@
 import numpy as np
 from typing import List
 
-from context import fieldcompare
 from fieldcompare.field import Field
 from fieldcompare.matching import MatchResult, find_matching_field_names
 

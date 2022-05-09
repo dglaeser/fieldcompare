@@ -6,7 +6,6 @@ from shutil import rmtree, copytree
 from pathlib import Path
 from io import StringIO
 
-from context import fieldcompare
 from fieldcompare._cli import main
 from fieldcompare.logging import StreamLogger
 from data.generate_test_meshes import _make_test_mesh, _perturb_mesh
@@ -376,18 +375,3 @@ def test_cli_directory_mode_absolute_tolerance_definition():
 
     rmtree(res_dir)
     rmtree(ref_dir)
-
-
-if __name__ == "__main__":
-    test_cli_file_mode_pass()
-    test_cli_file_mode_fail()
-    test_cli_file_mode_field_filter()
-    test_cli_file_mode_field_exclusion_filter()
-    test_cli_file_mode_missing_result_field()
-    test_cli_file_mode_missing_reference_field()
-    test_cli_directory_mode()
-    test_cli_directory_mode_field_filter()
-    test_cli_directory_mode_field_exclusion_filter()
-    test_cli_directory_mode_missing_result_file()
-    test_cli_directory_mode_missing_reference_file()
-    test_cli_directory_mode_file_inclusion_filter()
