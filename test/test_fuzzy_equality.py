@@ -2,7 +2,6 @@
 
 from pytest import raises
 
-from context import fieldcompare
 from fieldcompare import Field, make_array
 from fieldcompare import FuzzyEquality, DefaultEquality
 

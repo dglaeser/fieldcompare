@@ -3,7 +3,6 @@
 from io import StringIO
 from contextlib import redirect_stdout
 
-from context import fieldcompare
 from fieldcompare.logging import StreamLogger, StandardOutputLogger
 from fieldcompare.logging import ModifiedVerbosityLoggerFacade, IndentedLoggingFacade
 

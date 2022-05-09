@@ -6,7 +6,6 @@ from shutil import rmtree, copytree
 from pathlib import Path
 from io import StringIO
 
-from context import fieldcompare
 from fieldcompare._cli import main
 from fieldcompare.logging import StreamLogger
 from data.generate_test_meshes import _make_test_mesh, _perturb_mesh

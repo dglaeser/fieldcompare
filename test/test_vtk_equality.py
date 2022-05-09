@@ -3,7 +3,6 @@
 from pathlib import Path
 from pytest import raises
 
-from context import fieldcompare
 from fieldcompare import MeshFieldReader, FuzzyEquality, DefaultEquality
 
 TEST_DATA_PATH = Path(__file__).resolve().parent / Path("data")

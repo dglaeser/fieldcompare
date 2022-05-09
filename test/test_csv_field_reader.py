@@ -3,7 +3,6 @@
 from os import remove
 from csv import writer
 
-from context import fieldcompare
 from fieldcompare import read_fields
 from fieldcompare import ExactEquality
 

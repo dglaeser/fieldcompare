@@ -2,7 +2,6 @@
 
 from pytest import raises
 
-from context import fieldcompare
 from fieldcompare import make_array, sub_array
 from fieldcompare.array import make_initialized_array, make_uninitialized_array
 

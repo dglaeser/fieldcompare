@@ -1,6 +1,5 @@
 """Test text styling facilities"""
 
-from context import fieldcompare
 from fieldcompare.colors import make_colored, TextColor
 from fieldcompare.colors import text_color_options
 
