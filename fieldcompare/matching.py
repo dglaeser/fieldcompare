@@ -15,27 +15,30 @@ class MatchResult:
     orphan_references: List[str]
 
 
+def _find_matching_names(result_names: Iterable[str],
+                         reference_names: Iterable[str]) -> MatchResult:
+    res_orphans = list(set(result_names).difference(reference_names))
+    ref_orphans = list(set(reference_names).difference(result_names))
+    matches = list(set(result_names).intersection(reference_names))
+    return MatchResult(matches, res_orphans, ref_orphans)
+
+
 def find_matching_field_names(result_fields: Iterable[FieldInterface],
                               reference_fields: Iterable[FieldInterface]) -> MatchResult:
-    """Looks for matching field names in the provided results & reference field lists"""
-    res_names = [f.name for f in result_fields]
-    ref_names = [f.name for f in reference_fields]
-    res_orphans = list(set(res_names).difference(ref_names))
-    ref_orphans = list(set(ref_names).difference(res_names))
-    matches = list(set(res_names).intersection(ref_names))
-    return MatchResult(matches, res_orphans, ref_orphans)
+    """Looks for matching field names in the provided results & reference fields"""
+    return _find_matching_names(
+        [f.name for f in result_fields],
+        [f.name for f in reference_fields]
+    )
 
 
 def find_matching_file_names(results_folder: str,
                              references_folder: str) -> MatchResult:
     """Looks for matching supported files in a results & reference folder to be compared"""
-    result_files = set(_find_sub_files_recursively(results_folder))
-    reference_files = set(_find_sub_files_recursively(references_folder))
-
-    matches = [filename for filename in result_files.intersection(reference_files)]
-    orphan_results = [filename for filename in result_files.difference(reference_files)]
-    orphan_references = [filename for filename in reference_files.difference(result_files)]
-    return MatchResult(matches, orphan_results, orphan_references)
+    return _find_matching_names(
+        _find_sub_files_recursively(results_folder),
+        _find_sub_files_recursively(references_folder)
+    )
 
 
 def _find_sub_files_recursively(folder) -> List[str]:
