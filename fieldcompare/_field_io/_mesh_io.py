@@ -132,8 +132,9 @@ def _extract_from_meshio_mesh(mesh: Mesh,
     result = MeshFields(
         (mesh.points, _cells(mesh)),
         permute_uniquely,
-        logger
     )
+    result.attach_logger(logger)
+
     for array_name in mesh.point_data:
         result.add_point_data(array_name, mesh.point_data[array_name])
     for array_name in mesh.cell_data:
@@ -158,12 +159,13 @@ def _extract_from_meshio_time_series(time_series_reader,
     if remove_ghost_points:
         mesh, ghost_point_filter = _filter_out_ghost_points(mesh, logger)
     time_steps_reader = _MeshioTimeStepReader(mesh, time_series_reader, ghost_point_filter)
-    return TimeSeriesMeshFields(
+    result = TimeSeriesMeshFields(
         (mesh.points, _cells(mesh)),
         time_steps_reader,
-        permute_uniquely,
-        logger
+        permute_uniquely
     )
+    result.attach_logger(logger)
+    return result
 
 
 class _MeshioTimeStepReader:
