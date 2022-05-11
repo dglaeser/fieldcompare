@@ -43,6 +43,7 @@ test_coverage_report:
   extends: .install_dependencies
   script:
     - tox -e coverage
+  coverage: '/TOTAL.*\s([.\d]+)%/'
   artifacts:
     reports:
       coverage_report:
