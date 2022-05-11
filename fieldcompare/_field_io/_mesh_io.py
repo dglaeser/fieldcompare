@@ -9,7 +9,7 @@ from meshio import extension_to_filetypes as meshio_supported_extensions
 from meshio.xdmf import TimeSeriesReader as MeshIOTimeSeriesReader
 
 from ..field import Field
-from ..logging import Logger, NullDeviceLogger
+from ..logging import Logger, LoggableBase, NullDeviceLogger
 from ..array import Array, sub_array
 from ..array import make_initialized_array, make_uninitialized_array
 from ..array import sort_array, accumulate
@@ -17,18 +17,13 @@ from ..mesh_fields import MeshFields, TimeSeriesMeshFields
 
 from ._reader_map import _register_reader_for_extension
 
-
-class MeshFieldReader:
+class MeshFieldReader(LoggableBase):
     def __init__(self,
                  permute_uniquely: bool = True,
-                 remove_ghost_points: bool = True,
-                 logger: Logger = NullDeviceLogger()) -> None:
+                 remove_ghost_points: bool = True) -> None:
+        super().__init__()
         self._do_permutation = permute_uniquely
         self._remove_ghost_points = remove_ghost_points
-        self._logger = logger
-
-    def attach_logger(self, logger: Logger) -> None:
-        self._logger = logger
 
     @property
     def remove_ghost_points(self) -> bool:
@@ -56,18 +51,19 @@ class MeshFieldReader:
 
     def _read(self, filename: str) -> Iterable[Field]:
         extension = splitext(filename)[1]
+        # TODO: make work for multiple loggers
         if _is_time_series_compatible_format(extension):
             return _extract_from_meshio_time_series(
                 MeshIOTimeSeriesReader(filename),
                 self.remove_ghost_points,
                 self.permute_uniquely,
-                self._logger
+                self._loggers[0] if self._loggers else NullDeviceLogger()
             )
         return _extract_from_meshio_mesh(
             meshio_read(filename),
             self.remove_ghost_points,
             self.permute_uniquely,
-            self._logger
+            self._loggers[0] if self._loggers else NullDeviceLogger()
         )
 
 for ext in meshio_supported_extensions:

@@ -1,7 +1,7 @@
 """Interface & implementations for loggers"""
 
 import sys
-from typing import TextIO, Protocol
+from typing import TextIO, Protocol, List
 
 
 class Logger(Protocol):
@@ -43,6 +43,20 @@ class Loggable(Protocol):
     """Interface for classes that allow attaching a logger."""
     def attach_logger(self, logger: Logger) -> None:
         ...
+
+
+class LoggableBase:
+    """Base class for classes that do logging"""
+    def __init__(self) -> None:
+        self._loggers: List[Logger] = []
+
+    def attach_logger(self, logger: Logger) -> None:
+        if not any(_logger is logger for _logger in self._loggers):
+            self._loggers.append(logger)
+
+    def _log(self, message: str, verbosity_level: int = 1) -> None:
+        for _logger in self._loggers:
+            _logger.log(message, verbosity_level)
 
 
 class StreamLogger(LoggerBase):

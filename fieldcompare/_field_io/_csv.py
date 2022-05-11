@@ -5,19 +5,13 @@ from csv import reader
 
 from ..field import Field
 from ..array import make_array
-from ..logging import Logger, NullDeviceLogger
+from ..logging import LoggableBase
 from ._common import _convert_string, _convertible_to_float
 from ._reader_map import _register_reader_for_extension
 
 
-class CSVFieldReader:
+class CSVFieldReader(LoggableBase):
     """Read fields from csv files"""
-
-    def __init__(self, logger: Logger = NullDeviceLogger()) -> None:
-        self._logger = logger
-
-    def attach_logger(self, logger: Logger) -> None:
-        self._logger = logger
 
     def read(self, filename: str) -> List[Field]:
         names = []
@@ -29,13 +23,13 @@ class CSVFieldReader:
                 row_values = list(row)
                 if row_idx == 0:
                     if not any(_convertible_to_float(v) for v in row_values):
-                        self._logger.log(
+                        self._log(
                             "Using first row as field names\n",
                             verbosity_level=2
                         )
                         names = row_values
                     else:
-                        self._logger.log(
+                        self._log(
                             "Could not use first row as field names, using 'field_i'\n",
                             verbosity_level=2
                         )
