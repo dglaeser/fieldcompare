@@ -1,15 +1,13 @@
 """Read fields from files with various data formats"""
 
 from os.path import splitext, exists
-from typing import Iterable
 
-from .field import FieldInterface
+from .field import FieldContainer
 from ._field_io import _get_reader_for_extension, FieldReader
 from .logging import Logger, NullDeviceLogger
 
 
-def read_fields(filename: str,
-                logger: Logger = NullDeviceLogger()) -> Iterable[FieldInterface]:
+def read_fields(filename: str, logger: Logger = NullDeviceLogger()) -> FieldContainer:
     """Read in the fields from the file with the given name using default settings"""
     if not exists(filename):
         raise IOError(f"Given file '{filename}' does not exist")

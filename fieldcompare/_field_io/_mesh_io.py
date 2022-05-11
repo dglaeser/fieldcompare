@@ -8,7 +8,7 @@ from meshio import read as meshio_read
 from meshio import extension_to_filetypes as meshio_supported_extensions
 from meshio.xdmf import TimeSeriesReader as MeshIOTimeSeriesReader
 
-from ..field import Field
+from ..field import DefaultFieldContainer
 from ..logging import Logger, LoggableBase
 from ..array import Array, sub_array
 from ..array import make_initialized_array, make_uninitialized_array
@@ -57,7 +57,7 @@ class MeshFieldReader(LoggableBase):
     def permute_uniquely(self, value: bool) -> None:
         self._do_permutation = value
 
-    def read(self, filename: str) -> Iterable[Field]:
+    def read(self, filename: str) -> DefaultFieldContainer:
         assert splitext(filename)[1] in meshio_supported_extensions
 
         try:
@@ -65,20 +65,24 @@ class MeshFieldReader(LoggableBase):
         except Exception as e:
             raise IOError(f"Caught exception during reading of the mesh:\n{e}")
 
-    def _read(self, filename: str) -> Iterable[Field]:
+    def _read(self, filename: str) -> DefaultFieldContainer:
         extension = splitext(filename)[1]
         if _is_time_series_compatible_format(extension):
-            return _extract_from_meshio_time_series(
-                MeshIOTimeSeriesReader(filename),
+            return DefaultFieldContainer(
+                _extract_from_meshio_time_series(
+                    MeshIOTimeSeriesReader(filename),
+                    self.remove_ghost_points,
+                    self.permute_uniquely,
+                    self._LoggerAdapter(self)
+                )
+            )
+        return DefaultFieldContainer(
+            _extract_from_meshio_mesh(
+                meshio_read(filename),
                 self.remove_ghost_points,
                 self.permute_uniquely,
                 self._LoggerAdapter(self)
             )
-        return _extract_from_meshio_mesh(
-            meshio_read(filename),
-            self.remove_ghost_points,
-            self.permute_uniquely,
-            self._LoggerAdapter(self)
         )
 
 for ext in meshio_supported_extensions:

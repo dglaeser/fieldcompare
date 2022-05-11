@@ -36,3 +36,21 @@ class FieldContainer(Protocol):
 class Field:
     name: str
     values: Array
+
+
+class DefaultFieldContainer:
+    def __init__(self, fields: Iterable[FieldInterface]) -> None:
+        self._fields = list(fields)
+
+    @property
+    def field_names(self) -> Iterable[str]:
+        return (f.name for f in self._fields)
+
+    def get(self, field_name: str) -> FieldInterface:
+        for field in self._fields:
+            if field.name == field_name:
+                return field
+        raise KeyError("Could not find field with the given name")
+
+    def __iter__(self) -> Iterator[FieldInterface]:
+        return iter(self._fields)

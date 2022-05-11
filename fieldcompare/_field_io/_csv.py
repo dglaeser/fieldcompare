@@ -1,9 +1,8 @@
 """Reader for extracting fields from csv files"""
 
-from typing import List
 from csv import reader
 
-from ..field import Field
+from ..field import Field, DefaultFieldContainer
 from ..array import make_array
 from ..logging import LoggableBase
 from ._common import _convert_string, _convertible_to_float
@@ -13,7 +12,7 @@ from ._reader_map import _register_reader_for_extension
 class CSVFieldReader(LoggableBase):
     """Read fields from csv files"""
 
-    def read(self, filename: str) -> List[Field]:
+    def read(self, filename: str) -> DefaultFieldContainer:
         names = []
         rows = []
 
@@ -38,13 +37,13 @@ class CSVFieldReader(LoggableBase):
                 else:
                     rows.append([_convert_string(v) for v in row_values])
 
-        return [
+        return DefaultFieldContainer([
             Field(
                 names[col_idx],
                 make_array([rows[i][col_idx] for i in range(len(rows))])
             )
             for col_idx in range(len(names))
-        ]
+        ])
 
 
 _register_reader_for_extension(".csv", CSVFieldReader())
