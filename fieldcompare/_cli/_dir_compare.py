@@ -62,8 +62,7 @@ def _add_arguments(parser: ArgumentParser):
 
 
 def _run(args: dict, logger: Logger) -> int:
-    if not logger.verbosity_level:
-        logger.verbosity_level = args["verbosity"]
+    logger.verbosity_level = args["verbosity"]
 
     res_dir = args["dir"]
     ref_dir = args["reference_dir"]

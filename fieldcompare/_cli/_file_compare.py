@@ -206,9 +206,7 @@ def _add_arguments(parser: ArgumentParser):
 
 
 def _run(args: dict, logger: Logger) -> int:
-    if not logger.verbosity_level:
-        logger.verbosity_level = args["verbosity"]
-
+    logger.verbosity_level = args["verbosity"]
     opts = FileComparisonOptions(
         ignore_missing_result_fields=args["ignore_missing_result_fields"],
         ignore_missing_reference_fields=args["ignore_missing_reference_fields"],

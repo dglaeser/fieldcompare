@@ -1,7 +1,7 @@
 """Interface & implementations for loggers"""
 
 import sys
-from typing import TextIO, Optional, Protocol
+from typing import TextIO, Protocol
 
 
 class Logger(Protocol):
@@ -14,29 +14,25 @@ class Logger(Protocol):
     def verbosity_level(self, level: int) -> None:
         ...
 
-    def log(self, message: str, verbosity_level: Optional[int] = None) -> None:
+    def log(self, message: str, verbosity_level: int = 1) -> None:
         ...
 
 
 class LoggerBase:
     """Interface for loggers"""
-    def __init__(self, verbosity_level: Optional[int] = None) -> None:
+    def __init__(self, verbosity_level: int = 100) -> None:
         self._verbosity_level = verbosity_level
 
     @property
-    def verbosity_level(self) -> Optional[int]:
+    def verbosity_level(self) -> int:
         return self._verbosity_level
 
     @verbosity_level.setter
     def verbosity_level(self, level: int) -> None:
         self._verbosity_level = level
 
-    def log(self, message: str, verbosity_level: Optional[int] = None) -> None:
-        if self._verbosity_level is None:
-            self._log(message)
-        elif verbosity_level is None and self._verbosity_level > 0:
-            self._log(message)
-        elif verbosity_level is not None and verbosity_level <= self._verbosity_level:
+    def log(self, message: str, verbosity_level: int = 1) -> None:
+        if verbosity_level <= self._verbosity_level:
             self._log(message)
 
     def _log(self, message: str) -> None:
@@ -53,7 +49,7 @@ class StreamLogger(LoggerBase):
     """Logging into output streams"""
     def __init__(self,
                  ostream: TextIO,
-                 verbosity_level: Optional[int] = None) -> None:
+                 verbosity_level: int = 100) -> None:
         self._ostream = ostream
         super().__init__(verbosity_level)
 
@@ -63,13 +59,13 @@ class StreamLogger(LoggerBase):
 
 class StandardOutputLogger(StreamLogger):
     """Logging to standard out"""
-    def __init__(self, verbosity_level: Optional[int] = None) -> None:
+    def __init__(self, verbosity_level: int = 100) -> None:
         super().__init__(sys.stdout, verbosity_level)
 
 
 class NullDeviceLogger(LoggerBase):
     """Logger interface that does no logging"""
-    def __init__(self, verbosity_level: Optional[int] = None) -> None:
+    def __init__(self, verbosity_level: int = 100) -> None:
         super().__init__(verbosity_level)
 
     def _log(self, message: str) -> None:
