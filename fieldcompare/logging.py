@@ -2,10 +2,23 @@
 
 import sys
 from typing import TextIO, Optional, Protocol
-from abc import ABC, abstractmethod
 
 
-class Logger(ABC):
+class Logger(Protocol):
+    """Interface for loggers"""
+    @property
+    def verbosity_level(self) -> int:
+        ...
+
+    @verbosity_level.setter
+    def verbosity_level(self, level: int) -> None:
+        ...
+
+    def log(self, message: str, verbosity_level: Optional[int] = None) -> None:
+        ...
+
+
+class LoggerBase:
     """Interface for loggers"""
     def __init__(self, verbosity_level: Optional[int] = None) -> None:
         self._verbosity_level = verbosity_level
@@ -26,7 +39,6 @@ class Logger(ABC):
         elif verbosity_level is not None and verbosity_level <= self._verbosity_level:
             self._log(message)
 
-    @abstractmethod
     def _log(self, message: str) -> None:
         """Implementation-defined message logging"""
 
@@ -37,7 +49,7 @@ class Loggable(Protocol):
         ...
 
 
-class StreamLogger(Logger):
+class StreamLogger(LoggerBase):
     """Logging into output streams"""
     def __init__(self,
                  ostream: TextIO,
@@ -55,7 +67,7 @@ class StandardOutputLogger(StreamLogger):
         super().__init__(sys.stdout, verbosity_level)
 
 
-class NullDeviceLogger(Logger):
+class NullDeviceLogger(LoggerBase):
     """Logger interface that does no logging"""
     def __init__(self, verbosity_level: Optional[int] = None) -> None:
         super().__init__(verbosity_level)
@@ -64,7 +76,7 @@ class NullDeviceLogger(Logger):
         pass
 
 
-class ModifiedVerbosityLoggerFacade(Logger):
+class ModifiedVerbosityLoggerFacade(LoggerBase):
     """Wrapper around a logger to write to it with modified verbosity"""
     def __init__(self, logger: Logger, verbosity_change: int) -> None:
         self._logger = logger
@@ -77,7 +89,7 @@ class ModifiedVerbosityLoggerFacade(Logger):
         self._logger.log(message)
 
 
-class IndentedLoggingFacade(Logger):
+class IndentedLoggingFacade(LoggerBase):
     """Wrapper around a logger to write indented (useful for logging of sub-routines)"""
     def __init__(self, logger: Logger, first_line_prefix: str) -> None:
         self._logger = logger
