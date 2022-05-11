@@ -1,4 +1,4 @@
-"""Maps to extensions a suitable reader, to be filled by implementations."""
+"""A map from file extensions to suitable readers, to be filled by reader implementations."""
 
 from typing import Iterable, Protocol
 from ..field import FieldInterface
