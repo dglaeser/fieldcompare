@@ -56,5 +56,5 @@ commands =
   pytest --cov-report xml:coverage.xml \
          --cov-report html:cov_report \
          --cov-report term \
-         --cov=fieldcompare
+         --cov={envsitepackagesdir}/fieldcompare
 """
