@@ -1,5 +1,5 @@
 from os.path import exists, splitext
-from typing import Optional, Protocol
+from typing import Optional, Protocol, runtime_checkable
 
 from ..logging import Logger, NullDeviceLogger, Loggable
 from ..field import FieldContainer
@@ -13,6 +13,7 @@ class FieldReader(Loggable, Protocol):
         ...
 
 
+@runtime_checkable
 class MeshFieldReader(FieldReader, Protocol):
     """Interface for readers for fields from mesh files"""
     @property
@@ -61,7 +62,7 @@ def read_fields(filename: str, logger: Logger = NullDeviceLogger()) -> FieldCont
 
 
 def get_field_reader(filename: str) -> FieldReader:
-    """Returng a configurable reader suitable for reading fields from the given file"""
+    """Returng a reader suitable for reading fields from the given file"""
     file_extension = splitext(filename)[1]
     if not file_extension:
         raise ValueError("Could not get extension from given filename")
@@ -69,6 +70,14 @@ def get_field_reader(filename: str) -> FieldReader:
     reader = _get_reader_for_extension(file_extension)
     if reader is None:
         raise NotImplementedError(f"No reader found for files with the extension {file_extension}")
+    return reader
+
+
+def get_mesh_field_reader(filename: str) -> MeshFieldReader:
+    """Return a configurable mesh field reader for the given mesh file"""
+    reader = get_field_reader(filename)
+    if not isinstance(reader, MeshFieldReader):
+        raise ValueError("Reader found for the given file is not a mesh field reader")
     return reader
 
 
