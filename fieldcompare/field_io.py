@@ -3,8 +3,9 @@
 from os.path import splitext, exists
 
 from .field import FieldContainer
-from ._field_io import _get_reader_for_extension, FieldReader
 from .logging import Logger, NullDeviceLogger
+
+from ._field_io import _get_reader_for_extension, FieldReader
 
 
 def read_fields(filename: str, logger: Logger = NullDeviceLogger()) -> FieldContainer:
