@@ -16,7 +16,7 @@ from ..array import sort_array, accumulate
 from ..mesh_fields import MeshFields, TimeSeriesMeshFields
 
 
-class MeshFieldReader(LoggableBase):
+class _MeshIOFieldReader(LoggableBase):
     class _LoggerAdapter:
         def __init__(self, reader) -> None:
             self._reader = reader
@@ -84,9 +84,9 @@ class MeshFieldReader(LoggableBase):
         )
 
 
-def _register_readers_for_extensions(register_function: Callable[[str, MeshFieldReader], None]) -> None:
+def _register_readers_for_extensions(register_function: Callable[[str, _MeshIOFieldReader], None]) -> None:
     for ext in supported_extensions:
-        register_function(ext, MeshFieldReader())
+        register_function(ext, _MeshIOFieldReader())
 
 
 def _is_time_series_compatible_format(file_ext: str) -> bool:
