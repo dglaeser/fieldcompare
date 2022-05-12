@@ -55,12 +55,12 @@ def read_fields(filename: str, logger: Logger = NullDeviceLogger()) -> FieldCont
     if not exists(filename):
         raise IOError(f"Given file '{filename}' does not exist")
 
-    reader = make_reader(filename)
+    reader = get_field_reader(filename)
     reader.attach_logger(logger)
     return reader.read(filename)
 
 
-def make_reader(filename: str) -> FieldReader:
+def get_field_reader(filename: str) -> FieldReader:
     """Returng a configurable reader suitable for reading fields from the given file"""
     file_extension = splitext(filename)[1]
     if not file_extension:
