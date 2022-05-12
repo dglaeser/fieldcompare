@@ -48,7 +48,7 @@ _mesh_io._register_readers_for_extensions(_register_reader_for_extension)
 
 
 def is_mesh_file(filename: str) -> bool:
-    return splitext(filename)[1] in _mesh_io.supported_extensions
+    return splitext(filename)[1] in _mesh_io._meshio_supported_extensions
 
 
 def read_fields(filename: str, logger: Logger = NullDeviceLogger()) -> FieldContainer:

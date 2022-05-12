@@ -1,37 +1,132 @@
 """Reader for mesh file formats using meshio under the hood"""
 
-from typing import Iterable, Tuple, Optional, Callable
+from typing import Iterator, List, Tuple, Callable
 from os.path import splitext
+from dataclasses import dataclass
+from xml.etree import ElementTree
 
-from meshio import Mesh
-from meshio import read as meshio_read
-from meshio import extension_to_filetypes as supported_extensions
-from meshio.xdmf import TimeSeriesReader as MeshIOTimeSeriesReader
+from meshio import Mesh as _MeshIO_Mesh
+from meshio import read as _meshio_read
+from meshio import extension_to_filetypes as _meshio_supported_extensions
+from meshio.xdmf import TimeSeriesReader as _MeshIOTimeSeriesReader
 
-from ..field import DefaultFieldContainer
-from ..logging import Logger, LoggableBase
-from ..array import Array, sub_array
-from ..array import make_initialized_array, make_uninitialized_array
-from ..array import sort_array, accumulate
-from ..mesh_fields import MeshFields, TimeSeriesMeshFields
+from ..field import Field, FieldContainer, DefaultFieldContainer
+from ..logging import LoggableBase
+from ..array import Array
+
+from ._mesh import Mesh, DefaultMesh, TransformedMesh, TransformedMeshBase
+from ._mesh import transform_identity, transform_without_ghosts, transform_sorted
 
 
-class _MeshIOFieldReader(LoggableBase):
-    class _LoggerAdapter:
-        def __init__(self, reader) -> None:
-            self._reader = reader
+class _TimeSeriesFieldContainer:
+    """
+        A field container that contains the fields of multiple time steps.
+        To save memory, it never stores more than the fields of one time step.
+        If the fields of the next time step are requested, they are read in lazily.
+    """
+    @dataclass
+    class _FieldInfo:
+        name: str
+        data_type: str
 
-        def log(self, message: str, verbosity_level: int = 1) -> None:
-            self._reader._log(message, verbosity_level)
+    @dataclass
+    class _TimestepData:
+        point_data: dict
+        cell_data: dict
+        step_idx: int
 
-        @property
-        def verbosity_level(self) -> int:
-            raise ValueError("Verbosity level cannot be accessed")
+    def __init__(self,
+                 time_series_reader: _MeshIOTimeSeriesReader,
+                 meshio_mesh: _MeshIO_Mesh,
+                 transformed_mesh: TransformedMesh) -> None:
+        self._time_series_reader = time_series_reader
+        self._meshio_mesh = meshio_mesh
+        self._transformed_mesh = transformed_mesh
+        self._field_infos = self._find_fields_of_all_timesteps()
+        self._timestep_data = self._TimestepData({}, {}, -1)
 
-        @verbosity_level.setter
-        def verbosity_level(self, value: int) -> None:
-            raise ValueError("Verbosity level cannot be set")
+    @property
+    def field_names(self) -> List[str]:
+        return [_f.name for _f in self._field_infos]
 
+    def get(self, field_name: str) -> Field:
+        for _info in self._field_infos:
+            if _info.name == field_name:
+                step_idx = int(field_name.split("timestep_")[1])
+                self._prepare_step_data(step_idx)
+                return self._get_field(field_name, _info.data_type)
+        raise ValueError(f"Could not find field {field_name}")
+
+    def __iter__(self) -> Iterator[Field]:
+        return iter((self.get(field_name) for field_name in self.field_names))
+
+    def _prepare_step_data(self, step_idx: int) -> None:
+        if step_idx != self._timestep_data.step_idx:
+            _, point_data, cell_data = self._time_series_reader.read_data(step_idx)
+            self._timestep_data = self._TimestepData(point_data, cell_data, step_idx)
+
+    def _get_field(self, name: str, data_type: str) -> Field:
+        if data_type == "point_data":
+            return self._get_point_data_field(name)
+        elif data_type == "cell_data":
+            return self._get_cell_data_field(name)
+        raise ValueError("Unknown data type")
+
+    def _get_point_data_field(self, name: str) -> Field:
+        base_name = name.split("_timestep_")[0]
+        return Field(name, self._timestep_data.point_data[base_name])
+
+    def _get_cell_data_field(self, name: str) -> Field:
+        base_name_with_cell_type = name.split("_timestep_")[0]
+        base_name, cell_type = self._split_cell_type_suffix(base_name_with_cell_type)
+        for cell_block, cell_data in zip(self._meshio_mesh.cells,
+                                         self._timestep_data.cell_data[base_name]):
+            if cell_block.type == cell_type:
+                return Field(name, cell_data)
+        raise ValueError(f"Could not get the field with name {name}")
+
+    def _split_cell_type_suffix(self, name: str) -> Tuple[str, str]:
+        for cell_type in self._transformed_mesh.connectivity:
+            if name.endswith(cell_type):
+                return name.rsplit(f"_{cell_type}")[0], cell_type
+        raise ValueError("Did not find a cell type suffix on the given name")
+
+    def _find_fields_of_all_timesteps(self) -> List[_FieldInfo]:
+        fields = []
+        for step in range(self._time_series_reader.num_steps):
+            fields.extend(self._find_fields_of_step(step))
+        return fields
+
+    def _find_fields_of_step(self, step_idx: int) -> List[_FieldInfo]:
+        fields = []
+        for element in list(self._time_series_reader.collection[step_idx]):
+            if element.tag == "Attribute":
+                fields.extend(self._get_element_field_infos(step_idx, element))
+        return fields
+
+    def _get_element_field_infos(self, step_idx: int, xdmf_element) -> List[_FieldInfo]:
+        if xdmf_element.get("Center") == "Node":
+            return [self._FieldInfo(
+                self._make_step_field_name(step_idx, xdmf_element.get("Name")),
+                "point_data"
+            )]
+        elif xdmf_element.get("Center") == "Cell":
+            name = xdmf_element.get("Name")
+            return [
+                self._FieldInfo(
+                    self._make_step_field_name(step_idx, f"{name}_{cell_type}"),
+                    "cell_data"
+                )
+                for cell_type in self._transformed_mesh.connectivity
+            ]
+
+        raise IOError("Can only read point or cell data")
+
+    def _make_step_field_name(self, step_idx: int, name: str) -> str:
+        return f"{name}_timestep_{step_idx}"
+
+
+class MeshIOFieldReader(LoggableBase):
     def __init__(self,
                  permute_uniquely: bool = True,
                  remove_ghost_points: bool = True) -> None:
@@ -55,158 +150,119 @@ class _MeshIOFieldReader(LoggableBase):
     def permute_uniquely(self, value: bool) -> None:
         self._do_permutation = value
 
-    def read(self, filename: str) -> DefaultFieldContainer:
-        assert splitext(filename)[1] in supported_extensions
+    def read(self, filename: str) -> FieldContainer:
+        if splitext(filename)[1] not in _meshio_supported_extensions:
+            raise IOError("File type not supported by meshio")
 
         try:
             return self._read(filename)
         except Exception as e:
             raise IOError(f"Caught exception during reading of the mesh:\n{e}")
 
-    def _read(self, filename: str) -> DefaultFieldContainer:
+    def _read(self, filename: str) -> FieldContainer:
+        self._log(f"Reading fields from '{filename}'", verbosity_level=1)
+        if self._is_time_series(filename):
+            return self._read_from_time_series(filename)
+        return self._read_from_mesh(filename)
+
+    def _is_time_series(self, filename: str) -> bool:
+        return self._is_xdmf_time_series(filename)
+
+    def _is_xdmf_time_series(self, filename: str) -> bool:
         extension = splitext(filename)[1]
-        if _is_time_series_compatible_format(extension):
-            return DefaultFieldContainer(
-                _extract_from_meshio_time_series(
-                    MeshIOTimeSeriesReader(filename),
-                    self.remove_ghost_points,
-                    self.permute_uniquely,
-                    self._LoggerAdapter(self)
+        if extension not in [".xmf", ".xdmf"]:
+            return False
+
+        parser = ElementTree.XMLParser()
+        tree = ElementTree.parse(filename, parser)
+        root = tree.getroot()
+        if root.tag != "Xdmf":
+            return False
+        for domain in filter(lambda d: d.tag == "Domain", root):
+            for grid in filter(lambda g: g.tag == "Grid", domain):
+                if grid.get("GridType") == "Collection" \
+                        and grid.get("CollectionType") == "Temporal":
+                    return True
+        return False
+
+    def _read_from_mesh(self, filename: str) -> DefaultFieldContainer:
+        _meshio_mesh = _meshio_read(filename)
+        mesh = _convert_meshio_mesh(_meshio_mesh)
+        transformed_mesh = self._transform(mesh)
+
+        fields = []
+        fields.append(Field("point_coordinates", transformed_mesh.points))
+        for cell_type, corners in mesh.connectivity.items():
+            fields.append(Field(f"{cell_type}_corners", corners))
+        for name in _meshio_mesh.point_data:
+            fields.append(Field(
+                f"{name}",
+                transformed_mesh.transform_point_data(
+                    _meshio_mesh.point_data[name]
                 )
-            )
-        return DefaultFieldContainer(
-            _extract_from_meshio_mesh(
-                meshio_read(filename),
-                self.remove_ghost_points,
-                self.permute_uniquely,
-                self._LoggerAdapter(self)
-            )
+            ))
+        for name in _meshio_mesh.cell_data:
+            for cell_block, values in zip(_meshio_mesh.cells, _meshio_mesh.cell_data[name]):
+                fields.append(Field(
+                    f"{name}_{cell_block.type}",
+                    transformed_mesh.transform_cell_data(cell_block.type, values)
+                ))
+        return DefaultFieldContainer(fields)
+
+    def _read_from_time_series(self, filename: str) -> _TimeSeriesFieldContainer:
+        _meshio_reader = _MeshIOTimeSeriesReader(filename)
+        _meshio_mesh = _MeshIO_Mesh(*_meshio_reader.read_points_cells())
+        transformed_mesh = self._transform(_convert_meshio_mesh(_meshio_mesh))
+        return _TimeSeriesFieldContainer(_meshio_reader, _meshio_mesh, transformed_mesh)
+
+    def _transform(self, mesh: Mesh) -> TransformedMesh:
+        class ComposedTransformedMesh(TransformedMeshBase):
+            def __init__(self,
+                         mesh: Mesh,
+                         first_trafo_factory: Callable[[Mesh], TransformedMesh],
+                         second_trafo_factory: Callable[[Mesh], TransformedMesh]) -> None:
+                self._first_trafo = first_trafo_factory(mesh)
+                self._second_trafo = second_trafo_factory(self._first_trafo.mesh())
+                super().__init__(self._second_trafo.points, self._second_trafo.connectivity)
+
+            def transform_point_data(self, data: Array) -> Array:
+                return self._second_trafo.transform_point_data(
+                    self._first_trafo.transform_point_data(data)
+                )
+
+            def transform_cell_data(self, cell_type: str, data: Array) -> Array:
+                return self._second_trafo.transform_cell_data(
+                    cell_type,
+                    self._first_trafo.transform_cell_data(cell_type, data)
+                )
+        return ComposedTransformedMesh(
+            mesh,
+            self._transform_without_ghosts,
+            self._transform_sorted
         )
 
+    def _transform_without_ghosts(self, mesh: Mesh) -> TransformedMesh:
+        if self.remove_ghost_points:
+            self._log("Removing ghost points", verbosity_level=2)
+            return transform_without_ghosts(mesh)
+        return transform_identity(mesh)
 
-def _register_readers_for_extensions(register_function: Callable[[str, _MeshIOFieldReader], None]) -> None:
-    for ext in supported_extensions:
-        register_function(ext, _MeshIOFieldReader())
-
-
-def _is_time_series_compatible_format(file_ext: str) -> bool:
-    return file_ext in [".xmf", ".xdmf"]
-
-
-def _filter_out_ghost_points(mesh: Mesh, logger: Logger) -> Tuple[Mesh, Array]:
-    logger.log("Removing ghost points\n", verbosity_level=1)
-    is_ghost = make_initialized_array(size=len(mesh.points), dtype=bool, init_value=True)
-    for _, corners in _cells(mesh):
-        for p_idx in corners.flatten():
-            is_ghost[p_idx] = False
-
-    num_ghosts = accumulate(is_ghost)
-    first_ghost_index_after_sort = int(len(is_ghost) - num_ghosts)
-
-    ghost_filter_map = sort_array(is_ghost)
-    ghost_filter_map = sub_array(ghost_filter_map, 0, first_ghost_index_after_sort)
-    ghost_filter_map_inverse = make_uninitialized_array(size=len(mesh.points), dtype=int)
-    for new_index, old_index in enumerate(ghost_filter_map):
-        ghost_filter_map_inverse[old_index] = new_index
-
-    def _map_corners(corners_array):
-        for idx, corners in enumerate(corners_array):
-            corners_array[idx] = ghost_filter_map_inverse[corners_array[idx]]
-        return corners_array
-
-    return Mesh(
-        points=mesh.points[ghost_filter_map],
-        cells=[(cell_type, _map_corners(corners)) for cell_type, corners in _cells(mesh)],
-        point_data={name: mesh.point_data[name][ghost_filter_map] for name in mesh.point_data},
-        cell_data=mesh.cell_data
-    ), ghost_filter_map
+    def _transform_sorted(self, mesh: Mesh) -> TransformedMesh:
+        if self.permute_uniquely:
+            self._log("Sorting grid by coordinates to get a unique representation")
+            return transform_sorted(mesh)
+        return transform_identity(mesh)
 
 
-def _extract_from_meshio_mesh(mesh: Mesh,
-                              remove_ghost_points: bool,
-                              permute_uniquely: bool,
-                              logger: Logger) -> MeshFields:
-    logger.log("Extracting fields from mesh file\n", verbosity_level=1)
-    if remove_ghost_points:
-        mesh, _ = _filter_out_ghost_points(mesh, logger)
-    result = MeshFields(
-        (mesh.points, _cells(mesh)),
-        permute_uniquely,
+def _register_readers_for_extensions(register_function: Callable[[str, MeshIOFieldReader], None]) -> None:
+    for ext in _meshio_supported_extensions:
+        register_function(ext, MeshIOFieldReader())
+
+
+def _convert_meshio_mesh(mesh: _MeshIO_Mesh) -> Mesh:
+    return DefaultMesh(
+        points=mesh.points,
+        connectivity={
+            cell_block.type: cell_block.data for cell_block in mesh.cells
+        }
     )
-    result.attach_logger(logger)
-
-    for array_name in mesh.point_data:
-        result.add_point_data(array_name, mesh.point_data[array_name])
-    for array_name in mesh.cell_data:
-        result.add_cell_data(
-            array_name,
-            (
-                (cell_type, values)
-                for (cell_type, _), values in zip(_cells(mesh), mesh.cell_data[array_name])
-            )
-        )
-    return result
-
-
-def _extract_from_meshio_time_series(time_series_reader,
-                                     remove_ghost_points: bool,
-                                     permute_uniquely: bool,
-                                     logger: Logger) -> TimeSeriesMeshFields:
-    logger.log("Extracting points/cells from time series file\n", verbosity_level=1)
-    points, cells = time_series_reader.read_points_cells()
-    mesh = Mesh(points, cells)
-    ghost_point_filter = None
-    if remove_ghost_points:
-        mesh, ghost_point_filter = _filter_out_ghost_points(mesh, logger)
-    time_steps_reader = _MeshioTimeStepReader(mesh, time_series_reader, ghost_point_filter)
-    result = TimeSeriesMeshFields(
-        (mesh.points, _cells(mesh)),
-        time_steps_reader,
-        permute_uniquely
-    )
-    result.attach_logger(logger)
-    return result
-
-
-class _MeshioTimeStepReader:
-    def __init__(self,
-                 mesh: Mesh,
-                 meshio_reader: MeshIOTimeSeriesReader,
-                 ghost_point_filter: Optional[Array] = None) -> None:
-        self._mesh = mesh
-        self._reader = meshio_reader
-        self._num_time_steps = meshio_reader.num_steps
-        self._ghost_point_filter = ghost_point_filter
-
-    @property
-    def num_time_steps(self) -> int:
-        """Return the number of time steps that can be read"""
-        return self._num_time_steps
-
-    def read_time_step(self, time_step_index: int) -> Tuple:
-        """Read the time step with the given index"""
-        _, point_data, cell_data = self._reader.read_data(time_step_index)
-        point_data = [
-            (name, self._transform_point_data(point_data[name]))
-            for name in point_data
-        ]
-        cell_data = [
-            (
-                name,
-                [
-                    (cell_type, values)
-                    for (cell_type, _), values in zip(_cells(self._mesh), cell_data[name])
-                ]
-            )
-            for name in cell_data
-        ]
-        return point_data, cell_data
-
-    def _transform_point_data(self, point_data: Array) -> Array:
-        if self._ghost_point_filter is not None:
-            return point_data[self._ghost_point_filter]
-        return point_data
-
-
-def _cells(mesh: Mesh) -> Iterable[Tuple[str, Array]]:
-    return ((cell_block.type, cell_block.data) for cell_block in mesh.cells)

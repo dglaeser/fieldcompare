@@ -37,6 +37,11 @@ def is_array(input_array) -> bool:
     return isinstance(input_array, Array)
 
 
+def flatten(input_array) -> Array:
+    """Return the input array as flat array"""
+    return input_array.flatten()
+
+
 def accumulate(input_array: Array, axis: SupportsIndex = 0) -> Array:
     return np.sum(input_array, axis=axis)
 
