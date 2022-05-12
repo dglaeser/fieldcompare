@@ -1,6 +1,6 @@
 """Reader for mesh file formats using meshio under the hood"""
 
-from typing import Iterable, Tuple, Optional
+from typing import Iterable, Tuple, Optional, Callable
 from os.path import splitext
 
 from meshio import Mesh
@@ -14,8 +14,6 @@ from ..array import Array, sub_array
 from ..array import make_initialized_array, make_uninitialized_array
 from ..array import sort_array, accumulate
 from ..mesh_fields import MeshFields, TimeSeriesMeshFields
-
-from ._reader_map import _register_reader_for_extension
 
 
 class MeshFieldReader(LoggableBase):
@@ -85,8 +83,10 @@ class MeshFieldReader(LoggableBase):
             )
         )
 
-for ext in supported_extensions:
-    _register_reader_for_extension(ext, MeshFieldReader())
+
+def _register_readers_for_extensions(register_function: Callable[[str, MeshFieldReader], None]) -> None:
+    for ext in supported_extensions:
+        register_function(ext, MeshFieldReader())
 
 
 def _is_time_series_compatible_format(file_ext: str) -> bool:

@@ -1,12 +1,12 @@
 """Reader for extracting fields from csv files"""
 
 from csv import reader
+from typing import Callable
 
 from ..field import Field, DefaultFieldContainer
 from ..array import make_array
 from ..logging import LoggableBase
 from ._common import _convert_string, _convertible_to_float
-from ._reader_map import _register_reader_for_extension
 
 
 class CSVFieldReader(LoggableBase):
@@ -46,4 +46,5 @@ class CSVFieldReader(LoggableBase):
         ])
 
 
-_register_reader_for_extension(".csv", CSVFieldReader())
+def _register_readers_for_extensions(register_function: Callable[[str, CSVFieldReader], None]) -> None:
+    register_function(".csv", CSVFieldReader())

@@ -5,9 +5,10 @@ from textwrap import indent
 from re import compile
 
 from .._common import _default_base_tolerance
+from .._field_io import read_fields
+
 from ..colors import make_colored, TextColor
 from ..logging import Logger, ModifiedVerbosityLoggerFacade, IndentedLoggingFacade
-from ..field_io import read_fields
 
 
 class InclusionFilter:

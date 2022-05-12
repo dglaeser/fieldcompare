@@ -7,9 +7,9 @@ from os.path import join
 
 from ..matching import find_matching_file_names
 from ..logging import Logger, ModifiedVerbosityLoggerFacade, IndentedLoggingFacade
-from ..field_io import is_supported_file
 from ..colors import make_colored, TextStyle
 
+from .._field_io import is_supported_file
 from ._common import _bool_to_exit_code, _parse_field_tolerances, InclusionFilter, ExclusionFilter
 from ._common import _style_as_error, _style_as_warning, _make_list_string, _get_status_string
 
