@@ -5,7 +5,7 @@ from os.path import splitext
 
 from meshio import Mesh
 from meshio import read as meshio_read
-from meshio import extension_to_filetypes as meshio_supported_extensions
+from meshio import extension_to_filetypes as supported_extensions
 from meshio.xdmf import TimeSeriesReader as MeshIOTimeSeriesReader
 
 from ..field import DefaultFieldContainer
@@ -58,7 +58,7 @@ class MeshFieldReader(LoggableBase):
         self._do_permutation = value
 
     def read(self, filename: str) -> DefaultFieldContainer:
-        assert splitext(filename)[1] in meshio_supported_extensions
+        assert splitext(filename)[1] in supported_extensions
 
         try:
             return self._read(filename)
@@ -85,7 +85,7 @@ class MeshFieldReader(LoggableBase):
             )
         )
 
-for ext in meshio_supported_extensions:
+for ext in supported_extensions:
     _register_reader_for_extension(ext, MeshFieldReader())
 
 

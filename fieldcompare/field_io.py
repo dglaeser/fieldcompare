@@ -5,7 +5,11 @@ from os.path import splitext, exists
 from .field import FieldContainer
 from .logging import Logger, NullDeviceLogger
 
-from ._field_io import _get_reader_for_extension, FieldReader
+from ._field_io import _get_reader_for_extension, FieldReader, _mesh_io
+
+
+def is_mesh_file(filename: str) -> bool:
+    return splitext(filename)[1] in _mesh_io.supported_extensions
 
 
 def read_fields(filename: str, logger: Logger = NullDeviceLogger()) -> FieldContainer:
