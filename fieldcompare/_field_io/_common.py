@@ -1,12 +1,5 @@
 """Common helper functions for field-io operations"""
 
-from typing import Iterable
-from .._common import _is_scalar
-
-
-def _is_supported_field_data_format(field_values: Iterable) -> bool:
-    return all(_is_scalar(value) for value in field_values)
-
 
 def _convert_string(value_string: str):
     value = _string_to_int(value_string)
