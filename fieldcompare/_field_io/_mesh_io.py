@@ -160,7 +160,6 @@ class MeshIOFieldReader(LoggableBase):
             raise IOError(f"Caught exception during reading of the mesh:\n{e}")
 
     def _read(self, filename: str) -> FieldContainer:
-        self._log(f"Reading fields from '{filename}'", verbosity_level=1)
         if self._is_time_series(filename):
             return self._read_from_time_series(filename)
         return self._read_from_mesh(filename)
@@ -243,13 +242,13 @@ class MeshIOFieldReader(LoggableBase):
 
     def _transform_without_ghosts(self, mesh: Mesh) -> TransformedMesh:
         if self.remove_ghost_points:
-            self._log("Removing ghost points", verbosity_level=2)
+            self._log("Removing ghost points\n", verbosity_level=1)
             return transform_without_ghosts(mesh)
         return transform_identity(mesh)
 
     def _transform_sorted(self, mesh: Mesh) -> TransformedMesh:
         if self.permute_uniquely:
-            self._log("Sorting grid by coordinates to get a unique representation")
+            self._log("Sorting grid by coordinates to get a unique representation\n", verbosity_level=1)
             return transform_sorted(mesh)
         return transform_identity(mesh)
 

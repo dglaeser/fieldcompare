@@ -44,6 +44,9 @@ class Loggable(Protocol):
     def attach_logger(self, logger: Logger) -> None:
         ...
 
+    def remove_logger(self, logger: Logger) -> None:
+        ...
+
 
 class LoggableBase:
     """Base class for classes that do logging"""
@@ -53,6 +56,11 @@ class LoggableBase:
     def attach_logger(self, logger: Logger) -> None:
         if not any(_logger is logger for _logger in self._loggers):
             self._loggers.append(logger)
+
+    def remove_logger(self, logger: Logger) -> None:
+        for _logger in self._loggers:
+            if _logger is logger:
+                self._loggers.remove(_logger)
 
     def _log(self, message: str, verbosity_level: int = 1) -> None:
         for _logger in self._loggers:

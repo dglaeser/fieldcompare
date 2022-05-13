@@ -58,7 +58,9 @@ def read_fields(filename: str, logger: Logger = NullDeviceLogger()) -> FieldCont
 
     reader = get_field_reader(filename)
     reader.attach_logger(logger)
-    return reader.read(filename)
+    fields = reader.read(filename)
+    reader.remove_logger(logger)
+    return fields
 
 
 def get_field_reader(filename: str) -> FieldReader:

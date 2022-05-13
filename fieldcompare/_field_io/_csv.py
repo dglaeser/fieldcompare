@@ -22,16 +22,10 @@ class CSVFieldReader(LoggableBase):
                 row_values = list(row)
                 if row_idx == 0:
                     if not any(_convertible_to_float(v) for v in row_values):
-                        self._log(
-                            "Using first row as field names\n",
-                            verbosity_level=2
-                        )
+                        self._log("Using first row as field names\n", verbosity_level=1)
                         names = row_values
                     else:
-                        self._log(
-                            "Could not use first row as field names, using 'field_i'\n",
-                            verbosity_level=2
-                        )
+                        self._log("Could not use first row as field names, using 'field_i'\n", verbosity_level=1)
                         names = [f"field_{i}" for i in range(len(row))]
                         rows.append([_convert_string(v) for v in row_values])
                 else:
