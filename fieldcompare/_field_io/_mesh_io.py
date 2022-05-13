@@ -50,23 +50,29 @@ class _TimeSeriesFieldContainer:
         return [_f.name for _f in self._field_infos]
 
     def get(self, field_name: str) -> Field:
-        for _info in self._field_infos:
-            if _info.name == field_name:
-                if "timestep_" in field_name:
-                    step_idx = int(field_name.split("timestep_")[1])
-                    self._prepare_step_data(step_idx)
-                return self._get_field(field_name, _info.data_type)
-        raise ValueError(f"Could not find field {field_name}")
+        self._prepare_data_for_field(field_name)
+        return self._get_field(self._get_field_info(field_name))
 
     def __iter__(self) -> Iterator[Field]:
         return iter((self.get(field_name) for field_name in self.field_names))
+
+    def _prepare_data_for_field(self, field_name: str) -> None:
+        if "timestep_" in field_name:
+            step_idx = int(field_name.split("timestep_")[1])
+            self._prepare_step_data(step_idx)
 
     def _prepare_step_data(self, step_idx: int) -> None:
         if step_idx != self._timestep_data.step_idx:
             _, point_data, cell_data = self._time_series_reader.read_data(step_idx)
             self._timestep_data = self._TimestepData(point_data, cell_data, step_idx)
 
-    def _get_field(self, name: str, data_type: str) -> Field:
+    def _get_field_info(self, field_name: str) -> _FieldInfo:
+        for _info in filter(lambda _i: _i.name == field_name, self._field_infos):
+            return _info
+        raise ValueError(f"Could not find field info for '{field_name}'")
+
+    def _get_field(self, field_info: _FieldInfo) -> Field:
+        name, data_type = field_info.name, field_info.data_type
         if name == "point_coordinates":
             return Field(name, self._transformed_mesh.points)
         elif name.endswith("_corners") and data_type == "cell_data":
