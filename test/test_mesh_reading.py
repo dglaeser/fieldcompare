@@ -1,10 +1,44 @@
 from os import remove
+from pathlib import Path
 
 from _common import make_test_mesh, PointDataStorage, CellDataStorage
 from _common import make_point_data_array, make_cell_data_arrays
 from _common import write_time_series
 
-from fieldcompare import read_fields
+from fieldcompare import read_fields, make_field_reader, make_mesh_field_reader
+from fieldcompare import is_mesh_file, is_supported_file
+
+_TEST_DATA_PATH = Path(__file__).parent / Path("data")
+
+
+def test_is_supported_file():
+    assert is_supported_file("test.vtk")
+    assert is_supported_file("test.vtu")
+    assert is_supported_file("test.xdmf")
+    assert is_supported_file("test.xmf")
+
+
+def test_is_mesh_file():
+    assert is_mesh_file("test.vtk")
+    assert is_mesh_file("test.vtu")
+    assert is_mesh_file("test.xdmf")
+    assert is_mesh_file("test.xmf")
+    assert not is_mesh_file("test.csv")
+
+
+def test_field_reader_creation():
+    file_path = _TEST_DATA_PATH / Path("test_mesh.vtu")
+    reader = make_field_reader(str(file_path))
+    for field in reader.read(str(file_path)):
+        assert field.name
+
+
+def test_mesh_field_reader_creation():
+    file_path = _TEST_DATA_PATH / Path("test_mesh.vtu")
+    reader = make_mesh_field_reader(str(file_path))
+    for field in reader.read(str(file_path)):
+        assert field.name
+
 
 def test_time_series_field_names():
     mesh = make_test_mesh()

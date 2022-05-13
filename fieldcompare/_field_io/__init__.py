@@ -68,7 +68,7 @@ def read_fields(filename: str, logger: Logger = NullDeviceLogger()) -> FieldCont
     return fields
 
 
-def make_file_reader(filename: str) -> FieldReader:
+def make_field_reader(filename: str) -> FieldReader:
     """Returng a reader suitable for reading fields from the given file"""
     return deepcopy(_get_field_reader(filename))
 

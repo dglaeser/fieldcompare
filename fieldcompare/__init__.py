@@ -14,7 +14,8 @@ from .predicates import ExactEquality, FuzzyEquality, DefaultEquality
 from .field import Field, FieldInterface
 from ._field_io import (
     read_fields,
-    make_file_reader,
+    make_field_reader,
     make_mesh_field_reader,
-    is_supported_file
+    is_supported_file,
+    is_mesh_file
 )
