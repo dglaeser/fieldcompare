@@ -1,3 +1,4 @@
+from copy import deepcopy
 from os.path import exists, splitext
 from typing import Optional, Protocol, runtime_checkable
 
@@ -56,15 +57,32 @@ def read_fields(filename: str, logger: Logger = NullDeviceLogger()) -> FieldCont
     if not exists(filename):
         raise IOError(f"Given file '{filename}' does not exist")
 
-    reader = get_field_reader(filename)
+    reader = _get_field_reader(filename)
     reader.attach_logger(logger)
     fields = reader.read(filename)
     reader.remove_logger(logger)
     return fields
 
 
-def get_field_reader(filename: str) -> FieldReader:
+def make_file_reader(filename: str) -> FieldReader:
     """Returng a reader suitable for reading fields from the given file"""
+    return deepcopy(_get_field_reader(filename))
+
+
+def make_mesh_field_reader(filename: str) -> MeshFieldReader:
+    """Return a configurable mesh field reader for the given mesh file"""
+    reader = _get_field_reader(filename)
+    if not isinstance(reader, MeshFieldReader):
+        raise ValueError("Reader found for the given file is not a mesh field reader")
+    return deepcopy(reader)
+
+
+def is_supported_file(filename: str) -> bool:
+    """Return true if field I/O from the given file is supported"""
+    return _get_reader_for_extension(splitext(filename)[1]) is not None
+
+
+def _get_field_reader(filename: str) -> FieldReader:
     file_extension = splitext(filename)[1]
     if not file_extension:
         raise ValueError("Could not get extension from given filename")
@@ -73,16 +91,3 @@ def get_field_reader(filename: str) -> FieldReader:
     if reader is None:
         raise NotImplementedError(f"No reader found for files with the extension {file_extension}")
     return reader
-
-
-def get_mesh_field_reader(filename: str) -> MeshFieldReader:
-    """Return a configurable mesh field reader for the given mesh file"""
-    reader = get_field_reader(filename)
-    if not isinstance(reader, MeshFieldReader):
-        raise ValueError("Reader found for the given file is not a mesh field reader")
-    return reader
-
-
-def is_supported_file(filename: str) -> bool:
-    """Return true if field I/O from the given file is supported"""
-    return _get_reader_for_extension(splitext(filename)[1]) is not None
