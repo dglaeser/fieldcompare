@@ -52,8 +52,9 @@ class _TimeSeriesFieldContainer:
     def get(self, field_name: str) -> Field:
         for _info in self._field_infos:
             if _info.name == field_name:
-                step_idx = int(field_name.split("timestep_")[1])
-                self._prepare_step_data(step_idx)
+                if "timestep_" in field_name:
+                    step_idx = int(field_name.split("timestep_")[1])
+                    self._prepare_step_data(step_idx)
                 return self._get_field(field_name, _info.data_type)
         raise ValueError(f"Could not find field {field_name}")
 
@@ -66,7 +67,12 @@ class _TimeSeriesFieldContainer:
             self._timestep_data = self._TimestepData(point_data, cell_data, step_idx)
 
     def _get_field(self, name: str, data_type: str) -> Field:
-        if data_type == "point_data":
+        if name == "point_coordinates":
+            return Field(name, self._transformed_mesh.points)
+        elif name.endswith("_corners") and data_type == "cell_data":
+            cell_type = name.rsplit("_corners")[0]
+            return Field(name, self._transformed_mesh.connectivity[cell_type])
+        elif data_type == "point_data":
             return self._get_point_data_field(name)
         elif data_type == "cell_data":
             return self._get_cell_data_field(name)
@@ -74,7 +80,9 @@ class _TimeSeriesFieldContainer:
 
     def _get_point_data_field(self, name: str) -> Field:
         base_name = name.split("_timestep_")[0]
-        return Field(name, self._timestep_data.point_data[base_name])
+        field_data = self._timestep_data.point_data[base_name]
+        field_data = self._transformed_mesh.transform_point_data(field_data)
+        return Field(name, field_data)
 
     def _get_cell_data_field(self, name: str) -> Field:
         base_name_with_cell_type = name.split("_timestep_")[0]
@@ -82,7 +90,8 @@ class _TimeSeriesFieldContainer:
         for cell_block, cell_data in zip(self._meshio_mesh.cells,
                                          self._timestep_data.cell_data[base_name]):
             if cell_block.type == cell_type:
-                return Field(name, cell_data)
+                field_data = self._transformed_mesh.transform_cell_data(cell_type, cell_data)
+                return Field(name, field_data)
         raise ValueError(f"Could not get the field with name {name}")
 
     def _split_cell_type_suffix(self, name: str) -> Tuple[str, str]:
@@ -93,6 +102,9 @@ class _TimeSeriesFieldContainer:
 
     def _find_fields_of_all_timesteps(self) -> List[_FieldInfo]:
         fields = []
+        fields.append(self._FieldInfo("point_coordinates", "point_data"))
+        for cell_type in self._transformed_mesh.connectivity:
+            fields.append(self._FieldInfo(f"{cell_type}_corners", "cell_data"))
         for step in range(self._time_series_reader.num_steps):
             fields.extend(self._find_fields_of_step(step))
         return fields
