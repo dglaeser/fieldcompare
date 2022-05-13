@@ -49,7 +49,11 @@ _mesh_io._register_readers_for_extensions(_register_reader_for_extension)
 
 
 def is_mesh_file(filename: str) -> bool:
-    return splitext(filename)[1] in _mesh_io._meshio_supported_extensions
+    try:
+        _get_mesh_field_reader(filename)
+        return True
+    except ValueError:
+        return False
 
 
 def read_fields(filename: str, logger: Logger = NullDeviceLogger()) -> FieldContainer:
@@ -71,10 +75,7 @@ def make_file_reader(filename: str) -> FieldReader:
 
 def make_mesh_field_reader(filename: str) -> MeshFieldReader:
     """Return a configurable mesh field reader for the given mesh file"""
-    reader = _get_field_reader(filename)
-    if not isinstance(reader, MeshFieldReader):
-        raise ValueError("Reader found for the given file is not a mesh field reader")
-    return deepcopy(reader)
+    return deepcopy(_get_mesh_field_reader(filename))
 
 
 def is_supported_file(filename: str) -> bool:
@@ -90,4 +91,11 @@ def _get_field_reader(filename: str) -> FieldReader:
     reader = _get_reader_for_extension(file_extension)
     if reader is None:
         raise NotImplementedError(f"No reader found for files with the extension {file_extension}")
+    return reader
+
+
+def _get_mesh_field_reader(filename: str) -> MeshFieldReader:
+    reader = _get_field_reader(filename)
+    if not isinstance(reader, MeshFieldReader):
+        raise ValueError("Reader found for the given file is not a mesh field reader")
     return reader
