@@ -230,10 +230,10 @@ class MeshIOFieldReader(LoggableBase):
                 )
             ))
         for name in _meshio_mesh.cell_data:
-            for cell_block, values in zip(_meshio_mesh.cells, _meshio_mesh.cell_data[name]):
+            for cell_block, cell_data in zip(_meshio_mesh.cells, _meshio_mesh.cell_data[name]):
                 fields.append(Field(
                     _make_cell_type_field_name(name, cell_block.type),
-                    transformed_mesh.transform_cell_data(cell_block.type, values)
+                    transformed_mesh.transform_cell_data(cell_block.type, cell_data)
                 ))
         return DefaultFieldContainer(fields)
 
