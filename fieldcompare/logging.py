@@ -1,32 +1,40 @@
 """Interface & implementations for loggers"""
 
 import sys
-from typing import TextIO, Optional, Protocol
-from abc import ABC, abstractmethod
+from typing import TextIO, Protocol, List
 
 
-class Logger(ABC):
+class Logger(Protocol):
     """Interface for loggers"""
-    def __init__(self, verbosity_level: Optional[int] = None) -> None:
+    @property
+    def verbosity_level(self) -> int:
+        ...
+
+    @verbosity_level.setter
+    def verbosity_level(self, level: int) -> None:
+        ...
+
+    def log(self, message: str, verbosity_level: int = 1) -> None:
+        ...
+
+
+class LoggerBase:
+    """Interface for loggers"""
+    def __init__(self, verbosity_level: int = 100) -> None:
         self._verbosity_level = verbosity_level
 
     @property
-    def verbosity_level(self) -> Optional[int]:
+    def verbosity_level(self) -> int:
         return self._verbosity_level
 
     @verbosity_level.setter
     def verbosity_level(self, level: int) -> None:
         self._verbosity_level = level
 
-    def log(self, message: str, verbosity_level: Optional[int] = None) -> None:
-        if self._verbosity_level is None:
-            self._log(message)
-        elif verbosity_level is None and self._verbosity_level > 0:
-            self._log(message)
-        elif verbosity_level is not None and verbosity_level <= self._verbosity_level:
+    def log(self, message: str, verbosity_level: int = 1) -> None:
+        if verbosity_level <= self._verbosity_level:
             self._log(message)
 
-    @abstractmethod
     def _log(self, message: str) -> None:
         """Implementation-defined message logging"""
 
@@ -36,12 +44,34 @@ class Loggable(Protocol):
     def attach_logger(self, logger: Logger) -> None:
         ...
 
+    def remove_logger(self, logger: Logger) -> None:
+        ...
 
-class StreamLogger(Logger):
+
+class LoggableBase:
+    """Base class for classes that do logging"""
+    def __init__(self) -> None:
+        self._loggers: List[Logger] = []
+
+    def attach_logger(self, logger: Logger) -> None:
+        if not any(_logger is logger for _logger in self._loggers):
+            self._loggers.append(logger)
+
+    def remove_logger(self, logger: Logger) -> None:
+        for _logger in self._loggers:
+            if _logger is logger:
+                self._loggers.remove(_logger)
+
+    def _log(self, message: str, verbosity_level: int = 1) -> None:
+        for _logger in self._loggers:
+            _logger.log(message, verbosity_level)
+
+
+class StreamLogger(LoggerBase):
     """Logging into output streams"""
     def __init__(self,
                  ostream: TextIO,
-                 verbosity_level: Optional[int] = None) -> None:
+                 verbosity_level: int = 100) -> None:
         self._ostream = ostream
         super().__init__(verbosity_level)
 
@@ -51,20 +81,20 @@ class StreamLogger(Logger):
 
 class StandardOutputLogger(StreamLogger):
     """Logging to standard out"""
-    def __init__(self, verbosity_level: Optional[int] = None) -> None:
+    def __init__(self, verbosity_level: int = 100) -> None:
         super().__init__(sys.stdout, verbosity_level)
 
 
-class NullDeviceLogger(Logger):
+class NullDeviceLogger(LoggerBase):
     """Logger interface that does no logging"""
-    def __init__(self, verbosity_level: Optional[int] = None) -> None:
+    def __init__(self, verbosity_level: int = 100) -> None:
         super().__init__(verbosity_level)
 
     def _log(self, message: str) -> None:
         pass
 
 
-class ModifiedVerbosityLoggerFacade(Logger):
+class ModifiedVerbosityLoggerFacade(LoggerBase):
     """Wrapper around a logger to write to it with modified verbosity"""
     def __init__(self, logger: Logger, verbosity_change: int) -> None:
         self._logger = logger
@@ -77,7 +107,7 @@ class ModifiedVerbosityLoggerFacade(Logger):
         self._logger.log(message)
 
 
-class IndentedLoggingFacade(Logger):
+class IndentedLoggingFacade(LoggerBase):
     """Wrapper around a logger to write indented (useful for logging of sub-routines)"""
     def __init__(self, logger: Logger, first_line_prefix: str) -> None:
         self._logger = logger

@@ -12,6 +12,10 @@ from .array import Array, sub_array, make_array, make_initialized_array, make_un
 from .predicates import ExactEquality, FuzzyEquality, DefaultEquality
 
 from .field import Field, FieldInterface
-from .field_io import read_fields, is_supported_file, make_reader
-from ._field_io._csv import CSVFieldReader
-from ._field_io._mesh_io import MeshFieldReader
+from ._field_io import (
+    read_fields,
+    make_field_reader,
+    make_mesh_field_reader,
+    is_supported_file,
+    is_mesh_file
+)
