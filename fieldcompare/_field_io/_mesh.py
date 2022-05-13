@@ -76,6 +76,7 @@ class TransformedMeshBase:
 
 
 def transform_identity(mesh: Mesh) -> TransformedMesh:
+    """Return a transformed mesh with identity transformation"""
     class IdentityTransformedMesh(TransformedMeshBase):
         def __init__(self,
                      points: Array,
