@@ -4,7 +4,7 @@ import sys
 from typing import TextIO, Protocol, List
 
 
-class Logger(Protocol):
+class LoggerInterface(Protocol):
     """Interface for loggers"""
     @property
     def verbosity_level(self) -> int:
@@ -18,8 +18,17 @@ class Logger(Protocol):
         ...
 
 
+class Loggable(Protocol):
+    """Interface for classes that allow attaching a logger."""
+    def attach_logger(self, logger: LoggerInterface) -> None:
+        ...
+
+    def remove_logger(self, logger: LoggerInterface) -> None:
+        ...
+
+
 class LoggerBase:
-    """Interface for loggers"""
+    """Base class for loggers"""
     def __init__(self, verbosity_level: int = 100) -> None:
         self._verbosity_level = verbosity_level
 
@@ -39,25 +48,16 @@ class LoggerBase:
         """Implementation-defined message logging"""
 
 
-class Loggable(Protocol):
-    """Interface for classes that allow attaching a logger."""
-    def attach_logger(self, logger: Logger) -> None:
-        ...
-
-    def remove_logger(self, logger: Logger) -> None:
-        ...
-
-
 class LoggableBase:
     """Base class for classes that do logging"""
     def __init__(self) -> None:
-        self._loggers: List[Logger] = []
+        self._loggers: List[LoggerInterface] = []
 
-    def attach_logger(self, logger: Logger) -> None:
+    def attach_logger(self, logger: LoggerInterface) -> None:
         if not any(_logger is logger for _logger in self._loggers):
             self._loggers.append(logger)
 
-    def remove_logger(self, logger: Logger) -> None:
+    def remove_logger(self, logger: LoggerInterface) -> None:
         for _logger in self._loggers:
             if _logger is logger:
                 self._loggers.remove(_logger)
@@ -96,7 +96,7 @@ class NullDeviceLogger(LoggerBase):
 
 class ModifiedVerbosityLoggerFacade(LoggerBase):
     """Wrapper around a logger to write to it with modified verbosity"""
-    def __init__(self, logger: Logger, verbosity_change: int) -> None:
+    def __init__(self, logger: LoggerInterface, verbosity_change: int) -> None:
         self._logger = logger
         self._verbosity_change = verbosity_change
         super().__init__(logger.verbosity_level)
@@ -109,7 +109,7 @@ class ModifiedVerbosityLoggerFacade(LoggerBase):
 
 class IndentedLoggingFacade(LoggerBase):
     """Wrapper around a logger to write indented (useful for logging of sub-routines)"""
-    def __init__(self, logger: Logger, first_line_prefix: str) -> None:
+    def __init__(self, logger: LoggerInterface, first_line_prefix: str) -> None:
         self._logger = logger
         self._first_line_prefix = first_line_prefix
         super().__init__(logger.verbosity_level)

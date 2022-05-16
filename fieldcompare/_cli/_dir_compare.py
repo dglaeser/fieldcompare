@@ -6,7 +6,7 @@ from typing import List
 from os.path import join
 
 from ..matching import find_matching_file_names
-from ..logging import Logger, ModifiedVerbosityLoggerFacade, IndentedLoggingFacade
+from ..logging import LoggerInterface, ModifiedVerbosityLoggerFacade, IndentedLoggingFacade
 from ..colors import make_colored, TextStyle
 
 from .._field_io import is_supported_file
@@ -61,7 +61,7 @@ def _add_arguments(parser: ArgumentParser):
     _add_tolerance_options_args(parser)
 
 
-def _run(args: dict, logger: Logger) -> int:
+def _run(args: dict, logger: LoggerInterface) -> int:
     logger.verbosity_level = args["verbosity"]
 
     res_dir = args["dir"]
@@ -110,7 +110,7 @@ def _run(args: dict, logger: Logger) -> int:
 
 def _do_file_comparisons(args,
                          filenames: Iterable[str],
-                         logger: Logger) -> bool:
+                         logger: LoggerInterface) -> bool:
     passed = True
     _quiet_logger = ModifiedVerbosityLoggerFacade(logger, verbosity_change=-1)
     _sub_logger = IndentedLoggingFacade(_quiet_logger, first_line_prefix=" "*4)
@@ -151,7 +151,7 @@ def _do_file_comparisons(args,
     return passed
 
 
-def _log_missing_results(args, filenames: List[str], logger: Logger) -> None:
+def _log_missing_results(args, filenames: List[str], logger: LoggerInterface) -> None:
     if filenames:
         should_fail = not args["ignore_missing_result_files"]
         logger.log(
@@ -164,7 +164,7 @@ def _log_missing_results(args, filenames: List[str], logger: Logger) -> None:
         )
 
 
-def _log_missing_references(args, filenames: List[str], logger: Logger) -> None:
+def _log_missing_references(args, filenames: List[str], logger: LoggerInterface) -> None:
     if filenames:
         should_fail = not args["ignore_missing_reference_files"]
         logger.log(

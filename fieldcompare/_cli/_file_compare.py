@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from ..colors import make_colored, TextStyle
 from ..matching import find_matching_field_names
 from ..predicates import DefaultEquality
-from ..logging import Logger, StandardOutputLogger
+from ..logging import LoggerInterface, StandardOutputLogger
 from ..field import FieldInterface
 
 from ._common import _read_fields_from_file, _bool_to_exit_code
@@ -60,7 +60,7 @@ class FileComparison:
                  res_file: str,
                  ref_file: str,
                  options: FileComparisonOptions = FileComparisonOptions(),
-                 logger: Logger = StandardOutputLogger()):
+                 logger: LoggerInterface = StandardOutputLogger()):
         self._options = options
         self._logger = logger
 
@@ -205,7 +205,7 @@ def _add_arguments(parser: ArgumentParser):
     _add_field_filter_options_args(parser)
 
 
-def _run(args: dict, logger: Logger) -> int:
+def _run(args: dict, logger: LoggerInterface) -> int:
     logger.verbosity_level = args["verbosity"]
     opts = FileComparisonOptions(
         ignore_missing_result_fields=args["ignore_missing_result_fields"],
@@ -226,7 +226,9 @@ def _run(args: dict, logger: Logger) -> int:
     return _bool_to_exit_code(passed)
 
 
-def _log_missing_results(missing_results: List[str], ignore_missing_res: bool, logger: Logger) -> None:
+def _log_missing_results(missing_results: List[str],
+                         ignore_missing_res: bool,
+                         logger: LoggerInterface) -> None:
     if missing_results:
         should_fail = not ignore_missing_res
         logger.log(
@@ -239,7 +241,9 @@ def _log_missing_results(missing_results: List[str], ignore_missing_res: bool, l
         )
 
 
-def _log_missing_references(missing_references: List[str], ignore_missing_ref: bool, logger: Logger) -> None:
+def _log_missing_references(missing_references: List[str],
+                            ignore_missing_ref: bool,
+                            logger: LoggerInterface) -> None:
     if missing_references:
         should_fail = not ignore_missing_ref
         logger.log(

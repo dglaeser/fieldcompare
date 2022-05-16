@@ -2,7 +2,7 @@ from copy import deepcopy
 from os.path import exists, splitext
 from typing import Optional, Protocol, runtime_checkable
 
-from ..logging import Logger, NullDeviceLogger, Loggable
+from ..logging import LoggerInterface, NullDeviceLogger, Loggable
 from ..field import FieldContainerInterface
 
 from . import _csv, _mesh_io
@@ -56,7 +56,7 @@ def is_mesh_file(filename: str) -> bool:
         return False
 
 
-def read_fields(filename: str, logger: Logger = NullDeviceLogger()) -> FieldContainerInterface:
+def read_fields(filename: str, logger: LoggerInterface = NullDeviceLogger()) -> FieldContainerInterface:
     """Read in the fields from the file with the given name using default settings"""
     if not exists(filename):
         raise IOError(f"Given file '{filename}' does not exist")
