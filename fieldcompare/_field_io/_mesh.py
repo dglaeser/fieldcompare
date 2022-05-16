@@ -5,7 +5,7 @@ from typing import Dict, Protocol
 from .._common import _default_base_tolerance
 from .._array import (
     Array,
-    sort_array, lex_sort_array_columns,
+    get_sorting_index_map, get_lex_sorting_index_map,
     make_array, make_initialized_array, make_uninitialized_array, append_to_array,
     sub_array, flatten,
     accumulate,
@@ -115,7 +115,7 @@ def transform_without_ghosts(mesh: MeshInterface) -> TransformedMeshInterface:
     num_ghosts = accumulate(is_ghost)
     first_ghost_index_after_sort = int(len(is_ghost) - num_ghosts)
 
-    ghost_filter_map = sort_array(is_ghost)
+    ghost_filter_map = get_sorting_index_map(is_ghost)
     ghost_filter_map = sub_array(ghost_filter_map, 0, first_ghost_index_after_sort)
     ghost_filter_map_inverse = _make_inverse_index_map(ghost_filter_map)
     new_connectivity = {
@@ -160,7 +160,7 @@ def transform_sorted(mesh: MeshInterface) -> TransformedMeshInterface:
     for cell_type, corners in mesh.connectivity.items():
         for cell_idx, cell_corners in enumerate(corners):
             mapped_cell_corners = point_index_map_inverse[cell_corners]
-            corners[cell_idx] = sort_array(mapped_cell_corners)
+            corners[cell_idx] = get_sorting_index_map(mapped_cell_corners)
         cell_index_maps[cell_type] = _sorting_cell_indices(corners)
 
     sorted_points = mesh.points[point_index_map]
@@ -203,7 +203,7 @@ def _sorting_points_indices(points, cells) -> Array:
                 points[other._idx]
             )
 
-    pre_sort = list(lex_sort_array_columns(points))
+    pre_sort = list(get_lex_sorting_index_map(points))
     pre_sort.sort(key=lambda idx: _IndexedFuzzySortHelper(idx))
 
     # for non-conforming output, there may be multiple points at the same position
@@ -278,7 +278,7 @@ def _sorting_points_indices(points, cells) -> Array:
 
 
 def _sorting_cell_indices(cell_corner_list) -> Array:
-    return lex_sort_array_columns(cell_corner_list)
+    return get_lex_sorting_index_map(cell_corner_list)
 
 
 def _get_point_cloud_tolerance(points):

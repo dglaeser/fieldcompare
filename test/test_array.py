@@ -11,7 +11,9 @@ from fieldcompare._array import (
     adjacent_difference,
     all_true,
     append_to_array,
-    elements_less
+    elements_less,
+    get_sorting_index_map,
+    get_lex_sorting_index_map
 )
 
 
@@ -109,3 +111,19 @@ def test_array_elements_less():
     arr2[1] = 0
     less = elements_less(arr1, arr2)
     assert _check_array_equal(less, [True, False, True])
+
+
+def test_sort_array():
+    arr = make_array([3, 2, 6])
+    arr = get_sorting_index_map(arr)
+    assert _check_array_equal(arr, [1, 0, 2])
+
+
+def test_lex_sort_array_columns():
+    arr = make_array([
+        make_array([2, 1]),
+        make_array([1, 4]),
+        make_array([2, 0])
+    ])
+    arr = get_lex_sorting_index_map(arr)
+    assert _check_array_equal(arr, [1, 2, 0])
