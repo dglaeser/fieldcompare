@@ -2,7 +2,7 @@
 
 from typing import Protocol, Iterable, Iterator
 from dataclasses import dataclass
-from .array import Array
+from ._array import Array
 
 
 class FieldInterface(Protocol):

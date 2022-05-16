@@ -5,11 +5,11 @@ from textwrap import indent
 from typing import List, Iterable
 from dataclasses import dataclass
 
-from ..colors import make_colored, TextStyle
-from ..matching import find_matching_field_names
-from ..predicates import DefaultEquality
-from ..logging import LoggerInterface, StandardOutputLogger
-from ..field import FieldInterface
+from .._colors import make_colored, TextStyle
+from .._matching import find_matching_field_names
+from .._predicates import DefaultEquality
+from .._logging import LoggerInterface, StandardOutputLogger
+from .._field import FieldInterface
 
 from ._common import _read_fields_from_file, _bool_to_exit_code
 from ._common import _style_as_error, _style_as_warning, _make_list_string, _get_status_string

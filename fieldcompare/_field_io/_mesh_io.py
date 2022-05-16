@@ -11,9 +11,9 @@ from meshio import read as _meshio_read
 from meshio import extension_to_filetypes as _meshio_supported_extensions
 from meshio.xdmf import TimeSeriesReader as _MeshIOTimeSeriesReader
 
-from ..field import Field, FieldContainer, FieldContainerInterface
-from ..logging import LoggableBase
-from ..array import Array
+from .._field import Field, FieldContainer, FieldContainerInterface
+from .._logging import LoggableBase
+from .._array import Array
 
 from ._mesh import MeshInterface, TransformedMeshInterface
 from ._mesh import Mesh, TransformedMeshBase

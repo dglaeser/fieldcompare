@@ -3,8 +3,8 @@
 from io import StringIO
 from contextlib import redirect_stdout
 
-from fieldcompare.logging import StreamLogger, StandardOutputLogger
-from fieldcompare.logging import ModifiedVerbosityLogger, IndentedLogger
+from fieldcompare._logging import StreamLogger, StandardOutputLogger
+from fieldcompare._logging import ModifiedVerbosityLogger, IndentedLogger
 
 def test_stdout_logger():
     with StringIO() as stream:

@@ -1,8 +1,8 @@
 import numpy as np
 from typing import List
 
-from fieldcompare.field import Field
-from fieldcompare.matching import MatchResult, find_matching_field_names
+from fieldcompare._field import Field
+from fieldcompare._matching import MatchResult, find_matching_field_names
 
 
 def empty_match_result():

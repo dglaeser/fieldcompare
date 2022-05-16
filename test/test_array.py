@@ -3,7 +3,7 @@
 from pytest import raises
 
 from fieldcompare import make_array, sub_array
-from fieldcompare.array import make_initialized_array, make_uninitialized_array
+from fieldcompare import make_initialized_array, make_uninitialized_array
 
 def test_array_factory_functions():
     arr1 = make_array([0, 1, 2])

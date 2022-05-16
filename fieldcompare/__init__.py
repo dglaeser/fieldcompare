@@ -8,10 +8,27 @@ results against previously obtained results.
 
 from .__about__ import __version__
 
-from .array import Array, sub_array, make_array, make_initialized_array, make_uninitialized_array
-from .predicates import ExactEquality, FuzzyEquality, DefaultEquality
+from ._array import (
+    Array,
+    sub_array,
+    make_array,
+    make_initialized_array,
+    make_uninitialized_array
+)
 
-from .field import Field, FieldInterface
+from ._predicates import (
+    ExactEquality,
+    FuzzyEquality,
+    DefaultEquality
+)
+
+from ._field import (
+    Field,
+    FieldInterface,
+    FieldContainer,
+    FieldContainerInterface
+)
+
 from ._field_io import (
     read_fields,
     make_field_reader,

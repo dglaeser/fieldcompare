@@ -5,7 +5,7 @@ from datetime import datetime
 from argparse import ArgumentParser
 
 from fieldcompare import __version__
-from fieldcompare.logging import LoggerInterface, StandardOutputLogger
+from fieldcompare._logging import LoggerInterface, StandardOutputLogger
 
 from ._file_compare import _add_arguments as _file_mode_add_arguments
 from ._file_compare import _run as _run_file_mode
