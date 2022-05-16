@@ -15,7 +15,8 @@ from ..field import Field, FieldContainer, FieldContainerInterface
 from ..logging import LoggableBase
 from ..array import Array
 
-from ._mesh import Mesh, DefaultMesh, TransformedMesh, TransformedMeshBase
+from ._mesh import MeshInterface, TransformedMeshInterface
+from ._mesh import Mesh, TransformedMeshBase
 from ._mesh import transform_identity, transform_without_ghosts, transform_sorted
 
 
@@ -46,7 +47,7 @@ class _TimeSeriesFieldContainer:
     def __init__(self,
                  time_series_reader: _MeshIOTimeSeriesReader,
                  meshio_mesh: _MeshIO_Mesh,
-                 transformed_mesh: TransformedMesh) -> None:
+                 transformed_mesh: TransformedMeshInterface) -> None:
         self._time_series_reader = time_series_reader
         self._meshio_mesh = meshio_mesh
         self._transformed_mesh = transformed_mesh
@@ -243,12 +244,12 @@ class MeshIOFieldReader(LoggableBase):
         transformed_mesh = self._transform(_convert_meshio_mesh(_meshio_mesh))
         return _TimeSeriesFieldContainer(_meshio_reader, _meshio_mesh, transformed_mesh)
 
-    def _transform(self, mesh: Mesh) -> TransformedMesh:
+    def _transform(self, mesh: MeshInterface) -> TransformedMeshInterface:
         class ComposedTransformedMesh(TransformedMeshBase):
             def __init__(self,
-                         mesh: Mesh,
-                         first_trafo_factory: Callable[[Mesh], TransformedMesh],
-                         second_trafo_factory: Callable[[Mesh], TransformedMesh]) -> None:
+                         mesh: MeshInterface,
+                         first_trafo_factory: Callable[[MeshInterface], TransformedMeshInterface],
+                         second_trafo_factory: Callable[[MeshInterface], TransformedMeshInterface]) -> None:
                 self._first_trafo = first_trafo_factory(mesh)
                 self._second_trafo = second_trafo_factory(self._first_trafo.mesh())
                 super().__init__(self._second_trafo.points, self._second_trafo.connectivity)
@@ -269,13 +270,13 @@ class MeshIOFieldReader(LoggableBase):
             self._transform_sorted
         )
 
-    def _transform_without_ghosts(self, mesh: Mesh) -> TransformedMesh:
+    def _transform_without_ghosts(self, mesh: MeshInterface) -> TransformedMeshInterface:
         if self.remove_ghost_points:
             self._log("Removing ghost points\n", verbosity_level=1)
             return transform_without_ghosts(mesh)
         return transform_identity(mesh)
 
-    def _transform_sorted(self, mesh: Mesh) -> TransformedMesh:
+    def _transform_sorted(self, mesh: MeshInterface) -> TransformedMeshInterface:
         if self.permute_uniquely:
             self._log("Sorting grid by coordinates to get a unique representation\n", verbosity_level=1)
             return transform_sorted(mesh)
@@ -312,7 +313,7 @@ def _make_cell_corners_field_name(cell_type: str) -> str:
 
 
 def _convert_meshio_mesh(mesh: _MeshIO_Mesh) -> Mesh:
-    return DefaultMesh(
+    return Mesh(
         points=mesh.points,
         connectivity={
             cell_block.type: cell_block.data for cell_block in mesh.cells

@@ -4,7 +4,7 @@ from meshio import Mesh as MeshIOMesh
 from meshio.xdmf import TimeSeriesWriter as MeshIOTimeSeriesWriter
 
 from fieldcompare import Array, make_array
-from fieldcompare._field_io._mesh import DefaultMesh as Mesh
+from fieldcompare._field_io._mesh import Mesh
 
 
 class PointDataStorage:

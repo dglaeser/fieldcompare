@@ -19,7 +19,7 @@ from ..array import (
 
 MeshConnectivity = Dict[str, Array]
 
-class Mesh(Protocol):
+class MeshInterface(Protocol):
     @property
     def points(self) -> Array:
         ...
@@ -29,8 +29,8 @@ class Mesh(Protocol):
         ...
 
 
-class TransformedMesh(Mesh, Protocol):
-    def mesh(self) -> Mesh:
+class TransformedMeshInterface(MeshInterface, Protocol):
+    def mesh(self) -> MeshInterface:
         ...
 
     def transform_point_data(self, data: Array) -> Array:
@@ -40,7 +40,7 @@ class TransformedMesh(Mesh, Protocol):
         ...
 
 
-class DefaultMesh:
+class Mesh:
     def __init__(self,
                  points: Array,
                  connectivity: MeshConnectivity) -> None:
@@ -72,10 +72,10 @@ class TransformedMeshBase:
         return self._connectivity
 
     def mesh(self) -> Mesh:
-        return DefaultMesh(self.points, self.connectivity)
+        return Mesh(self.points, self.connectivity)
 
 
-def transform_identity(mesh: Mesh) -> TransformedMesh:
+def transform_identity(mesh: MeshInterface) -> TransformedMeshInterface:
     """Return a transformed mesh with identity transformation"""
     class IdentityTransformedMesh(TransformedMeshBase):
         def __init__(self,
@@ -91,7 +91,7 @@ def transform_identity(mesh: Mesh) -> TransformedMesh:
     return IdentityTransformedMesh(mesh.points, mesh.connectivity)
 
 
-def transform_without_ghosts(mesh: Mesh) -> TransformedMesh:
+def transform_without_ghosts(mesh: MeshInterface) -> TransformedMeshInterface:
     """Return a transformed mesh where ghost points are removed"""
     class GhostsRemovedTransformedMesh(TransformedMeshBase):
         def __init__(self,
@@ -132,7 +132,7 @@ def transform_without_ghosts(mesh: Mesh) -> TransformedMesh:
     )
 
 
-def transform_sorted(mesh: Mesh) -> TransformedMesh:
+def transform_sorted(mesh: MeshInterface) -> TransformedMeshInterface:
     """Return a transformed mesh that is sorted by the point coordinates"""
     class SortedMesh(TransformedMeshBase):
         def __init__(self,
