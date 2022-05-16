@@ -6,7 +6,7 @@ from typing import List
 from os.path import join
 
 from ..matching import find_matching_file_names
-from ..logging import LoggerInterface, ModifiedVerbosityLoggerFacade, IndentedLoggingFacade
+from ..logging import LoggerInterface, ModifiedVerbosityLogger, IndentedLogger
 from ..colors import make_colored, TextStyle
 
 from .._field_io import is_supported_file
@@ -112,8 +112,8 @@ def _do_file_comparisons(args,
                          filenames: Iterable[str],
                          logger: LoggerInterface) -> bool:
     passed = True
-    _quiet_logger = ModifiedVerbosityLoggerFacade(logger, verbosity_change=-1)
-    _sub_logger = IndentedLoggingFacade(_quiet_logger, first_line_prefix=" "*4)
+    _quiet_logger = ModifiedVerbosityLogger(logger, verbosity_change=-1)
+    _sub_logger = IndentedLogger(_quiet_logger, first_line_prefix=" "*4)
     _rel_tol_map = _parse_field_tolerances(args.get("relative_tolerance"))
     _abs_tol_map = _parse_field_tolerances(args.get("absolute_tolerance"))
     for filename in filenames:
