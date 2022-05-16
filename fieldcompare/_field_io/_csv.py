@@ -3,7 +3,7 @@
 from csv import reader
 from typing import Callable
 
-from ..field import Field, DefaultFieldContainer
+from ..field import Field, FieldContainer
 from ..array import make_array
 from ..logging import LoggableBase
 from ._common import _convert_string, _convertible_to_float
@@ -12,7 +12,7 @@ from ._common import _convert_string, _convertible_to_float
 class CSVFieldReader(LoggableBase):
     """Read fields from csv files"""
 
-    def read(self, filename: str) -> DefaultFieldContainer:
+    def read(self, filename: str) -> FieldContainer:
         names = []
         rows = []
 
@@ -31,7 +31,7 @@ class CSVFieldReader(LoggableBase):
                 else:
                     rows.append([_convert_string(v) for v in row_values])
 
-        return DefaultFieldContainer([
+        return FieldContainer([
             Field(
                 names[col_idx],
                 make_array([rows[i][col_idx] for i in range(len(rows))])

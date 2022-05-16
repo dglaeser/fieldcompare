@@ -3,14 +3,14 @@ from os.path import exists, splitext
 from typing import Optional, Protocol, runtime_checkable
 
 from ..logging import Logger, NullDeviceLogger, Loggable
-from ..field import FieldContainer
+from ..field import FieldContainerInterface
 
 from . import _csv, _mesh_io
 
 
 class FieldReader(Loggable, Protocol):
     """Interface for readers for fields from files"""
-    def read(self, filename: str) -> FieldContainer:
+    def read(self, filename: str) -> FieldContainerInterface:
         ...
 
 
@@ -56,7 +56,7 @@ def is_mesh_file(filename: str) -> bool:
         return False
 
 
-def read_fields(filename: str, logger: Logger = NullDeviceLogger()) -> FieldContainer:
+def read_fields(filename: str, logger: Logger = NullDeviceLogger()) -> FieldContainerInterface:
     """Read in the fields from the file with the given name using default settings"""
     if not exists(filename):
         raise IOError(f"Given file '{filename}' does not exist")

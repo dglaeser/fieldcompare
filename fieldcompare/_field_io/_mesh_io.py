@@ -11,7 +11,7 @@ from meshio import read as _meshio_read
 from meshio import extension_to_filetypes as _meshio_supported_extensions
 from meshio.xdmf import TimeSeriesReader as _MeshIOTimeSeriesReader
 
-from ..field import Field, FieldContainer, DefaultFieldContainer
+from ..field import Field, FieldContainer, FieldContainerInterface
 from ..logging import LoggableBase
 from ..array import Array
 
@@ -179,7 +179,7 @@ class MeshIOFieldReader(LoggableBase):
     def permute_uniquely(self, value: bool) -> None:
         self._do_permutation = value
 
-    def read(self, filename: str) -> FieldContainer:
+    def read(self, filename: str) -> FieldContainerInterface:
         if splitext(filename)[1] not in _meshio_supported_extensions:
             raise IOError("File type not supported by meshio")
 
@@ -188,7 +188,7 @@ class MeshIOFieldReader(LoggableBase):
         except Exception as e:
             raise IOError(f"Caught exception during reading of the mesh:\n{e}")
 
-    def _read(self, filename: str) -> FieldContainer:
+    def _read(self, filename: str) -> FieldContainerInterface:
         if self._is_time_series(filename):
             return self._read_from_time_series(filename)
         return self._read_from_mesh(filename)
@@ -213,7 +213,7 @@ class MeshIOFieldReader(LoggableBase):
                     return True
         return False
 
-    def _read_from_mesh(self, filename: str) -> DefaultFieldContainer:
+    def _read_from_mesh(self, filename: str) -> FieldContainer:
         _meshio_mesh = _meshio_read(filename)
         mesh = _convert_meshio_mesh(_meshio_mesh)
         transformed_mesh = self._transform(mesh)
@@ -235,7 +235,7 @@ class MeshIOFieldReader(LoggableBase):
                     _make_cell_type_field_name(name, cell_block.type),
                     transformed_mesh.transform_cell_data(cell_block.type, cell_data)
                 ))
-        return DefaultFieldContainer(fields)
+        return FieldContainer(fields)
 
     def _read_from_time_series(self, filename: str) -> _TimeSeriesFieldContainer:
         _meshio_reader = _MeshIOTimeSeriesReader(filename)
