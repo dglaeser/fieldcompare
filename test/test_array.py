@@ -13,7 +13,15 @@ from fieldcompare._array import (
     append_to_array,
     elements_less,
     get_sorting_index_map,
-    get_lex_sorting_index_map
+    get_lex_sorting_index_map,
+    abs_array,
+    max_element,
+    min_element,
+    max_column_elements,
+    rel_diff,
+    abs_diff,
+    find_first_unequal,
+    find_first_fuzzy_unequal
 )
 
 
@@ -127,3 +135,95 @@ def test_lex_sort_array_columns():
     ])
     arr = get_lex_sorting_index_map(arr)
     assert _check_array_equal(arr, [1, 2, 0])
+
+
+def test_abs_array():
+    arr = make_array([-1, -2, -3])
+    arr = abs_array(arr)
+    assert _check_array_equal(arr, [1, 2, 3])
+
+
+def test_min_element():
+    arr = make_array([4, 6, 1])
+    assert min_element(arr) == 1
+
+
+def test_max_element():
+    arr = make_array([4, 6, 1])
+    assert max_element(arr) == 6
+
+
+def test_max_column_elements():
+    arr = make_array([
+        make_array([4, 2, 8]),
+        make_array([1, 2, 3]),
+        make_array([10, 2, 14])
+    ])
+    arr = max_column_elements(arr)
+    assert _check_array_equal(arr, [10, 2, 14])
+
+
+def test_scalar_array_rel_diff():
+    arr1 = make_array([1., 2., 3.])
+    arr2 = make_array([2., 4., 6.])
+    diff = rel_diff(arr1, arr2)
+    assert all(
+        abs(_diff - 1) < 1e-6 for _diff in diff
+    )
+
+
+def test_vector_array_rel_diff():
+    arr1 = make_array([
+        make_array([1., 2., 3.]),
+        make_array([1., 2., 3.])
+    ])
+    arr2 = make_array([
+        make_array([3., 6., 9.]),
+        make_array([3., 6., 9.])
+    ])
+    diff = rel_diff(arr1, arr2)
+    assert all(
+        all(abs(_entry - 2) < 1e-6 for _entry in _diff)
+        for _diff in diff
+    )
+
+
+def test_scalar_array_abs_diff():
+    arr1 = make_array([0., 0., 0.])
+    arr2 = make_array([2., 4., 6.])
+    diff = abs_diff(arr1, arr2)
+    assert all(
+        abs(_diff - _v2) < 1e-6 for _diff, _v2 in zip(diff, arr2)
+    )
+
+
+def test_vector_array_abs_diff():
+    arr1 = make_array([
+        make_array([0., 0., 0.]),
+        make_array([0., 0., 0.])
+    ])
+    arr2 = make_array([
+        make_array([2., 4., 6.]),
+        make_array([2., 4., 6.])
+    ])
+    diff = abs_diff(arr1, arr2)
+    assert all(
+        all(
+            abs(_diff_entry - _arr2_entry) < 1e-6
+            for _diff_entry, _arr2_entry in zip(_diff, _arr2)
+        )
+        for _diff, _arr2 in zip(diff, arr2)
+    )
+
+
+def test_find_first_unequal():
+    arr1 = make_array([13, 7, 42, 8])
+    arr2 = make_array([13, 7, 42, 9])
+    assert find_first_unequal(arr1, arr2) == (8, 9)
+
+
+def test_find_first_fuzzy_unequal():
+    eps = 1e-12
+    arr1 = make_array([13., 7., 42., 8.])
+    arr2 = make_array([13.+eps, 7.-eps, 42.+eps, 9.])
+    assert find_first_fuzzy_unequal(arr1, arr2) == (8., 9.)
