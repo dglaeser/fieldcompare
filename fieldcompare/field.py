@@ -17,7 +17,7 @@ class FieldInterface(Protocol):
         ...
 
 
-class FieldContainer(Protocol):
+class FieldContainerInterface(Protocol):
     @property
     def field_names(self) -> Iterable[str]:
         """Return an iterable over the names over all contained fields"""
@@ -38,7 +38,9 @@ class Field:
     values: Array
 
 
-class DefaultFieldContainer:
+class FieldContainer:
+    """Stores fields and makes them accessible by name."""
+
     def __init__(self, fields: Iterable[FieldInterface]) -> None:
         self._fields = list(fields)
 

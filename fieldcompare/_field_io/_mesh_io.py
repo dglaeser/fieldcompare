@@ -11,11 +11,12 @@ from meshio import read as _meshio_read
 from meshio import extension_to_filetypes as _meshio_supported_extensions
 from meshio.xdmf import TimeSeriesReader as _MeshIOTimeSeriesReader
 
-from ..field import Field, FieldContainer, DefaultFieldContainer
+from ..field import Field, FieldContainer, FieldContainerInterface
 from ..logging import LoggableBase
 from ..array import Array
 
-from ._mesh import Mesh, DefaultMesh, TransformedMesh, TransformedMeshBase
+from ._mesh import MeshInterface, TransformedMeshInterface
+from ._mesh import Mesh, TransformedMeshBase
 from ._mesh import transform_identity, transform_without_ghosts, transform_sorted
 
 
@@ -46,7 +47,7 @@ class _TimeSeriesFieldContainer:
     def __init__(self,
                  time_series_reader: _MeshIOTimeSeriesReader,
                  meshio_mesh: _MeshIO_Mesh,
-                 transformed_mesh: TransformedMesh) -> None:
+                 transformed_mesh: TransformedMeshInterface) -> None:
         self._time_series_reader = time_series_reader
         self._meshio_mesh = meshio_mesh
         self._transformed_mesh = transformed_mesh
@@ -179,7 +180,7 @@ class MeshIOFieldReader(LoggableBase):
     def permute_uniquely(self, value: bool) -> None:
         self._do_permutation = value
 
-    def read(self, filename: str) -> FieldContainer:
+    def read(self, filename: str) -> FieldContainerInterface:
         if splitext(filename)[1] not in _meshio_supported_extensions:
             raise IOError("File type not supported by meshio")
 
@@ -188,7 +189,7 @@ class MeshIOFieldReader(LoggableBase):
         except Exception as e:
             raise IOError(f"Caught exception during reading of the mesh:\n{e}")
 
-    def _read(self, filename: str) -> FieldContainer:
+    def _read(self, filename: str) -> FieldContainerInterface:
         if self._is_time_series(filename):
             return self._read_from_time_series(filename)
         return self._read_from_mesh(filename)
@@ -213,7 +214,7 @@ class MeshIOFieldReader(LoggableBase):
                     return True
         return False
 
-    def _read_from_mesh(self, filename: str) -> DefaultFieldContainer:
+    def _read_from_mesh(self, filename: str) -> FieldContainer:
         _meshio_mesh = _meshio_read(filename)
         mesh = _convert_meshio_mesh(_meshio_mesh)
         transformed_mesh = self._transform(mesh)
@@ -235,7 +236,7 @@ class MeshIOFieldReader(LoggableBase):
                     _make_cell_type_field_name(name, cell_block.type),
                     transformed_mesh.transform_cell_data(cell_block.type, cell_data)
                 ))
-        return DefaultFieldContainer(fields)
+        return FieldContainer(fields)
 
     def _read_from_time_series(self, filename: str) -> _TimeSeriesFieldContainer:
         _meshio_reader = _MeshIOTimeSeriesReader(filename)
@@ -243,12 +244,12 @@ class MeshIOFieldReader(LoggableBase):
         transformed_mesh = self._transform(_convert_meshio_mesh(_meshio_mesh))
         return _TimeSeriesFieldContainer(_meshio_reader, _meshio_mesh, transformed_mesh)
 
-    def _transform(self, mesh: Mesh) -> TransformedMesh:
+    def _transform(self, mesh: MeshInterface) -> TransformedMeshInterface:
         class ComposedTransformedMesh(TransformedMeshBase):
             def __init__(self,
-                         mesh: Mesh,
-                         first_trafo_factory: Callable[[Mesh], TransformedMesh],
-                         second_trafo_factory: Callable[[Mesh], TransformedMesh]) -> None:
+                         mesh: MeshInterface,
+                         first_trafo_factory: Callable[[MeshInterface], TransformedMeshInterface],
+                         second_trafo_factory: Callable[[MeshInterface], TransformedMeshInterface]) -> None:
                 self._first_trafo = first_trafo_factory(mesh)
                 self._second_trafo = second_trafo_factory(self._first_trafo.mesh())
                 super().__init__(self._second_trafo.points, self._second_trafo.connectivity)
@@ -269,13 +270,13 @@ class MeshIOFieldReader(LoggableBase):
             self._transform_sorted
         )
 
-    def _transform_without_ghosts(self, mesh: Mesh) -> TransformedMesh:
+    def _transform_without_ghosts(self, mesh: MeshInterface) -> TransformedMeshInterface:
         if self.remove_ghost_points:
             self._log("Removing ghost points\n", verbosity_level=1)
             return transform_without_ghosts(mesh)
         return transform_identity(mesh)
 
-    def _transform_sorted(self, mesh: Mesh) -> TransformedMesh:
+    def _transform_sorted(self, mesh: MeshInterface) -> TransformedMeshInterface:
         if self.permute_uniquely:
             self._log("Sorting grid by coordinates to get a unique representation\n", verbosity_level=1)
             return transform_sorted(mesh)
@@ -312,7 +313,7 @@ def _make_cell_corners_field_name(cell_type: str) -> str:
 
 
 def _convert_meshio_mesh(mesh: _MeshIO_Mesh) -> Mesh:
-    return DefaultMesh(
+    return Mesh(
         points=mesh.points,
         connectivity={
             cell_block.type: cell_block.data for cell_block in mesh.cells

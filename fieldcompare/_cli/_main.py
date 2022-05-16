@@ -5,7 +5,7 @@ from datetime import datetime
 from argparse import ArgumentParser
 
 from fieldcompare import __version__
-from fieldcompare.logging import Logger, StandardOutputLogger
+from fieldcompare.logging import LoggerInterface, StandardOutputLogger
 
 from ._file_compare import _add_arguments as _file_mode_add_arguments
 from ._file_compare import _run as _run_file_mode
@@ -13,7 +13,7 @@ from ._file_compare import _run as _run_file_mode
 from ._dir_compare import _add_arguments as _dir_mode_add_arguments
 from ._dir_compare import _run as _run_dir_mode
 
-def main(argv=None, logger: Logger = StandardOutputLogger()):
+def main(argv=None, logger: LoggerInterface = StandardOutputLogger()):
     parser = ArgumentParser(description="Compare fields in files of various formats")
     parser.add_argument(
         "--version", "-v",
