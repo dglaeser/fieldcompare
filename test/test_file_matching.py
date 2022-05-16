@@ -4,7 +4,7 @@ from os import makedirs, remove, walk, rmdir
 from os.path import join, exists, isdir
 from typing import List
 
-from fieldcompare.matching import find_matching_file_names
+from fieldcompare._matching import find_matching_file_names
 
 def _touch(file_path: str) -> None:
     with open(file_path, "w") as _:

@@ -5,7 +5,7 @@ from typing import List, Iterable
 from os.path import join, relpath
 from os import walk
 
-from .field import FieldInterface
+from ._field import FieldInterface
 
 @dataclass
 class MatchResult:

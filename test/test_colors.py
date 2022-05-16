@@ -1,7 +1,7 @@
 """Test text styling facilities"""
 
-from fieldcompare.colors import make_colored, TextColor
-from fieldcompare.colors import text_color_options
+from fieldcompare._colors import make_colored, TextColor
+from fieldcompare._colors import text_color_options
 
 def test_color_context_manager():
     test_string = make_colored("hello", color=TextColor.red)

@@ -6,10 +6,10 @@ from numpy import allclose, floating
 
 from ._common import _get_as_string, _default_base_tolerance, _is_iterable, _is_scalar
 
-from .array import Array, is_array, make_array
-from .array import find_first_unequal
-from .array import find_first_fuzzy_unequal
-from .array import rel_diff, abs_diff, max_column_elements
+from ._array import Array, is_array, make_array
+from ._array import find_first_unequal
+from ._array import find_first_fuzzy_unequal
+from ._array import rel_diff, abs_diff, max_column_elements
 
 
 @dataclass

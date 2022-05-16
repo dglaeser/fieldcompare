@@ -7,7 +7,7 @@ from pathlib import Path
 from io import StringIO
 
 from fieldcompare._cli import main
-from fieldcompare.logging import StreamLogger
+from fieldcompare._logging import StreamLogger
 from data.generate_test_meshes import _make_test_mesh, _perturb_mesh
 from data.generate_test_meshes import _get_time_series_point_data_values
 from data.generate_test_meshes import _get_time_series_cell_data_values

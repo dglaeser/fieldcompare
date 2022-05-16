@@ -3,7 +3,7 @@
 from typing import Dict, Protocol
 
 from .._common import _default_base_tolerance
-from ..array import (
+from .._array import (
     Array,
     sort_array, lex_sort_array_columns,
     make_array, make_initialized_array, make_uninitialized_array, append_to_array,

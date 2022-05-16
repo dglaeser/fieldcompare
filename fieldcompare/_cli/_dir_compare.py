@@ -5,9 +5,9 @@ from argparse import ArgumentParser
 from typing import List
 from os.path import join
 
-from ..matching import find_matching_file_names
-from ..logging import LoggerInterface, ModifiedVerbosityLogger, IndentedLogger
-from ..colors import make_colored, TextStyle
+from .._matching import find_matching_file_names
+from .._logging import LoggerInterface, ModifiedVerbosityLogger, IndentedLogger
+from .._colors import make_colored, TextStyle
 
 from .._field_io import is_supported_file
 from ._common import _bool_to_exit_code, _parse_field_tolerances, InclusionFilter, ExclusionFilter

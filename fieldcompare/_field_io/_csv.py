@@ -3,9 +3,9 @@
 from csv import reader
 from typing import Callable
 
-from ..field import Field, FieldContainer
-from ..array import make_array
-from ..logging import LoggableBase
+from .._field import Field, FieldContainer
+from .._array import make_array
+from .._logging import LoggableBase
 from ._common import _convert_string, _convertible_to_float
 
 
