@@ -94,7 +94,7 @@ class NullDeviceLogger(LoggerBase):
         pass
 
 
-class ModifiedVerbosityLoggerFacade(LoggerBase):
+class ModifiedVerbosityLogger(LoggerBase):
     """Wrapper around a logger to write to it with modified verbosity"""
     def __init__(self, logger: LoggerInterface, verbosity_change: int) -> None:
         self._logger = logger
@@ -107,7 +107,7 @@ class ModifiedVerbosityLoggerFacade(LoggerBase):
         self._logger.log(message)
 
 
-class IndentedLoggingFacade(LoggerBase):
+class IndentedLogger(LoggerBase):
     """Wrapper around a logger to write indented (useful for logging of sub-routines)"""
     def __init__(self, logger: LoggerInterface, first_line_prefix: str) -> None:
         self._logger = logger

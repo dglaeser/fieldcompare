@@ -8,7 +8,7 @@ from .._common import _default_base_tolerance
 from .._field_io import read_fields
 
 from ..colors import make_colored, TextColor
-from ..logging import LoggerInterface, ModifiedVerbosityLoggerFacade, IndentedLoggingFacade
+from ..logging import LoggerInterface, ModifiedVerbosityLogger, IndentedLogger
 
 
 class InclusionFilter:
@@ -75,8 +75,8 @@ def _parse_field_tolerances(tolerance_strings: Optional[List[str]] = None) -> Fi
 
 def _read_fields_from_file(filename: str, logger: LoggerInterface):
     logger.log(f"Reading fields from '{filename}'\n", verbosity_level=1)
-    low_verbosity_logger = ModifiedVerbosityLoggerFacade(logger, verbosity_change=-2)
-    file_io_logger = IndentedLoggingFacade(low_verbosity_logger, " -- ")
+    low_verbosity_logger = ModifiedVerbosityLogger(logger, verbosity_change=-2)
+    file_io_logger = IndentedLogger(low_verbosity_logger, " -- ")
     return read_fields(filename, logger=file_io_logger)
 
 
