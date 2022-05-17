@@ -13,7 +13,9 @@ from data.generate_test_meshes import _get_time_series_point_data_values
 from data.generate_test_meshes import _get_time_series_cell_data_values
 from data.generate_test_meshes import _write_time_series
 
+
 TEST_DATA_PATH = Path(__file__).resolve().parent / Path("data")
+
 
 def test_cli_file_mode_pass():
     assert main([
@@ -21,7 +23,8 @@ def test_cli_file_mode_pass():
         "--reference", str(TEST_DATA_PATH / Path("test_mesh.vtu"))
     ]) == 0
 
-def test_cli_file_mode_fail():
+
+def test_cli_file_mode_fail_on_perturbed_mesh():
     _mesh = _make_test_mesh()
     _perturbed_mesh = _perturb_mesh(_make_test_mesh(), max_perturbation=1e-3)
 
@@ -33,6 +36,7 @@ def test_cli_file_mode_fail():
 
     remove(_mesh_filename)
     remove(_perturbed_mesh_filename)
+
 
 def test_cli_file_mode_field_filter():
     with StringIO() as stream:
@@ -49,6 +53,7 @@ def test_cli_file_mode_field_filter():
         assert len(comparison_logs) == 1
         assert "function" in comparison_logs[0]
 
+
 def test_cli_file_mode_field_exclusion_filter():
     with StringIO() as stream:
         logger = StreamLogger(stream)
@@ -62,6 +67,7 @@ def test_cli_file_mode_field_exclusion_filter():
             line for line in stream.getvalue().split("\n") if "Comparison of the fields" in line
         ]
         assert not any("function" in log for log in comparison_logs)
+
 
 def test_cli_file_mode_relative_tolerance_definition():
     _mesh = _make_test_mesh()
@@ -98,6 +104,7 @@ def test_cli_file_mode_relative_tolerance_definition():
 
     remove(_mesh_filename)
     remove(_perturbed_mesh_filename)
+
 
 def test_cli_file_mode_absolute_tolerance_definition():
     _mesh = _make_test_mesh()
@@ -139,6 +146,7 @@ def test_cli_file_mode_absolute_tolerance_definition():
     remove(_mesh_filename)
     remove(_perturbed_mesh_filename)
 
+
 def test_cli_file_mode_missing_result_field():
     _mesh = _make_test_mesh()
     _point_data_1 = _get_time_series_point_data_values(_mesh, num_time_steps=2)
@@ -160,6 +168,7 @@ def test_cli_file_mode_missing_result_field():
     remove(_mesh_1_filename.replace(".xdmf", ".h5"))
     remove(_mesh_2_filename.replace(".xdmf", ".h5"))
 
+
 def test_cli_file_mode_missing_reference_field():
     _mesh = _make_test_mesh()
     _point_data_1 = _get_time_series_point_data_values(_mesh, num_time_steps=3)
@@ -180,8 +189,10 @@ def test_cli_file_mode_missing_reference_field():
     remove(_mesh_1_filename.replace(".xdmf", ".h5"))
     remove(_mesh_2_filename.replace(".xdmf", ".h5"))
 
-def test_cli_directory_mode():
+
+def test_cli_directory_mode_pass():
     assert main(["dir", str(TEST_DATA_PATH), "--reference-dir", str(TEST_DATA_PATH)]) == 0
+
 
 def test_cli_directory_mode_field_filter():
     with StringIO() as stream:
@@ -197,6 +208,7 @@ def test_cli_directory_mode_field_filter():
         ]
         assert all("function" in log for log in comparison_logs)
 
+
 def test_cli_directory_mode_field_exclusion_filter():
     with StringIO() as stream:
         logger = StreamLogger(stream)
@@ -210,6 +222,7 @@ def test_cli_directory_mode_field_exclusion_filter():
             line for line in stream.getvalue().split("\n") if "Comparison of the fields" in line
         ]
         assert not any("function" in log for log in comparison_logs)
+
 
 def test_cli_directory_mode_missing_result_file():
     tmp_results_path = TEST_DATA_PATH.resolve().parent / Path("cli_dir_test_results_data")
@@ -236,6 +249,7 @@ def test_cli_directory_mode_missing_result_file():
 
     rmtree(tmp_results_path)
 
+
 def test_cli_directory_mode_missing_reference_file():
     tmp_reference_path = TEST_DATA_PATH.resolve().parent / Path("cli_dir_test_ref_data")
     copytree(TEST_DATA_PATH, tmp_reference_path, dirs_exist_ok=True)
@@ -261,6 +275,7 @@ def test_cli_directory_mode_missing_reference_file():
 
     rmtree(tmp_reference_path)
 
+
 def test_cli_directory_mode_file_inclusion_filter():
     # check that the normal run has xdmf in the output
     with StringIO() as stream:
@@ -285,6 +300,7 @@ def test_cli_directory_mode_file_inclusion_filter():
             "*.vtu",
             "--verbosity=1"], logger)
         assert ".xdmf" not in stream.getvalue()
+
 
 def test_cli_directory_mode_relative_tolerance_definition():
     _mesh = _make_test_mesh()
@@ -330,6 +346,7 @@ def test_cli_directory_mode_relative_tolerance_definition():
 
     rmtree(res_dir)
     rmtree(ref_dir)
+
 
 def test_cli_directory_mode_absolute_tolerance_definition():
     _mesh = _make_test_mesh()
