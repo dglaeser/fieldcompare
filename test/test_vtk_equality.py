@@ -5,12 +5,15 @@ from pytest import raises
 
 from fieldcompare import make_mesh_field_reader, FuzzyEquality, DefaultEquality
 
+
 TEST_DATA_PATH = Path(__file__).resolve().parent / Path("data")
+
 
 def _get_field_from_list(name, fields_list):
     element_list = list(filter(lambda f: f.name == name, fields_list))
     assert len(element_list) == 1
     return element_list[0]
+
 
 def _compare_vtk_files(file1,
                        file2,
@@ -49,6 +52,7 @@ def test_identical_vtk_files():
         DefaultEquality()
     )
 
+
 def test_vtk_files_permutated():
     assert _compare_vtk_files(
         TEST_DATA_PATH / Path("test_mesh.vtu"),
@@ -59,6 +63,7 @@ def test_vtk_files_permutated():
         TEST_DATA_PATH / Path("test_mesh_permutated.vtu"),
         DefaultEquality()
     )
+
 
 def test_vtk_files_perturbed():
     predicate = FuzzyEquality()
@@ -114,6 +119,7 @@ def test_vtk_files_perturbed():
         default_predicate
     )
 
+
 def test_non_conforming_vtk_files():
     predicate = FuzzyEquality()
     default_predicate = DefaultEquality()
@@ -165,6 +171,7 @@ def test_non_conforming_vtk_files():
         TEST_DATA_PATH / Path("test_non_conforming_mesh_permutated_perturbed.vtu"),
         default_predicate
     )
+
 
 def test_vtk_with_ghost_points():
     predicate = FuzzyEquality()

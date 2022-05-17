@@ -65,16 +65,16 @@ def elements_less(first: Array, second: Array) -> Array:
     return np.less(first, second)
 
 
-def lex_sort_array_columns(input_array: Array) -> Array:
-    """Sort an array lexicographically. This expects multi-dimensional arrays."""
+def get_lex_sorting_index_map(input_array: Array) -> Array:
+    """Get the list of indices for sorting the array lexicographically. Expects multi-dimensional arrays."""
     dimension = len(input_array[0])
     return np.lexsort(
         tuple(input_array[:, i] for i in reversed(range(dimension)))
     )
 
 
-def sort_array(input_array: Array) -> Array:
-    """Sort an array."""
+def get_sorting_index_map(input_array: Array) -> Array:
+    """Get the list of indices that would sort the array."""
     return np.argsort(input_array)
 
 

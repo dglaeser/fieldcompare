@@ -33,8 +33,8 @@ def test_exact_equality_with_arrays():
 
 
 def test_exact_equality_with_field_values():
-    field1 = Field("f1", [1.0, 1.0])
-    field2 = Field("f2", [1.0, 1.0 + 1e-4])
+    field1 = Field("f1", make_array([1.0, 1.0]))
+    field2 = Field("f2", make_array([1.0, 1.0 + 1e-4]))
     for check in [ExactEquality(), DefaultEquality()]:
         assert not check(field1.values, field2.values)
 

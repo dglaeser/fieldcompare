@@ -3,6 +3,7 @@
 from fieldcompare._colors import make_colored, TextColor
 from fieldcompare._colors import text_color_options
 
+
 def test_color_context_manager():
     test_string = make_colored("hello", color=TextColor.red)
     assert "[0m" in test_string

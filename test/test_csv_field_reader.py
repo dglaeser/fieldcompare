@@ -15,6 +15,7 @@ def _write_fields_to_csv_no_names(filename: str, values) -> None:
         for i in range(num_cols):
             csv_writer.writerow(vals[i] for vals in values)
 
+
 def _write_fields_to_csv(filename: str, names, values) -> None:
     with open(filename, "w") as csv_file:
         csv_writer = writer(csv_file)
@@ -24,6 +25,7 @@ def _write_fields_to_csv(filename: str, names, values) -> None:
         assert all(len(vals) == num_cols for vals in values)
         for i in range(num_cols):
             csv_writer.writerow(vals[i] for vals in values)
+
 
 def get_reference_data():
     return {
