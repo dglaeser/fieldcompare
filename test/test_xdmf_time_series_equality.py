@@ -4,7 +4,9 @@ from pathlib import Path
 
 from fieldcompare import read_fields, FuzzyEquality, DefaultEquality
 
+
 TEST_DATA_PATH = Path(__file__).resolve().parent / Path("data")
+
 
 class CheckResult:
     def __init__(self, value: bool, msg: str = "") -> None:
@@ -17,6 +19,7 @@ class CheckResult:
     @property
     def report(self) -> str:
         return self._msg
+
 
 def _compare_time_series_files(file1, file2, predicate=FuzzyEquality()) -> CheckResult:
     print("Start xdfm comparison")
@@ -36,6 +39,7 @@ def _compare_time_series_files(file1, file2, predicate=FuzzyEquality()) -> Check
         if not check:
             return CheckResult(False, f"Field {field1.name} has compared unequal")
     return CheckResult(True)
+
 
 def test_identical_time_series_files():
     assert _compare_time_series_files(
@@ -57,6 +61,7 @@ def test_identical_time_series_files():
         TEST_DATA_PATH / Path("test_time_series_perturbed.xdmf"),
         DefaultEquality()
     )
+
 
 def test_perturbed_time_series_files():
     predicate = FuzzyEquality()
