@@ -154,20 +154,22 @@ def transform_sorted(mesh: MeshInterface) -> TransformedMeshInterface:
         mesh.points,
         mesh.connectivity
     )
+    sorted_points = mesh.points[point_index_map]
 
-    cell_index_maps = {}
     point_index_map_inverse = _make_inverse_index_map(point_index_map)
-    for cell_type, corners in mesh.connectivity.items():
+    def _map_and_sort_cell_corners(corners):
         for cell_idx, cell_corners in enumerate(corners):
             mapped_cell_corners = point_index_map_inverse[cell_corners]
-            corners[cell_idx] = get_sorting_index_map(mapped_cell_corners)
-        cell_index_maps[cell_type] = _sorting_cell_indices(corners)
+            sorting_map = get_sorting_index_map(mapped_cell_corners)
+            corners[cell_idx] = mapped_cell_corners[sorting_map]
+        return corners
 
-    sorted_points = mesh.points[point_index_map]
-    sorted_cells = {
-        cell_type: corners[cell_index_maps[cell_type]]
-        for cell_type, corners in mesh.connectivity.items()
-    }
+    sorted_cells = {}
+    cell_index_maps = {}
+    for cell_type, corners in mesh.connectivity.items():
+        corners = _map_and_sort_cell_corners(corners)
+        cell_index_maps[cell_type] = _sorting_cell_indices(corners)
+        sorted_cells[cell_type] = corners[cell_index_maps[cell_type]]
 
     return SortedMesh(
         points=sorted_points,
@@ -290,7 +292,7 @@ def _get_point_cloud_tolerance(points):
 
 
 def _make_inverse_index_map(forward_map: Array) -> Array:
-    inverse = make_array(forward_map)
+    inverse = make_uninitialized_array(len(forward_map), dtype=int)
     for list_index, mapped_index in enumerate(forward_map):
         inverse[mapped_index] = list_index
     return inverse
