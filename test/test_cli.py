@@ -38,6 +38,21 @@ def test_cli_file_mode_fail_on_perturbed_mesh():
     remove(_perturbed_mesh_filename)
 
 
+def test_cli_file_mode_fail_on_perturbed_mesh_without_mesh_reordering():
+    # pass with mesh-reordering
+    assert main([
+        "file", str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+        "--reference", str(TEST_DATA_PATH / Path("test_mesh_permutated.vtu"))
+    ]) == 0
+
+    # fail without mesh-reordering
+    assert main([
+        "file", str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+        "--reference", str(TEST_DATA_PATH / Path("test_mesh_permutated.vtu")),
+        "--disable-mesh-reordering"
+    ]) == 1
+
+
 def test_cli_file_mode_field_filter():
     with StringIO() as stream:
         logger = StreamLogger(stream)

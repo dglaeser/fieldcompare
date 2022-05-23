@@ -19,7 +19,12 @@ from ._common import (
     RegexFilter
 )
 
-from ._file_compare import _add_tolerance_options_args, _add_field_options_args, _add_field_filter_options_args
+from ._file_compare import (
+    _add_tolerance_options_args,
+    _add_field_options_args,
+    _add_field_filter_options_args,
+    _add_mesh_reorder_options_args
+)
 
 
 def _add_arguments(parser: ArgumentParser):
@@ -64,6 +69,7 @@ def _add_arguments(parser: ArgumentParser):
     _add_field_options_args(parser)
     _add_field_filter_options_args(parser)
     _add_tolerance_options_args(parser)
+    _add_mesh_reorder_options_args(parser)
 
 
 def _run(args: dict, logger: LoggerInterface) -> int:
@@ -137,7 +143,8 @@ def _do_file_comparisons(args,
             relative_tolerances=_rel_tol_map,
             absolute_tolerances=_abs_tol_map,
             field_inclusion_filter=RegexFilter(args["include_fields"] if args["include_fields"] else ["*"]),
-            field_exclusion_filter=RegexFilter(args["exclude_fields"])
+            field_exclusion_filter=RegexFilter(args["exclude_fields"]),
+            disable_mesh_reordering=True if args["disable_mesh_reordering"] else False
         )
         try:
             _passed = _run_file_compare(_sub_logger, opts, res_file, ref_file)

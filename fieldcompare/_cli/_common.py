@@ -26,8 +26,8 @@ from .._mesh_fields import (
     sort_cell_connectivity
 )
 
-from .._field_comparison import FieldComparison, FieldComparisonOptions
-from .._file_comparison import FileComparison
+from .._field_comparison import FieldComparison
+from .._file_comparison import FileComparison, FileComparisonOptions
 
 class RegexFilter:
     """Filters lists of strings according to a list of regular expressions."""
@@ -81,7 +81,7 @@ def _parse_field_tolerances(tolerance_strings: Optional[List[str]] = None) -> Fi
 
 
 def _run_file_compare(logger: LoggerInterface,
-                      opts: FieldComparisonOptions,
+                      opts: FileComparisonOptions,
                       res_file: str,
                       ref_file: str) -> bool:
     if is_mesh_file(res_file) and is_mesh_file(ref_file):
@@ -90,13 +90,14 @@ def _run_file_compare(logger: LoggerInterface,
 
 
 def _run_mesh_file_compare(logger: LoggerInterface,
-                           opts: FieldComparisonOptions,
+                           opts: FileComparisonOptions,
                            result_file: str,
                            reference_file: str) -> bool:
     result_fields = _read_fields(result_file, logger)
     reference_fields = _read_fields(reference_file, logger)
 
-    if _point_coordinates_differ(result_fields, reference_fields, opts):
+    reorder = not opts.disable_mesh_reordering
+    if reorder and _point_coordinates_differ(result_fields, reference_fields, opts):
         logger.log(
             "Detected differences in coordinates, will retry with a sorted mesh\n",
             verbosity_level=1
@@ -106,7 +107,7 @@ def _run_mesh_file_compare(logger: LoggerInterface,
         reference_fields = _sort_mesh_fields(reference_fields, sub_logger)
         return FieldComparison(opts, logger)(result_fields, reference_fields)
 
-    if _cell_corners_differ(result_fields, reference_fields):
+    if reorder and _cell_corners_differ(result_fields, reference_fields):
         logger.log(
             "Detected differences in cell connectivity, will retry with a sorted cells\n",
             verbosity_level=1
@@ -165,7 +166,7 @@ def _get_logger_for_sorting(logger: LoggerInterface) -> LoggerInterface:
 
 def _point_coordinates_differ(fields1: MeshFieldContainerInterface,
                               fields2: MeshFieldContainerInterface,
-                              opts: FieldComparisonOptions) -> bool:
+                              opts: FileComparisonOptions) -> bool:
     field_name = "point_coordinates"
     coords1 = fields1.get(field_name).values
     coords2 = fields2.get(field_name).values

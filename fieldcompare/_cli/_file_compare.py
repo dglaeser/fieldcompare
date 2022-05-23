@@ -13,6 +13,18 @@ from ._common import (
     RegexFilter
 )
 
+def _add_mesh_reorder_options_args(parser: ArgumentParser) -> None:
+    parser.add_argument(
+        "--disable-mesh-reordering",
+        required=False,
+        action="store_true",
+        help="For fields defined on meshes, the mesh is reordered in a unique way in case differences "
+             "in the point coordinates or the mesh connectivity are detected. This ensures that the "
+             "comparisons pass also for rearranged meshes when the field data matches. Use this flag "
+             "to disable this behaviour in case you want to test for identical mesh ordering."
+    )
+
+
 def _add_field_filter_options_args(parser: ArgumentParser) -> None:
     parser.add_argument(
         "--include-fields",
@@ -85,6 +97,7 @@ def _add_arguments(parser: ArgumentParser):
     _add_field_options_args(parser)
     _add_tolerance_options_args(parser)
     _add_field_filter_options_args(parser)
+    _add_mesh_reorder_options_args(parser)
 
 
 def _run(args: dict, logger: LoggerInterface) -> int:
@@ -95,7 +108,8 @@ def _run(args: dict, logger: LoggerInterface) -> int:
         relative_tolerances=_parse_field_tolerances(args.get("relative_tolerance")),
         absolute_tolerances=_parse_field_tolerances(args.get("absolute_tolerance")),
         field_inclusion_filter=RegexFilter(args["include_fields"] if args["include_fields"] else ["*"]),
-        field_exclusion_filter=RegexFilter(args["exclude_fields"])
+        field_exclusion_filter=RegexFilter(args["exclude_fields"]),
+        disable_mesh_reordering=True if args["disable_mesh_reordering"] else False
     )
 
     try:
