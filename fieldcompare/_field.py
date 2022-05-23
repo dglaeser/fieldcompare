@@ -1,6 +1,6 @@
 """Class that represents a field of values"""
 
-from typing import Protocol, Iterable, Iterator
+from typing import Protocol, Iterable, Iterator, List
 from dataclasses import dataclass
 from ._array import Array
 
@@ -45,8 +45,8 @@ class FieldContainer:
         self._fields = list(fields)
 
     @property
-    def field_names(self) -> Iterable[str]:
-        return (f.name for f in self._fields)
+    def field_names(self) -> List[str]:
+        return list(f.name for f in self._fields)
 
     def get(self, field_name: str) -> FieldInterface:
         for field in self._fields:

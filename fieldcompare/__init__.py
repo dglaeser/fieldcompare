@@ -52,3 +52,13 @@ from ._matching import (
     find_matching_file_names,
     find_matching_names
 )
+
+from ._field_comparison import (
+    FieldComparison,
+    FieldComparisonOptions
+)
+
+from ._file_comparison import (
+    FileComparison,
+    FileComparisonOptions
+)
