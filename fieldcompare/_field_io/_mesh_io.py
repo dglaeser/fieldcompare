@@ -221,7 +221,7 @@ class MeshIOFieldReader(LoggableBase):
 
         fields = []
         fields.append(Field(_point_coordinates_field_name(), transformed_mesh.points))
-        for cell_type, corners in mesh.connectivity.items():
+        for cell_type, corners in transformed_mesh.connectivity.items():
             fields.append(Field(_make_cell_corners_field_name(cell_type), corners))
         for name in _meshio_mesh.point_data:
             fields.append(Field(

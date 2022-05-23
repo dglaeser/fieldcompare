@@ -7,10 +7,16 @@ from copy import deepcopy
 from meshio import Mesh
 from meshio.xdmf import TimeSeriesWriter
 
+
+def _test_function(coord) -> float:
+    return (1.0 - coord[0])*(1.0 - coord[1])
+
+
 def _add_ghost_points(mesh):
     num_points = len(mesh.points)
     mesh.points = np.append(mesh.points, mesh.points[0:int(num_points/2)], axis=0)
     return mesh
+
 
 def _make_non_conforming_test_mesh(refinement: int = 1):
     num_cells_x = int(pow(2, refinement))
@@ -31,6 +37,15 @@ def _make_non_conforming_test_mesh(refinement: int = 1):
             points.append([p0[0] + 0.0, p0[1] + dy, 0.0])
             cells[0][1].append([p0_idx, p0_idx+1, p0_idx+2, p0_idx+3])
     return Mesh(points, cells)
+
+
+def _get_cell_center(cell, mesh_points):
+    center = deepcopy(mesh_points[cell[0]])
+    dim = len(center)
+    for corner_idx in cell[1:]:
+        center = [center[i] + mesh_points[corner_idx][i] for i in range(dim)]
+    center = [center[i]/len(cell) for i in range(dim)]
+    return center
 
 
 def _make_test_mesh():
@@ -56,18 +71,22 @@ def _make_test_mesh():
         ])
     ]
 
-    def _y(x):
-        return (1.0 - x[0])*(1.0 - x[1])
-
     return Mesh(
         points,
         cells,
         point_data={
             "point_index": list(range(len(points))),
-            "function": [_y(x) for x in points]
+            "function": [_test_function(x) for x in points]
         },
-        cell_data={"cell_index": [[0, 1, 2, 3], [4]]}
+        cell_data={
+            "cell_index": [[0, 1, 2, 3], [4]],
+            "cell_func_values": [
+                [_test_function(_get_cell_center(cell, points)) for cell in corners]
+                for _, corners in cells
+            ]
+        }
     )
+
 
 def _permutate_mesh(mesh):
     seed = 1
@@ -124,6 +143,7 @@ def _get_inverse_index_map(forward_index_map):
         inverse[mapped_index] = list_index
     return inverse
 
+
 def _perturb_mesh(mesh, max_perturbation=1e-9):
     seed = 1
     random_instance = random.Random(seed)
@@ -143,17 +163,16 @@ def _get_time_series_point_data_values(mesh, num_time_steps, max_perturbation=0.
     result = []
     for ts in range(num_time_steps-1):
         result.append({
-            "point_data": np.array([float(i*ts) for i in range(len(mesh.points))])
+            "point_data": np.array([_test_function(p)*(ts+1) for p in mesh.points])
         })
-    ts = num_time_steps - 1
 
     # perturb the last time step
     seed = 1
     random_instance = random.Random(seed)
     result.append({
         "point_data": np.array([
-            float(i*ts) + random_instance.uniform(0, max_perturbation)
-            for i in range(len(mesh.points))
+            _test_function(p)*num_time_steps + random_instance.uniform(0, max_perturbation)
+            for p in mesh.points
         ])
     })
 
@@ -164,22 +183,22 @@ def _get_time_series_cell_data_values(mesh, num_time_steps, max_perturbation=0.0
     result = []
     for ts in range(num_time_steps-1):
         result.append({"cell_data": []})
-        cell_idx = 0
         for cell_block in mesh.cells:
             result[-1]["cell_data"].append(np.array([
-                float(cell_idx*ts) for i in range(len(cell_block.data))
+                _test_function(_get_cell_center(cell, mesh.points))*(ts+1)
+                for cell in cell_block.data
             ]))
-    ts = num_time_steps - 1
 
     # perturb the last time step
     seed = 1
     random_instance = random.Random(seed)
     result.append({"cell_data": []})
-    cell_idx = 0
     for cell_block in mesh.cells:
         result[-1]["cell_data"].append(np.array([
-            float(cell_idx*ts) + random_instance.uniform(0, max_perturbation)
-            for i in range(len(cell_block.data))
+            _test_function(
+                _get_cell_center(cell, mesh.points)
+            )*num_time_steps + random_instance.uniform(0, max_perturbation)
+            for cell in cell_block.data
         ]))
 
     return result
@@ -203,6 +222,10 @@ if __name__ == "__main__":
     point_values = _get_time_series_point_data_values(test_mesh, 3)
     cell_values = _get_time_series_cell_data_values(test_mesh, 3)
     _write_time_series("test_time_series.xdmf", test_mesh, point_values, cell_values, 3)
+
+    point_values = _get_time_series_point_data_values(permutated_mesh, 3)
+    cell_values = _get_time_series_cell_data_values(permutated_mesh, 3)
+    _write_time_series("test_time_series_permutated.xdmf", permutated_mesh, point_values, cell_values, 3)
 
     point_values = _get_time_series_point_data_values(test_mesh, 3, 1e-8)
     cell_values = _get_time_series_cell_data_values(test_mesh, 3, 1e-8)

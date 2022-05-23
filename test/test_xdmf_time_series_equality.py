@@ -63,6 +63,13 @@ def test_identical_time_series_files():
     )
 
 
+def test_permutated_time_series_files():
+    assert _compare_time_series_files(
+        TEST_DATA_PATH / Path("test_time_series.xdmf"),
+        TEST_DATA_PATH / Path("test_time_series_permutated.xdmf")
+    )
+
+
 def test_perturbed_time_series_files():
     predicate = FuzzyEquality()
     default_predicate = DefaultEquality()

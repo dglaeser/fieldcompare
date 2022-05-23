@@ -27,7 +27,8 @@ def _compare_vtk_files(file1,
     for field1 in fields1:
         field2 = _get_field_from_list(field1.name, fields2)
         print(f" -- checking field {field1.name}")
-        return bool(predicate(field1.values, field2.values))
+        if not predicate(field1.values, field2.values):
+            return False
     return True
 
 
