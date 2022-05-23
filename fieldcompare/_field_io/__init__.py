@@ -4,6 +4,7 @@ from typing import Optional, Protocol, runtime_checkable
 
 from .._logging import LoggerInterface, NullDeviceLogger, Loggable
 from .._field import FieldContainerInterface
+from .._mesh_fields import MeshFieldContainerInterface
 
 from . import _csv, _mesh_io
 
@@ -15,8 +16,11 @@ class FieldReaderInterface(Loggable, Protocol):
 
 
 @runtime_checkable
-class MeshFieldReaderInterface(FieldReaderInterface, Protocol):
+class MeshFieldReaderInterface(Loggable, Protocol):
     """Interface for readers for fields from mesh files"""
+    def read(self, filename: str) -> MeshFieldContainerInterface:
+        ...
+
     @property
     def remove_ghost_points(self) -> bool:
         ...

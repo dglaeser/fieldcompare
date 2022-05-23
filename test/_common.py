@@ -4,7 +4,7 @@ from meshio import Mesh as MeshIOMesh
 from meshio.xdmf import TimeSeriesWriter as MeshIOTimeSeriesWriter
 
 from fieldcompare import Array, make_array
-from fieldcompare._field_io._mesh import Mesh
+from fieldcompare._field_io._mesh_io import _Mesh as Mesh
 
 
 class PointDataStorage:
@@ -63,8 +63,10 @@ def make_point_data_array(mesh: Mesh) -> Array:
 
 def make_cell_data_arrays(mesh: Mesh) -> Dict[str, Array]:
     return {
-        cell_type: make_array([float(i) for i in range(len(corners))])
-        for cell_type, corners in mesh.connectivity.items()
+        cell_type: make_array([
+            float(i) for i in range(len(mesh.connectivity(cell_type)))
+        ])
+        for cell_type in mesh.cell_types
     }
 
 
@@ -75,8 +77,8 @@ def write_file(filename,
     meshio_mesh = MeshIOMesh(
         points=mesh.points,
         cells=[
-            (cell_type, corners)
-            for cell_type, corners in mesh.connectivity.items()
+            (cell_type, mesh.connectivity(cell_type))
+            for cell_type in mesh.cell_types
         ],
         point_data=point_data.as_dict(),
         cell_data=_convert_to_meshio_cell_data(cell_data.as_dict())
@@ -92,7 +94,10 @@ def write_time_series(filename,
     num_time_steps = len(point_data)
 
     with MeshIOTimeSeriesWriter(filename) as writer:
-        writer.write_points_cells(mesh.points, mesh.connectivity)
+        writer.write_points_cells(
+            mesh.points,
+            {ct: mesh.connectivity(ct) for ct in mesh.cell_types}
+        )
         for ts in range(num_time_steps):
             writer.write_data(
                 ts, point_data[ts].as_dict(), _convert_to_meshio_cell_data(cell_data[ts].as_dict())
