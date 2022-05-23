@@ -13,6 +13,7 @@ from ._file_compare import _run as _run_file_mode
 from ._dir_compare import _add_arguments as _dir_mode_add_arguments
 from ._dir_compare import _run as _run_dir_mode
 
+
 def main(argv=None, logger: LoggerInterface = StandardOutputLogger()):
     parser = ArgumentParser(description="Compare fields in files of various formats")
     parser.add_argument(
@@ -23,24 +24,28 @@ def main(argv=None, logger: LoggerInterface = StandardOutputLogger()):
     )
 
     sub_parsers = parser.add_subparsers(title="subcommands", dest="command", required=True)
+    _add_file_mode_parser(sub_parsers)
+    _add_directory_mode_parser(sub_parsers)
 
-    file_mode_parser = sub_parsers.add_parser(
-        "file", help="Compare a pair of files", aliases=["f"]
-    )
+    # TODO(Dennis): add value-chop option (maybe not necessary due to combo of atol/rtol)
+    # TODO(Dennis): Allow comparison & predicate maps to be passed
+
+    args = parser.parse_args(argv)
+    return args.func(vars(args), logger)
+
+
+def _add_file_mode_parser(sub_parsers) -> None:
+    file_mode_parser = sub_parsers.add_parser("file", help="Compare a pair of files", aliases=["f"])
     _file_mode_add_arguments(file_mode_parser)
     file_mode_parser.set_defaults(func=_run_file_mode)
 
+
+def _add_directory_mode_parser(sub_parsers) -> None:
     dir_mode_parser = sub_parsers.add_parser(
         "dir", help="Compare the files in two directories", aliases=["d"]
     )
     _dir_mode_add_arguments(dir_mode_parser)
     dir_mode_parser.set_defaults(func=_run_dir_mode)
-
-    args = parser.parse_args(argv)
-    return args.func(vars(args), logger)
-
-    # TODO(Dennis): add value-chop option (maybe not necessary due to combo of atol/rtol)
-    # TODO(Dennis): Allow comparison & predicate maps to be passed
 
 
 def _get_version_info() -> str:

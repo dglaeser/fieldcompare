@@ -48,7 +48,7 @@ def test_cli_file_mode_field_filter():
         ]
         assert main(args, logger) == 0
         comparison_logs = [
-            line for line in stream.getvalue().split("\n") if "Comparison of the fields" in line
+            line for line in stream.getvalue().split("\n") if "Comparison of the field" in line
         ]
         assert len(comparison_logs) == 1
         assert "function" in comparison_logs[0]
@@ -64,7 +64,7 @@ def test_cli_file_mode_field_exclusion_filter():
         ]
         assert main(args, logger) == 0
         comparison_logs = [
-            line for line in stream.getvalue().split("\n") if "Comparison of the fields" in line
+            line for line in stream.getvalue().split("\n") if "Comparison of the field" in line
         ]
         assert not any("function" in log for log in comparison_logs)
 
@@ -204,7 +204,7 @@ def test_cli_directory_mode_field_filter():
         ]
         assert main(args, logger) == 0
         comparison_logs = [
-            line for line in stream.getvalue().split("\n") if "Comparison of the fields" in line
+            line for line in stream.getvalue().split("\n") if "Comparison of the field" in line
         ]
         assert all("function" in log for log in comparison_logs)
 
@@ -219,7 +219,7 @@ def test_cli_directory_mode_field_exclusion_filter():
         ]
         assert main(args, logger) == 0
         comparison_logs = [
-            line for line in stream.getvalue().split("\n") if "Comparison of the fields" in line
+            line for line in stream.getvalue().split("\n") if "Comparison of the field" in line
         ]
         assert not any("function" in log for log in comparison_logs)
 

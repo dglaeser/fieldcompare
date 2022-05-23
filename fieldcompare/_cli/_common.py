@@ -1,23 +1,42 @@
 """Common functions used in the command-line interface"""
 
 from typing import List, Dict, Optional, Tuple, Sequence
-from textwrap import indent
 from re import compile
 
 from .._common import _default_base_tolerance
-from .._field_io import read_fields
+from .._predicates import DefaultEquality, ExactEquality
 
-from .._colors import make_colored, TextColor
-from .._logging import LoggerInterface, ModifiedVerbosityLogger, IndentedLogger
+from .._logging import (
+    LoggerInterface,
+    ModifiedVerbosityLogger,
+    IndentedLogger
+)
 
+from .._field_io import (
+    is_mesh_file,
+    make_mesh_field_reader,
+    MeshFieldReaderInterface
+)
 
-class InclusionFilter:
+from .._mesh_fields import (
+    MeshFieldContainerInterface,
+    remove_ghost_points,
+    sort_point_coordinates,
+    sort_cells,
+    sort_cell_connectivity
+)
+
+from .._field_comparison import FieldComparison, FieldComparisonOptions
+from .._file_comparison import FileComparison
+
+class RegexFilter:
+    """Filters lists of strings according to a list of regular expressions."""
     def __init__(self, regexes: Optional[List[str]] = None) -> None:
         self._regexes = regexes
 
     def __call__(self, names: Sequence[str]) -> List[str]:
         if not self._regexes:
-            return list(names)
+            return []
 
         result = []
         for regex in self._regexes:
@@ -29,18 +48,6 @@ class InclusionFilter:
         return list(set(result))
 
 
-class ExclusionFilter:
-    def __init__(self, regexes: Optional[List[str]] = None) -> None:
-        self._regexes = regexes
-
-    def __call__(self, names: Sequence[str]) -> List[str]:
-        if not self._regexes:
-            return list(names)
-
-        matches = InclusionFilter(self._regexes)(names)
-        return list(set(names).difference(set(matches)))
-
-
 class FieldToleranceMap:
     def __init__(self,
                  default_tolerance: float = _default_base_tolerance(),
@@ -48,7 +55,7 @@ class FieldToleranceMap:
         self._default_tolerance = default_tolerance
         self._field_tolerances = tolerances
 
-    def get(self, field_name: str) -> float:
+    def __call__(self, field_name: str) -> float:
         return self._field_tolerances.get(field_name, self._default_tolerance)
 
 
@@ -73,29 +80,129 @@ def _parse_field_tolerances(tolerance_strings: Optional[List[str]] = None) -> Fi
     return FieldToleranceMap()
 
 
-def _read_fields_from_file(filename: str, logger: LoggerInterface):
+def _run_file_compare(logger: LoggerInterface,
+                      opts: FieldComparisonOptions,
+                      res_file: str,
+                      ref_file: str) -> bool:
+    if is_mesh_file(res_file) and is_mesh_file(ref_file):
+        return _run_mesh_file_compare(logger, opts, res_file, ref_file)
+    return FileComparison(opts, logger)(res_file, ref_file)
+
+
+def _run_mesh_file_compare(logger: LoggerInterface,
+                           opts: FieldComparisonOptions,
+                           result_file: str,
+                           reference_file: str) -> bool:
+    result_fields = _read_fields(result_file, logger)
+    reference_fields = _read_fields(reference_file, logger)
+
+    if _point_coordinates_differ(result_fields, reference_fields, opts):
+        logger.log(
+            "Detected differences in coordinates, will retry with a sorted mesh\n",
+            verbosity_level=1
+        )
+        sub_logger = _get_logger_for_sorting(logger)
+        result_fields = _sort_mesh_fields(result_fields, sub_logger)
+        reference_fields = _sort_mesh_fields(reference_fields, sub_logger)
+        return FieldComparison(opts, logger)(result_fields, reference_fields)
+
+    if _cell_corners_differ(result_fields, reference_fields):
+        logger.log(
+            "Detected differences in cell connectivity, will retry with a sorted cells\n",
+            verbosity_level=1
+        )
+        sub_logger = _get_logger_for_sorting(logger)
+        result_fields = _sort_cells(result_fields, sub_logger)
+        reference_fields = _sort_cells(reference_fields, sub_logger)
+        return FieldComparison(opts, logger)(result_fields, reference_fields)
+
+    return FieldComparison(opts, logger)(result_fields, reference_fields)
+
+
+def _read_fields(filename: str, logger: LoggerInterface) -> MeshFieldContainerInterface:
     logger.log(f"Reading fields from '{filename}'\n", verbosity_level=1)
+    reader = _make_mesh_field_reader(filename)
+    return reader.read(filename)
+
+
+def _make_mesh_field_reader(filename: str) -> MeshFieldReaderInterface:
+    reader = make_mesh_field_reader(filename)
+    reader.remove_ghost_points = False
+    reader.permute_uniquely = False
+    return reader
+
+
+def _sort_mesh_fields(mesh_fields: MeshFieldContainerInterface,
+                      logger: LoggerInterface) -> MeshFieldContainerInterface:
+
+    mesh_fields = _sort_points(mesh_fields, logger)
+    mesh_fields = _sort_cells(mesh_fields, logger)
+    return mesh_fields
+
+
+def _sort_points(mesh_fields: MeshFieldContainerInterface,
+                 logger: LoggerInterface) -> MeshFieldContainerInterface:
+    logger.log("Removing ghost points\n", verbosity_level=1)
+    mesh_fields = remove_ghost_points(mesh_fields)
+
+    logger.log("Sorting grid points by coordinates to get a unique representation\n", verbosity_level=1)
+    mesh_fields = sort_point_coordinates(mesh_fields)
+    return mesh_fields
+
+
+def _sort_cells(mesh_fields: MeshFieldContainerInterface,
+                logger: LoggerInterface) -> MeshFieldContainerInterface:
+    logger.log("Sorting grid cells\n", verbosity_level=1)
+    mesh_fields = sort_cell_connectivity(mesh_fields)
+    mesh_fields = sort_cells(mesh_fields)
+    return mesh_fields
+
+
+def _get_logger_for_sorting(logger: LoggerInterface) -> LoggerInterface:
     low_verbosity_logger = ModifiedVerbosityLogger(logger, verbosity_change=-2)
-    file_io_logger = IndentedLogger(low_verbosity_logger, " -- ")
-    return read_fields(filename, logger=file_io_logger)
+    return IndentedLogger(low_verbosity_logger, " -- ")
 
 
-def _get_status_string(passed: bool) -> str:
-    if passed:
-        return make_colored("PASSED", color=TextColor.green)
-    return make_colored("FAILED", color=TextColor.red)
+def _point_coordinates_differ(fields1: MeshFieldContainerInterface,
+                              fields2: MeshFieldContainerInterface,
+                              opts: FieldComparisonOptions) -> bool:
+    field_name = "point_coordinates"
+    coords1 = fields1.get(field_name).values
+    coords2 = fields2.get(field_name).values
+    predicate = DefaultEquality(
+        abs_tol=opts.absolute_tolerances(field_name),
+        rel_tol=opts.relative_tolerances(field_name)
+    )
+    return not bool(predicate(coords1, coords2))
 
 
-def _style_as_warning(text: str) -> str:
-    return make_colored(text, color=TextColor.yellow)
+def _cell_corners_differ(fields1: MeshFieldContainerInterface,
+                         fields2: MeshFieldContainerInterface) -> bool:
+    cell_types_1 = list(fields1.cell_types)
+    cell_types_2 = list(fields2.cell_types)
+    if cell_types_1.sort() != cell_types_2.sort():
+        return True
 
+    # TODO(Dennis): we should not know about how these fields are named
+    def _corner_field_name(cell_type: str) -> str:
+        return f"{cell_type}_corners"
 
-def _style_as_error(text: str) -> str:
-    return make_colored(text, color=TextColor.red)
+    def _have_corner_fields(cell_type: str) -> bool:
+        name = _corner_field_name(cell_type)
+        return fields1.is_cell_corners_field(name, cell_type) \
+            and fields2.is_cell_corners_field(name, cell_type)
 
+    corner_field_names = [
+        _corner_field_name(cell_type)
+        for cell_type in cell_types_1 if _have_corner_fields(cell_type)
+    ]
+    for field_name in corner_field_names:
+        corners1 = fields1.get(field_name).values
+        corners2 = fields2.get(field_name).values
+        if not ExactEquality()(corners1, corners2):
+            return True
 
-def _make_list_string(missing_fields: List[str]) -> str:
-    return indent("\n".join(missing_fields), "- ")
+    return False
 
 
 def _bool_to_exit_code(value: bool) -> int:

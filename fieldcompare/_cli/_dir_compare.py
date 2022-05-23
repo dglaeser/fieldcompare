@@ -8,13 +8,18 @@ from os.path import join
 from .._matching import find_matching_file_names
 from .._logging import LoggerInterface, ModifiedVerbosityLogger, IndentedLogger
 from .._colors import make_colored, TextStyle
+from .._file_comparison import FileComparisonOptions
+from .._format import as_error, as_warning, make_list_string, get_status_string
 
 from .._field_io import is_supported_file
-from ._common import _bool_to_exit_code, _parse_field_tolerances, InclusionFilter, ExclusionFilter
-from ._common import _style_as_error, _style_as_warning, _make_list_string, _get_status_string
+from ._common import (
+    _bool_to_exit_code,
+    _parse_field_tolerances,
+    _run_file_compare,
+    RegexFilter
+)
 
 from ._file_compare import _add_tolerance_options_args, _add_field_options_args, _add_field_filter_options_args
-from ._file_compare import FileComparison, FileComparisonOptions
 
 
 def _add_arguments(parser: ArgumentParser):
@@ -73,7 +78,7 @@ def _run(args: dict, logger: LoggerInterface) -> int:
         verbosity_level=1
     )
 
-    include_filter = InclusionFilter(args["include_files"])
+    include_filter = RegexFilter(args["include_files"] if args["include_files"] else ["*"])
     filtered_matches = include_filter(search_result.matches)
     missing_results = include_filter(search_result.orphan_references)
     missing_references = include_filter(search_result.orphan_results)
@@ -91,7 +96,7 @@ def _run(args: dict, logger: LoggerInterface) -> int:
     if unsupported_files:
         logger.log(
             "The following files have been skipped due to unsupported format:\n{}\n".format(
-                _make_list_string([join(res_dir, f) for f in unsupported_files])
+                make_list_string([join(res_dir, f) for f in unsupported_files])
             ),
             verbosity_level=2
         )
@@ -99,12 +104,12 @@ def _run(args: dict, logger: LoggerInterface) -> int:
     if dropped_matches:
         logger.log(
             "\nThe following files have been filtered out by the given regular expressions:\n{}\n".format(
-                _make_list_string([join(res_dir, f) for f in dropped_matches])
+                make_list_string([join(res_dir, f) for f in dropped_matches])
             ),
             verbosity_level=2
         )
 
-    logger.log("\nDirectory comparison {}\n".format(_get_status_string(passed)))
+    logger.log("\nDirectory comparison {}\n".format(get_status_string(passed)))
     return _bool_to_exit_code(passed)
 
 
@@ -112,8 +117,9 @@ def _do_file_comparisons(args,
                          filenames: Iterable[str],
                          logger: LoggerInterface) -> bool:
     passed = True
+    _sub_indent = " "*4
     _quiet_logger = ModifiedVerbosityLogger(logger, verbosity_change=-1)
-    _sub_logger = IndentedLogger(_quiet_logger, first_line_prefix=" "*4)
+    _sub_logger = IndentedLogger(_quiet_logger, first_line_prefix=_sub_indent)
     _rel_tol_map = _parse_field_tolerances(args.get("relative_tolerance"))
     _abs_tol_map = _parse_field_tolerances(args.get("absolute_tolerance"))
     for filename in filenames:
@@ -130,23 +136,19 @@ def _do_file_comparisons(args,
             ignore_missing_reference_fields=args["ignore_missing_reference_fields"],
             relative_tolerances=_rel_tol_map,
             absolute_tolerances=_abs_tol_map,
-            field_inclusion_filter=InclusionFilter(args["include_fields"]),
-            field_exclusion_filter=ExclusionFilter(args["exclude_fields"])
+            field_inclusion_filter=RegexFilter(args["include_fields"] if args["include_fields"] else ["*"]),
+            field_exclusion_filter=RegexFilter(args["exclude_fields"])
         )
         try:
-            comparison = FileComparison(res_file, ref_file, opts, _sub_logger)
-            _passed = comparison.run()
+            _passed = _run_file_compare(_sub_logger, opts, res_file, ref_file)
+            IndentedLogger(logger, first_line_prefix=_sub_indent).log(
+                f"File comparison {get_status_string(_passed)}\n", verbosity_level=1
+            )
         except Exception as e:
             logger.log(str(e), verbosity_level=1)
             _passed = False
 
-        if _sub_logger.verbosity_level is not None and _sub_logger.verbosity_level == 0:
-            logger.log(
-                " "*4 + f"File comparison {_get_status_string(_passed)}",
-                verbosity_level=1
-            )
         logger.log("\n", verbosity_level=1)
-
         passed = False if not _passed else passed
     return passed
 
@@ -159,7 +161,7 @@ def _log_missing_results(args, filenames: List[str], logger: LoggerInterface) ->
             verbosity_level=1
         )
         logger.log(
-            "{}\n".format(_make_list_string([join(args["dir"], f) for f in filenames])),
+            "{}\n".format(make_list_string([join(args["dir"], f) for f in filenames])),
             verbosity_level=1
         )
 
@@ -172,7 +174,7 @@ def _log_missing_references(args, filenames: List[str], logger: LoggerInterface)
             verbosity_level=1
         )
         logger.log(
-            "{}\n".format(_make_list_string([join(args["reference_dir"], f) for f in filenames])),
+            "{}\n".format(make_list_string([join(args["reference_dir"], f) for f in filenames])),
             verbosity_level=1
         )
 
@@ -180,7 +182,7 @@ def _log_missing_references(args, filenames: List[str], logger: LoggerInterface)
 def _missing_res_or_ref_message(res_or_ref: str, is_error: bool) -> str:
     result = f"missing {res_or_ref} files"
     if is_error:
-        result = "Could not process " + _style_as_error(result)
+        result = "Could not process " + as_error(result)
     else:
-        result = "Ignored the following " + _style_as_warning(result)
+        result = "Ignored the following " + as_warning(result)
     return result
