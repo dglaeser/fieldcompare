@@ -223,6 +223,10 @@ if __name__ == "__main__":
     cell_values = _get_time_series_cell_data_values(test_mesh, 3)
     _write_time_series("test_time_series.xdmf", test_mesh, point_values, cell_values, 3)
 
+    point_values = _get_time_series_point_data_values(permutated_mesh, 3)
+    cell_values = _get_time_series_cell_data_values(permutated_mesh, 3)
+    _write_time_series("test_time_series_permutated.xdmf", permutated_mesh, point_values, cell_values, 3)
+
     point_values = _get_time_series_point_data_values(test_mesh, 3, 1e-8)
     cell_values = _get_time_series_cell_data_values(test_mesh, 3, 1e-8)
     _write_time_series("test_time_series_perturbed.xdmf", test_mesh, point_values, cell_values, 3)
