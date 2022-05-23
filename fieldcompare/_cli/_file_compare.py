@@ -28,11 +28,10 @@ def _add_mesh_reorder_options_args(parser: ArgumentParser) -> None:
         required=False,
         action="store_true",
         help="Per default, ghost points are removed from the mesh before a reordering of the points "
-             "is carried out, since on nonconforming meshes with multiple ghost points at the same "
-             "position there is no way to sort them uniquely. Use this flag to deactivate this "
-             "behaviour in case you want to test the ghost points also on reordered meshes. Keep "
-             "in mind that this only works on meshes where each ghost point does not coincide with "
-             "any other point of the mesh."
+             "is carried out, since on meshes with multiple ghost points at the same position there "
+             "is no way to sort them uniquely. Use this flag to deactivate this behaviour in case "
+             "you want to test the ghost points also on reordered meshes. Keep in mind that this "
+             "only works on meshes where the ghost points do not coincide with any other points."
     )
 
 
