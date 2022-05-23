@@ -33,7 +33,7 @@ class ExactEquality:
         try:
             return self._check(first, second)
         except Exception as e:
-            raise ValueError(f"Exact equality check failed. Caught exception: {e}")
+            raise ValueError(f"Exact equality check failed. Caught exception: {e}\n")
 
     def _check(self, first, second) -> PredicateResult:
         if _is_iterable(first) and _is_iterable(second):
