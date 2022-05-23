@@ -176,6 +176,8 @@ class DefaultEquality(FuzzyEquality):
 
 
 def _is_float(value) -> bool:
+    if is_array(value) and value.dtype.name != "object":
+        return "float" in value.dtype.name
     if _is_scalar(value):
         return isinstance(value, floating) or isinstance(value, float)
     elif _is_iterable(value):
