@@ -55,6 +55,11 @@ def all_true(input_array: Array, axis: Optional[SupportsIndex] = None):
     return np.all(input_array, axis=axis)
 
 
+def any_true(input_array: Array, axis: Optional[SupportsIndex] = None):
+    """Check whether any entry of a boolean array is true along the given axis."""
+    return np.any(input_array, axis=axis)
+
+
 def append_to_array(input_array: Array, values) -> Array:
     """Append the given value(s) to the given array and return the result."""
     return np.append(input_array, values)
