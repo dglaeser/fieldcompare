@@ -144,7 +144,8 @@ def _do_file_comparisons(args,
             absolute_tolerances=_abs_tol_map,
             field_inclusion_filter=RegexFilter(args["include_fields"] if args["include_fields"] else ["*"]),
             field_exclusion_filter=RegexFilter(args["exclude_fields"]),
-            disable_mesh_reordering=True if args["disable_mesh_reordering"] else False
+            disable_mesh_reordering=True if args["disable_mesh_reordering"] else False,
+            disable_mesh_ghost_point_removal=True if args["disable_mesh_ghost_point_removal"] else False
         )
         try:
             _passed = _run_file_compare(_sub_logger, opts, res_file, ref_file)

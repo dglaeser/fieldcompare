@@ -96,26 +96,27 @@ def _run_mesh_file_compare(logger: LoggerInterface,
     result_fields = _read_fields(result_file, logger)
     reference_fields = _read_fields(reference_file, logger)
 
+    sub_logger = _get_logger_for_sorting(logger)
     reorder = not opts.disable_mesh_reordering
     if reorder and _point_coordinates_differ(result_fields, reference_fields, opts):
         logger.log(
-            "Detected differences in coordinates, will retry with a sorted mesh\n",
+            "Detected differences in coordinates, sorting points...\n",
             verbosity_level=1
         )
-        sub_logger = _get_logger_for_sorting(logger)
-        result_fields = _sort_mesh_fields(result_fields, sub_logger)
-        reference_fields = _sort_mesh_fields(reference_fields, sub_logger)
-        return FieldComparison(opts, logger)(result_fields, reference_fields)
+
+        if not opts.disable_mesh_ghost_point_removal:
+            result_fields = _remove_ghost_points(result_fields, sub_logger)
+            reference_fields = _remove_ghost_points(reference_fields, sub_logger)
+        result_fields = _sort_points(result_fields, sub_logger)
+        reference_fields = _sort_points(reference_fields, sub_logger)
 
     if reorder and _cell_corners_differ(result_fields, reference_fields):
         logger.log(
-            "Detected differences in cell connectivity, will retry with a sorted cells\n",
+            "Detected differences in cell connectivity, sorting cells...\n",
             verbosity_level=1
         )
-        sub_logger = _get_logger_for_sorting(logger)
         result_fields = _sort_cells(result_fields, sub_logger)
         reference_fields = _sort_cells(reference_fields, sub_logger)
-        return FieldComparison(opts, logger)(result_fields, reference_fields)
 
     return FieldComparison(opts, logger)(result_fields, reference_fields)
 
@@ -133,19 +134,15 @@ def _make_mesh_field_reader(filename: str) -> MeshFieldReaderInterface:
     return reader
 
 
-def _sort_mesh_fields(mesh_fields: MeshFieldContainerInterface,
-                      logger: LoggerInterface) -> MeshFieldContainerInterface:
-
-    mesh_fields = _sort_points(mesh_fields, logger)
-    mesh_fields = _sort_cells(mesh_fields, logger)
+def _remove_ghost_points(mesh_fields: MeshFieldContainerInterface,
+                         logger: LoggerInterface) -> MeshFieldContainerInterface:
+    logger.log("Removing ghost points\n", verbosity_level=1)
+    mesh_fields = remove_ghost_points(mesh_fields)
     return mesh_fields
 
 
 def _sort_points(mesh_fields: MeshFieldContainerInterface,
                  logger: LoggerInterface) -> MeshFieldContainerInterface:
-    logger.log("Removing ghost points\n", verbosity_level=1)
-    mesh_fields = remove_ghost_points(mesh_fields)
-
     logger.log("Sorting grid points by coordinates to get a unique representation\n", verbosity_level=1)
     mesh_fields = sort_point_coordinates(mesh_fields)
     return mesh_fields

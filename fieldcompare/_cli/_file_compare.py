@@ -23,6 +23,17 @@ def _add_mesh_reorder_options_args(parser: ArgumentParser) -> None:
              "comparisons pass also for rearranged meshes when the field data matches. Use this flag "
              "to disable this behaviour in case you want to test for identical mesh ordering."
     )
+    parser.add_argument(
+        "--disable-mesh-ghost-point-removal",
+        required=False,
+        action="store_true",
+        help="Per default, ghost points are removed from the mesh before a reordering of the points "
+             "is carried out, since on nonconforming meshes with multiple ghost points at the same "
+             "position there is no way to sort them uniquely. Use this flag to deactivate this "
+             "behaviour in case you want to test the ghost points also on reordered meshes. Keep "
+             "in mind that this only works on meshes where each ghost point does not coincide with "
+             "any other point of the mesh."
+    )
 
 
 def _add_field_filter_options_args(parser: ArgumentParser) -> None:
@@ -109,7 +120,8 @@ def _run(args: dict, logger: LoggerInterface) -> int:
         absolute_tolerances=_parse_field_tolerances(args.get("absolute_tolerance")),
         field_inclusion_filter=RegexFilter(args["include_fields"] if args["include_fields"] else ["*"]),
         field_exclusion_filter=RegexFilter(args["exclude_fields"]),
-        disable_mesh_reordering=True if args["disable_mesh_reordering"] else False
+        disable_mesh_reordering=True if args["disable_mesh_reordering"] else False,
+        disable_mesh_ghost_point_removal=True if args["disable_mesh_ghost_point_removal"] else False
     )
 
     try:
