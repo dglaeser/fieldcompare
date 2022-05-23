@@ -53,6 +53,33 @@ def test_cli_file_mode_fail_on_perturbed_mesh_without_mesh_reordering():
     ]) == 1
 
 
+def test_cli_file_mode_fail_on_permuted_non_conforming_mesh_without_ghost_removal():
+    # pass with mesh-reordering
+    assert main([
+        "file", str(TEST_DATA_PATH / Path("test_non_conforming_mesh.vtu")),
+        "--reference", str(TEST_DATA_PATH / Path("test_non_conforming_mesh_with_ghost_points.vtu"))
+    ]) == 0
+
+    # fail without mesh-reordering
+    assert main([
+        "file", str(TEST_DATA_PATH / Path("test_non_conforming_mesh.vtu")),
+        "--reference", str(TEST_DATA_PATH / Path("test_non_conforming_mesh_with_ghost_points.vtu")),
+        "--disable-mesh-ghost-point-removal"
+    ]) == 1
+
+
+def test_cli_file_mode_passes_without_ghost_removal_when_ghosts_do_not_overlap():
+    assert main([
+        "file", str(TEST_DATA_PATH / Path("test_non_conforming_mesh_with_non_overlapping_ghost_points_permutated.vtu")),
+        "--reference", str(TEST_DATA_PATH / Path("test_non_conforming_mesh_with_non_overlapping_ghost_points.vtu"))
+    ]) == 0
+    assert main([
+        "file", str(TEST_DATA_PATH / Path("test_non_conforming_mesh_with_non_overlapping_ghost_points_permutated.vtu")),
+        "--reference", str(TEST_DATA_PATH / Path("test_non_conforming_mesh_with_non_overlapping_ghost_points.vtu")),
+        "--disable-mesh-ghost-point-removal"
+    ]) == 0
+
+
 def test_cli_file_mode_field_filter():
     with StringIO() as stream:
         logger = StreamLogger(stream)
