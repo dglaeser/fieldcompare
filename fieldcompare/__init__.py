@@ -46,3 +46,9 @@ from ._logging import (
     LoggerInterface,
     Loggable
 )
+
+from ._matching import (
+    find_matching_field_names,
+    find_matching_file_names,
+    find_matching_names
+)
