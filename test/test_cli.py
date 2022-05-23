@@ -38,6 +38,48 @@ def test_cli_file_mode_fail_on_perturbed_mesh():
     remove(_perturbed_mesh_filename)
 
 
+def test_cli_file_mode_fail_on_perturbed_mesh_without_mesh_reordering():
+    # pass with mesh-reordering
+    assert main([
+        "file", str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+        "--reference", str(TEST_DATA_PATH / Path("test_mesh_permutated.vtu"))
+    ]) == 0
+
+    # fail without mesh-reordering
+    assert main([
+        "file", str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+        "--reference", str(TEST_DATA_PATH / Path("test_mesh_permutated.vtu")),
+        "--disable-mesh-reordering"
+    ]) == 1
+
+
+def test_cli_file_mode_fail_on_permuted_non_conforming_mesh_without_ghost_removal():
+    # pass with mesh-reordering
+    assert main([
+        "file", str(TEST_DATA_PATH / Path("test_non_conforming_mesh.vtu")),
+        "--reference", str(TEST_DATA_PATH / Path("test_non_conforming_mesh_with_ghost_points.vtu"))
+    ]) == 0
+
+    # fail without mesh-reordering
+    assert main([
+        "file", str(TEST_DATA_PATH / Path("test_non_conforming_mesh.vtu")),
+        "--reference", str(TEST_DATA_PATH / Path("test_non_conforming_mesh_with_ghost_points.vtu")),
+        "--disable-mesh-ghost-point-removal"
+    ]) == 1
+
+
+def test_cli_file_mode_passes_without_ghost_removal_when_ghosts_do_not_overlap():
+    assert main([
+        "file", str(TEST_DATA_PATH / Path("test_non_conforming_mesh_with_non_overlapping_ghost_points_permutated.vtu")),
+        "--reference", str(TEST_DATA_PATH / Path("test_non_conforming_mesh_with_non_overlapping_ghost_points.vtu"))
+    ]) == 0
+    assert main([
+        "file", str(TEST_DATA_PATH / Path("test_non_conforming_mesh_with_non_overlapping_ghost_points_permutated.vtu")),
+        "--reference", str(TEST_DATA_PATH / Path("test_non_conforming_mesh_with_non_overlapping_ghost_points.vtu")),
+        "--disable-mesh-ghost-point-removal"
+    ]) == 0
+
+
 def test_cli_file_mode_field_filter():
     with StringIO() as stream:
         logger = StreamLogger(stream)
@@ -48,7 +90,7 @@ def test_cli_file_mode_field_filter():
         ]
         assert main(args, logger) == 0
         comparison_logs = [
-            line for line in stream.getvalue().split("\n") if "Comparison of the fields" in line
+            line for line in stream.getvalue().split("\n") if "Comparison of the field" in line
         ]
         assert len(comparison_logs) == 1
         assert "function" in comparison_logs[0]
@@ -64,7 +106,7 @@ def test_cli_file_mode_field_exclusion_filter():
         ]
         assert main(args, logger) == 0
         comparison_logs = [
-            line for line in stream.getvalue().split("\n") if "Comparison of the fields" in line
+            line for line in stream.getvalue().split("\n") if "Comparison of the field" in line
         ]
         assert not any("function" in log for log in comparison_logs)
 
@@ -204,7 +246,7 @@ def test_cli_directory_mode_field_filter():
         ]
         assert main(args, logger) == 0
         comparison_logs = [
-            line for line in stream.getvalue().split("\n") if "Comparison of the fields" in line
+            line for line in stream.getvalue().split("\n") if "Comparison of the field" in line
         ]
         assert all("function" in log for log in comparison_logs)
 
@@ -219,7 +261,7 @@ def test_cli_directory_mode_field_exclusion_filter():
         ]
         assert main(args, logger) == 0
         comparison_logs = [
-            line for line in stream.getvalue().split("\n") if "Comparison of the fields" in line
+            line for line in stream.getvalue().split("\n") if "Comparison of the field" in line
         ]
         assert not any("function" in log for log in comparison_logs)
 

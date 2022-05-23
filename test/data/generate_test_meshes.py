@@ -12,10 +12,19 @@ def _test_function(coord) -> float:
     return (1.0 - coord[0])*(1.0 - coord[1])
 
 
-def _add_ghost_points(mesh):
-    num_points = len(mesh.points)
-    mesh.points = np.append(mesh.points, mesh.points[0:int(num_points/2)], axis=0)
-    return mesh
+def _add_ghost_points(mesh, use_preexisting_points=True):
+    cpy = deepcopy(mesh)
+    if use_preexisting_points:
+        num_points = len(mesh.points)
+        cpy.points = np.append(mesh.points, mesh.points[0:int(num_points/2)], axis=0)
+    else:
+        dim = len(mesh.points[0])
+        max_point = np.array([
+            np.max(mesh.points[:, i]) for i in range(dim)
+        ])
+        cpy.points = np.append(mesh.points, [max_point+max_point], axis=0)
+        cpy.points = np.append(mesh.points, [max_point+max_point+max_point], axis=0)
+    return cpy
 
 
 def _make_non_conforming_test_mesh(refinement: int = 1):
@@ -238,5 +247,14 @@ if __name__ == "__main__":
     non_conforming_permuted_perturbed = _perturb_mesh(non_conforming_permuted)
     non_conforming_permuted_perturbed.write("test_non_conforming_mesh_permutated_perturbed.vtu", binary=False)
 
-    non_conforming = _add_ghost_points(non_conforming)
-    non_conforming.write("test_non_conforming_mesh_with_ghost_points.vtu", binary=False)
+    non_conforming_with_ghosts = _add_ghost_points(non_conforming)
+    non_conforming_with_ghosts.write("test_non_conforming_mesh_with_ghost_points.vtu", binary=False)
+
+    non_conforming_with_ghosts = _add_ghost_points(non_conforming, use_preexisting_points=False)
+    non_conforming_with_ghosts.write("test_non_conforming_mesh_with_non_overlapping_ghost_points.vtu", binary=False)
+
+    non_conforming_with_ghosts = _add_ghost_points(non_conforming_permuted, use_preexisting_points=False)
+    non_conforming_with_ghosts.write(
+        "test_non_conforming_mesh_with_non_overlapping_ghost_points_permutated.vtu",
+        binary=False
+    )
