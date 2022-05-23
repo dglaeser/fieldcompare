@@ -19,6 +19,7 @@ from ._field_comparison import FieldComparison, FieldComparisonOptions
 @dataclass
 class FileComparisonOptions(FieldComparisonOptions):
     disable_mesh_reordering: bool = False
+    disable_mesh_ghost_point_removal: bool = False
 
 
 class FileComparison:
@@ -28,6 +29,7 @@ class FileComparison:
                  logger: LoggerInterface = StandardOutputLogger()):
         self._field_comparison = FieldComparison(options, logger)
         self._disable_mesh_reordering = options.disable_mesh_reordering
+        self._disable_ghost_point_removal = options.disable_mesh_ghost_point_removal
         self._logger = logger
 
     def __call__(self, res_file: str, ref_file: str,) -> bool:
@@ -54,8 +56,8 @@ class FileComparison:
     def _read_mesh_file(self, filename: str, logger: LoggerInterface) -> FieldContainerInterface:
         reader = make_mesh_field_reader(filename)
         reader.attach_logger(logger)
-        if self._disable_mesh_reordering:
-            reader.permute_uniquely = False
+        reader.remove_ghost_points = False if self._disable_ghost_point_removal else True
+        reader.permute_uniquely = False if self._disable_mesh_reordering else True
         return reader.read(filename)
 
 

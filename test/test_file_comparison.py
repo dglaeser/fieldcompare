@@ -55,6 +55,19 @@ def test_file_comparison_fails_without_mesh_reordering():
     )(test_file, reference_file)
 
 
+def test_file_comparison_fails_without_ghost_point_removal():
+    test_file = str(TEST_DATA_PATH / Path("test_non_conforming_mesh.vtu"))
+    reference_file = str(TEST_DATA_PATH / Path("test_non_conforming_mesh_with_ghost_points.vtu"))
+
+    assert FileComparison()(test_file, reference_file)
+    assert not FileComparison(
+        FileComparisonOptions(
+            disable_mesh_reordering=False,
+            disable_mesh_ghost_point_removal=True
+        )
+    )(test_file, reference_file)
+
+
 def test_file_comparison_missing_reference_field():
     base_filename = "test_file_comparison_missing_reference_field"
     result_filename = f"{base_filename}_result.vtk"
