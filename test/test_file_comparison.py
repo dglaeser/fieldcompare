@@ -1,5 +1,6 @@
 from os import remove
 from io import StringIO
+from pathlib import Path
 from typing import List, Optional
 
 from _common import write_file, make_test_mesh, make_point_data_array, make_cell_data_arrays
@@ -7,6 +8,9 @@ from _common import PointDataStorage, CellDataStorage
 
 from fieldcompare import FileComparison, FileComparisonOptions
 from fieldcompare import StreamLogger
+
+
+TEST_DATA_PATH = Path(__file__).resolve().parent / Path("data")
 
 
 def _write_mesh_file(filename: str,
@@ -39,6 +43,16 @@ def test_file_comparison_identical_files_and_default_options():
     assert FileComparison()(mesh_file, mesh_file)
 
     remove(mesh_file)
+
+
+def test_file_comparison_fails_without_mesh_reordering():
+    test_file = str(TEST_DATA_PATH / Path("test_mesh.vtu"))
+    reference_file = str(TEST_DATA_PATH / Path("test_mesh_permutated.vtu"))
+
+    assert FileComparison()(test_file, reference_file)
+    assert not FileComparison(
+        FileComparisonOptions(disable_mesh_reordering=True)
+    )(test_file, reference_file)
 
 
 def test_file_comparison_missing_reference_field():
