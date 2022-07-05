@@ -55,10 +55,10 @@ to compare two files, and
 fieldcompare dir PATH_TO_DIR --reference PATH_TO_REFERENCE_DIR
 ```
 
-The latter command will scan both folders for files with matching names, and then run a file comparison on
-pairs of matching files. This can be useful if your simulation produces a number of files for which you
-have references stored in some reference folder, and you want to compare them all in a single command.
-For more info on the CLI options available, type in
+for comparing two directories. The latter command will scan both folders for files with matching names,
+and then run a file comparison on pairs of matching files. This can be useful if your simulation produces
+a number of files for which you have references stored in some reference folder, and you want to compare
+them all in a single command. For more info on the CLI options available, type in
 
 ```sh
 fieldcompare file --help
