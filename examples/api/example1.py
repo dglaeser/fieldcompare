@@ -36,7 +36,7 @@ assert equal(data_array_1, data_array_2)
 low_tolerance_equal = DefaultEquality(rel_tol=1e-14, abs_tol=1e-14)
 assert not low_tolerance_equal(data_array_1, data_array_2)
 
-# You can also enforce usage of the fuzzy equality predicate, independent of the data type
+# You can also directly use the fuzzy equality predicate, independent of the data type
 fuzzy_equal = FuzzyEquality()
 low_tolerance_fuzzy_equal = FuzzyEquality(rel_tol=1e-14, abs_tol=1e-14)
 assert fuzzy_equal(data_array_1, data_array_2)

@@ -6,9 +6,9 @@ from fieldcompare import DefaultEquality, read_fields, is_mesh_file, make_mesh_f
 mesh_file = "mesh_data.vtu"
 mesh_file_permuted = "mesh_data_permuted.vtu"
 
-# we can reuse the "read_fields" function to obtain all fields
+# we can use the "read_fields" function to obtain all fields
 # defined on the mesh. Let's print these fields, and we will
-# see that there are fields that describes the coordinates
+# see that there are fields that describe the coordinates
 # of the mesh points and the cell corner indices (each cell
 # type is stored as a separate field), plus data fields associated
 # with points and cells
