@@ -39,12 +39,12 @@ if __name__ == "__main__":
     # the latter can be useful e.g. when you want to compare the fields of two files for
     # equality. For instance, let's assume we were reading the same data from some other
     # source and we want to ensure that they are equal (up to fuzziness).
-    fields2 = read_fields("example2.csv")
+    reference_fields = read_fields("example2.csv")
     equal = DefaultEquality()
     for field_name in fields.field_names:
         assert equal(
             fields.get(field_name).values,
-            fields2.get(field_name).values
+            reference_fields.get(field_name).values
         )
 
     _remove_example_csv_file()
