@@ -46,8 +46,8 @@ class _Mesh:
 
 class MeshIOFieldReader(LoggableBase):
     def __init__(self,
-                 permute_uniquely: bool = True,
-                 remove_ghost_points: bool = True) -> None:
+                 permute_uniquely: bool = False,
+                 remove_ghost_points: bool = False) -> None:
         super().__init__()
         self._do_permutation = permute_uniquely
         self._remove_ghost_points = remove_ghost_points
