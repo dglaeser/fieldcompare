@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from fieldcompare import read_fields, FuzzyEquality, DefaultEquality
+from fieldcompare import make_mesh_field_reader, FuzzyEquality, DefaultEquality
 
 
 TEST_DATA_PATH = Path(__file__).resolve().parent / Path("data")
@@ -23,8 +23,12 @@ class CheckResult:
 
 def _compare_time_series_files(file1, file2, predicate=FuzzyEquality()) -> CheckResult:
     print("Start xdfm comparison")
-    fields1 = read_fields(file1)
-    fields2 = read_fields(file2)
+    reader1 = make_mesh_field_reader(file1)
+    reader2 = make_mesh_field_reader(file2)
+    reader1.permute_uniquely = True
+    reader2.permute_uniquely = True
+    fields1 = reader1.read(file1)
+    fields2 = reader2.read(file2)
 
     def _get_field2(name: str):
         for field in fields2:

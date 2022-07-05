@@ -18,10 +18,12 @@ def _get_field_from_list(name, fields_list):
 def _compare_vtk_files(file1,
                        file2,
                        predicate=FuzzyEquality(),
-                       remove_ghost_points: bool = True) -> bool:
+                       remove_ghost_points: bool = True,
+                       permute_uniquely: bool = True) -> bool:
     print("Comparing vtk files")
     reader = make_mesh_field_reader(file1)
     reader.remove_ghost_points = remove_ghost_points
+    reader.permute_uniquely = permute_uniquely
     fields1 = reader.read(file1)
     fields2 = reader.read(file2)
     for field1 in fields1:
