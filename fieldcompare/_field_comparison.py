@@ -43,7 +43,7 @@ class FieldComparisonOptions:
 
 
 class FieldComparison:
-    """Class to perform a comparison of two files"""
+    """Class to perform a comparison of two field containers"""
     def __init__(self,
                  options: FieldComparisonOptions = FieldComparisonOptions(),
                  logger: LoggerInterface = StandardOutputLogger()):
