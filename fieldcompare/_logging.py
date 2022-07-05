@@ -1,6 +1,7 @@
 """Interface & implementations for loggers"""
 
 import sys
+from warnings import warn
 from typing import TextIO, Protocol, List
 
 
@@ -62,6 +63,7 @@ class LoggableBase:
             if _logger is logger:
                 self._loggers.remove(_logger)
                 return
+        warn("Could not remove given logger, is not attached")
 
     def _log(self, message: str, verbosity_level: int = 1) -> None:
         for _logger in self._loggers:
