@@ -61,6 +61,7 @@ class LoggableBase:
         for _logger in self._loggers:
             if _logger is logger:
                 self._loggers.remove(_logger)
+                return
 
     def _log(self, message: str, verbosity_level: int = 1) -> None:
         for _logger in self._loggers:
