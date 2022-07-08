@@ -26,7 +26,7 @@ A common issue with regression testing of mesh files is that the mesh may be wri
 ordering of points or cells, while the actual field data on the mesh may be the same. To this end,
 `fieldcompare` provides the option to make the fields read from a mesh unique by sorting the mesh
 after its point coordinates and cell connectivity. Moreover, one can choose to strip the mesh from
-ghost points,that may occur, for instance, upon merging the data from multiple grid partitions
+ghost points, that may occur, for instance, upon merging the data from multiple grid partitions
 distributed over different processors.
 
 
@@ -35,7 +35,7 @@ distributed over different processors.
 After cloning this repository, you can simply install `fieldcompare` via pip by navigating to the top
 folder of this repository and then typing `python -m pip install .`. In case you don't want to install
 into your system, you can simply create a virtual environment beforehand using [venv](https://docs.python.org/3/library/venv.html).
-This will also install the CLI, which is then available as the `fieldcompare` command.
+The pip command will also install the CLI, which is then available as the `fieldcompare` command.
 
 
 # Command-line interface
