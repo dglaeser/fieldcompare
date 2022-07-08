@@ -84,7 +84,7 @@ a merge request into the main branch of this repository.
 
 `fieldcompare` is licensed under the terms and conditions of the GNU General
 Public License (GPL) version 3 or - at your option - any later version. The GPL
-can be [read online][https://www.gnu.org/licenses/gpl-3.0.en.html] or in the
+can be [read online](https://www.gnu.org/licenses/gpl-3.0.en.html) or in the
 [LICENSE.txt](LICENSE.txt) file in this repository. See [LICENSE.txt](LICENSE.txt)
 for full copying permissions.
 
