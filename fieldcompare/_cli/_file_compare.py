@@ -74,14 +74,14 @@ def _add_tolerance_options_args(parser: ArgumentParser) -> None:
         required=False,
         nargs="*",
         help="Specify the relative tolerance to be used. "
-             "Use e.g. '-rtol 1e-3:pressure' to set the tolerance for a field named 'pressure'"
+             "Use e.g. '-rtol pressure:1e-3' to set the tolerance for a field named 'pressure'"
     )
     parser.add_argument(
         "-atol", "--absolute-tolerance",
         required=False,
         nargs="*",
         help="Specify the absolute tolerance to be used. "
-             "Use e.g. '-atol 1e-3:pressure' to set the tolerance for a field named 'pressure'"
+             "Use e.g. '-atol pressure:1e-3' to set the tolerance for a field named 'pressure'"
     )
 
 
