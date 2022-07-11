@@ -30,6 +30,13 @@ ghost points, that may occur, for instance, upon merging the data from multiple 
 distributed over different processors.
 
 
+# GitHub Action
+
+If you want to use `fieldcompare` in your GitHub actions, you may want to check out our
+[fieldcompare action](https://github.com/dglaeser/action-field-compare), which allows you to easily
+perform regression tests within your workflows.
+
+
 # Installation
 
 After cloning this repository, you can simply install `fieldcompare` via pip by navigating to the top
@@ -38,7 +45,7 @@ into your system, you can simply create a virtual environment beforehand using [
 The pip command will also install the CLI, which is then available as the `fieldcompare` command.
 
 
-# Command-line interface
+# Command-line Interface
 
 The CLI exposes two subcommands, namely `file` and `dir`, where the former is used to compare two files
 for equality, and the latter can be used to compare all files with matching names in two given directories.
