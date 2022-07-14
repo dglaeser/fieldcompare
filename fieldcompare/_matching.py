@@ -14,6 +14,9 @@ class MatchResult:
     orphan_results: List[str]
     orphan_references: List[str]
 
+    def __iter__(self):
+        return iter(self.matches)
+
 
 def find_matching_names(result_names: Iterable[str],
                         reference_names: Iterable[str]) -> MatchResult:
