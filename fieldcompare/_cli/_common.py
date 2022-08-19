@@ -2,6 +2,7 @@
 
 from typing import List, Dict, Optional, Tuple, Sequence
 from re import compile
+from re import error as RegexError
 
 from .._common import _default_base_tolerance
 from .._predicates import DefaultEquality, ExactEquality
@@ -31,21 +32,26 @@ from .._file_comparison import FileComparison, FileComparisonOptions
 
 class RegexFilter:
     """Filters lists of strings according to a list of regular expressions."""
-    def __init__(self, regexes: Optional[List[str]] = None) -> None:
+    def __init__(self, regexes: List[str]) -> None:
         self._regexes = regexes
 
     def __call__(self, names: Sequence[str]) -> List[str]:
-        if not self._regexes:
-            return []
-
         result = []
         for regex in self._regexes:
-            # support unix bash wildcard patterns
-            if regex.startswith("*") or regex.startswith("?"):
-                regex = f".{regex}"
-            pattern = compile(regex)
+            try:
+                pattern = compile(regex)
+            except RegexError as e:
+                raise RuntimeError(f"Regular expression {regex} could not be compiled.\nError: {e}")
             result.extend(list(filter(lambda n: pattern.match(n), names)))
         return list(set(result))
+
+
+def _include_all() -> RegexFilter:
+    return RegexFilter([".*"])
+
+
+def _exclude_all() -> RegexFilter:
+    return RegexFilter([])
 
 
 class FieldToleranceMap:

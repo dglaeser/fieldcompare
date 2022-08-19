@@ -10,7 +10,9 @@ from ._common import (
     _bool_to_exit_code,
     _parse_field_tolerances,
     _run_file_compare,
-    RegexFilter
+    RegexFilter,
+    _include_all,
+    _exclude_all
 )
 
 def _add_mesh_reorder_options_args(parser: ArgumentParser) -> None:
@@ -117,8 +119,8 @@ def _run(args: dict, logger: LoggerInterface) -> int:
         ignore_missing_reference_fields=args["ignore_missing_reference_fields"],
         relative_tolerances=_parse_field_tolerances(args.get("relative_tolerance")),
         absolute_tolerances=_parse_field_tolerances(args.get("absolute_tolerance")),
-        field_inclusion_filter=RegexFilter(args["include_fields"] if args["include_fields"] else ["*"]),
-        field_exclusion_filter=RegexFilter(args["exclude_fields"]),
+        field_inclusion_filter=RegexFilter(args["include_fields"]) if args["include_fields"] else _include_all(),
+        field_exclusion_filter=RegexFilter(args["exclude_fields"]) if args["exclude_fields"] else _exclude_all(),
         disable_mesh_reordering=True if args["disable_mesh_reordering"] else False,
         disable_mesh_ghost_point_removal=True if args["disable_mesh_ghost_point_removal"] else False
     )

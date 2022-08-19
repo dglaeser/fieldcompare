@@ -16,7 +16,9 @@ from ._common import (
     _bool_to_exit_code,
     _parse_field_tolerances,
     _run_file_compare,
-    RegexFilter
+    RegexFilter,
+    _include_all,
+    _exclude_all
 )
 
 from ._file_compare import (
@@ -84,7 +86,7 @@ def _run(args: dict, logger: LoggerInterface) -> int:
         verbosity_level=1
     )
 
-    include_filter = RegexFilter(args["include_files"] if args["include_files"] else ["*"])
+    include_filter = RegexFilter(args["include_files"]) if args["include_files"] else _include_all()
     filtered_matches = include_filter(search_result.matches)
     missing_results = include_filter(search_result.orphan_references)
     missing_references = include_filter(search_result.orphan_results)
@@ -142,8 +144,8 @@ def _do_file_comparisons(args,
             ignore_missing_reference_fields=args["ignore_missing_reference_fields"],
             relative_tolerances=_rel_tol_map,
             absolute_tolerances=_abs_tol_map,
-            field_inclusion_filter=RegexFilter(args["include_fields"] if args["include_fields"] else ["*"]),
-            field_exclusion_filter=RegexFilter(args["exclude_fields"]),
+            field_inclusion_filter=RegexFilter(args["include_fields"]) if args["include_fields"] else _include_all(),
+            field_exclusion_filter=RegexFilter(args["exclude_fields"]) if args["exclude_fields"] else _exclude_all(),
             disable_mesh_reordering=True if args["disable_mesh_reordering"] else False,
             disable_mesh_ghost_point_removal=True if args["disable_mesh_ghost_point_removal"] else False
         )

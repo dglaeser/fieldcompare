@@ -339,7 +339,7 @@ def test_cli_directory_mode_file_inclusion_filter():
             "dir", str(TEST_DATA_PATH),
             "--reference-dir", str(TEST_DATA_PATH),
             "--include-files",
-            "*.vtu",
+            r".*\.vtu",
             "--verbosity=1"], logger)
         assert ".xdmf" not in stream.getvalue()
 
