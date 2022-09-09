@@ -39,7 +39,7 @@ python_classes = "*Test"
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = py38,py39
+envlist = py38,py39,py310
 isolated_build = True
 
 [testenv]
