@@ -33,10 +33,12 @@ test:
     reports:
       junit: test_report.xml
   script:
-    - tox -e py${PY_VERSION/./}
+    # TODO: simplify again and turn 3.10.4 -> 3.10 (once the mypy error with numpy is fixed)
+    - env=${PY_VERSION//./}
+    - tox -e py${env:0:3}
   parallel:
     matrix:
-      - PY_VERSION: ["3.8", "3.9", "3.10"]
+      - PY_VERSION: ["3.8", "3.9", "3.10.4"]
 
 test_coverage_report:
   stage: coverage
