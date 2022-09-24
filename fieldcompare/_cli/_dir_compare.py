@@ -16,7 +16,9 @@ from ._common import (
     _bool_to_exit_code,
     _parse_field_tolerances,
     _run_file_compare,
-    RegexFilter
+    PatternFilter,
+    _include_all,
+    _exclude_all
 )
 
 from ._file_compare import (
@@ -55,7 +57,7 @@ def _add_arguments(parser: ArgumentParser):
         "--include-files",
         required=False,
         action="append",
-        help="Pass a regular expression used to filter files to be compared. This option can "
+        help="Pass a Unix-style wildcard pattern to filter files to be compared. This option can "
              "be used multiple times. Files that match any of the patterns are considered. "
              "If this option is not specified, all files found in the directories are considered."
     )
@@ -84,7 +86,7 @@ def _run(args: dict, logger: LoggerInterface) -> int:
         verbosity_level=1
     )
 
-    include_filter = RegexFilter(args["include_files"] if args["include_files"] else ["*"])
+    include_filter = PatternFilter(args["include_files"]) if args["include_files"] else _include_all()
     filtered_matches = include_filter(search_result.matches)
     missing_results = include_filter(search_result.orphan_references)
     missing_references = include_filter(search_result.orphan_results)
@@ -109,7 +111,7 @@ def _run(args: dict, logger: LoggerInterface) -> int:
 
     if dropped_matches:
         logger.log(
-            "\nThe following files have been filtered out by the given regular expressions:\n{}\n".format(
+            "\nThe following files have been filtered out by the wildcard patterns:\n{}\n".format(
                 make_list_string([join(res_dir, f) for f in dropped_matches])
             ),
             verbosity_level=2
@@ -142,8 +144,8 @@ def _do_file_comparisons(args,
             ignore_missing_reference_fields=args["ignore_missing_reference_fields"],
             relative_tolerances=_rel_tol_map,
             absolute_tolerances=_abs_tol_map,
-            field_inclusion_filter=RegexFilter(args["include_fields"] if args["include_fields"] else ["*"]),
-            field_exclusion_filter=RegexFilter(args["exclude_fields"]),
+            field_inclusion_filter=PatternFilter(args["include_fields"]) if args["include_fields"] else _include_all(),
+            field_exclusion_filter=PatternFilter(args["exclude_fields"]) if args["exclude_fields"] else _exclude_all(),
             disable_mesh_reordering=True if args["disable_mesh_reordering"] else False,
             disable_mesh_ghost_point_removal=True if args["disable_mesh_ghost_point_removal"] else False
         )

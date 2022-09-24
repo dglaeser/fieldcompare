@@ -1,7 +1,7 @@
 """Common functions used in the command-line interface"""
 
 from typing import List, Dict, Optional, Tuple, Sequence
-from re import compile
+from fnmatch import fnmatch
 
 from .._common import _default_base_tolerance
 from .._predicates import DefaultEquality, ExactEquality
@@ -29,23 +29,23 @@ from .._mesh_fields import (
 from .._field_comparison import FieldComparison
 from .._file_comparison import FileComparison, FileComparisonOptions
 
-class RegexFilter:
-    """Filters lists of strings according to a list of regular expressions."""
-    def __init__(self, regexes: Optional[List[str]] = None) -> None:
-        self._regexes = regexes
+class PatternFilter:
+    """Filters lists of strings according to a list of patterns."""
+    def __init__(self, patterns: List[str]) -> None:
+        self._patterns = patterns
 
     def __call__(self, names: Sequence[str]) -> List[str]:
-        if not self._regexes:
-            return []
+        return [
+            n for n in names if any(fnmatch(n, pattern) for pattern in self._patterns)
+        ]
 
-        result = []
-        for regex in self._regexes:
-            # support unix bash wildcard patterns
-            if regex.startswith("*") or regex.startswith("?"):
-                regex = f".{regex}"
-            pattern = compile(regex)
-            result.extend(list(filter(lambda n: pattern.match(n), names)))
-        return list(set(result))
+
+def _include_all() -> PatternFilter:
+    return PatternFilter(["*"])
+
+
+def _exclude_all() -> PatternFilter:
+    return PatternFilter([])
 
 
 class FieldToleranceMap:
