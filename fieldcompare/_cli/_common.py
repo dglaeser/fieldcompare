@@ -1,8 +1,7 @@
 """Common functions used in the command-line interface"""
 
 from typing import List, Dict, Optional, Tuple, Sequence
-from re import compile
-from re import error as RegexError
+from fnmatch import fnmatch
 
 from .._common import _default_base_tolerance
 from .._predicates import DefaultEquality, ExactEquality
@@ -30,28 +29,23 @@ from .._mesh_fields import (
 from .._field_comparison import FieldComparison
 from .._file_comparison import FileComparison, FileComparisonOptions
 
-class RegexFilter:
-    """Filters lists of strings according to a list of regular expressions."""
-    def __init__(self, regexes: List[str]) -> None:
-        self._regexes = regexes
+class PatternFilter:
+    """Filters lists of strings according to a list of patterns."""
+    def __init__(self, patterns: List[str]) -> None:
+        self._patterns = patterns
 
     def __call__(self, names: Sequence[str]) -> List[str]:
-        result = []
-        for regex in self._regexes:
-            try:
-                pattern = compile(regex)
-            except RegexError as e:
-                raise RuntimeError(f"Regular expression {regex} could not be compiled.\nError: {e}")
-            result.extend(list(filter(lambda n: pattern.match(n), names)))
-        return list(set(result))
+        return [
+            n for n in names if any(fnmatch(n, pattern) for pattern in self._patterns)
+        ]
 
 
-def _include_all() -> RegexFilter:
-    return RegexFilter([".*"])
+def _include_all() -> PatternFilter:
+    return PatternFilter(["*"])
 
 
-def _exclude_all() -> RegexFilter:
-    return RegexFilter([])
+def _exclude_all() -> PatternFilter:
+    return PatternFilter([])
 
 
 class FieldToleranceMap:

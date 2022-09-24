@@ -10,7 +10,7 @@ from ._common import (
     _bool_to_exit_code,
     _parse_field_tolerances,
     _run_file_compare,
-    RegexFilter,
+    PatternFilter,
     _include_all,
     _exclude_all
 )
@@ -42,7 +42,7 @@ def _add_field_filter_options_args(parser: ArgumentParser) -> None:
         "--include-fields",
         required=False,
         action="append",
-        help="Pass a regular expression used to filter fields to be compared. This option can "
+        help="Pass a Unix-style wildcard pattern to filter fields to be compared. This option can "
              "be used multiple times. Field names that match any of the patterns are considered. "
              "If this argument is not specified, all fields are considered."
     )
@@ -50,7 +50,7 @@ def _add_field_filter_options_args(parser: ArgumentParser) -> None:
         "--exclude-fields",
         required=False,
         action="append",
-        help="Pass a regular expression used to exclude fields from the comparisons. This option can "
+        help="Pass a Unix-style wildcard pattern to exclude fields from the comparisons. This option can "
              "be used multiple times. Field names that match any of the patterns are excluded. "
     )
 
@@ -119,8 +119,8 @@ def _run(args: dict, logger: LoggerInterface) -> int:
         ignore_missing_reference_fields=args["ignore_missing_reference_fields"],
         relative_tolerances=_parse_field_tolerances(args.get("relative_tolerance")),
         absolute_tolerances=_parse_field_tolerances(args.get("absolute_tolerance")),
-        field_inclusion_filter=RegexFilter(args["include_fields"]) if args["include_fields"] else _include_all(),
-        field_exclusion_filter=RegexFilter(args["exclude_fields"]) if args["exclude_fields"] else _exclude_all(),
+        field_inclusion_filter=PatternFilter(args["include_fields"]) if args["include_fields"] else _include_all(),
+        field_exclusion_filter=PatternFilter(args["exclude_fields"]) if args["exclude_fields"] else _exclude_all(),
         disable_mesh_reordering=True if args["disable_mesh_reordering"] else False,
         disable_mesh_ghost_point_removal=True if args["disable_mesh_ghost_point_removal"] else False
     )

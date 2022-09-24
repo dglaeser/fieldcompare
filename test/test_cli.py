@@ -332,16 +332,26 @@ def test_cli_directory_mode_file_inclusion_filter():
             "--reference-dir", str(TEST_DATA_PATH),
             "--verbosity=1"], logger)
         assert ".xdmf" in stream.getvalue()
-    # check that xdmf disappears with regex
+    # check that xdmf disappears with a given pattern
     with StringIO() as stream:
         logger = StreamLogger(stream)
         main([
             "dir", str(TEST_DATA_PATH),
             "--reference-dir", str(TEST_DATA_PATH),
             "--include-files",
-            r".*\.vtu",
+            "*.vtu",
             "--verbosity=1"], logger)
         assert ".xdmf" not in stream.getvalue()
+    # check that pattern matches ONLY vtu files
+    with StringIO() as stream:
+        logger = StreamLogger(stream)
+        main([
+            "dir", str(TEST_DATA_PATH),
+            "--reference-dir", str(TEST_DATA_PATH),
+            "--include-files",
+            "*.pvtu",
+            "--verbosity=1"], logger)
+        assert ".vtu" not in stream.getvalue()
 
 
 def test_cli_directory_mode_relative_tolerance_definition():
