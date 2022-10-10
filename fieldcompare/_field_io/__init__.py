@@ -88,10 +88,7 @@ def is_supported_file(filename: str) -> bool:
 
 
 def _get_field_reader(filename: str) -> FieldReaderInterface:
-    file_extension = splitext(filename)[1]
-    if not file_extension:
-        raise ValueError("Could not get extension from given filename")
-
+    file_extension = _get_extension(filename)
     reader = _get_reader_for_extension(file_extension)
     if reader is None:
         raise NotImplementedError(f"No reader found for files with the extension {file_extension}")
@@ -103,3 +100,11 @@ def _get_mesh_field_reader(filename: str) -> MeshFieldReaderInterface:
     if not isinstance(reader, MeshFieldReaderInterface):
         raise ValueError("Reader found for the given file is not a mesh field reader")
     return reader
+
+def _get_extension(filename: str) -> str:
+    base, extension = splitext(filename)
+    if not extension and base.startswith("."):
+        return base
+    elif not extension:
+        raise ValueError("Could not get extension from given filename")
+    return extension
