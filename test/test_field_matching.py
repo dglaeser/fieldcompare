@@ -17,6 +17,16 @@ def match_result_with_no_orphans(matches: List[str]):
     return MatchResult(matches, [], [])
 
 
+def test_match_result_iterates_over_matches():
+    matching_name = "match"
+    non_matching_name = "no_match"
+    result_field = [make_field(matching_name)]
+    reference_fields = [make_field(matching_name), make_field(non_matching_name)]
+    matches = find_matching_field_names(result_field, reference_fields)
+    matching_names = [name for name in matches]
+    assert matching_names == [matching_name]
+
+
 def test_two_empty_lists__returns_an_empty_matchresult():
     actual = find_matching_field_names([], [])
     assert actual == empty_match_result()
