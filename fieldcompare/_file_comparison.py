@@ -14,6 +14,7 @@ from ._logging import (
 )
 
 from ._field_comparison import FieldComparison, FieldComparisonOptions
+from ._comparison import ComparisonSuite, Status
 
 
 @dataclass
@@ -32,14 +33,15 @@ class FileComparison:
         self._disable_ghost_point_removal = options.disable_mesh_ghost_point_removal
         self._logger = logger
 
-    def __call__(self, res_file: str, ref_file: str,) -> bool:
+    def __call__(self, res_file: str, ref_file: str,) -> ComparisonSuite:
         """Check two files for equality of the contained fields"""
         try:
             res_fields = self._read_file(res_file)
             ref_fields = self._read_file(ref_file)
         except Exception as e:
-            self._logger.log(f"Error reading fields. Exception:\n{e}\n", verbosity_level=1)
-            return False
+            msg = f"Error reading fields. Exception:\n{e}\n"
+            self._logger.log(msg, verbosity_level=1)
+            return ComparisonSuite(Status.error, msg)
         return self._field_comparison(res_fields, ref_fields)
 
     def _read_file(self, filename: str) -> FieldContainerInterface:
