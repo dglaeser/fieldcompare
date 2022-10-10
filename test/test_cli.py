@@ -2,9 +2,10 @@
 
 from os import remove, listdir, makedirs
 from os.path import isfile, join, splitext
-from shutil import rmtree, copytree
+from shutil import rmtree, copytree, copy
 from pathlib import Path
 from io import StringIO
+from xml.etree import ElementTree
 
 from fieldcompare._cli import main
 from fieldcompare._logging import StreamLogger
@@ -22,6 +23,19 @@ def test_cli_file_mode_pass():
         "file", str(TEST_DATA_PATH / Path("test_mesh.vtu")),
         "--reference", str(TEST_DATA_PATH / Path("test_mesh.vtu"))
     ]) == 0
+
+
+def test_cli_file_mode_junit_report():
+    report_filename = "file_mode_junit.xml"
+    if isfile(report_filename):
+        remove(report_filename)
+    assert main([
+        "file", str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+        "--reference", str(TEST_DATA_PATH / Path("test_mesh_permutated.vtu")),
+        "--junit-xml", report_filename
+    ]) == 0
+    assert isfile(report_filename)
+    ElementTree.parse(report_filename)
 
 
 def test_cli_file_mode_fail_on_perturbed_mesh():
@@ -234,6 +248,25 @@ def test_cli_file_mode_missing_reference_field():
 
 def test_cli_directory_mode_pass():
     assert main(["dir", str(TEST_DATA_PATH), "--reference-dir", str(TEST_DATA_PATH)]) == 0
+
+
+def test_cli_directory_mode_junit_report():
+    tmp_results_path = TEST_DATA_PATH.resolve().parent / Path("cli_dir_junit_report_results_data")
+    copytree(TEST_DATA_PATH, tmp_results_path, dirs_exist_ok=True)
+    copy(
+        tmp_results_path / Path("test_mesh_permutated.vtu"),
+        tmp_results_path / Path("test_mesh.vtu"),
+    )
+    report_filename = "dir_mode_junit.xml"
+    if isfile(report_filename):
+        remove(report_filename)
+    assert main([
+        "dir", str(TEST_DATA_PATH),
+        "--reference-dir", str(tmp_results_path),
+        "--junit-xml", report_filename
+    ]) == 0
+    assert isfile(report_filename)
+    ElementTree.parse(report_filename)
 
 
 def test_cli_directory_mode_field_filter():
