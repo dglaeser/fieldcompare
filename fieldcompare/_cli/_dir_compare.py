@@ -108,6 +108,14 @@ def _run(args: dict, logger: LoggerInterface) -> int:
             suites.append(test_suite.as_xml())
         ElementTree(suites).write(args["junit_xml"], xml_declaration=True)
 
+    def test_details_callback(_name: str) -> str:
+        for _, _, suite in filter(lambda tup: tup[0] == _name, comparisons):
+            if suite.stdout:
+                return f"'{suite.stdout}'"
+            if suite.status == Status.failed:
+                return ",".join(f"'{comp.name}'" for comp in suite if comp.status == Status.failed)
+        return ""
+
     logger.log("\n")
     _log_summary(
         logger,
@@ -115,7 +123,8 @@ def _run(args: dict, logger: LoggerInterface) -> int:
         [name for name, _, comp in comparisons if not comp],
         [name for name, _, comp in comparisons if comp.status == Status.skipped],
         "file",
-        verbosity_level=1
+        verbosity_level=1,
+        test_details_callback=test_details_callback
     )
 
     passed = all(comp for _, _, comp in comparisons)

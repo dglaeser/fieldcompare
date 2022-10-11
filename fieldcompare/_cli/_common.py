@@ -1,6 +1,6 @@
 """Common functions used in the command-line interface"""
 
-from typing import List, Dict, Optional, Tuple, Sequence
+from typing import List, Dict, Optional, Tuple, Sequence, Callable
 from fnmatch import fnmatch
 
 from .._common import _default_base_tolerance
@@ -221,7 +221,8 @@ def _log_summary(logger: LoggerInterface,
                  failed: List[str],
                  skipped: List[str],
                  comparison_type: str,
-                 verbosity_level: int) -> None:
+                 verbosity_level: int,
+                 test_details_callback: Callable[[str], str] = lambda n: "") -> None:
     def _counted(count: int) -> str:
         return f"{count} {comparison_type} {_plural('comparison', count)}"
 
@@ -234,10 +235,6 @@ def _log_summary(logger: LoggerInterface,
     def _log_line(label: str, report: str) -> None:
         _log(f"[{label}] {report}\n")
 
-    def _log_names(label: str, names: List[str]) -> None:
-        for name in names:
-            _log_line(label, name)
-
     num_comparisons = len(passed) + len(failed)
     _log_line(highlight(_padded("="*7)), f"{_counted(num_comparisons)} performed")
     if skipped:
@@ -246,7 +243,12 @@ def _log_summary(logger: LoggerInterface,
         _log_line(as_success(_padded("PASSED")), _counted(len(passed)))
     if failed:
         _log_line(as_error(_padded("FAILED")), f"{_counted(len(failed))}, listed below:")
-        _log_names(as_error(_padded("FAILED")), failed)
+        for failed_name in failed:
+            details = test_details_callback(failed_name)
+            _log_line(
+                as_error(_padded("FAILED")),
+                f"{failed_name}: {details}" if details else f"{failed_name}"
+            )
 
 
 def _plural(word: str, count: int) -> str:
