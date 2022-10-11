@@ -29,10 +29,12 @@ class Comparison:
 class ComparisonSuite:
     def __init__(self,
                  status: Optional[Status] = None,
-                 stdout: str = "") -> None:
+                 error_log: str = "",
+                 error_shortlog: str = "") -> None:
         self._comparisons: List[Comparison] = []
         self._status = status
-        self._stdout = stdout
+        self._error_log = error_log
+        self._error_shortlog = error_shortlog
 
     def __iter__(self):
         return iter(self._comparisons)
@@ -65,9 +67,11 @@ class ComparisonSuite:
         return len(self._comparisons)
 
     @property
-    def stdout(self) -> str:
-        return self._stdout
+    def error_log(self) -> str:
+        assert not self._error_log or self.status != Status.passed
+        return self._error_log
 
-    @stdout.setter
-    def stdout(self, text: str) -> None:
-        self._stdout = text
+    @property
+    def error_shortlog(self) -> str:
+        assert not self._error_shortlog or self.status != Status.passed
+        return self._error_shortlog

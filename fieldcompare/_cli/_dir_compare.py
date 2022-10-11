@@ -110,10 +110,10 @@ def _run(args: dict, logger: LoggerInterface) -> int:
 
     def test_details_callback(_name: str) -> str:
         for _, _, suite in filter(lambda tup: tup[0] == _name, comparisons):
-            if suite.stdout:
-                return f"'{suite.stdout}'"
-            if suite.status == Status.failed:
-                return ",".join(f"'{comp.name}'" for comp in suite if comp.status == Status.failed)
+            if suite.status != Status.passed:
+                return f"'{suite.error_shortlog}'" if suite.error_shortlog else ",".join(
+                    f"'{comp.name}'" for comp in suite if comp.status == Status.failed
+                )
         return ""
 
     logger.log("\n")
@@ -204,7 +204,11 @@ def _do_file_comparisons(args,
             )
         except Exception as e:
             logger.log(str(e), verbosity_level=1)
-            file_comparisons.append((filename, timestamp, ComparisonSuite(Status.error, str(e))))
+            file_comparisons.append((
+                filename,
+                timestamp,
+                ComparisonSuite(Status.error, error_log=str(e), error_shortlog="Exception raised")
+            ))
 
     return file_comparisons
 
@@ -289,7 +293,7 @@ def _add_skipped_file_comparisons(comparisons: FileComparisons,
                                   treat_as_failure: bool = False):
     status = Status.failed if treat_as_failure else Status.skipped
     for name in names:
-        suite = ComparisonSuite(status, reason)
+        suite = ComparisonSuite(status, error_log=reason, error_shortlog=reason)
         # insert a dummy testcase such that junit readers show a (skipped/failed) test
         suite.insert(Comparison("file comparison", status, reason))
         comparisons.append((name, datetime.now().isoformat(), suite))

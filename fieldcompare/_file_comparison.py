@@ -41,7 +41,7 @@ class FileComparison:
         except Exception as e:
             msg = f"Error reading fields. Exception:\n{e}\n"
             self._logger.log(msg, verbosity_level=1)
-            return ComparisonSuite(Status.error, msg)
+            return ComparisonSuite(Status.error, error_log=msg, error_shortlog="Exception raised")
         return self._field_comparison(res_fields, ref_fields)
 
     def _read_file(self, filename: str) -> FieldContainerInterface:
