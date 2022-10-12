@@ -1,4 +1,5 @@
 meshio[all]>=5.3
+colorama
 tox
 pytest
 flake8

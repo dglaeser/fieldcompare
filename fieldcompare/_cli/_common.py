@@ -1,6 +1,6 @@
 """Common functions used in the command-line interface"""
 
-from typing import List, Dict, Optional, Tuple, Sequence
+from typing import List, Dict, Optional, Tuple, Sequence, Callable
 from fnmatch import fnmatch
 
 from .._common import _default_base_tolerance
@@ -26,8 +26,17 @@ from .._mesh_fields import (
     sort_cell_connectivity
 )
 
+from .._format import (
+    as_success,
+    as_error,
+    as_warning,
+    highlight
+)
+
+from .._comparison import ComparisonSuite
 from .._field_comparison import FieldComparison
 from .._file_comparison import FileComparison, FileComparisonOptions
+
 
 class PatternFilter:
     """Filters lists of strings according to a list of patterns."""
@@ -83,7 +92,7 @@ def _parse_field_tolerances(tolerance_strings: Optional[List[str]] = None) -> Fi
 def _run_file_compare(logger: LoggerInterface,
                       opts: FileComparisonOptions,
                       res_file: str,
-                      ref_file: str) -> bool:
+                      ref_file: str) -> ComparisonSuite:
     if is_mesh_file(res_file) and is_mesh_file(ref_file):
         return _run_mesh_file_compare(logger, opts, res_file, ref_file)
     return FileComparison(opts, logger)(res_file, ref_file)
@@ -92,7 +101,7 @@ def _run_file_compare(logger: LoggerInterface,
 def _run_mesh_file_compare(logger: LoggerInterface,
                            opts: FileComparisonOptions,
                            result_file: str,
-                           reference_file: str) -> bool:
+                           reference_file: str) -> ComparisonSuite:
     result_fields = _read_fields(result_file, logger)
     reference_fields = _read_fields(reference_file, logger)
 
@@ -205,3 +214,42 @@ def _cell_corners_differ(fields1: MeshFieldContainerInterface,
 
 def _bool_to_exit_code(value: bool) -> int:
     return int(not value)
+
+
+def _log_summary(logger: LoggerInterface,
+                 passed: List[str],
+                 failed: List[str],
+                 skipped: List[str],
+                 comparison_type: str,
+                 verbosity_level: int,
+                 test_details_callback: Callable[[str], str] = lambda n: "") -> None:
+    def _counted(count: int) -> str:
+        return f"{count} {comparison_type} {_plural('comparison', count)}"
+
+    def _padded(label: str) -> str:
+        return f"{label: ^9}"
+
+    def _log(msg: str) -> None:
+        logger.log(msg, verbosity_level=verbosity_level)
+
+    def _log_line(label: str, report: str) -> None:
+        _log(f"[{label}] {report}\n")
+
+    num_comparisons = len(passed) + len(failed)
+    _log_line(highlight(_padded("="*7)), f"{_counted(num_comparisons)} performed")
+    if skipped:
+        _log_line(as_warning(_padded("SKIPPED")), _counted(len(skipped)))
+    if passed:
+        _log_line(as_success(_padded("PASSED")), _counted(len(passed)))
+    if failed:
+        _log_line(as_error(_padded("FAILED")), f"{_counted(len(failed))}, listed below:")
+        for failed_name in failed:
+            details = test_details_callback(failed_name)
+            _log_line(
+                as_error(_padded("FAILED")),
+                f"{failed_name}: {details}" if details else f"{failed_name}"
+            )
+
+
+def _plural(word: str, count: int) -> str:
+    return f"{word}s" if count != 1 else word

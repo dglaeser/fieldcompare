@@ -1,15 +1,22 @@
 """Command-line interface for comparing a pair of files"""
 
+from os.path import basename
 from argparse import ArgumentParser
+from datetime import datetime
+from xml.etree.ElementTree import ElementTree
 
 from .._logging import LoggerInterface
 from .._file_comparison import FileComparisonOptions
 from .._format import get_status_string
+from .._common import _measure_time
+from .._comparison import Status
 
+from ._junit import TestSuite
 from ._common import (
     _bool_to_exit_code,
     _parse_field_tolerances,
     _run_file_compare,
+    _log_summary,
     PatternFilter,
     _include_all,
     _exclude_all
@@ -87,6 +94,14 @@ def _add_tolerance_options_args(parser: ArgumentParser) -> None:
     )
 
 
+def _add_junit_export_arg(parser: ArgumentParser) -> None:
+    parser.add_argument(
+        "--junit-xml",
+        required=False,
+        help="Pass the filename into which a junit report should be written"
+    )
+
+
 def _add_arguments(parser: ArgumentParser):
     parser.add_argument(
         "file",
@@ -102,7 +117,7 @@ def _add_arguments(parser: ArgumentParser):
     parser.add_argument(
         "--verbosity",
         required=False,
-        default=2,
+        default=1,
         type=int,
         help="Set the verbosity level"
     )
@@ -110,9 +125,11 @@ def _add_arguments(parser: ArgumentParser):
     _add_tolerance_options_args(parser)
     _add_field_filter_options_args(parser)
     _add_mesh_reorder_options_args(parser)
+    _add_junit_export_arg(parser)
 
 
 def _run(args: dict, logger: LoggerInterface) -> int:
+    timestamp = datetime.now().isoformat()
     logger.verbosity_level = args["verbosity"]
     opts = FileComparisonOptions(
         ignore_missing_result_fields=args["ignore_missing_result_fields"],
@@ -126,10 +143,25 @@ def _run(args: dict, logger: LoggerInterface) -> int:
     )
 
     try:
-        passed = _run_file_compare(logger, opts, args["file"], args["reference"])
+        cpu_time, comparisons = _measure_time(_run_file_compare)(logger, opts, args["file"], args["reference"])
+        passed = bool(comparisons)
+        logger.log("\n")
+        _log_summary(
+            logger,
+            [comp.name for comp in comparisons if comp.status == Status.passed],
+            [comp.name for comp in comparisons if not comp],
+            [comp.name for comp in comparisons if comp.status == Status.skipped],
+            "field",
+            verbosity_level=1
+        )
+
+        if args["junit_xml"] is not None:
+            suite = TestSuite(basename(args["file"]), comparisons, timestamp, cpu_time)
+            ElementTree(suite.as_xml()).write(args["junit_xml"], xml_declaration=True)
+
     except Exception as e:
         logger.log(str(e), verbosity_level=1)
         passed = False
 
-    logger.log("File comparison {}\n".format(get_status_string(passed)))
+    logger.log("\nFile comparison {}\n".format(get_status_string(passed)))
     return _bool_to_exit_code(passed)

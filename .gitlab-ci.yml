@@ -1,5 +1,6 @@
 stages:
   - test
+  - reporting
   - coverage
   - pages
 
@@ -39,6 +40,30 @@ test:
   parallel:
     matrix:
       - PY_VERSION: ["3.8", "3.9", "3.10.4"]
+
+file_mode_junit_report:
+  image: python:3.10
+  extends: .install_dependencies
+  stage: reporting
+  script:
+    - python -m pip install -r requirements.txt
+    - python -m pip install .
+    - fieldcompare file test/data/test_mesh.vtu -r test/data/test_mesh.vtu --exclude-fields "*coordinates" --junit-xml file_mode_junit.xml
+  artifacts:
+    reports:
+      junit: file_mode_junit.xml
+
+dir_mode_junit_report:
+  image: python:3.10
+  extends: .install_dependencies
+  stage: reporting
+  script:
+    - python -m pip install -r requirements.txt
+    - python -m pip install .
+    - fieldcompare dir test/data/ -r test/data/ --include-files "*.vtu" --junit-xml dir_mode_junit.xml
+  artifacts:
+    reports:
+      junit: dir_mode_junit.xml
 
 test_coverage_report:
   stage: coverage

@@ -22,6 +22,13 @@ class _AnsiiColorBackend:
             text = text + self._style_map[self._reset_key]
         return text
 
+    def remove_color_codes(self, text: str) -> str:
+        for _, code in self._color_map.items():
+            text = text.replace(code, "")
+        for _, code in self._style_map.items():
+            text = text.replace(code, "")
+        return text
+
     def _setup_color_map(self, use_colors: bool) -> None:
         self._color_map: dict = {}
         for name in dir(colorama.Fore):
@@ -72,3 +79,7 @@ def make_colored(text: str,
                  color: Optional[TextColor] = None,
                  style: Optional[TextStyle] = None) -> str:
     return _COLOR_BACKEND.make_colored(text, color, style)  # type: ignore
+
+
+def remove_color_codes(text: str) -> str:
+    return _COLOR_BACKEND.remove_color_codes(text)
