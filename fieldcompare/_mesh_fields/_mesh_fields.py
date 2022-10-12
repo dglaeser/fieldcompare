@@ -89,7 +89,7 @@ class MeshFieldContainer:
         return field_name == _point_coordinates_field_name()
 
     def is_cell_corners_field(self, field_name: str, cell_type: str) -> bool:
-        return _is_cell_corners_field_name(field_name, cell_type)
+        return cell_type in self.cell_types and _is_cell_corners_field_name(field_name, cell_type)
 
     # Interfaces required to be a "FieldContainerInterface"
     @property
