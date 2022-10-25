@@ -7,25 +7,29 @@
 
 # FieldCompare
 
-`fieldcompare` is a python package with command-line interface (CLI) that can be used, generally, to compare
-datasets with a focus on checking for fuzzy equality. It was designed mainly to serve as a tool to realize
-regression tests for research software, and in particular research software that deals with numerical
-simulations. An easy and widely-used approach to verify that simulation software still produces the same
-results as prior to a particular change in the code is to compare newly obtained results with stored
-reference data. Therefore, `fieldcompare` uses [meshio](https://github.com/nschloe/meshio) under the
-hood to read in data from a variety of mesh files into the data structures that can be used for comparisons
-with `fieldcompare`. Besides those, `csv` files are also supported, a format that is widely used in
-simulation frameworks to write out secondary data such as e.g. error norms and convergence rates.
+`fieldcompare` is a python package with command-line interface (CLI) that can be used to compare
+datasets for (fuzzy) equality. It was designed mainly to serve as a tool to realize regression tests
+for research software, and in particular research software that deals with numerical simulations.
+In regression tests, the output of a software is compared to reference data that was produced by
+the same software at an earlier time, in order to detect if changes to the code cause unexpected
+changes to the behavior of the software.
 
-Independent of the file type and format, `fieldcompare` reads all "fields" from those files and allows
+Simulations typically produce discrete field data defined on computational grids, and there exists
+a variety of standard and widely-used file formats. Support for a large number of grid file formats
+is achieved by using [meshio](https://github.com/nschloe/meshio) under the hood to read in the field
+data into structures that can be used for comparisons with `fieldcompare`. Besides grid files, `csv`
+files are also supported, a format that is widely used in simulation frameworks to write out secondary
+data such as e.g. error norms and convergence rates.
+
+Independent of the file type and format, `fieldcompare` reads all _fields_ from those files and allows
 you to then check all entries of the fields for equality with custom absolute and relative tolerances.
 Programmatically, you can also use predicates different from equality (e.g. "smaller-than"), while the
-CLI is currently hardwired to equality checks, which is the most common use case.
+CLI is currently hardwired to (fuzzy) equality checks, which is the most common use case.
 
-A common issue with regression testing of mesh files is that the mesh may be written with a different
-ordering of points or cells, while the actual field data on the mesh may be the same. To this end,
-`fieldcompare` provides the option to make the fields read from a mesh unique by sorting the mesh
-after its point coordinates and cell connectivity. Moreover, one can choose to strip the mesh from
+A common issue with regression testing of grid files is that the grid may be written with a different
+ordering of points or cells, while the actual field data on the grid may be the same. To this end,
+`fieldcompare` provides the option to make the fields read from a grid unique by sorting the grid
+by its point coordinates and cell connectivity. Moreover, one can choose to strip the grid from
 ghost points, that may occur, for instance, upon merging the data from multiple grid partitions
 distributed over different processors.
 
@@ -34,7 +38,7 @@ distributed over different processors.
 
 If you want to use `fieldcompare` in your GitHub actions, you may want to check out our
 [fieldcompare action](https://github.com/dglaeser/action-field-compare), which allows you to easily
-perform regression tests within your workflows.
+perform regression tests within your GitHub workflows.
 
 
 # Installation
