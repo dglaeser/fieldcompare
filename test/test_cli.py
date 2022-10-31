@@ -36,6 +36,7 @@ def test_cli_file_mode_junit_report():
     ]) == 0
     assert isfile(report_filename)
     ElementTree.parse(report_filename)
+    remove(report_filename)
 
 
 def test_cli_file_mode_fail_on_perturbed_mesh():
@@ -267,6 +268,8 @@ def test_cli_directory_mode_junit_report():
     ]) == 0
     assert isfile(report_filename)
     ElementTree.parse(report_filename)
+    remove(report_filename)
+    rmtree(tmp_results_path)
 
 
 def test_cli_directory_mode_field_filter():
