@@ -95,17 +95,14 @@ class FieldComparison:
         self._missing_reference_fields = self._apply_field_exclusion_filter(self._missing_reference_fields)
 
     def _apply_field_inclusion_filter(self, fields: List[str]) -> List[str]:
-        if self._options.field_inclusion_filter:
-            include = self._options.field_inclusion_filter(fields)
-            self._filtered_fields = self._filtered_fields.union(set(fields).difference(set(include)))
-            return include
-        return fields
+        include = self._options.field_inclusion_filter(fields)
+        self._filtered_fields = self._filtered_fields.union(set(fields).difference(set(include)))
+        return include
 
     def _apply_field_exclusion_filter(self, fields: List[str]) -> List[str]:
-        if self._options.field_exclusion_filter:
-            to_exclude = set(self._options.field_exclusion_filter(fields))
-            fields = list(set(fields).difference(to_exclude))
-            self._filtered_fields = self._filtered_fields.union(to_exclude)
+        to_exclude = set(self._options.field_exclusion_filter(fields))
+        fields = list(set(fields).difference(to_exclude))
+        self._filtered_fields = self._filtered_fields.union(to_exclude)
         return fields
 
     def _do_field_comparisons(self) -> ComparisonSuite:
