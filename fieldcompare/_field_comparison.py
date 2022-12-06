@@ -4,10 +4,11 @@ from textwrap import indent
 from typing import Iterable, List, Callable
 from dataclasses import dataclass
 
+from .predicates import DefaultEquality
+
 from ._array import Array
 from ._colors import make_colored, TextStyle
 from ._matching import find_matching_names
-from ._predicates import DefaultEquality
 from ._field import FieldContainerInterface
 from ._logging import LoggerInterface, StandardOutputLogger
 

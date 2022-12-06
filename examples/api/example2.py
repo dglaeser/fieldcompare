@@ -1,7 +1,8 @@
 """In this example, we use fieldcompare to read in fields from files and compare them"""
 
 from os import remove
-from fieldcompare import read_fields, DefaultEquality
+from fieldcompare import read_fields
+from fieldcompare.predicates import DefaultEquality
 
 def _write_example_csv_file() -> None:
     with open("example2.csv", "w") as csv_file:

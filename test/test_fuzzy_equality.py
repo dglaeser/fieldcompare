@@ -3,8 +3,7 @@
 from pytest import raises
 
 from fieldcompare import Field, make_array
-from fieldcompare import FuzzyEquality, DefaultEquality
-from fieldcompare._predicates import PredicateError
+from fieldcompare.predicates import FuzzyEquality, DefaultEquality, PredicateError
 
 
 def test_fuzzy_equality_with_lists():

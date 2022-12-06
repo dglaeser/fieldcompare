@@ -2,7 +2,8 @@
 
 from pathlib import Path
 
-from fieldcompare import make_mesh_field_reader, FuzzyEquality, DefaultEquality
+from fieldcompare import make_mesh_field_reader
+from fieldcompare.predicates import FuzzyEquality, DefaultEquality
 
 
 TEST_DATA_PATH = Path(__file__).resolve().parent / Path("data")

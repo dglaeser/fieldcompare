@@ -2,12 +2,12 @@
 
 from dataclasses import dataclass
 
-from ._common import _default_base_tolerance
+from .._common import _default_base_tolerance
 
-from ._array import ArrayLike, as_array, as_string, has_floats
-from ._array import find_first_unequal
-from ._array import find_first_fuzzy_unequal
-from ._array import rel_diff, abs_diff, max_column_elements
+from .._array import ArrayLike, as_array, as_string, has_floats
+from .._array import find_first_unequal
+from .._array import find_first_fuzzy_unequal
+from .._array import rel_diff, abs_diff, max_column_elements
 
 
 class PredicateError(Exception):

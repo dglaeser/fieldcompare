@@ -1,7 +1,7 @@
 """In this example, we use fieldcompare to check fields for equality"""
 
 from fieldcompare import make_array
-from fieldcompare import DefaultEquality, FuzzyEquality
+from fieldcompare.predicates import DefaultEquality, FuzzyEquality
 
 # fieldcompare uses predicate classes to compare two data arrays,
 # which can be used programmatically. Here, we use the default

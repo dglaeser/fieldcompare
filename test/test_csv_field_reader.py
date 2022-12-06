@@ -4,7 +4,7 @@ from os import remove
 from csv import writer
 
 from fieldcompare import read_fields
-from fieldcompare import ExactEquality
+from fieldcompare.predicates import ExactEquality
 
 
 def _write_fields_to_csv_no_names(filename: str, values) -> None:

@@ -1,7 +1,7 @@
 """In this example, we use fieldcompare to read in fields defined on a mesh"""
 
-from fieldcompare import DefaultEquality, read_fields, is_mesh_file, make_mesh_field_reader
-
+from fieldcompare import read_fields, is_mesh_file, make_mesh_field_reader
+from fieldcompare.predicates import DefaultEquality
 
 mesh_file = "mesh_data.vtu"
 mesh_file_permuted = "mesh_data_permuted.vtu"

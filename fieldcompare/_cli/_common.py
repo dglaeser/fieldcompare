@@ -3,8 +3,9 @@
 from typing import List, Dict, Optional, Tuple, Sequence, Callable
 from fnmatch import fnmatch
 
+from ..predicates import DefaultEquality, ExactEquality
+
 from .._common import _default_base_tolerance
-from .._predicates import DefaultEquality, ExactEquality
 
 from .._logging import (
     LoggerInterface,

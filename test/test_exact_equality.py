@@ -2,7 +2,7 @@
 
 from fieldcompare import Field
 from fieldcompare import make_array
-from fieldcompare import ExactEquality, DefaultEquality
+from fieldcompare.predicates import ExactEquality, DefaultEquality
 
 
 def test_exact_equality_with_lists():

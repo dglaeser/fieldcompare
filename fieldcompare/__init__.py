@@ -16,12 +16,6 @@ from ._array import (
     make_uninitialized_array
 )
 
-from ._predicates import (
-    ExactEquality,
-    FuzzyEquality,
-    DefaultEquality
-)
-
 from ._field import (
     Field,
     FieldInterface,
