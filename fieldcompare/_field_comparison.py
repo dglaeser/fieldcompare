@@ -7,7 +7,6 @@ from dataclasses import dataclass
 from .predicates import DefaultEquality
 
 from ._array import Array
-from ._colors import make_colored, TextStyle
 from ._matching import find_matching_names
 from ._field import FieldContainerInterface
 from ._logging import LoggerInterface, StandardOutputLogger
@@ -19,6 +18,7 @@ from ._common import _default_base_tolerance, _measure_time
 from ._format import (
     as_error,
     as_warning,
+    highlighted,
     get_status_string,
     make_indented_list_string
 )
@@ -229,10 +229,7 @@ def _missing_res_or_ref_message(res_or_ref: str, is_error: bool) -> str:
 
 
 def _get_comparison_message_string(field_name: str, status: bool) -> str:
-    return "Comparison of the field '{}': {}\n".format(
-        make_colored(field_name, style=TextStyle.bright),
-        get_status_string(status)
-    )
+    return f"Comparison of the field '{highlighted(field_name)}': {get_status_string(status)}\n"
 
 
 def _get_predicate_report_string(pred_info: str, pred_log: str) -> str:

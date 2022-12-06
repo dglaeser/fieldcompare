@@ -31,7 +31,7 @@ from .._format import (
     as_success,
     as_error,
     as_warning,
-    highlight
+    highlighted
 )
 
 from .._comparison import ComparisonSuite
@@ -237,7 +237,7 @@ def _log_summary(logger: LoggerInterface,
         _log(f"[{label}] {report}\n")
 
     num_comparisons = len(passed) + len(failed)
-    _log_line(highlight(_padded("="*7)), f"{_counted(num_comparisons)} performed")
+    _log_line(highlighted(_padded("="*7)), f"{_counted(num_comparisons)} performed")
     if skipped:
         _log_line(as_warning(_padded("SKIPPED")), _counted(len(skipped)))
     if passed:

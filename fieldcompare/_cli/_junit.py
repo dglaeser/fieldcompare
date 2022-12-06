@@ -3,7 +3,7 @@
 from typing import Optional
 from xml.etree.ElementTree import Element, SubElement
 
-from .._colors import remove_color_codes
+from .._format import remove_color_codes
 from .._comparison import ComparisonSuite, Comparison, Status
 
 

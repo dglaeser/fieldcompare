@@ -10,10 +10,9 @@ from xml.etree.ElementTree import ElementTree, Element
 
 from .._matching import find_matching_file_names
 from .._logging import LoggerInterface, ModifiedVerbosityLogger, IndentedLogger
-from .._colors import make_colored, TextStyle
 from .._comparison import ComparisonSuite, Comparison, Status
 from .._file_comparison import FileComparisonOptions
-from .._format import as_error, as_warning, get_status_string, make_indented_list_string
+from .._format import as_error, as_warning, highlighted, get_status_string, make_indented_list_string
 from .._common import _measure_time
 from .._field_io import is_supported_file
 
@@ -89,8 +88,8 @@ def _run(args: dict, logger: LoggerInterface) -> int:
     res_dir = args["dir"]
     ref_dir = args["reference_dir"]
     logger.log("Comparing files in the directories '{}' and '{}'\n\n".format(
-        make_colored(res_dir, style=TextStyle.bright),
-        make_colored(ref_dir, style=TextStyle.bright)),
+        highlighted(res_dir),
+        highlighted(ref_dir)),
         verbosity_level=1
     )
 
@@ -181,8 +180,8 @@ def _do_file_comparisons(args,
 
         logger.log(("\n" if i > 0 else ""), verbosity_level=1)
         logger.log("Comparing the files '{}' and '{}'\n".format(
-            make_colored(res_file, style=TextStyle.bright),
-            make_colored(ref_file, style=TextStyle.bright)),
+            highlighted(res_file),
+            highlighted(ref_file)),
             verbosity_level=1
         )
 
