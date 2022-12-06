@@ -5,7 +5,6 @@ from pytest import raises
 from fieldcompare import make_array, sub_array
 from fieldcompare import make_initialized_array, make_uninitialized_array
 from fieldcompare._array import (
-    is_array,
     flatten,
     accumulate,
     adjacent_difference,
@@ -75,11 +74,6 @@ def test_sub_array_extraction():
         sub_array({1: False, 2: False}, 0, 1)
     with raises(ValueError):
         sub_array((i for i in range(3)), 0, 1)
-
-
-def test_is_array():
-    assert not is_array([1, 2, 3])
-    assert is_array(make_array([1, 2, 3]))
 
 
 def test_flaten_array():

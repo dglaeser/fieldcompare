@@ -9,11 +9,7 @@ from fieldcompare import DefaultEquality, FuzzyEquality
 # point types and exact equality for e.g. integers
 equal = DefaultEquality()
 
-# we can now check scalar values for (fuzzy) equality
-assert equal(1.0, 1.0)
-assert equal(1, 1)
-
-# but more importantly, we can compare lists of values
+# We can now compare lists of values
 assert equal([0, 1], [0, 1])
 assert not equal([0, 1], [0, 1.2])
 assert equal(["field_compare"], ["field_compare"])

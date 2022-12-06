@@ -5,15 +5,6 @@ from fieldcompare import make_array
 from fieldcompare import ExactEquality, DefaultEquality
 
 
-def test_exact_equality_with_scalars():
-    for check in [ExactEquality(), DefaultEquality()]:
-        assert check(1, 1)
-        assert check(1.0, 1.0)
-        assert not check(2, 1)
-        assert not check(2.0, 1.0)
-        assert not check(1.0, 1.0 + 1e-4)
-
-
 def test_exact_equality_with_lists():
     for check in [ExactEquality(), DefaultEquality()]:
         assert check([1, 2], [1, 2])

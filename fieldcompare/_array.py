@@ -1,9 +1,10 @@
-"""Arrays representing field values"""
+"""Array representing field values and associated helper functions"""
 
-from typing import Sequence, Tuple, Optional, Union, SupportsIndex
+from typing import Iterable, Sequence, Tuple, Optional, Union, SupportsIndex
 
 import numpy as np
 from numpy import ndarray as Array
+from numpy.typing import ArrayLike
 
 from fieldcompare._common import _default_base_tolerance
 
@@ -18,9 +19,16 @@ def make_initialized_array(size: int, init_value, dtype=None) -> Array:
     return result
 
 
-def make_array(input_array: Union[Array, Sequence], dtype=None) -> Array:
+def make_array(input_array: ArrayLike, dtype=None) -> Array:
     """Make an array from the given sequence"""
     return np.array(input_array, dtype=dtype)
+
+
+def as_array(input_array: Union[Array, ArrayLike]) -> Array:
+    """Return an array with the values of the given input sequence"""
+    if isinstance(input_array, Array):
+        return input_array
+    return np.array(input_array)
 
 
 def sub_array(input_array: Array, start: int, end: int) -> Array:
@@ -32,9 +40,23 @@ def sub_array(input_array: Array, start: int, end: int) -> Array:
     raise ValueError("Provided type is neither array nor sequence")
 
 
-def is_array(input_array) -> bool:
-    """Return true if the given object is an Array"""
-    return isinstance(input_array, Array)
+def has_floats(input_array: Array) -> bool:
+    """Return true if the array contains at least one floating-point value"""
+    def _has_floats(value) -> bool:
+        if isinstance(value, Array) and value.dtype.name != "object":
+            return "float" in input_array.dtype.name
+        if np.isscalar(value):
+            return isinstance(value, np.floating) or isinstance(value, float)
+        elif isinstance(value, Iterable):
+            return any(_has_floats(v) for v in value)
+        raise ValueError("Could not determine if array has floats")
+    return _has_floats(input_array)
+
+
+def as_string(input: ArrayLike) -> str:
+    """Return the string representation of the given array-like value"""
+    with np.printoptions(floatmode="unique"):
+        return np.array2string(as_array(input))
 
 
 def flatten(input_array) -> Array:
