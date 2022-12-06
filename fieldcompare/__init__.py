@@ -42,9 +42,9 @@ from ._logging import (
 )
 
 from ._matching import (
-    find_matching_field_names,
-    find_matching_file_names,
-    find_matching_names
+    find_matches,
+    find_matching_names,
+    find_matching_file_names
 )
 
 from ._field_comparison import (

@@ -1,46 +1,50 @@
-"""Functions for automatic selection of files and fields to be compared"""
+"""Functions for detecting matching strings in two given iterables"""
 
+from typing import List, Tuple, Iterable, Protocol
 from dataclasses import dataclass
-from typing import List, Iterable
 from os.path import join, relpath
 from os import walk
 
-from ._field import FieldInterface
+
+class _Named(Protocol):
+    @property
+    def name(self) -> str:
+        ...
+
 
 @dataclass
 class MatchResult:
-    """Data class to store the result of finding matching fields/files"""
+    """Data class to store the result of finding matching strings"""
     matches: List[str]
-    orphan_results: List[str]
-    orphan_references: List[str]
+    orphans: Tuple[List[str], List[str]]
 
     def __iter__(self):
         return iter(self.matches)
 
 
-def find_matching_names(result_names: Iterable[str],
-                        reference_names: Iterable[str]) -> MatchResult:
-    res_orphans = list(set(result_names).difference(reference_names))
-    ref_orphans = list(set(reference_names).difference(result_names))
-    matches = list(set(result_names).intersection(reference_names))
-    return MatchResult(matches, res_orphans, ref_orphans)
+def find_matches(names: List[str], reference_names: List[str]) -> MatchResult:
+    """Finds matching and non-matching strings in the two given iterables"""
+    names_set = set(names)
+    reference_names_set = set(reference_names)
+    res_orphans = list(names_set.difference(reference_names_set))
+    ref_orphans = list(reference_names_set.difference(names_set))
+    matches = list(names_set.intersection(reference_names_set))
+    return MatchResult(matches, (res_orphans, ref_orphans))
 
 
-def find_matching_field_names(result_fields: Iterable[FieldInterface],
-                              reference_fields: Iterable[FieldInterface]) -> MatchResult:
-    """Looks for matching field names in the provided results & reference fields"""
-    return find_matching_names(
-        [f.name for f in result_fields],
-        [f.name for f in reference_fields]
+def find_matching_names(names: Iterable[_Named], references: Iterable[_Named]) -> MatchResult:
+    """Looks for matching names in the provided objects exposing a name"""
+    return find_matches(
+        list(map(lambda v: v.name, names)),
+        list(map(lambda v: v.name, references))
     )
 
 
-def find_matching_file_names(results_folder: str,
-                             references_folder: str) -> MatchResult:
+def find_matching_file_names(folder: str, reference_folder: str) -> MatchResult:
     """Looks for matching supported files in a results & reference folder to be compared"""
-    return find_matching_names(
-        _find_sub_files_recursively(results_folder),
-        _find_sub_files_recursively(references_folder)
+    return find_matches(
+        _find_sub_files_recursively(folder),
+        _find_sub_files_recursively(reference_folder)
     )
 
 
