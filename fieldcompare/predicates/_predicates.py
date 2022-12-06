@@ -36,10 +36,10 @@ class ExactEquality:
     def _check(self, first: ArrayLike, second: ArrayLike) -> PredicateResult:
         first = as_array(first)
         second = as_array(second)
-        if len(first) != len(second):
+        if first.shape != second.shape:
             return PredicateResult(
                 value=False,
-                report="Array lengths not equal",
+                report=f"Array shapes not equal: {first.shape} / {second.shape}",
                 predicate_info=self._get_info()
             )
         unequals = find_first_unequal(first, second)
@@ -97,10 +97,10 @@ class FuzzyEquality:
     def _check(self, first: ArrayLike, second: ArrayLike) -> PredicateResult:
         first = as_array(first)
         second = as_array(second)
-        if len(first) != len(second):
+        if first.shape != second.shape:
             return PredicateResult(
                 value=False,
-                report="Array lengths not equal",
+                report=f"Array shapes not equal: {first.shape} / {second.shape}",
                 predicate_info=self._get_info()
             )
         unequals = find_first_fuzzy_unequal(first, second, self._rel_tol, self._abs_tol)

@@ -5,6 +5,15 @@ from pytest import raises
 from fieldcompare import Field, make_array
 from fieldcompare.predicates import FuzzyEquality, DefaultEquality, PredicateError
 
+def test_fuzzy_equality_with_scalars():
+    for check in [FuzzyEquality(), DefaultEquality()]:
+        assert check(1.0, 1.0)
+        assert check(1.0 + 1e-20, 1.0 + 1e-20)
+        assert not check(1.0, 1.0 + 1e-2)
+
+        check.relative_tolerance = 0.1
+        assert check(1.0, 1.0 + 1e-2)
+
 
 def test_fuzzy_equality_with_lists():
     for check in [FuzzyEquality(), DefaultEquality()]:

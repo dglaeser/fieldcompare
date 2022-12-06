@@ -157,6 +157,11 @@ def find_first_unequal(first: Array, second: Array) -> Optional[Tuple]:
         if not np.all(bitset):
             return _get_first_false_pair(bitset, first, second)
     except Exception:
+        # handle case of scalars
+        if not first.shape and not second.shape:
+            if not np.array_equal(first, second):
+                return (first, second)
+
         # this works also for mixed-type arrays (slower)
         for val1, val2 in zip(first, second):
             if not np.array_equal(val1, val2):
@@ -176,6 +181,11 @@ def find_first_fuzzy_unequal(first: Array,
             return _get_first_false_pair(bitset, first, second)
     except Exception:
         try:
+            # handle case of scalars
+            if not first.shape and not second.shape:
+                if not np.allclose(first, second, rtol=rel_tol, atol=abs_tol):
+                    return (first, second)
+
             # this works also for entries with different shapes but fuzzy-comparable types
             for val1, val2 in zip(first, second):
                 if not np.allclose(val1, val2, rtol=rel_tol, atol=abs_tol):
