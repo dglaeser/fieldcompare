@@ -3,10 +3,14 @@
 from typing import Iterable, Sequence, Tuple, Optional, Union, SupportsIndex
 
 import numpy as np
-from numpy import ndarray as Array
-from numpy.typing import ArrayLike
+from numpy import ndarray
+from numpy.typing import ArrayLike as np_arraylike
 
 from fieldcompare._common import _default_base_tolerance
+
+
+Array = ndarray
+ArrayLike = np_arraylike
 
 
 def make_uninitialized_array(size: int, dtype=None) -> Array:
