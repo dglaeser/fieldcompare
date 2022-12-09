@@ -87,9 +87,9 @@ class FieldComparison:
         match_result = find_matches(list(res_fields), list(ref_fields))
         self._filtered_fields: set = set()
 
-        self._fields_to_compare = self._apply_field_inclusion_filter(match_result.matches)
-        self._missing_result_fields = self._apply_field_inclusion_filter(match_result.orphans[1])
-        self._missing_reference_fields = self._apply_field_inclusion_filter(match_result.orphans[0])
+        self._fields_to_compare = self._apply_field_inclusion_filter(list(n for n, _ in match_result.matches))
+        self._missing_result_fields = self._apply_field_inclusion_filter(match_result.orphans_in_reference)
+        self._missing_reference_fields = self._apply_field_inclusion_filter(match_result.orphans_in_source)
 
         self._fields_to_compare = self._apply_field_exclusion_filter(self._fields_to_compare)
         self._missing_result_fields = self._apply_field_exclusion_filter(self._missing_result_fields)

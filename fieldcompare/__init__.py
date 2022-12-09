@@ -43,7 +43,7 @@ from ._logging import (
 
 from ._matching import (
     find_matches,
-    find_matching_names,
+    find_matches_by_name,
     find_matching_file_names
 )
 

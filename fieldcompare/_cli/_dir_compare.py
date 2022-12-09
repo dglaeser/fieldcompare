@@ -144,11 +144,12 @@ def _categorize_files(args: dict, res_dir: str, ref_dir: str) -> CategorizedFile
     include_filter = PatternFilter(args["include_files"]) if args["include_files"] else _include_all()
 
     search_result = find_matching_file_names(res_dir, ref_dir)
-    filtered_matches = include_filter(search_result.matches)
-    missing_results = include_filter(search_result.orphans[1])
-    missing_references = include_filter(search_result.orphans[0])
+    matches = list(n for n, _ in search_result.matches)
+    filtered_matches = include_filter(matches)
+    missing_results = include_filter(search_result.orphans_in_reference)
+    missing_references = include_filter(search_result.orphans_in_source)
 
-    dropped_matches = list(set(search_result.matches).difference(set(filtered_matches)))
+    dropped_matches = list(set(matches).difference(set(filtered_matches)))
     supported_files = list(filter(lambda f: is_supported_file(join(res_dir, f)), filtered_matches))
     unsupported_files = list(set(filtered_matches).difference(set(supported_files)))
 

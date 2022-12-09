@@ -1,6 +1,6 @@
 """Functions for detecting matching strings in two given iterables"""
 
-from typing import List, Tuple, Iterable, Protocol
+from typing import List, Tuple, Iterable, Protocol, TypeVar, Callable, Any
 from dataclasses import dataclass
 from os.path import join, relpath
 from os import walk
@@ -14,30 +14,40 @@ class _Named(Protocol):
 
 @dataclass
 class MatchResult:
-    """Data class to store the result of finding matching strings"""
-    matches: List[str]
-    orphans: Tuple[List[str], List[str]]
-
-    def __iter__(self):
-        return iter(self.matches)
+    """Data class to store the result of finding matches in two ranges"""
+    matches: List[Tuple[Any, Any]]
+    orphans_in_source: List[Any]
+    orphans_in_reference: List[Any]
 
 
-def find_matches(names: List[str], reference_names: List[str]) -> MatchResult:
-    """Finds matching and non-matching strings in the two given iterables"""
-    names_set = set(names)
-    reference_names_set = set(reference_names)
-    res_orphans = list(names_set.difference(reference_names_set))
-    ref_orphans = list(reference_names_set.difference(names_set))
-    matches = list(names_set.intersection(reference_names_set))
-    return MatchResult(matches, (res_orphans, ref_orphans))
+T1 = TypeVar("T1")
+T2 = TypeVar("T2")
+def find_matches(source: Iterable[T1],
+                 reference: Iterable[T2],
+                 eq_predicate: Callable[[T1, T2], bool] = lambda a, b: a == b) -> MatchResult:
+    """Find matches and orphans in the two ranges using the given equality predicate"""
+    matches = []
+    orphans_source = []
+    orphans_target = list(v for v in reference)
+
+    def _find_and_add(s) -> bool:
+        for t in orphans_target:
+            if eq_predicate(s, t):
+                matches.append((s, t))
+                orphans_target.remove(t)
+                return True
+        return False
+
+    for s in source:
+        if not _find_and_add(s):
+            orphans_source.append(s)
+
+    return MatchResult(matches, orphans_source, orphans_target)
 
 
-def find_matching_names(names: Iterable[_Named], references: Iterable[_Named]) -> MatchResult:
+def find_matches_by_name(first: Iterable[_Named], second: Iterable[_Named]) -> MatchResult:
     """Looks for matching names in the provided objects exposing a name"""
-    return find_matches(
-        list(map(lambda v: v.name, names)),
-        list(map(lambda v: v.name, references))
-    )
+    return find_matches(first, second, lambda a, b: a.name == b.name)
 
 
 def find_matching_file_names(folder: str, reference_folder: str) -> MatchResult:
