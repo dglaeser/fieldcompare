@@ -56,3 +56,10 @@ from ._file_comparison import (
     FileComparison,
     FileComparisonOptions
 )
+
+from ._comparisons import (
+    FieldDataComparison,
+    FieldComparisonStatus,
+    FieldComparisonResult,
+    FieldComparisonSuite
+)
