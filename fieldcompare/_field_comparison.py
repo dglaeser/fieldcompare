@@ -125,7 +125,7 @@ class FieldComparison:
         status = Status.passed if bool(result) else Status.failed
 
         msg = _get_comparison_message_string(name, bool(result))
-        report = indent(_get_predicate_report_string(result.predicate_info, result.report), " -- ")
+        report = indent(_get_predicate_report_string(str(predicate), result.report), " -- ")
         self._logger.log(msg, verbosity_level=1)
         self._logger.log(report, verbosity_level=2)
         return Comparison(name, status, f"{msg}{report}")

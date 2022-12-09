@@ -4,5 +4,6 @@ from ._predicates import (
     ExactEquality,
     FuzzyEquality,
     DefaultEquality,
+    PredicateResult,
     PredicateError
 )

@@ -1,7 +1,7 @@
 """Defines the interfaces used by fieldcompare"""
 
 from __future__ import annotations
-from typing import Protocol, Optional, Iterator, Any
+from typing import Protocol, Callable, Iterator, Any
 from ._array import Array
 
 
@@ -25,9 +25,13 @@ class PredicateResult(Protocol):
         """Return true if the predicate evaluated to true"""
         ...
 
-    def report(self, verbosity_level: Optional[int] = None) -> str:
+    @property
+    def report(self) -> str:
         """Return a report of the predicate evaluation"""
         ...
+
+
+Predicate = Callable[[Any, Any], PredicateResult]
 
 
 class Domain(Protocol):

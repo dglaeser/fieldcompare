@@ -47,11 +47,11 @@ assert low_tolerance_equal(data_array_1, data_array_2)
 assert low_tolerance_fuzzy_equal(data_array_1, data_array_2)
 
 # The result of a call to a predicate yields a boolean-testable type, which is the
-# way we have used it so far. But, that type contains information on the used predicate,
-# the result of the check and a report with additional info on what occurred during the check.
+# way we have used it so far. But, that type contains a report with additional info
+# # on what occurred during the check.
 low_tolerance_fuzzy_equal.absolute_tolerance = 1e-14
 low_tolerance_fuzzy_equal.relative_tolerance = 1e-14
 check = low_tolerance_fuzzy_equal(data_array_1, data_array_2)
 print(f"Boolean result of the check:\n{check.value}")
-print(f"Information on the predicate used:\n{check.predicate_info}")
+print(f"Information on the predicate used:\n{str(low_tolerance_fuzzy_equal)}")
 print(f"Report on the check itself:\n{check.report}")

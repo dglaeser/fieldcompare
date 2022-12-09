@@ -19,7 +19,6 @@ class PredicateError(Exception):
 class PredicateResult:
     value: bool
     report: str = ""
-    predicate_info: str = ""
 
     def __bool__(self) -> bool:
         return self.value
@@ -33,14 +32,16 @@ class ExactEquality:
         except Exception as e:
             raise PredicateError(f"Exact equality check failed with exception: {e}\n")
 
+    def __str__(self) -> str:
+        return "ExactEquality"
+
     def _check(self, first: ArrayLike, second: ArrayLike) -> PredicateResult:
         first = as_array(first)
         second = as_array(second)
         if first.shape != second.shape:
             return PredicateResult(
                 value=False,
-                report=f"Array shapes not equal: {first.shape} / {second.shape}",
-                predicate_info=self._get_info()
+                report=f"Array shapes not equal: {first.shape} / {second.shape}"
             )
         unequals = find_first_unequal(first, second)
         if unequals is not None:
@@ -48,16 +49,8 @@ class ExactEquality:
             return PredicateResult(
                 value=False,
                 report=_get_equality_fail_report(val1, val2),
-                predicate_info=self._get_info()
             )
-        return PredicateResult(
-            value=True,
-            predicate_info=self._get_info(),
-            report="All field values have compared equal"
-        )
-
-    def _get_info(self) -> str:
-        return "ExactEquality"
+        return _success_result()
 
 
 class FuzzyEquality:
@@ -94,14 +87,19 @@ class FuzzyEquality:
         except Exception as e:
             raise PredicateError(f"Fuzzy comparison failed with exception: {e}")
 
+    def __str__(self) -> str:
+        return "FuzzyEquality (abs_tol: {}, rel_tol: {})".format(
+            self.absolute_tolerance,
+            self.relative_tolerance
+        )
+
     def _check(self, first: ArrayLike, second: ArrayLike) -> PredicateResult:
         first = as_array(first)
         second = as_array(second)
         if first.shape != second.shape:
             return PredicateResult(
                 value=False,
-                report=f"Array shapes not equal: {first.shape} / {second.shape}",
-                predicate_info=self._get_info()
+                report=f"Array shapes not equal: {first.shape} / {second.shape}"
             )
         unequals = find_first_fuzzy_unequal(first, second, self._rel_tol, self._abs_tol)
         if unequals is not None:
@@ -109,8 +107,7 @@ class FuzzyEquality:
             deviation_in_percent = _compute_deviation_in_percent(val1, val2)
             return PredicateResult(
                 value=False,
-                report=_get_equality_fail_report(val1, val2, deviation_in_percent),
-                predicate_info=self._get_info()
+                report=_get_equality_fail_report(val1, val2, deviation_in_percent)
             )
         max_abs_diffs = _compute_max_abs_diffs(first, second)
         if max_abs_diffs is not None:
@@ -118,16 +115,9 @@ class FuzzyEquality:
             max_abs_diff_str = max_abs_diff_str.replace("\n", " ")
             return PredicateResult(
                 value=True,
-                report="Maximum absolute difference: {}".format(max_abs_diff_str),
-                predicate_info=self._get_info()
+                report="Maximum absolute difference: {}".format(max_abs_diff_str)
             )
-        return PredicateResult(True, predicate_info=self._get_info())
-
-    def _get_info(self) -> str:
-        return "FuzzyEquality (abs_tol: {}, rel_tol: {})".format(
-            self.absolute_tolerance,
-            self.relative_tolerance
-        )
+        return _success_result()
 
 
 class DefaultEquality(FuzzyEquality):
@@ -141,6 +131,12 @@ class DefaultEquality(FuzzyEquality):
         if has_floats(first) or has_floats(second):
             return FuzzyEquality.__call__(self, first, second)
         return ExactEquality()(first, second)
+
+    def __str__(self) -> str:
+        return "DefaultEquality (abs_tol: {}, rel_tol: {})".format(
+            self.absolute_tolerance,
+            self.relative_tolerance
+        )
 
 
 def _get_equality_fail_report(val1, val2, deviation_in_percent=None) -> str:
@@ -169,3 +165,10 @@ def _compute_max_abs_diffs(first, second):
         return max_column_elements(abs_diff(first, second))
     except Exception:
         return None
+
+
+def _success_result() -> PredicateResult:
+    return PredicateResult(
+        True,
+        report="All field values have compared equal"
+    )
