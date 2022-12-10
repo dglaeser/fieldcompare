@@ -6,6 +6,7 @@ from numpy.typing import ArrayLike
 
 from ._mesh_fields import MeshFields, remove_cell_type_suffix
 from ._mesh import Mesh
+from .protocols import MeshFields as MeshFieldsInterface
 
 
 def from_meshio(mesh: MeshIOMesh) -> MeshFields:
@@ -23,7 +24,7 @@ def from_meshio(mesh: MeshIOMesh) -> MeshFields:
     )
 
 
-def to_meshio(mesh_fields: MeshFields) -> MeshIOMesh:
+def to_meshio(mesh_fields: MeshFieldsInterface) -> MeshIOMesh:
     """Convert MeshFields into a mesh of the meshio library"""
     types = [ct for ct in mesh_fields.domain.cell_types]
     cell_data: Dict[str, List[ArrayLike]] = {}
