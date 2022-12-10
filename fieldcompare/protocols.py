@@ -1,7 +1,7 @@
 """Defines the interfaces used by fieldcompare"""
 
 from __future__ import annotations
-from typing import Protocol, Callable, Iterator, Any
+from typing import Protocol, Callable, Iterator, Tuple, Any
 from ._array import Array
 
 
@@ -55,4 +55,16 @@ class FieldData(Protocol):
 
     def permuted(self, permutation) -> FieldData:
         """Return this field data permuted by the given permutation"""
+        ...
+
+
+class FieldDataSequence(Protocol):
+    """Represents a sequence of fields, for instance, a time series"""
+
+    def set_permutation(self, permutation) -> None:
+        """Set the permutation to be used on the field data"""
+        ...
+
+    def __iter__(self) -> Iterator[Tuple[FieldData, bool]]:
+        """Return an iterator over the sequence and bools indicating changes in the domain"""
         ...

@@ -63,3 +63,5 @@ from ._comparisons import (
     FieldComparisonResult,
     FieldComparisonSuite
 )
+
+from ._field_sequence import FieldDataSequence
