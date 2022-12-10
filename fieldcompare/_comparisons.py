@@ -80,7 +80,7 @@ class FieldDataComparison:
                  fieldcomp_callback: FieldComparisonCallback = lambda c: None) -> FieldComparisonSuite:
         domain_eq_check = self._source.domain.equals(self._reference.domain)
         if not domain_eq_check:
-            return FieldComparisonSuite(err_msg=domain_eq_check.report())
+            return FieldComparisonSuite(err_msg=domain_eq_check.report)
 
         query = find_matches_by_name(self._source, self._reference)
         comparisons = self._compare_matches(query, predicate_selector, fieldcomp_callback)
