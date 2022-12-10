@@ -41,8 +41,6 @@ class PermutedMesh:
     def permute_cell_data(self, cell_type: str, data: Array) -> Array:
         """Permute the given cell data values"""
         if self._cell_permutations is not None:
-            print("D = ", data)
-            print("P = ", self._cell_permutations[cell_type])
             return data[self._cell_permutations[cell_type]]
         return data
 
