@@ -14,6 +14,20 @@ from .protocols import Mesh
 from ._permuted_mesh import PermutedMesh
 
 
+def _cell_type_suffix(cell_type: str) -> str:
+    return f" ({cell_type})"
+
+
+def make_cell_type_field_name(cell_type: str, field_name: str) -> str:
+    """Append the cell type suffix to the field name"""
+    return f"{field_name}{_cell_type_suffix(cell_type)}"
+
+
+def remove_cell_type_suffix(cell_type: str, field_name_with_suffix: str) -> str:
+    """Remove the cell type suffix from the given field name"""
+    return field_name_with_suffix.rstrip(_cell_type_suffix(cell_type))
+
+
 class MeshFields:
     """Class to represent field data on a computational mesh"""
     def __init__(self,
@@ -55,7 +69,13 @@ class MeshFields:
     def cell_fields_types(self) -> Iterable[Tuple[Field, str]]:
         """Return a range over cell fields + associated cell type"""
         return (
-            (Field(f"{name}_{cell_type}", self._cell_data[name][cell_type]), cell_type)
+            (
+                Field(
+                    make_cell_type_field_name(cell_type, name),
+                    self._cell_data[name][cell_type]
+                ),
+                cell_type
+            )
             for cell_type in self._mesh.cell_types
             for name in self._cell_data
         )
