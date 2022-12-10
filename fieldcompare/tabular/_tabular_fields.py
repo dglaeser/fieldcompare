@@ -1,0 +1,44 @@
+"""FieldData implementation for tabular data"""
+
+from __future__ import annotations
+from typing import Iterator, Dict, Callable
+
+from .._field import Field
+from .._array import Array
+from ._table import Table
+from ..protocols import FieldData
+
+
+class TabularFields(FieldData):
+    def __init__(self,
+                 domain: Table,
+                 fields: Dict[str, Array]) -> None:
+        self._domain = domain
+        self._fields = fields
+        assert all(
+            len(values) == domain.number_of_rows
+            for values in fields.values()
+        )
+
+    @property
+    def domain(self) -> Table:
+        """Return the table on which these fields are defined"""
+        return self._domain
+
+    def __iter__(self) -> Iterator[Field]:
+        """Return the fields contained in this table"""
+        def _mapped_values(values: Array) -> Array:
+            if self._domain.indices:
+                return values[self._domain.indices]
+            return values
+        return (
+            Field(name, _mapped_values(values))
+            for name, values in self._fields.items()
+        )
+
+    def permuted(self, permutation: Callable[[Table], Table]) -> TabularFields:
+        """Return these fields permuted by the given permutation"""
+        return TabularFields(
+            domain=permutation(self.domain),
+            fields=self._fields
+        )
