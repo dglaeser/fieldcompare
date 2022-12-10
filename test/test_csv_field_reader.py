@@ -1,71 +1,74 @@
 """Test field-IO from csv files"""
 
-from os import remove
-from csv import writer
+from io import StringIO
 
-from fieldcompare import read_fields
 from fieldcompare.predicates import ExactEquality
+from fieldcompare.tabular import CSVFieldReader, Table
 
 
-def _write_fields_to_csv_no_names(filename: str, values) -> None:
-    with open(filename, "w") as csv_file:
-        csv_writer = writer(csv_file)
-        num_cols = len(values[0])
-        assert all(len(vals) == num_cols for vals in values)
-        for i in range(num_cols):
-            csv_writer.writerow(vals[i] for vals in values)
-
-
-def _write_fields_to_csv(filename: str, names, values) -> None:
-    with open(filename, "w") as csv_file:
-        csv_writer = writer(csv_file)
-        csv_writer.writerow(names)
-
-        num_cols = len(values[0])
-        assert all(len(vals) == num_cols for vals in values)
-        for i in range(num_cols):
-            csv_writer.writerow(vals[i] for vals in values)
+def _as_string_stream(data: dict, add_names: bool = True) -> StringIO:
+    stream = StringIO()
+    if add_names:
+        stream.write(",".join(data.keys()) + "\n")
+    values = list(data.values())
+    num_rows = len(values[0])
+    for row_idx in range(num_rows):
+        stream.write(",".join(str(values[col][row_idx]) for col in range(len(values))) + "\n")
+    stream.seek(0)
+    return stream
 
 
 def get_reference_data():
     return {
-        "int_field": {"values": [0, 3, 8]},
-        "float_field": {"values": [1.0, 4.0, 10.0]},
-        "str_field": {"values": ["value0", "value1", "value2"]}
+        "int_field": [0, 3, 8],
+        "float_field": [1.0, 4.0, 10.0],
+        "str_field": ["value0", "value1", "value2"]
     }
 
 
 def test_csv_field_extraction():
-    ref_data = get_reference_data()
-    test_csv_file_name = "test_csv_field_extraction_data.csv"
-    _write_fields_to_csv(
-        test_csv_file_name,
-        ref_data.keys(),
-        [d["values"] for d in ref_data.values()]
-    )
+    reference_data = get_reference_data()
+    stream = _as_string_stream(reference_data)
+    fields = CSVFieldReader(delimiter=",", use_names=True).read(stream)
 
-    for field in read_fields(test_csv_file_name):
-        assert ref_data.get(field.name) is not None
+    for field in fields:
+        assert reference_data.get(field.name) is not None
         assert ExactEquality()(
             field.values,
-            ref_data[field.name]["values"]
+            reference_data[field.name]
         )
-    remove(test_csv_file_name)
 
 
 def test_csv_field_extraction_no_names():
-    ref_data = get_reference_data()
-    test_csv_file_name = "test_csv_field_extraction_data_no_names.csv"
-    _write_fields_to_csv_no_names(
-        test_csv_file_name,
-        [d["values"] for d in ref_data.values()]
-    )
+    reference_data = get_reference_data()
+    stream = _as_string_stream(reference_data)
+    fields = CSVFieldReader(delimiter=",", use_names=False, skip_rows=1).read(stream)
 
-    for field in read_fields(test_csv_file_name):
+    for field in fields:
         assert any(
             ExactEquality()(
                 field.values,
-                ref_data[field_name]["values"]
-            ) for field_name in ref_data.keys()
+                reference_data[ref_field_name]
+            ) for ref_field_name in reference_data
         )
-    remove(test_csv_file_name)
+
+
+def test_csv_field_permutation():
+    reference_data = get_reference_data()
+    num_rows = len(reference_data[list(reference_data.keys())[0]])
+
+    stream = _as_string_stream(reference_data)
+    fields = CSVFieldReader(delimiter=",").read(stream)
+    fields_permuted = fields.permuted(
+        lambda _: Table(
+            num_rows=num_rows,
+            idx_map=list(reversed(list(range(num_rows))))
+        )
+    )
+
+    for field in fields_permuted:
+        assert reference_data.get(field.name) is not None
+        assert ExactEquality()(
+            field.values,
+            list(reversed(reference_data[field.name]))
+        )
