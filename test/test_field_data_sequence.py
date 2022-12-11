@@ -1,5 +1,7 @@
+from pathlib import Path
+
 from fieldcompare.protocols import FieldData
-from fieldcompare.mesh import Mesh, MeshFields
+from fieldcompare.mesh import Mesh, MeshFields, read_sequence
 from fieldcompare import FieldDataComparison, FieldDataSequence
 
 
@@ -35,10 +37,25 @@ class MockFieldDataSource:
         return get_field_data(self._step_idx)
 
 
-
 def test_field_data_sequence():
     sequence = FieldDataSequence(source=MockFieldDataSource())
     reference_mesh = get_mesh()
     for step_idx, field_data in enumerate(sequence):
         assert field_data.domain.equals(reference_mesh)
         assert FieldDataComparison(field_data, get_field_data(step_idx))()
+
+
+def test_xdmf_field_data_sequence():
+    xdmf_file = Path(__file__).resolve().parent / Path("data/test_time_series.xdmf")
+    sequence = read_sequence(str(xdmf_file))
+
+    mesh = None
+    for field_data in sequence:
+        mesh = field_data.domain
+        break
+
+    for field_data in sequence:
+        assert mesh is not None
+        assert mesh.equals(field_data.domain)
+        for field in field_data:
+            print(f"Field = {field}")
