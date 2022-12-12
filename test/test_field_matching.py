@@ -1,6 +1,6 @@
 from typing import List
 
-from fieldcompare import make_array
+from fieldcompare._array import make_array
 from fieldcompare._field import Field
 from fieldcompare._matching import find_matches_by_name
 

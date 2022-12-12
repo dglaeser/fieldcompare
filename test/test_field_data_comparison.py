@@ -3,10 +3,10 @@ from typing import Iterator
 from random import Random
 from io import StringIO
 
-from fieldcompare import Array, make_array
 from fieldcompare import Field, FieldDataComparison
 from fieldcompare import protocols
 from fieldcompare.predicates import DefaultEquality
+from fieldcompare._array import Array, make_array
 
 
 class MockDomain:

@@ -8,14 +8,6 @@ results against previously obtained results.
 
 from .__about__ import __version__
 
-from ._array import (
-    Array,
-    sub_array,
-    make_array,
-    make_initialized_array,
-    make_uninitialized_array
-)
-
 from ._field import (
     Field,
     FieldInterface,

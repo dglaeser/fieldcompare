@@ -2,9 +2,11 @@
 
 from pytest import raises
 
-from fieldcompare import make_array, sub_array
-from fieldcompare import make_initialized_array, make_uninitialized_array
 from fieldcompare._array import (
+    make_array,
+    make_initialized_array,
+    make_uninitialized_array,
+    sub_array,
     flatten,
     accumulate,
     adjacent_difference,
