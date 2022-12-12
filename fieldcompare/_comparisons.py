@@ -1,9 +1,9 @@
 """Classes to perform field data comparisons"""
-from typing import Callable, Optional, List, Iterator, Iterable, Any
+from typing import Callable, Optional, List, Tuple, Iterator, Iterable, Any
 from dataclasses import dataclass
 from enum import Enum, auto
 
-from .predicates import DefaultEquality
+from .predicates import DefaultEquality, PredicateResult
 from .protocols import Field, FieldData, Predicate
 
 from ._matching import MatchResult, find_matches_by_name
@@ -16,6 +16,7 @@ class FieldComparisonStatus(Enum):
     error = auto()
     missing_source = auto()
     missing_reference = auto()
+    filtered = auto()
 
 
 @dataclass
@@ -37,16 +38,23 @@ class FieldComparisonResult:
 
 class FieldComparisonSuite:
     def __init__(self,
-                 comparisons: List[FieldComparisonResult] = [],
-                 err_msg: str = "") -> None:
+                 domain_eq_check: PredicateResult,
+                 comparisons: List[FieldComparisonResult] = []) -> None:
+        self._domain_eq_check = domain_eq_check
         self._comparisons = comparisons
-        self._err_msg = err_msg
 
     def __bool__(self) -> bool:
-        return False if self._err_msg else not any(c.is_failure for c in self._comparisons)
+        if not self._domain_eq_check:
+            return False
+        return not any(c.is_failure for c in self._comparisons)
 
     def __iter__(self) -> Iterator[FieldComparisonResult]:
         return iter(self._comparisons)
+
+    @property
+    def domain_equality_check(self) -> PredicateResult:
+        """Return the result of the domain equality check"""
+        return self._domain_eq_check
 
     @property
     def passed(self) -> Iterable[FieldComparisonResult]:
@@ -71,22 +79,42 @@ PredicateSelector = Callable[[Field, Field], Predicate]
 FieldComparisonCallback = Callable[[FieldComparisonResult], Any]
 
 class FieldDataComparison:
-    def __init__(self, source: FieldData, reference: FieldData) -> None:
+    def __init__(self,
+                 source: FieldData,
+                 reference: FieldData,
+                 field_inclusion_filter: Callable[[str], bool] = lambda _: True,
+                 field_exclusion_filter: Callable[[str], bool] = lambda _: False) -> None:
         self._source = source
         self._reference = reference
+        self._field_inclusion_filter = field_inclusion_filter
+        self._field_exclusion_filter = field_exclusion_filter
 
     def __call__(self,
                  predicate_selector: PredicateSelector = lambda _, __: DefaultEquality(),
                  fieldcomp_callback: FieldComparisonCallback = lambda c: None) -> FieldComparisonSuite:
         domain_eq_check = self._source.domain.equals(self._reference.domain)
         if not domain_eq_check:
-            return FieldComparisonSuite(err_msg=domain_eq_check.report)
+            return FieldComparisonSuite(domain_eq_check=domain_eq_check)
 
         query = find_matches_by_name(self._source, self._reference)
+        query, filtered = self._filter_matches(query)
         comparisons = self._compare_matches(query, predicate_selector, fieldcomp_callback)
         comparisons.extend(self._missing_source_comparisons(query))
         comparisons.extend(self._missing_reference_comparisons(query))
-        return FieldComparisonSuite(comparisons=comparisons)
+        comparisons.extend(self._filtered_comparisons(filtered))
+        return FieldComparisonSuite(domain_eq_check=domain_eq_check, comparisons=comparisons)
+
+    def _filter_matches(self, query: MatchResult) -> Tuple[MatchResult, List[Field]]:
+        filtered = []
+        matching_pairs = []
+        for i, (source, target) in enumerate(query.matches):
+            if not self._field_inclusion_filter(source.name) \
+                or self._field_exclusion_filter(source.name):
+                filtered.append(source)
+            else:
+                matching_pairs.append((source, target))
+        query.matches = matching_pairs
+        return query, filtered
 
     def _compare_matches(self,
                          query: MatchResult,
@@ -146,4 +174,14 @@ class FieldDataComparison:
                 predicate="",
                 report="Missing reference field"
             ) for field in query.orphans_in_source
+        ]
+
+    def _filtered_comparisons(self, filtered: List[Field]) -> List[FieldComparisonResult]:
+        return [
+            FieldComparisonResult(
+                name=field.name,
+                status=FieldComparisonStatus.filtered,
+                predicate="",
+                report="Filtered out by given rules"
+            ) for field in filtered
         ]
