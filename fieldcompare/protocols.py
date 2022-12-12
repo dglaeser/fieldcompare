@@ -61,10 +61,11 @@ class FieldData(Protocol):
 class FieldDataSequence(Protocol):
     """Represents a sequence of fields, for instance, a time series"""
 
-    def set_permutation(self, permutation) -> None:
-        """Set the permutation to be used on the field data"""
+    @property
+    def number_of_steps(self) -> int:
+        """Return the number of steps in the sequence"""
         ...
 
-    def __iter__(self) -> Iterator[Tuple[FieldData, bool]]:
-        """Return an iterator over the sequence and bools indicating changes in the domain"""
+    def __iter__(self) -> Iterator[FieldData]:
+        """Return an iterator over the sequence"""
         ...

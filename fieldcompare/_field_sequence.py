@@ -21,6 +21,11 @@ class FieldDataSequenceSource(Protocol):
         """Return the data of this step"""
         ...
 
+    @property
+    def number_of_steps(self) -> int:
+        """Return the number of steps in the sequence"""
+        ...
+
 
 class FieldDataSequence:
     """A sequence over several fields (e.g. a time series)"""
@@ -34,3 +39,8 @@ class FieldDataSequence:
         while self._source.step():
             yield self._source.get()
         return
+
+    @property
+    def number_of_steps(self) -> int:
+        """Return the number of steps in the sequence"""
+        return self._source.number_of_steps
