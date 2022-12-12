@@ -104,19 +104,20 @@ class PermutedMeshFields:
 
     @property
     def point_fields(self) -> Iterable[Field]:
-        """Return an iterator over the contained point fields"""
+        """Return a range over the contained point fields"""
         return (
-            Field(_field.name, self._mesh.permute_point_data(_field.values))
+            self._get_permuted_point_field(_field)
             for _field in self._field_data.point_fields
         )
 
     @property
     def cell_fields(self) -> Iterable[Field]:
-        """Return an iterator over the contained cell fields"""
+        """Return a range over the contained cell fields"""
         return (_tup[0] for _tup in self.cell_fields_types)
 
     @property
     def cell_fields_types(self) -> Iterable[Tuple[Field, str]]:
+        """Return a range over cell field / cell type tuples"""
         return (
             (self._get_permuted_cell_field(cell_type, field), cell_type)
             for field, cell_type in self._field_data.cell_fields_types
@@ -125,6 +126,12 @@ class PermutedMeshFields:
     def permuted(self, permutation: Callable[[Mesh], PermutedMesh]) -> PermutedMeshFields:
         """Return the fields as permuted by the given permutation"""
         return PermutedMeshFields(self, permutation)
+
+    def _get_permuted_point_field(self, field: Field) -> Field:
+        return Field(
+            field.name,
+            self._mesh.permute_point_data(field.values)
+        )
 
     def _get_permuted_cell_field(self, cell_type: str, field: Field) -> Field:
         return Field(

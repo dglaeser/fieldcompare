@@ -1,8 +1,13 @@
 """Class to represent computational meshes"""
-from typing import Iterable, Tuple
+
+from typing import Iterable, Tuple, Optional
+
+from .._common import _default_base_tolerance
 from .._array import Array, ArrayLike, make_array
-from ..predicates import FuzzyEquality, PredicateResult
+from ..predicates import PredicateResult
+
 from .protocols import Mesh as MeshInterface
+from ._mesh_equal import mesh_equal
 
 class Mesh:
     """Represents a computational mesh"""
@@ -14,6 +19,18 @@ class Mesh:
             cell_type: make_array(corners)
             for cell_type, corners in connectivity
         }
+        self._abs_tol = _default_base_tolerance()
+        self._rel_tol = _default_base_tolerance()
+
+    @property
+    def absolute_tolerance(self) -> float:
+        """Return the absolute tolerance defined for equality checks against other meshes"""
+        return self._abs_tol
+
+    @property
+    def relative_tolerance(self) -> float:
+        """Return the relative tolerance defined for equality checks against other meshes"""
+        return self._rel_tol
 
     @property
     def points(self) -> Array:
@@ -31,21 +48,11 @@ class Mesh:
 
     def equals(self, other: MeshInterface) -> PredicateResult:
         """Check whether this mesh is equal to the given one"""
-        points_equal = FuzzyEquality()(self.points, other.points)
-        if not points_equal:
-            return PredicateResult(
-                False,
-                report=f"Differing point coordinates: {points_equal.report}"
-            )
-        if not set(self.cell_types) == set(other.cell_types):
-            return PredicateResult(
-                False,
-                report="Differing grid cell types detected"
-            )
-        for cell_type in self.cell_types:
-            if len(self.connectivity(cell_type)) != len(other.connectivity(cell_type)):
-                return PredicateResult(
-                    False,
-                    report=f"Differing connectivity for '{cell_type}' detected"
-                )
-        return PredicateResult(True)
+        return mesh_equal(self, other, abs_tol=self._abs_tol, rel_tol=self._rel_tol)
+
+    def set_tolerances(self,
+                       abs_tol: Optional[float] = None,
+                       rel_tol: Optional[float] = None) -> None:
+        """Set the tolerances used for equality checks against other meshes"""
+        self._abs_tol = abs_tol if abs_tol is not None else self._abs_tol
+        self._rel_tol = rel_tol if rel_tol is not None else self._rel_tol

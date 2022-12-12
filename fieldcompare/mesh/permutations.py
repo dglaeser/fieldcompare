@@ -25,11 +25,6 @@ from ._permuted_mesh import PermutedMesh
 from .protocols import Mesh
 
 
-def permute_uniquely(mesh: Mesh) -> PermutedMesh:
-    """Returns a mesh that is permuted such that a unique ordering is achieved."""
-    return sort_cells(sort_points(remove_unconnected_points(mesh)))
-
-
 def remove_unconnected_points(mesh: Mesh) -> PermutedMesh:
     """Return a mesh with unconnected points removed"""
     return PermutedMesh(

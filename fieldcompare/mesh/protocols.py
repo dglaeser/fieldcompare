@@ -1,7 +1,9 @@
 """Defines the interfaces used by the fieldcompare.mesh module"""
-from typing import Protocol, Iterable, Tuple, runtime_checkable
+
+from __future__ import annotations
+from typing import Protocol, Iterable, Tuple, Optional, runtime_checkable
 from .._array import Array
-from ..protocols import FieldData, Field
+from ..protocols import FieldData, Field, PredicateResult
 
 
 @runtime_checkable
@@ -20,6 +22,24 @@ class Mesh(Protocol):
 
     def connectivity(self, cell_type: str) -> Array:
         """Return the corner indices array for the cells of the given type"""
+        ...
+
+    def equals(self, other: Mesh) -> PredicateResult:
+        """Check if this mesh is equal to the given one"""
+        ...
+
+    @property
+    def absolute_tolerance(self) -> float:
+        """Return the absolute tolerance used in equality checks against other meshes"""
+        ...
+
+    @property
+    def relative_tolerance(self) -> float:
+        """Return the relative tolerance used in equality checks against other meshes"""
+        ...
+
+    def set_tolerances(self, abs_tol: Optional[float] = None, rel_tol: Optional[float] = None) -> None:
+        """Set the tolerances used for equality checks against other meshes"""
         ...
 
 
