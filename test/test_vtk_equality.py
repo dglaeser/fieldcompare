@@ -3,8 +3,9 @@
 from pathlib import Path
 from pytest import raises
 
-from fieldcompare import make_mesh_field_reader
+from fieldcompare.mesh import read, permutations, sort
 from fieldcompare.predicates import FuzzyEquality, DefaultEquality
+from fieldcompare import FieldDataComparison
 
 
 TEST_DATA_PATH = Path(__file__).resolve().parent / Path("data")
@@ -19,20 +20,24 @@ def _get_field_from_list(name, fields_list):
 def _compare_vtk_files(file1,
                        file2,
                        predicate=FuzzyEquality(),
-                       remove_ghost_points: bool = True,
-                       permute_uniquely: bool = True) -> bool:
+                       remove_ghost_points: bool = True) -> bool:
     print("Comparing vtk files")
-    reader = make_mesh_field_reader(file1)
-    reader.remove_ghost_points = remove_ghost_points
-    reader.permute_uniquely = permute_uniquely
-    fields1 = reader.read(file1)
-    fields2 = reader.read(file2)
-    for field1 in fields1:
-        field2 = _get_field_from_list(field1.name, fields2)
-        print(f" -- checking field {field1.name}")
-        if not predicate(field1.values, field2.values):
-            return False
-    return True
+    fields1 = read(file1)
+    fields2 = read(file2)
+    if remove_ghost_points:
+        fields1 = sort(fields1)
+        fields2 = sort(fields2)
+    else:
+        fields1 = fields1.permuted(permutations.sort_points).permuted(permutations.sort_cells)
+        fields2 = fields2.permuted(permutations.sort_points).permuted(permutations.sort_cells)
+    fields1.domain.set_tolerances(abs_tol=predicate.absolute_tolerance, rel_tol=predicate.relative_tolerance)
+    fields2.domain.set_tolerances(abs_tol=predicate.absolute_tolerance, rel_tol=predicate.relative_tolerance)
+    result = FieldDataComparison(fields1, fields2)(
+        predicate_selector=lambda _, __: predicate,
+        fieldcomp_callback=lambda c: print(f"{c.name}: {c.status}")
+    )
+    print(f"Domain-Check = {result.domain_equality_check}")
+    return bool(result)
 
 
 def test_identical_vtk_files():
@@ -192,7 +197,7 @@ def test_vtk_with_ghost_points():
         default_predicate
     )
 
-    with raises(IOError):
+    with raises(ValueError):
         _compare_vtk_files(
             TEST_DATA_PATH / Path("test_non_conforming_mesh.vtu"),
             TEST_DATA_PATH / Path("test_non_conforming_mesh_with_ghost_points.vtu"),
@@ -200,7 +205,7 @@ def test_vtk_with_ghost_points():
             remove_ghost_points=False
         )
 
-    with raises(IOError):
+    with raises(ValueError):
         _compare_vtk_files(
             TEST_DATA_PATH / Path("test_non_conforming_mesh.vtu"),
             TEST_DATA_PATH / Path("test_non_conforming_mesh_with_ghost_points.vtu"),

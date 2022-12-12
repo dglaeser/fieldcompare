@@ -1,6 +1,6 @@
 """Command-line interface for comparing a pair of folders"""
 
-from typing import Iterable
+from typing import Iterable, Optional
 from argparse import ArgumentParser
 from typing import List, Tuple
 from os.path import join
@@ -9,31 +9,31 @@ from dataclasses import dataclass
 from xml.etree.ElementTree import ElementTree, Element
 
 from .._matching import find_matching_file_names
-from .._logging import LoggerInterface, ModifiedVerbosityLogger, IndentedLogger
-from .._comparison import ComparisonSuite, Comparison, Status
-from .._file_comparison import FileComparisonOptions
 from .._format import as_error, as_warning, highlighted, get_status_string, make_indented_list_string
 from .._common import _measure_time
-from .._field_io import is_supported_file
 
-from ._junit import TestSuite
+from ._junit import as_junit_xml_element
 from ._common import (
+    CLILogger,
     _bool_to_exit_code,
     _parse_field_tolerances,
-    _run_file_compare,
-    _log_summary,
+    _log_suite_summary,
     PatternFilter,
     _include_all,
     _exclude_all
 )
 
-from ._file_compare import (
+from ._file_mode import (
     _add_tolerance_options_args,
     _add_field_options_args,
     _add_field_filter_options_args,
     _add_mesh_reorder_options_args,
     _add_junit_export_arg
 )
+
+from ._deduce_domain import is_supported_file
+from ._test_suite import TestSuite, TestResult, Test
+from ._file_comparison import FileComparisonOptions, FileComparison
 
 
 def _add_arguments(parser: ArgumentParser):
@@ -82,8 +82,8 @@ def _add_arguments(parser: ArgumentParser):
     _add_junit_export_arg(parser)
 
 
-def _run(args: dict, logger: LoggerInterface) -> int:
-    logger.verbosity_level = args["verbosity"]
+def _run(args: dict, in_logger: CLILogger) -> int:
+    logger = in_logger.with_verbosity(args["verbosity"])
 
     res_dir = args["dir"]
     ref_dir = args["reference_dir"]
@@ -94,40 +94,26 @@ def _run(args: dict, logger: LoggerInterface) -> int:
     )
 
     categories = _categorize_files(args, res_dir, ref_dir)
-    cpu_time, comparisons = _measure_time(_do_file_comparisons)(args, categories.files_to_compare, logger)
+    comparisons = _do_file_comparisons(
+        args, categories.files_to_compare, logger
+    )
 
-    logger.log("\n", verbosity_level=1)
     _log_unhandled_files(args, categories, logger)
     _add_unhandled_comparisons(args, categories, comparisons)
 
     if args["junit_xml"] is not None:
         suites = Element("testsuites")
-        for suite_name, timestamp, suite in comparisons:
-            test_suite = TestSuite(suite_name, suite, timestamp, cpu_time)
-            suites.append(test_suite.as_xml())
+        for _, timestamp, suite in comparisons:
+            suites.append(as_junit_xml_element(suite, timestamp))
         ElementTree(suites).write(args["junit_xml"], xml_declaration=True)
 
-    def test_details_callback(_name: str) -> str:
-        for _, _, suite in filter(lambda tup: tup[0] == _name, comparisons):
-            if suite.status != Status.passed:
-                return f"'{suite.error_shortlog}'" if suite.error_shortlog else ",".join(
-                    f"'{comp.name}'" for comp in suite if comp.status == Status.failed
-                )
-        return ""
-
     logger.log("\n")
-    _log_summary(
-        logger,
-        [name for name, _, comp in comparisons if comp.status == Status.passed],
-        [name for name, _, comp in comparisons if not comp],
-        [name for name, _, comp in comparisons if comp.status == Status.skipped],
-        "file",
-        verbosity_level=1,
-        test_details_callback=test_details_callback
+    _log_suite_summary(
+        list(suite for _, _, suite in comparisons), "file",
+        logger.with_modified_verbosity(-1)
     )
 
     passed = all(comp for _, _, comp in comparisons)
-    logger.log("\nDirectory comparison {}\n".format(get_status_string(passed)))
     return _bool_to_exit_code(passed)
 
 
@@ -145,9 +131,9 @@ def _categorize_files(args: dict, res_dir: str, ref_dir: str) -> CategorizedFile
 
     search_result = find_matching_file_names(res_dir, ref_dir)
     matches = list(n for n, _ in search_result.matches)
-    filtered_matches = include_filter(matches)
-    missing_results = include_filter(search_result.orphans_in_reference)
-    missing_references = include_filter(search_result.orphans_in_source)
+    filtered_matches = [m for m in matches if include_filter(m)]
+    missing_results = [m for m in search_result.orphans_in_reference if include_filter(m)]
+    missing_references = [m for m in search_result.orphans_in_source if include_filter(m)]
 
     dropped_matches = list(set(matches).difference(set(filtered_matches)))
     supported_files = list(filter(lambda f: is_supported_file(join(res_dir, f)), filtered_matches))
@@ -162,14 +148,11 @@ def _categorize_files(args: dict, res_dir: str, ref_dir: str) -> CategorizedFile
     )
 
 
-FileComparisons = List[Tuple[str, str, ComparisonSuite]]
+FileComparisons = List[Tuple[str, str, TestSuite]]
 
 def _do_file_comparisons(args,
                          filenames: Iterable[str],
-                         logger: LoggerInterface) -> FileComparisons:
-    _sub_indent = " "*4
-    _quiet_logger = ModifiedVerbosityLogger(logger, verbosity_change=-1)
-    _sub_logger = IndentedLogger(_quiet_logger, first_line_prefix=_sub_indent)
+                         logger: CLILogger) -> FileComparisons:
     _rel_tol_map = _parse_field_tolerances(args.get("relative_tolerance"))
     _abs_tol_map = _parse_field_tolerances(args.get("absolute_tolerance"))
 
@@ -180,37 +163,66 @@ def _do_file_comparisons(args,
         ref_file = join(args["reference_dir"], filename)
 
         logger.log(("\n" if i > 0 else ""), verbosity_level=1)
-        logger.log("Comparing the files '{}' and '{}'\n".format(
-            highlighted(res_file),
-            highlighted(ref_file)),
+        logger.log(
+            f"Comparing '{highlighted(res_file)}'\n"
+            f"      and '{highlighted(ref_file)}'\n",
             verbosity_level=1
         )
 
         opts = FileComparisonOptions(
             ignore_missing_result_fields=args["ignore_missing_result_fields"],
             ignore_missing_reference_fields=args["ignore_missing_reference_fields"],
+            ignore_missing_sequence_steps=args["ignore_missing_sequence_steps"],
             relative_tolerances=_rel_tol_map,
             absolute_tolerances=_abs_tol_map,
             field_inclusion_filter=PatternFilter(args["include_fields"]) if args["include_fields"] else _include_all(),
             field_exclusion_filter=PatternFilter(args["exclude_fields"]) if args["exclude_fields"] else _exclude_all(),
             disable_mesh_reordering=True if args["disable_mesh_reordering"] else False,
-            disable_mesh_ghost_point_removal=True if args["disable_mesh_ghost_point_removal"] else False
+            disable_unconnected_points_removal=True if args["disable_mesh_orphan_point_removal"] else False
         )
         try:
-            field_comparisons = _run_file_compare(_sub_logger, opts, res_file, ref_file)
-            file_comparisons.append((filename, timestamp, field_comparisons))
-            IndentedLogger(logger, first_line_prefix=_sub_indent).log(
-                f"File comparison {get_status_string(bool(field_comparisons))}\n", verbosity_level=1
+            sub_logger = logger.with_prefix("  ")
+            comparator = FileComparison(opts, sub_logger.with_modified_verbosity(-1))
+            cpu_time, test_suite = _measure_time(comparator)(res_file, ref_file)
+            file_comparisons.append((filename, timestamp, test_suite.with_overridden(
+                cpu_time=cpu_time,
+                name=res_file,
+                shortlog=_get_failing_field_test_names(test_suite)
+            )))
+            sub_logger.log(
+                f"File comparison {get_status_string(bool(test_suite))}\n", verbosity_level=1
             )
         except Exception as e:
-            logger.log(str(e), verbosity_level=1)
+            output = f"Error upon file comparison: {str(e)}"
+            logger.log(output, verbosity_level=1)
             file_comparisons.append((
                 filename,
                 timestamp,
-                ComparisonSuite(Status.error, error_log=str(e), error_shortlog="Exception raised")
+                TestSuite(
+                    tests=[],
+                    name=filename,
+                    result=TestResult.error,
+                    shortlog="Exception raised",
+                    stdout=output
+                )
             ))
 
     return file_comparisons
+
+
+def _get_failing_field_test_names(test_suite: TestSuite) -> Optional[str]:
+    names = [t.name for t in test_suite if not t.result]
+    if not names:
+        return None
+
+    names_string = ""
+    max_num_characters = 30
+    for n in names:
+        n = f"'{n}'"
+        if len(names_string) + len(n) > max_num_characters:
+            return names_string
+        names_string = n if not names_string else ";".join([names_string, n])
+    return names_string
 
 
 def _log_unhandled_files(args, categories, logger) -> None:
@@ -242,11 +254,11 @@ def _log_unhandled_files(args, categories, logger) -> None:
 
 def _log_unhandled_file_list(message: str,
                              names: List[str],
-                             logger: LoggerInterface,
+                             logger: CLILogger,
                              verbosity_level: int) -> None:
     if names:
         logger.log(
-            f"{message}\n{make_indented_list_string(names)}\n",
+            f"\n{message}\n{make_indented_list_string(names)}\n",
             verbosity_level=verbosity_level
         )
 
@@ -291,9 +303,13 @@ def _add_skipped_file_comparisons(comparisons: FileComparisons,
                                   names: List[str],
                                   reason: str,
                                   treat_as_failure: bool = False):
-    status = Status.failed if treat_as_failure else Status.skipped
+    status = TestResult.failed if treat_as_failure else TestResult.skipped
     for name in names:
-        suite = ComparisonSuite(status, error_log=reason, error_shortlog=reason)
         # insert a dummy testcase such that junit readers show a (skipped/failed) test
-        suite.insert(Comparison("file comparison", status, reason))
+        suite = TestSuite(
+            tests=[Test("file comparison", status, shortlog=reason, stdout="", cpu_time=None)],
+            name=name,
+            result=status,
+            shortlog=reason
+        )
         comparisons.append((name, datetime.now().isoformat(), suite))

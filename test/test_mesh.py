@@ -1,4 +1,4 @@
-from fieldcompare.mesh import Mesh, PermutedMesh
+from fieldcompare.mesh import Mesh, PermutedMesh, sort_mesh
 from fieldcompare.mesh import permutations
 
 
@@ -54,7 +54,7 @@ def test_uniquely_permuted_mesh():
         connectivity=([("line", [[2, 1], [0, 1]])])
     )
 
-    unique = permutations.permute_uniquely(mesh)
+    unique = sort_mesh(mesh)
     unique_2 = permutations.sort_cells(
         permutations.sort_points(
             permutations.remove_unconnected_points(mesh)

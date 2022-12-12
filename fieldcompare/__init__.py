@@ -23,38 +23,10 @@ from ._field import (
     FieldContainerInterface
 )
 
-from ._field_io import (
-    read_fields,
-    make_field_reader,
-    make_mesh_field_reader,
-    is_supported_file,
-    is_mesh_file
-)
-
-from ._logging import (
-    NullDeviceLogger,
-    StandardOutputLogger,
-    StreamLogger,
-    LoggerBase,
-    LoggableBase,
-    LoggerInterface,
-    Loggable
-)
-
 from ._matching import (
     find_matches,
     find_matches_by_name,
     find_matching_file_names
-)
-
-from ._field_comparison import (
-    FieldComparison,
-    FieldComparisonOptions
-)
-
-from ._file_comparison import (
-    FileComparison,
-    FileComparisonOptions
 )
 
 from ._comparisons import (

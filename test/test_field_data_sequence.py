@@ -36,6 +36,10 @@ class MockFieldDataSource:
     def get(self) -> FieldData:
         return get_field_data(self._step_idx)
 
+    @property
+    def number_of_steps(self) -> int:
+        return self._num_steps
+
 
 def test_field_data_sequence():
     sequence = FieldDataSequence(source=MockFieldDataSource())
