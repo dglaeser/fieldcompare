@@ -109,6 +109,7 @@ class FileComparison:
         )
 
     _T = TypeVar("_T")
+
     def _run_file_comparison(self,
                              res_file: str,
                              ref_file: str,
@@ -156,9 +157,12 @@ class FileComparison:
 
         def _merge_test_suites(s1: TestSuite, s2: TestSuite, i: int) -> TestSuite:
             def _merged_result(r1: Optional[TestResult], r2: Optional[TestResult]) -> Optional[TestResult]:
-                if any(r == TestResult.failed for r in [r1, r2]): return TestResult.failed
-                if any(r == TestResult.error for r in [r1, r2]): return TestResult.error
-                if any(r == TestResult.skipped for r in [r1, r2]): return TestResult.skipped
+                if any(r == TestResult.failed for r in [r1, r2]):
+                    return TestResult.failed
+                if any(r == TestResult.error for r in [r1, r2]):
+                    return TestResult.error
+                if any(r == TestResult.skipped for r in [r1, r2]):
+                    return TestResult.skipped
                 return None
             return _make_test_suite(
                 tests=list(s1) + list(s2),
@@ -291,14 +295,17 @@ class FileComparison:
         )
 
     def _parse_status(self, status: FieldComparisonStatus) -> TestResult:
-        if status == FieldComparisonStatus.passed: return TestResult.passed
-        if status == FieldComparisonStatus.failed: return TestResult.failed
-        if status == FieldComparisonStatus.error: return TestResult.error
+        if status == FieldComparisonStatus.passed:
+            return TestResult.passed
+        if status == FieldComparisonStatus.failed:
+            return TestResult.failed
+        if status == FieldComparisonStatus.error:
+            return TestResult.error
         if status == FieldComparisonStatus.missing_reference \
-            and not self._opts.ignore_missing_reference_fields:
+                and not self._opts.ignore_missing_reference_fields:
             return TestResult.failed
         if status == FieldComparisonStatus.missing_source \
-            and not self._opts.ignore_missing_result_fields:
+                and not self._opts.ignore_missing_result_fields:
             return TestResult.failed
         return TestResult.skipped
 

@@ -1,6 +1,5 @@
 """Command-line interface for comparing a pair of files"""
 
-from os.path import basename
 from argparse import ArgumentParser
 from datetime import datetime
 from xml.etree.ElementTree import ElementTree

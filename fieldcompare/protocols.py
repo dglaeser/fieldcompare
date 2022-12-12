@@ -1,7 +1,7 @@
 """Defines the interfaces used by fieldcompare"""
 
 from __future__ import annotations
-from typing import Protocol, Callable, Iterator, Tuple, Any
+from typing import Protocol, Callable, Iterator, Any
 from ._array import Array
 
 

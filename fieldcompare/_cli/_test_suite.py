@@ -97,7 +97,10 @@ class TestSuite:
 
 
 def to_test_result(status: FieldComparisonStatus) -> TestResult:
-    if status.passed: return TestResult.passed
-    if status.failed: return TestResult.failed
-    if status.error: return TestResult.error
+    if status.passed:
+        return TestResult.passed
+    if status.failed:
+        return TestResult.failed
+    if status.error:
+        return TestResult.error
     return TestResult.skipped

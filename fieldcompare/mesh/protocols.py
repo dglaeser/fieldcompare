@@ -1,9 +1,10 @@
 """Defines the interfaces used by the fieldcompare.mesh module"""
 
 from __future__ import annotations
-from typing import Protocol, Iterable, Tuple, Optional, runtime_checkable
-from .._array import Array
+from typing import Protocol, Iterable, Tuple, Optional, Callable, runtime_checkable
+
 from ..protocols import FieldData, Field, PredicateResult
+from .._array import Array
 
 
 @runtime_checkable
@@ -64,4 +65,8 @@ class MeshFields(FieldData, Protocol):
     @property
     def cell_fields_types(self) -> Iterable[Tuple[Field, str]]:
         """Return a range over cell fields + associated cell type"""
+        ...
+
+    def permuted(self, permutation: Callable[[Mesh], Mesh]) -> MeshFields:
+        """Permute the mesh fields with the given mesh permutation"""
         ...

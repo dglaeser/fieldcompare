@@ -12,7 +12,7 @@ from .._format import (
 )
 
 from ._logger import CLILogger
-from ._test_suite import TestSuite, TestResult
+from ._test_suite import TestResult
 
 
 class PatternFilter:

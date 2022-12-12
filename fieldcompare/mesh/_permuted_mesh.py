@@ -64,7 +64,8 @@ class PermutedMesh:
 
     def equals(self, other: Mesh) -> PredicateResult:
         """Check whether this mesh is equal to the given one"""
-        return mesh_equal(self, other,
+        return mesh_equal(
+            self, other,
             abs_tol=self.absolute_tolerance,
             rel_tol=self.relative_tolerance,
         )

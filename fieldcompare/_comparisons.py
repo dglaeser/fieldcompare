@@ -109,7 +109,7 @@ class FieldDataComparison:
         matching_pairs = []
         for i, (source, target) in enumerate(query.matches):
             if not self._field_inclusion_filter(source.name) \
-                or self._field_exclusion_filter(source.name):
+                    or self._field_exclusion_filter(source.name):
                 filtered.append(source)
             else:
                 matching_pairs.append((source, target))
