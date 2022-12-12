@@ -32,7 +32,7 @@ class FieldDataSequence:
     def __init__(self, source: FieldDataSequenceSource) -> None:
         self._source = source
 
-    def __iter__(self) -> Iterator[FieldData]:
+    def __iter__(self) -> Iterator:
         """Return an iterator over all steps in the sequence"""
         self._source.reset()
         yield self._source.get()
