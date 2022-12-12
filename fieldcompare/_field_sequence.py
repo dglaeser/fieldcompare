@@ -38,7 +38,6 @@ class FieldDataSequence:
         yield self._source.get()
         while self._source.step():
             yield self._source.get()
-        return
 
     @property
     def number_of_steps(self) -> int:
