@@ -37,15 +37,24 @@ def is_mesh_sequence(filename: str) -> bool:
 
 def read(filename: str) -> MeshFields:
     """Read the fields from the given mesh file"""
-    return from_meshio(_meshio_read(filename))
+    if not is_mesh_file(filename):
+        raise IOError(f"Unsupported mesh file '{filename}'")
+    try:
+        return from_meshio(_meshio_read(filename))
+    except Exception as e:
+        raise IOError(f"Error reading mesh file: {e}")
 
 
 def read_sequence(filename: str) -> FieldDataSequence:
     """Read a sequence from the given filename"""
     ext = splitext(filename)[1]
     if ext not in [".xmf", ".xdmf"]:
-        raise NotImplementedError(f"Sequences from files with extension {ext}")
-    return FieldDataSequence(source=_XDMFSequenceSource(filename))
+        raise IOError(f"Unsupported mesh sequence file: '{filename}'")
+
+    try:
+        return FieldDataSequence(source=_XDMFSequenceSource(filename))
+    except Exception as e:
+        raise IOError(f"Error reading mesh sequence: {e}")
 
 
 class _XDMFSequenceSource:
