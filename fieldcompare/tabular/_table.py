@@ -3,7 +3,7 @@
 from __future__ import annotations
 from typing import Optional
 
-from .._array import Array
+from .._array import Array, is_index_array
 from ..predicates import PredicateResult
 
 
@@ -16,6 +16,8 @@ class Table:
             self._num_rows = len(self._idx_map)
             if num_rows is not None and num_rows != self._num_rows:
                 raise ValueError("Given number of rows does not match the length of the index map")
+            if not is_index_array(self._idx_map):
+                raise ValueError("Given map is not an array of indices")
         elif num_rows is not None:
             self._num_rows = num_rows
         else:
