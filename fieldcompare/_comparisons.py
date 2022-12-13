@@ -1,4 +1,5 @@
-"""Classes to perform field data comparisons"""
+"""Class to perform field data comparisons"""
+
 from typing import Callable, Optional, List, Tuple, Iterator, Iterable, Any
 from dataclasses import dataclass
 from enum import Enum, auto
@@ -11,6 +12,7 @@ from ._common import _measure_time
 
 
 class FieldComparisonStatus(Enum):
+    """Represents the status of a field comparison"""
     passed = auto()
     failed = auto()
     error = auto()
@@ -21,6 +23,7 @@ class FieldComparisonStatus(Enum):
 
 @dataclass
 class FieldComparisonResult:
+    """Stores information on a performed field comparison"""
     name: str
     status: FieldComparisonStatus
     predicate: str
@@ -37,6 +40,7 @@ class FieldComparisonResult:
 
 
 class FieldComparisonSuite:
+    """Contains the information on a suite of field comparisons"""
     def __init__(self,
                  domain_eq_check: PredicateResult,
                  comparisons: List[FieldComparisonResult] = []) -> None:
@@ -44,11 +48,13 @@ class FieldComparisonSuite:
         self._comparisons = comparisons
 
     def __bool__(self) -> bool:
+        """Return true if the suite is considered to have passed successfully"""
         if not self._domain_eq_check:
             return False
         return not any(c.is_failure for c in self._comparisons)
 
     def __iter__(self) -> Iterator[FieldComparisonResult]:
+        """Return an iterator over all contained field comparison results"""
         return iter(self._comparisons)
 
     @property
@@ -79,6 +85,7 @@ PredicateSelector = Callable[[Field, Field], Predicate]
 FieldComparisonCallback = Callable[[FieldComparisonResult], Any]
 
 class FieldDataComparison:
+    """Compares all fields in two given field data objects"""
     def __init__(self,
                  source: FieldData,
                  reference: FieldData,
@@ -91,7 +98,8 @@ class FieldDataComparison:
 
     def __call__(self,
                  predicate_selector: PredicateSelector = lambda _, __: DefaultEquality(),
-                 fieldcomp_callback: FieldComparisonCallback = lambda c: None) -> FieldComparisonSuite:
+                 fieldcomp_callback: FieldComparisonCallback = lambda _: None) -> FieldComparisonSuite:
+        """Compare all fields in the field data objects using the given predicates"""
         domain_eq_check = self._source.domain.equals(self._reference.domain)
         if not domain_eq_check:
             return FieldComparisonSuite(domain_eq_check=domain_eq_check)
