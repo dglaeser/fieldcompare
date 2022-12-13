@@ -3,15 +3,15 @@
 from __future__ import annotations
 from typing import Optional
 
-from .._array import Array, is_index_array
+from .._array import Array, ArrayLike, as_array, is_index_array
 from ..predicates import PredicateResult
 
 
 class Table:
     def __init__(self,
                  num_rows: Optional[int] = None,
-                 idx_map: Optional[Array] = None) -> None:
-        self._idx_map = idx_map
+                 idx_map: Optional[ArrayLike] = None) -> None:
+        self._idx_map = as_array(idx_map) if idx_map is not None else idx_map
         if self._idx_map is not None:
             self._num_rows = len(self._idx_map)
             if num_rows is not None and num_rows != self._num_rows:

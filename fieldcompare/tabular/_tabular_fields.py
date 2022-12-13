@@ -28,7 +28,7 @@ class TabularFields(FieldData):
     def __iter__(self) -> Iterator[Field]:
         """Return the fields contained in this table"""
         def _mapped_values(values: Array) -> Array:
-            if self._domain.indices:
+            if self._domain.indices is not None:
                 return values[self._domain.indices]
             return values
         return (
