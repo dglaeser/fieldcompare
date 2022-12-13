@@ -57,6 +57,13 @@ def has_floats(input_array: Array) -> bool:
     return _has_floats(input_array)
 
 
+def is_index_array(input_array: Array) -> bool:
+    """Return true if the array consists of integer values"""
+    if len(input_array.shape) > 1:
+        return False
+    return input_array.dtype in [np.int8, np.int16, np.int32, np.int64]
+
+
 def as_string(input: ArrayLike, digits: Optional[int] = None) -> str:
     """Return the string representation of the given array-like value"""
     if digits is not None:
