@@ -5,8 +5,6 @@ from typing import Optional, List, Iterator
 from dataclasses import dataclass
 from enum import Enum, auto
 
-from .._field_data_comparison import FieldComparisonStatus
-
 
 class TestStatus(Enum):
     passed = auto()
@@ -94,13 +92,3 @@ class TestSuite:
             stdout=self._stdout,
             cpu_time=(cpu_time if cpu_time is not None else self._cpu_time)
         )
-
-
-def to_test_status(status: FieldComparisonStatus) -> TestStatus:
-    if status.passed:
-        return TestStatus.passed
-    if status.failed:
-        return TestStatus.failed
-    if status.error:
-        return TestStatus.error
-    return TestStatus.skipped
