@@ -140,16 +140,9 @@ class DefaultEquality(FuzzyEquality):
 
 
 def _get_equality_fail_report(val1, val2, deviation_in_percent=None) -> str:
-    result = str(
-        "Deviation above tolerance detected:\n"
-        "- First field entry: {}\n"
-        "- Second field entry: {}".format(
-            as_string(val1),
-            as_string(val2)
-        )
-    )
+    result = f"Deviation above tolerance detected -> {as_string(val1)} vs. {as_string(val2)}"
     if deviation_in_percent is not None:
-        result += f"\n- Deviation in [%]: {deviation_in_percent}"
+        result += f" ({as_string(deviation_in_percent, digits=2)} %)"
     return result
 
 

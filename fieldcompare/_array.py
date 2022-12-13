@@ -57,8 +57,11 @@ def has_floats(input_array: Array) -> bool:
     return _has_floats(input_array)
 
 
-def as_string(input: ArrayLike) -> str:
+def as_string(input: ArrayLike, digits: Optional[int] = None) -> str:
     """Return the string representation of the given array-like value"""
+    if digits is not None:
+        with np.printoptions(floatmode="fixed", precision=digits):
+            return np.array2string(as_array(input))
     with np.printoptions(floatmode="unique"):
         return np.array2string(as_array(input))
 
