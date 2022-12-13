@@ -96,7 +96,7 @@ def _log_suite_summary(suite,
             _log_line(
                 as_warning(_padded("SKIPPED")),
                 f"{highlighted(test.name)}: ({test.shortlog})",
-                verbosity_level=2
+                verbosity_level=3
             )
 
     if failed:

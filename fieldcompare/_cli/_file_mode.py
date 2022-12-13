@@ -35,7 +35,7 @@ def _add_arguments(parser: ArgumentParser):
     parser.add_argument(
         "--verbosity",
         required=False,
-        default=1,
+        default=2,
         type=int,
         help="Set the verbosity level"
     )

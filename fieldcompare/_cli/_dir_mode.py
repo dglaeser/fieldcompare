@@ -109,7 +109,7 @@ def _run(args: dict, in_logger: CLILogger) -> int:
     logger.log("\n")
     _log_suite_summary(
         list(suite for _, _, suite in comparisons), "file",
-        logger.with_modified_verbosity(-1)
+        logger
     )
 
     passed = all(comp for _, _, comp in comparisons)
