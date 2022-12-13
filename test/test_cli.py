@@ -269,13 +269,45 @@ def test_cli_file_mode_missing_sequences_steps():
     _point_data_2 = _get_time_series_point_data_values(_mesh, num_time_steps=3)
     _cell_data_2 = _get_time_series_cell_data_values(_mesh, num_time_steps=3)
 
-    _mesh_1_filename = "_test_mesh_cli_file_mode_missing_result_field_1.xdmf"
-    _mesh_2_filename = "_test_mesh_cli_file_mode_missing_result_field_2.xdmf"
+    _mesh_1_filename = "_test_cli_file_mode_missing_sequences_steps_field_1.xdmf"
+    _mesh_2_filename = "_test_cli_file_mode_missing_sequences_steps_field_2.xdmf"
     _write_time_series(_mesh_1_filename, _mesh, _point_data_1, _cell_data_1, num_time_steps=2)
     _write_time_series(_mesh_2_filename, _mesh, _point_data_2, _cell_data_2, num_time_steps=3)
 
     assert main(["file", _mesh_1_filename, "--reference", _mesh_2_filename]) == 1
     assert main(["file", _mesh_1_filename, "--reference", _mesh_2_filename, "--ignore-missing-sequence-steps"]) == 0
+
+    remove(_mesh_1_filename)
+    remove(_mesh_2_filename)
+    remove(_mesh_1_filename.replace(".xdmf", ".h5"))
+    remove(_mesh_2_filename.replace(".xdmf", ".h5"))
+
+
+def test_cli_file_mode_missing_sequences_steps_force_comparison():
+    _mesh = _make_test_mesh()
+    _point_data_1 = _get_time_series_point_data_values(_mesh, num_time_steps=2)
+    _cell_data_1 = _get_time_series_cell_data_values(_mesh, num_time_steps=2)
+    _point_data_2 = _get_time_series_point_data_values(_mesh, num_time_steps=3)
+    _cell_data_2 = _get_time_series_cell_data_values(_mesh, num_time_steps=3)
+
+    _mesh_1_filename = "_test_cli_file_mode_missing_sequences_steps_force_comparison_field_1.xdmf"
+    _mesh_2_filename = "_test_cli_file_mode_missing_sequences_steps_force_comparison_field_2.xdmf"
+    _write_time_series(_mesh_1_filename, _mesh, _point_data_1, _cell_data_1, num_time_steps=2)
+    _write_time_series(_mesh_2_filename, _mesh, _point_data_2, _cell_data_2, num_time_steps=3)
+
+    stream = StringIO()
+    assert main(
+        ["file", _mesh_1_filename, "--reference", _mesh_2_filename],
+        logger=CLILogger(output_stream=stream)
+    ) == 1
+    assert "Comparing the field" not in stream.getvalue()
+
+    stream = StringIO()
+    assert main(
+        ["file", _mesh_1_filename, "--reference", _mesh_2_filename, "--force-sequence-comparison"],
+        logger=CLILogger(output_stream=stream)
+    ) == 1
+    assert "Comparing the field" in stream.getvalue()
 
     remove(_mesh_1_filename)
     remove(_mesh_2_filename)

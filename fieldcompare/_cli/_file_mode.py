@@ -53,6 +53,7 @@ def _run(args: dict, in_logger: CLILogger) -> int:
         ignore_missing_result_fields=args["ignore_missing_result_fields"],
         ignore_missing_reference_fields=args["ignore_missing_reference_fields"],
         ignore_missing_sequence_steps=args["ignore_missing_sequence_steps"],
+        force_sequence_comparison=args["force_sequence_comparison"],
         relative_tolerances=_parse_field_tolerances(args.get("relative_tolerance")),
         absolute_tolerances=_parse_field_tolerances(args.get("absolute_tolerance")),
         field_inclusion_filter=PatternFilter(args["include_fields"]) if args["include_fields"] else _include_all(),
@@ -140,6 +141,15 @@ def _add_field_options_args(parser: ArgumentParser) -> None:
         required=False,
         action="store_true",
         help="Treat missing sequence steps as warning and compare only the common steps"
+    )
+    parser.add_argument(
+        "--force-sequence-comparison",
+        required=False,
+        action="store_true",
+        help="This flag forces the comparison of common steps in two sequences although the "
+             "sequences have different lengths. The comparison is considered failed because "
+             "of the different sequences lengths, but the output of the comparison of common "
+             "steps is produced. To treat differing lengths as warnings, see 'ignore-missing-sequence-steps"
     )
 
 
