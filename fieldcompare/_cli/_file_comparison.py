@@ -120,8 +120,12 @@ class FileComparison:
                              read_function: Callable[[str], _T],
                              comparison_function: Callable[[_T, _T], TestSuite]) -> TestSuite:
         def _read(file: str):
-            self._logger.log(f"Reading {domain} from '{highlighted(file)}'\n", verbosity_level=1)
-            return read_function(file)
+            try:
+                self._logger.log(f"Reading {domain} from '{highlighted(file)}'\n", verbosity_level=1)
+                return read_function(file)
+            except IOError as e:
+                self._logger.log(f"{as_error('ERROR')} '{e}'", verbosity_level=1)
+                raise e
 
         try:
             res_fields = _read(res_file)
