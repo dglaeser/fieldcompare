@@ -266,7 +266,7 @@ class FileComparison:
                 f"{self._status_string(self._parse_status(result.status))}",
                 indentation_level=1
             ),
-            verbosity_level=1
+            verbosity_level=(2 if result.status else 1)
         )
         _log(
             message=_get_indented(
