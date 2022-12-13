@@ -36,7 +36,7 @@ from ._test_suite import TestSuite, Test, TestResult
 
 @dataclass
 class FileComparisonOptions:
-    ignore_missing_result_fields: bool = False
+    ignore_missing_source_fields: bool = False
     ignore_missing_reference_fields: bool = False
     ignore_missing_sequence_steps: bool = False
     force_sequence_comparison: bool = False
@@ -305,7 +305,7 @@ class FileComparison:
                 and not self._opts.ignore_missing_reference_fields:
             return TestResult.failed
         if status == FieldComparisonStatus.missing_source \
-                and not self._opts.ignore_missing_result_fields:
+                and not self._opts.ignore_missing_source_fields:
             return TestResult.failed
         return TestResult.skipped
 

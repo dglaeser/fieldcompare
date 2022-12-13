@@ -226,7 +226,7 @@ def test_cli_file_mode_missing_result_fields():
     assert main([
         "file", _mesh_filename,
         "--reference", _reference_mesh_filename,
-        "--ignore-missing-result-fields"
+        "--ignore-missing-source-fields"
     ]) == 0
 
     remove(_mesh_filename)
@@ -250,7 +250,7 @@ def test_cli_file_mode_missing_reference_fields():
     assert main([
         "file", _mesh_filename,
         "--reference", _reference_mesh_filename,
-        "--ignore-missing-result-fields"
+        "--ignore-missing-source-fields"
     ]) == 1
     assert main([
         "file", _mesh_filename,
@@ -395,7 +395,7 @@ def test_cli_directory_mode_missing_result_file():
     assert main([
         "dir", str(tmp_results_path),
         "--reference-dir", str(TEST_DATA_PATH),
-        "--ignore-missing-result-files"
+        "--ignore-missing-source-files"
     ]) == 0
 
     rmtree(tmp_results_path)
@@ -421,7 +421,7 @@ def test_cli_directory_mode_missing_reference_file():
     assert main([
         "dir", str(TEST_DATA_PATH),
         "--reference-dir", str(tmp_reference_path),
-        "--ignore-missing-result-files"
+        "--ignore-missing-source-files"
     ]) == 1
     assert main([
         "dir", str(TEST_DATA_PATH),

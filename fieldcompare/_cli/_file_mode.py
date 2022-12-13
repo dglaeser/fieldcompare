@@ -50,7 +50,7 @@ def _run(args: dict, in_logger: CLILogger) -> int:
     timestamp = datetime.now().isoformat()
     logger = in_logger.with_verbosity(args["verbosity"])
     opts = FileComparisonOptions(
-        ignore_missing_result_fields=args["ignore_missing_result_fields"],
+        ignore_missing_source_fields=args["ignore_missing_source_fields"],
         ignore_missing_reference_fields=args["ignore_missing_reference_fields"],
         ignore_missing_sequence_steps=args["ignore_missing_sequence_steps"],
         force_sequence_comparison=args["force_sequence_comparison"],
@@ -90,8 +90,8 @@ def _add_mesh_reorder_options_args(parser: ArgumentParser) -> None:
         action="store_true",
         help="For fields defined on meshes, the mesh is reordered in a unique way in case differences "
              "in the point coordinates or the mesh connectivity are detected. This ensures that the "
-             "comparisons pass also for rearranged meshes when the field data matches. Use this flag "
-             "to disable this behaviour in case you want to test for identical mesh ordering."
+             "comparisons pass also for meshes that are differently ordered when the field data matches. "
+             "Use this flag to disable this behaviour in case you want to test for identical mesh ordering."
     )
     parser.add_argument(
         "--disable-mesh-orphan-point-removal",
@@ -125,10 +125,10 @@ def _add_field_filter_options_args(parser: ArgumentParser) -> None:
 
 def _add_field_options_args(parser: ArgumentParser) -> None:
     parser.add_argument(
-        "--ignore-missing-result-fields",
+        "--ignore-missing-source-fields",
         required=False,
         action="store_true",
-        help="Use this flag to treat missing result fields as warnings only"
+        help="Use this flag to treat missing source fields as warnings only"
     )
     parser.add_argument(
         "--ignore-missing-reference-fields",

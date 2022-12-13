@@ -49,10 +49,10 @@ def _add_arguments(parser: ArgumentParser):
         help="The directory with the reference files"
     )
     parser.add_argument(
-        "--ignore-missing-result-files",
+        "--ignore-missing-source-files",
         required=False,
         action="store_true",
-        help="Use this flag to suppress errors from missing result files"
+        help="Use this flag to suppress errors from missing source files"
     )
     parser.add_argument(
         "--ignore-missing-reference-files",
@@ -120,7 +120,7 @@ def _run(args: dict, in_logger: CLILogger) -> int:
 @dataclass
 class CategorizedFiles:
     files_to_compare: List[str]
-    missing_results: List[str]
+    missing_sources: List[str]
     missing_references: List[str]
     filtered_files: List[str]
     unsupported_files: List[str]
@@ -132,7 +132,7 @@ def _categorize_files(args: dict, res_dir: str, ref_dir: str) -> CategorizedFile
     search_result = find_matching_file_names(res_dir, ref_dir)
     matches = list(n for n, _ in search_result.matches)
     filtered_matches = [m for m in matches if include_filter(m)]
-    missing_results = [m for m in search_result.orphans_in_reference if include_filter(m)]
+    missing_sources = [m for m in search_result.orphans_in_reference if include_filter(m)]
     missing_references = [m for m in search_result.orphans_in_source if include_filter(m)]
 
     dropped_matches = list(set(matches).difference(set(filtered_matches)))
@@ -141,7 +141,7 @@ def _categorize_files(args: dict, res_dir: str, ref_dir: str) -> CategorizedFile
 
     return CategorizedFiles(
         files_to_compare=supported_files,
-        missing_results=missing_results,
+        missing_sources=missing_sources,
         missing_references=missing_references,
         filtered_files=dropped_matches,
         unsupported_files=unsupported_files
@@ -170,7 +170,7 @@ def _do_file_comparisons(args,
         )
 
         opts = FileComparisonOptions(
-            ignore_missing_result_fields=args["ignore_missing_result_fields"],
+            ignore_missing_source_fields=args["ignore_missing_source_fields"],
             ignore_missing_reference_fields=args["ignore_missing_reference_fields"],
             ignore_missing_sequence_steps=args["ignore_missing_sequence_steps"],
             relative_tolerances=_rel_tol_map,
@@ -227,8 +227,8 @@ def _get_failing_field_test_names(test_suite: TestSuite) -> Optional[str]:
 
 def _log_unhandled_files(args, categories, logger) -> None:
     _log_unhandled_file_list(
-        _missing_res_or_ref_message("result", not args["ignore_missing_result_files"]),
-        categories.missing_results,
+        _missing_res_or_ref_message("result", not args["ignore_missing_source_files"]),
+        categories.missing_sources,
         logger,
         verbosity_level=1
     )
@@ -277,9 +277,9 @@ def _add_unhandled_comparisons(args: dict,
                                comparisons: FileComparisons) -> None:
     _add_skipped_file_comparisons(
         comparisons,
-        categories.missing_results,
-        "Missing result file",
-        not args["ignore_missing_result_files"]
+        categories.missing_sources,
+        "Missing source file",
+        not args["ignore_missing_source_files"]
     )
     _add_skipped_file_comparisons(
         comparisons,
