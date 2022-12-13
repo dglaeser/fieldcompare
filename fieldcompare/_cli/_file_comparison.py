@@ -31,7 +31,7 @@ from .._field_data_comparison import (
 
 from ._logger import CLILogger
 from ._deduce_domain import deduce_file_type, FileType, DomainType
-from ._test_suite import TestSuite, Test, TestResult
+from ._test_suite import TestSuite, TestResult, TestStatus
 
 
 @dataclass
@@ -61,13 +61,13 @@ class FileComparison:
         if res_file_type != ref_file_type:
             return _make_test_suite(
                 tests=[],
-                result=TestResult.error,
+                status=TestStatus.error,
                 shortlog="Non-matching file types: '{ref_file_type}' / '{res_file_type}"
             )
         if res_file_type.domain_type == DomainType.unknown:
             return _make_test_suite(
                 tests=[],
-                result=TestResult.error,
+                status=TestStatus.error,
                 shortlog="Unsupported file type"
             )
         return self._compare_files(res_file, ref_file, res_file_type)
@@ -125,7 +125,7 @@ class FileComparison:
         except IOError as e:
             return _make_test_suite(
                 tests=[],
-                result=TestResult.error,
+                status=TestStatus.error,
                 shortlog=f"Error reading fields from '{res_file}': {e}"
             )
 
@@ -134,7 +134,7 @@ class FileComparison:
         except IOError as e:
             return _make_test_suite(
                 tests=[],
-                result=TestResult.error,
+                status=TestStatus.error,
                 shortlog=f"Error reading reference file '{res_file}': {e}"
             )
         return comparison_function(res_fields, ref_fields)
@@ -142,31 +142,31 @@ class FileComparison:
     def _run_mesh_sequence_comparison(self,
                                       res_sequence: FieldDataSequence,
                                       ref_sequence: FieldDataSequence) -> TestSuite:
-        num_steps_check: Optional[TestResult] = None
+        num_steps_check: Optional[TestStatus] = None
         num_steps_check_fail_msg = "Mesh sequences have differing lengths"
         if res_sequence.number_of_steps != ref_sequence.number_of_steps:
             if not self._opts.ignore_missing_sequence_steps:
-                num_steps_check = TestResult.failed
-                self._logger.log(f"{self._status_string(TestResult.error)}: {num_steps_check_fail_msg}")
+                num_steps_check = TestStatus.failed
+                self._logger.log(f"{self._status_string(TestStatus.error)}: {num_steps_check_fail_msg}")
                 if not self._opts.force_sequence_comparison:
-                    return _make_test_suite([], TestResult.failed, num_steps_check_fail_msg)
+                    return _make_test_suite([], TestStatus.failed, num_steps_check_fail_msg)
             else:
                 self._logger.log(
                     f"{as_warning('Warning')}: {num_steps_check_fail_msg}, comparing only common steps\n"
                 )
 
         def _merge_test_suites(s1: TestSuite, s2: TestSuite, i: int) -> TestSuite:
-            def _merged_result(r1: Optional[TestResult], r2: Optional[TestResult]) -> Optional[TestResult]:
-                if any(r == TestResult.failed for r in [r1, r2]):
-                    return TestResult.failed
-                if any(r == TestResult.error for r in [r1, r2]):
-                    return TestResult.error
-                if any(r == TestResult.skipped for r in [r1, r2]):
-                    return TestResult.skipped
+            def _merged_result(r1: Optional[TestStatus], r2: Optional[TestStatus]) -> Optional[TestStatus]:
+                if any(r == TestStatus.failed for r in [r1, r2]):
+                    return TestStatus.failed
+                if any(r == TestStatus.error for r in [r1, r2]):
+                    return TestStatus.error
+                if any(r == TestStatus.skipped for r in [r1, r2]):
+                    return TestStatus.skipped
                 return None
             return _make_test_suite(
                 tests=list(s1) + list(s2),
-                result=_merged_result(s1.result, s2.result),
+                status=_merged_result(s1.status, s2.status),
                 shortlog=s1.shortlog + (
                     f"; {s2.shortlog}" if s1.shortlog else f"{s2.shortlog}"
                 )
@@ -195,8 +195,8 @@ class FileComparison:
 
         if self._opts.disable_mesh_reordering:
             msg = "Non-reordered meshes have compared unequal"
-            self._logger.log(f"{self._status_string(TestResult.failed)}: {msg}")
-            return _make_test_suite([], TestResult.failed, shortlog=msg)
+            self._logger.log(f"{self._status_string(TestStatus.failed)}: {msg}")
+            return _make_test_suite([], TestStatus.failed, shortlog=msg)
 
         self._logger.log(
             "Meshes did not compare equal. Retrying with sorted points...\n",
@@ -223,8 +223,8 @@ class FileComparison:
             return self._to_test_suite(suite)
 
         msg = "Fields defined on different meshes"
-        self._logger.log(f"{self._status_string(TestResult.failed)}: {msg}")
-        return _make_test_suite([], TestResult.failed, shortlog="Fields defined on different meshes")
+        self._logger.log(f"{self._status_string(TestStatus.failed)}: {msg}")
+        return _make_test_suite([], TestStatus.failed, shortlog="Fields defined on different meshes")
 
     def _run_field_data_comparison(self,
                                    result: FieldData,
@@ -273,9 +273,9 @@ class FileComparison:
         )
 
     def _to_test_suite(self, suite: FieldComparisonSuite) -> TestSuite:
-        return TestSuite([self._to_test(c) for c in suite])
+        return TestSuite([self._to_test_result(c) for c in suite])
 
-    def _to_test(self, comp_result: FieldComparisonResult) -> Test:
+    def _to_test_result(self, comp_result: FieldComparisonResult) -> TestResult:
         def _get_stdout() -> str:
             stream = StringIO()
             self._stream_field_comparison_report(comp_result, stream)
@@ -286,33 +286,33 @@ class FileComparison:
             shortlog = "missing reference field"
         if comp_result.status == FieldComparisonStatus.missing_source:
             shortlog = "missing source field"
-        return Test(
+        return TestResult(
             name=comp_result.name,
-            result=self._parse_status(comp_result.status),
+            status=self._parse_status(comp_result.status),
             shortlog=shortlog,
             stdout=_get_stdout(),
             cpu_time=comp_result.cpu_time
         )
 
-    def _parse_status(self, status: FieldComparisonStatus) -> TestResult:
+    def _parse_status(self, status: FieldComparisonStatus) -> TestStatus:
         if status == FieldComparisonStatus.passed:
-            return TestResult.passed
+            return TestStatus.passed
         if status == FieldComparisonStatus.failed:
-            return TestResult.failed
+            return TestStatus.failed
         if status == FieldComparisonStatus.error:
-            return TestResult.error
+            return TestStatus.error
         if status == FieldComparisonStatus.missing_reference \
                 and not self._opts.ignore_missing_reference_fields:
-            return TestResult.failed
+            return TestStatus.failed
         if status == FieldComparisonStatus.missing_source \
                 and not self._opts.ignore_missing_source_fields:
-            return TestResult.failed
-        return TestResult.skipped
+            return TestStatus.failed
+        return TestStatus.skipped
 
-    def _status_string(self, status: TestResult) -> str:
-        if status == TestResult.passed:
+    def _status_string(self, status: TestStatus) -> str:
+        if status == TestStatus.passed:
             return as_success("PASSED")
-        if status in [TestResult.failed, TestResult.error]:
+        if status in [TestStatus.failed, TestStatus.error]:
             return as_error("FAILED")
         return as_warning("SKIPPED")
 
@@ -324,11 +324,7 @@ def _get_indented(message: str, indentation_level: int = 0) -> str:
         message = "\n".join(lines)
     return message
 
-def _make_test_suite(tests: List[Test],
-                     result: Optional[TestResult],
+def _make_test_suite(tests: List[TestResult],
+                     status: Optional[TestStatus],
                      shortlog: str = "") -> TestSuite:
-    return TestSuite(
-        tests=tests,
-        result=result,
-        shortlog=shortlog
-    )
+    return TestSuite(tests=tests, status=status, shortlog=shortlog)

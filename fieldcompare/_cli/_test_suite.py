@@ -8,20 +8,20 @@ from enum import Enum, auto
 from .._field_data_comparison import FieldComparisonStatus
 
 
-class TestResult(Enum):
+class TestStatus(Enum):
     passed = auto()
     failed = auto()
     error = auto()
     skipped = auto()
 
     def __bool__(self) -> bool:
-        return self not in [TestResult.failed, TestResult.error]
+        return self not in [TestStatus.failed, TestStatus.error]
 
 
 @dataclass
-class Test:
+class TestResult:
     name: str
-    result: TestResult
+    status: TestStatus
     shortlog: str
     stdout: str
     cpu_time: Optional[float]
@@ -29,28 +29,28 @@ class Test:
 
 class TestSuite:
     def __init__(self,
-                 tests: List[Test],
+                 tests: List[TestResult],
                  name: Optional[str] = None,
-                 result: Optional[TestResult] = None,
+                 status: Optional[TestStatus] = None,
                  shortlog: str = "",
                  stdout: str = "",
                  cpu_time: Optional[float] = None) -> None:
         self._tests = tests
         self._name = name
-        self._result = result
+        self._status = status
         self._shortlog = shortlog
         self._stdout = stdout
         self._cpu_time = cpu_time
 
     def __bool__(self) -> bool:
-        def _is_true(result: TestResult) -> bool:
-            return result not in [TestResult.failed, TestResult.error]
+        def _is_true(result: TestStatus) -> bool:
+            return result not in [TestStatus.failed, TestStatus.error]
 
-        if self._result is not None:
-            return _is_true(self._result)
-        return all(_is_true(t.result) for t in self._tests)
+        if self._status is not None:
+            return _is_true(self._status)
+        return all(_is_true(t.status) for t in self._tests)
 
-    def __iter__(self) -> Iterator[Test]:
+    def __iter__(self) -> Iterator[TestResult]:
         return iter(self._tests)
 
     @property
@@ -64,10 +64,10 @@ class TestSuite:
         return len(self._tests)
 
     @property
-    def result(self) -> TestResult:
-        if self._result is not None:
-            return self._result
-        return TestResult.passed if self else TestResult.failed
+    def status(self) -> TestStatus:
+        if self._status is not None:
+            return self._status
+        return TestStatus.passed if self else TestStatus.failed
 
     @property
     def shortlog(self) -> str:
@@ -84,23 +84,23 @@ class TestSuite:
     def with_overridden(self,
                         cpu_time: Optional[float] = None,
                         name: Optional[str] = None,
-                        result: Optional[TestResult] = None,
+                        status: Optional[TestStatus] = None,
                         shortlog: Optional[str] = None) -> TestSuite:
         return TestSuite(
             tests=self._tests,
             name=(name if name is not None else self._name),
-            result=(result if result is not None else self._result),
+            status=(status if status is not None else self._status),
             shortlog=(shortlog if shortlog is not None else self._shortlog),
             stdout=self._stdout,
             cpu_time=(cpu_time if cpu_time is not None else self._cpu_time)
         )
 
 
-def to_test_result(status: FieldComparisonStatus) -> TestResult:
+def to_test_status(status: FieldComparisonStatus) -> TestStatus:
     if status.passed:
-        return TestResult.passed
+        return TestStatus.passed
     if status.failed:
-        return TestResult.failed
+        return TestStatus.failed
     if status.error:
-        return TestResult.error
-    return TestResult.skipped
+        return TestStatus.error
+    return TestStatus.skipped

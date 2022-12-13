@@ -15,10 +15,10 @@ from .._common import _measure_time
 from ._junit import as_junit_xml_element
 from ._common import (
     CLILogger,
+    PatternFilter,
     _bool_to_exit_code,
     _parse_field_tolerances,
     _log_suite_summary,
-    PatternFilter,
     _include_all,
     _exclude_all
 )
@@ -32,7 +32,7 @@ from ._file_mode import (
 )
 
 from ._deduce_domain import is_supported_file
-from ._test_suite import TestSuite, TestResult, Test
+from ._test_suite import TestSuite, TestResult, TestStatus
 from ._file_comparison import FileComparisonOptions, FileComparison
 
 
@@ -201,7 +201,7 @@ def _do_file_comparisons(args,
                 TestSuite(
                     tests=[],
                     name=filename,
-                    result=TestResult.error,
+                    status=TestStatus.error,
                     shortlog="Exception raised",
                     stdout=output
                 )
@@ -211,7 +211,7 @@ def _do_file_comparisons(args,
 
 
 def _get_failing_field_test_names(test_suite: TestSuite) -> Optional[str]:
-    names = [t.name for t in test_suite if not t.result]
+    names = [t.name for t in test_suite if not t.status]
     if not names:
         return None
 
@@ -303,13 +303,13 @@ def _add_skipped_file_comparisons(comparisons: FileComparisons,
                                   names: List[str],
                                   reason: str,
                                   treat_as_failure: bool = False):
-    status = TestResult.failed if treat_as_failure else TestResult.skipped
+    status = TestStatus.failed if treat_as_failure else TestStatus.skipped
     for name in names:
         # insert a dummy testcase such that junit readers show a (skipped/failed) test
         suite = TestSuite(
-            tests=[Test("file comparison", status, shortlog=reason, stdout="", cpu_time=None)],
+            tests=[TestResult("file comparison", status, shortlog=reason, stdout="", cpu_time=None)],
             name=name,
-            result=status,
+            status=status,
             shortlog=reason
         )
         comparisons.append((name, datetime.now().isoformat(), suite))

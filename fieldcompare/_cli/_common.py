@@ -12,7 +12,7 @@ from .._format import (
 )
 
 from ._logger import CLILogger
-from ._test_suite import TestResult
+from ._test_suite import TestStatus
 
 
 class PatternFilter:
@@ -80,9 +80,9 @@ def _log_suite_summary(suite,
     def _log_line(label: str, report: str, verbosity_level: int = 1) -> None:
         logger.log(f"[{label}] {report}\n", verbosity_level=verbosity_level)
 
-    passed = [t for t in suite if t.result == TestResult.passed]
-    skipped = [t for t in suite if t.result == TestResult.skipped]
-    failed = [t for t in suite if t.result in [TestResult.failed, TestResult.error]]
+    passed = [t for t in suite if t.status == TestStatus.passed]
+    skipped = [t for t in suite if t.status == TestStatus.skipped]
+    failed = [t for t in suite if t.status in [TestStatus.failed, TestStatus.error]]
 
     num_comparisons = len(passed) + len(failed)
     _log_line(highlighted(_padded("="*7)), f"{_counted(num_comparisons)} performed")
