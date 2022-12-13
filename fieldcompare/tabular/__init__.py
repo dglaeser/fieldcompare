@@ -16,7 +16,10 @@ def is_tabular_data_sequence(filename: str) -> bool:
 
 def read(filename: str, delimiter: str = ",", use_names: bool = True) -> TabularFields:
     """Read the tabular data from the given file"""
-    ext = splitext(filename)[1]
-    if ext == ".csv":
-        return CSVFieldReader(delimiter=delimiter, use_names=use_names).read(filename)
-    raise NotImplementedError(f"No support for tabular data I/O for files with extension '{ext}'")
+    try:
+        ext = splitext(filename)[1]
+        if ext == ".csv":
+            return CSVFieldReader(delimiter=delimiter, use_names=use_names).read(filename)
+    except Exception as e:
+        raise IOError(f"Error reading tabular data file '{filename}': {e}")
+    raise IOError(f"Unsupported tabular data file '{filename}'")
