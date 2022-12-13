@@ -22,7 +22,7 @@ from ..mesh import (
     permutations as mesh_permutations
 )
 
-from .._comparisons import (
+from .._field_data_comparison import (
     FieldDataComparison,
     FieldComparisonSuite,
     FieldComparisonResult,

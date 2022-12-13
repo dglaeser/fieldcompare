@@ -5,7 +5,7 @@ from typing import Optional, List, Iterator
 from dataclasses import dataclass
 from enum import Enum, auto
 
-from .._comparisons import FieldComparisonStatus
+from .._field_data_comparison import FieldComparisonStatus
 
 
 class TestResult(Enum):

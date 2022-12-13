@@ -17,7 +17,7 @@ from ._matching import (
     find_matching_file_names
 )
 
-from ._comparisons import (
+from ._field_data_comparison import (
     FieldDataComparison,
     FieldComparisonStatus,
     FieldComparisonResult,
