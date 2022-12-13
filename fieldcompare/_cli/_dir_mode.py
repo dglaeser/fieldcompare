@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from xml.etree.ElementTree import ElementTree, Element
 
 from .._matching import find_matching_file_names
-from .._format import highlighted, get_status_string
+from .._format import highlighted, as_warning, get_status_string
 from .._common import _measure_time
 
 from ._junit import as_junit_xml_element
@@ -189,7 +189,16 @@ def _do_file_comparisons(args,
                 shortlog=_get_failing_field_test_names(test_suite)
             )))
             sub_logger.log(
-                f"File comparison {get_status_string(bool(test_suite))}\n", verbosity_level=1
+                "File comparison {} with {} {} / {} {} / {} {}\n".format(
+                    get_status_string(bool(test_suite)),
+                    sum(1 for t in test_suite if t.status == TestStatus.passed),
+                    get_status_string(True),
+                    sum(1 for t in test_suite if not t.status),
+                    get_status_string(False),
+                    sum(1 for t in test_suite if t.status and t.status != TestStatus.passed),
+                    as_warning("SKIPPED")
+                ),
+                verbosity_level=1
             )
         except Exception as e:
             output = f"Error upon file comparison: {str(e)}"
