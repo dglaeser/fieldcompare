@@ -1,22 +1,8 @@
-"""Defines the interfaces used by fieldcompare"""
+"""Definitions of the interfaces used by fieldcompare"""
 
 from __future__ import annotations
 from typing import Protocol, Callable, Iterator, Any
 from ._array import Array
-
-
-class Field(Protocol):
-    """Represents a single field consisting of a name and field values"""
-
-    @property
-    def name(self) -> str:
-        """Return the name of the field"""
-        ...
-
-    @property
-    def values(self) -> Array:
-        """Return the field values"""
-        ...
 
 
 class PredicateResult(Protocol):
@@ -38,6 +24,20 @@ class Domain(Protocol):
     """Represents a domain on which fields are defined"""
     def equals(self, other: Domain) -> PredicateResult:
         """Check if this domain is equal to the given domain"""
+        ...
+
+
+class Field(Protocol):
+    """Represents a single field consisting of a name and field values"""
+
+    @property
+    def name(self) -> str:
+        """Return the name of the field"""
+        ...
+
+    @property
+    def values(self) -> Array:
+        """Return the field values"""
         ...
 
 
