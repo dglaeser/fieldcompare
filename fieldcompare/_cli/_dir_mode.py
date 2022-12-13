@@ -307,7 +307,7 @@ def _add_skipped_file_comparisons(comparisons: FileComparisons,
     for name in names:
         # insert a dummy testcase such that junit readers show a (skipped/failed) test
         suite = TestSuite(
-            tests=[TestResult("file comparison", status, shortlog=reason, stdout="", cpu_time=None)],
+            tests=[TestResult("file comparison", status, shortlog=reason, stdout=reason, cpu_time=None)],
             name=name,
             status=status,
             shortlog=reason
