@@ -1,7 +1,6 @@
 """Logging output formatting helpers"""
 
-from typing import List, Optional
-from textwrap import indent
+from typing import Optional
 from enum import Enum
 
 import colorama
@@ -96,11 +95,3 @@ def as_success(text: str) -> str:
 
 def highlighted(text: str) -> str:
     return make_colored(text, style=TextStyle.bright)
-
-
-def make_list_string(names: List[str]) -> str:
-    return indent("\n".join(names), "- ")
-
-
-def make_indented_list_string(names: List[str]) -> str:
-    return indent(make_list_string(names), "  ")

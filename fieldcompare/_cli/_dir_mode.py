@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from xml.etree.ElementTree import ElementTree, Element
 
 from .._matching import find_matching_file_names
-from .._format import as_error, as_warning, highlighted, get_status_string, make_indented_list_string
+from .._format import highlighted, get_status_string
 from .._common import _measure_time
 
 from ._junit import as_junit_xml_element
@@ -98,7 +98,6 @@ def _run(args: dict, in_logger: CLILogger) -> int:
         args, categories.files_to_compare, logger
     )
 
-    _log_unhandled_files(args, categories, logger)
     _add_unhandled_comparisons(args, categories, comparisons)
 
     if args["junit_xml"] is not None:
@@ -223,53 +222,6 @@ def _get_failing_field_test_names(test_suite: TestSuite) -> Optional[str]:
             return names_string
         names_string = n if not names_string else ";".join([names_string, n])
     return names_string
-
-
-def _log_unhandled_files(args, categories, logger) -> None:
-    _log_unhandled_file_list(
-        _missing_res_or_ref_message("result", not args["ignore_missing_source_files"]),
-        categories.missing_sources,
-        logger,
-        verbosity_level=1
-    )
-    _log_unhandled_file_list(
-        _missing_res_or_ref_message("reference", not args["ignore_missing_reference_files"]),
-        categories.missing_references,
-        logger,
-        verbosity_level=1
-    )
-    _log_unhandled_file_list(
-        as_warning("The following files have been skipped due to unsupported format:"),
-        categories.unsupported_files,
-        logger,
-        verbosity_level=2
-    )
-    _log_unhandled_file_list(
-        as_warning("The following files have been filtered out by the wildcard patterns:"),
-        categories.filtered_files,
-        logger,
-        verbosity_level=3
-    )
-
-
-def _log_unhandled_file_list(message: str,
-                             names: List[str],
-                             logger: CLILogger,
-                             verbosity_level: int) -> None:
-    if names:
-        logger.log(
-            f"\n{message}\n{make_indented_list_string(names)}\n",
-            verbosity_level=verbosity_level
-        )
-
-
-def _missing_res_or_ref_message(res_or_ref: str, is_error: bool) -> str:
-    result = f"missing {res_or_ref} files"
-    if is_error:
-        result = "Could not process " + as_error(result)
-    else:
-        result = "Ignored " + as_warning(result)
-    return result
 
 
 def _add_unhandled_comparisons(args: dict,
