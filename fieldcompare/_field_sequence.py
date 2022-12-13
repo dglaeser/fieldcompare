@@ -7,7 +7,7 @@ from .protocols import FieldData
 
 
 class FieldDataSequenceSource(Protocol):
-    """Providess access to the data of the steps of the sequence"""
+    """Provides access to the data of the steps of the sequence"""
 
     def reset(self) -> None:
         """Go back to the first step in the sequence"""
