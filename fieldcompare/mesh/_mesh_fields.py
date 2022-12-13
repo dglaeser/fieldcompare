@@ -1,4 +1,5 @@
-"""Class to represent a computational mesh"""
+"""Classes to represent fields on computational meshes"""
+
 from __future__ import annotations
 from itertools import chain
 from typing import (
