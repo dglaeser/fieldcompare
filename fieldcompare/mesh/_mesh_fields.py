@@ -10,8 +10,7 @@ from typing import (
 from .._array import Array, as_array
 from .._field import Field
 
-from .protocols import Mesh
-from ._permuted_mesh import PermutedMesh
+from .protocols import Mesh, PermutedMesh
 
 
 def _cell_type_suffix(cell_type: str) -> str:
