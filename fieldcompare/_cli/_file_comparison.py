@@ -287,16 +287,18 @@ class FileComparison:
             return stream.getvalue()
 
         shortlog = comp_result.report
-        stdout = _get_stdout()
         if comp_result.status == FieldComparisonStatus.missing_reference:
             shortlog = "missing reference field"
             stdout = shortlog
-        if comp_result.status == FieldComparisonStatus.missing_source:
+        elif comp_result.status == FieldComparisonStatus.missing_source:
             shortlog = "missing source field"
             stdout = shortlog
-        if comp_result.status == FieldComparisonStatus.filtered:
+        elif comp_result.status == FieldComparisonStatus.filtered:
             shortlog = "filtered out by given wildcard patterns"
             stdout = shortlog
+        else:
+            stdout = _get_stdout()
+
         return TestResult(
             name=comp_result.name,
             status=self._parse_status(comp_result.status),
