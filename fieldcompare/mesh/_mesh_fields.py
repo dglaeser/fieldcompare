@@ -11,6 +11,7 @@ from .._array import Array, as_array
 from .._field import Field
 
 from .protocols import Mesh, PermutedMesh
+from ..protocols import FieldData
 
 
 def _cell_type_suffix(cell_type: str) -> str:
@@ -27,7 +28,7 @@ def remove_cell_type_suffix(cell_type: str, field_name_with_suffix: str) -> str:
     return field_name_with_suffix.rstrip(_cell_type_suffix(cell_type))
 
 
-class MeshFields:
+class MeshFields(FieldData):
     """Class to represent field data on a computational mesh"""
     def __init__(self,
                  mesh: Mesh,
@@ -84,7 +85,7 @@ class MeshFields:
         return PermutedMeshFields(self, permutation)
 
 
-class PermutedMeshFields:
+class PermutedMeshFields(FieldData):
     """Exposes field data on permuted meshes"""
     def __init__(self,
                  field_data: Union[MeshFields, PermutedMeshFields],
