@@ -20,6 +20,9 @@ class FieldComparisonStatus(Enum):
     missing_reference = auto()
     filtered = auto()
 
+    def __bool__(self) -> bool:
+        return self not in [FieldComparisonStatus.failed, FieldComparisonStatus.error]
+
 
 @dataclass
 class FieldComparisonResult:
