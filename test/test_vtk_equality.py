@@ -28,8 +28,8 @@ def _compare_vtk_files(file1,
         fields1 = sort(fields1)
         fields2 = sort(fields2)
     else:
-        fields1 = fields1.permuted(permutations.sort_points).permuted(permutations.sort_cells)
-        fields2 = fields2.permuted(permutations.sort_points).permuted(permutations.sort_cells)
+        fields1 = fields1.transformed(permutations.sort_points).transformed(permutations.sort_cells)
+        fields2 = fields2.transformed(permutations.sort_points).transformed(permutations.sort_cells)
     fields1.domain.set_tolerances(abs_tol=predicate.absolute_tolerance, rel_tol=predicate.relative_tolerance)
     fields2.domain.set_tolerances(abs_tol=predicate.absolute_tolerance, rel_tol=predicate.relative_tolerance)
     result = FieldDataComparison(fields1, fields2)(

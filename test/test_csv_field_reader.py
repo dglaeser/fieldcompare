@@ -59,7 +59,7 @@ def test_csv_field_permutation():
 
     stream = _as_string_stream(reference_data)
     fields = CSVFieldReader(delimiter=",").read(stream)
-    fields_permuted = fields.permuted(
+    fields_permuted = fields.transformed(
         lambda _: Table(
             num_rows=num_rows,
             idx_map=list(reversed(list(range(num_rows))))

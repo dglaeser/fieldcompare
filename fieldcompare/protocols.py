@@ -53,8 +53,8 @@ class FieldData(Protocol):
         """Return an iterator over the contained fields"""
         ...
 
-    def permuted(self, permutation) -> FieldData:
-        """Return this field data permuted by the given permutation"""
+    def transformed(self, transformation) -> FieldData:
+        """Return this field data transformed by the given transformation"""
         ...
 
 

@@ -51,11 +51,11 @@ for comparison in comparator():
 # The sort function is shorthand for removing unconnected points,
 # then sorting the points and finally sorting the cells:
 def _manual_sort(_fields: protocols.MeshFields) -> protocols.MeshFields:
-    return _fields.permuted(
+    return _fields.transformed(
         permutations.remove_unconnected_points
-    ).permuted(
+    ).transformed(
         permutations.sort_points
-    ).permuted(
+    ).transformed(
         permutations.sort_cells
     )
 fields_sorted = _manual_sort(fields)
@@ -63,8 +63,8 @@ fields_permuted_sorted = _manual_sort(fields_permuted)
 assert FieldDataComparison(fields_sorted, fields_permuted_sorted)()
 
 # In our case here, sorting only the points does not yield equal meshes:
-fields_sorted = fields.permuted(permutations.sort_points)
-fields_permuted_sorted = fields_permuted.permuted(permutations.sort_points)
+fields_sorted = fields.transformed(permutations.sort_points)
+fields_permuted_sorted = fields_permuted.transformed(permutations.sort_points)
 assert not FieldDataComparison(fields_sorted, fields_permuted_sorted)()
 
 # Note that there are conversion functions available for meshio meshes

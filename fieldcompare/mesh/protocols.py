@@ -45,13 +45,13 @@ class Mesh(Protocol):
 
 
 @runtime_checkable
-class PermutedMesh(Mesh, Protocol):
-    def permute_point_data(self, data: Array) -> Array:
-        """Return the permuted point data"""
+class TransformedMesh(Mesh, Protocol):
+    def transform_point_data(self, data: Array) -> Array:
+        """Return the transformed point data"""
         ...
 
-    def permute_cell_data(self, cell_type: str, data: Array) -> Array:
-        """Return the permuted cell data"""
+    def transform_cell_data(self, cell_type: str, data: Array) -> Array:
+        """Return the transformed cell data"""
         ...
 
 
@@ -78,6 +78,6 @@ class MeshFields(FieldData, Protocol):
         """Return a range over cell fields + associated cell type"""
         ...
 
-    def permuted(self, permutation: Callable[[Mesh], PermutedMesh]) -> MeshFields:
-        """Permute the mesh fields with the given mesh permutation"""
+    def transformed(self, transformation: Callable[[Mesh], TransformedMesh]) -> MeshFields:
+        """Transform the mesh fields by the given mesh transformation"""
         ...

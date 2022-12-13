@@ -36,9 +36,9 @@ class TabularFields(FieldData):
             for name, values in self._fields.items()
         )
 
-    def permuted(self, permutation: Callable[[Table], Table]) -> TabularFields:
-        """Return these fields permuted by the given permutation"""
+    def transformed(self, transformation: Callable[[Table], Table]) -> TabularFields:
+        """Return these fields transformed by the given transformation"""
         return TabularFields(
-            domain=permutation(self.domain),
+            domain=transformation(self.domain),
             fields=self._fields
         )

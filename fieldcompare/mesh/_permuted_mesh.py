@@ -5,10 +5,10 @@ from .._array import Array, max_element, make_array, make_uninitialized_array
 from ..predicates import PredicateResult
 
 from ._mesh_equal import mesh_equal
-from .protocols import Mesh
+from .protocols import Mesh, TransformedMesh
 
 
-class PermutedMesh:
+class PermutedMesh(TransformedMesh):
     """Represents a permuted computational mesh"""
     def __init__(self,
                  mesh: Mesh,
@@ -48,16 +48,16 @@ class PermutedMesh:
         corner_indices = self._mesh.connectivity(cell_type)
         if self._inverse_point_permutation is not None:
             corner_indices = self._inverse_point_permutation[corner_indices]
-        return self.permute_cell_data(cell_type, corner_indices)
+        return self.transform_cell_data(cell_type, corner_indices)
 
-    def permute_point_data(self, data: Array) -> Array:
-        """Permute the given point data values"""
+    def transform_point_data(self, data: Array) -> Array:
+        """Transform the given point data values"""
         if self._point_permutation is not None:
             return data[self._point_permutation]
         return data
 
-    def permute_cell_data(self, cell_type: str, data: Array) -> Array:
-        """Permute the given cell data values"""
+    def transform_cell_data(self, cell_type: str, data: Array) -> Array:
+        """Transform the given cell data values"""
         if self._cell_permutations is not None:
             return data[self._cell_permutations[cell_type]]
         return data

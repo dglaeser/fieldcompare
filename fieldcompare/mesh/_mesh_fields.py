@@ -11,7 +11,7 @@ from typing import (
 from .._array import Array, as_array
 from .._field import Field
 
-from .protocols import Mesh, PermutedMesh
+from .protocols import Mesh, TransformedMesh
 from ..protocols import FieldData
 
 
@@ -81,21 +81,21 @@ class MeshFields(FieldData):
             for name in self._cell_data
         )
 
-    def permuted(self, permutation: Callable[[Mesh], PermutedMesh]) -> PermutedMeshFields:
-        """Return the fields as permuted by the given permutation"""
-        return PermutedMeshFields(self, permutation)
+    def transformed(self, transformation: Callable[[Mesh], TransformedMesh]) -> TransformedMeshFields:
+        """Return the fields transformed by the given transformation"""
+        return TransformedMeshFields(self, transformation)
 
 
-class PermutedMeshFields(FieldData):
-    """Exposes field data on permuted meshes"""
+class TransformedMeshFields(FieldData):
+    """Exposes field data on transformed meshes"""
     def __init__(self,
-                 field_data: Union[MeshFields, PermutedMeshFields],
-                 permutation: Callable[[Mesh], PermutedMesh]) -> None:
+                 field_data: Union[MeshFields, TransformedMeshFields],
+                 permutation: Callable[[Mesh], TransformedMesh]) -> None:
         self._field_data = field_data
         self._mesh = permutation(self._field_data.domain)
 
     @property
-    def domain(self) -> PermutedMesh:
+    def domain(self) -> TransformedMesh:
         """Return the mesh on which these fields are defined"""
         return self._mesh
 
@@ -124,18 +124,18 @@ class PermutedMeshFields(FieldData):
             for field, cell_type in self._field_data.cell_fields_types
         )
 
-    def permuted(self, permutation: Callable[[Mesh], PermutedMesh]) -> PermutedMeshFields:
-        """Return the fields as permuted by the given permutation"""
-        return PermutedMeshFields(self, permutation)
+    def transformed(self, transformation: Callable[[Mesh], TransformedMesh]) -> TransformedMeshFields:
+        """Return the fields transformed by the given transformation"""
+        return TransformedMeshFields(self, transformation)
 
     def _get_permuted_point_field(self, field: Field) -> Field:
         return Field(
             field.name,
-            self._mesh.permute_point_data(field.values)
+            self._mesh.transform_point_data(field.values)
         )
 
     def _get_permuted_cell_field(self, cell_type: str, field: Field) -> Field:
         return Field(
             field.name,
-            self._mesh.permute_cell_data(cell_type, field.values)
+            self._mesh.transform_cell_data(cell_type, field.values)
         )

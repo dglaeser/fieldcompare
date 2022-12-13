@@ -204,8 +204,8 @@ class FileComparison:
         )
         def _permute(mesh_fields):
             if not self._opts.disable_unconnected_points_removal:
-                mesh_fields = mesh_fields.permuted(mesh_permutations.remove_unconnected_points)
-            return mesh_fields.permuted(mesh_permutations.sort_points)
+                mesh_fields = mesh_fields.transformed(mesh_permutations.remove_unconnected_points)
+            return mesh_fields.transformed(mesh_permutations.sort_points)
         res_fields = _permute(res_fields)
         ref_fields = _permute(ref_fields)
         suite = self._run_field_data_comparison(res_fields, ref_fields)
@@ -216,8 +216,8 @@ class FileComparison:
             "Meshes did not compare equal. Retrying with sorted cells...\n",
             verbosity_level=1
         )
-        res_fields = res_fields.permuted(mesh_permutations.sort_cells)
-        ref_fields = ref_fields.permuted(mesh_permutations.sort_cells)
+        res_fields = res_fields.transformed(mesh_permutations.sort_cells)
+        ref_fields = ref_fields.transformed(mesh_permutations.sort_cells)
         suite = self._run_field_data_comparison(res_fields, ref_fields)
         if suite.domain_equality_check:
             return self._to_test_suite(suite)
