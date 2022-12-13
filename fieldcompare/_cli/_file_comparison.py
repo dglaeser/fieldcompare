@@ -274,7 +274,7 @@ class FileComparison:
                 f"Predicate: {result.predicate if result.predicate else 'n/a'}",
                 indentation_level=2
             ),
-            verbosity_level=2
+            verbosity_level=(3 if result.status else 1)
         )
 
     def _to_test_suite(self, suite: FieldComparisonSuite) -> TestSuite:
