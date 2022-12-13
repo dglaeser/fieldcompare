@@ -20,7 +20,7 @@ def as_junit_xml_element(suite: TestSuite, timestamp: str) -> Element:
 
     SubElement(xml_tree, "properties")  # e.g. environment settings... currently, we have nothing
     for test in suite:
-        _add_test_case(xml_tree, test)
+        _add_test_case(xml_tree, test, _as_string_or("n/a", suite.name))
 
     return xml_tree
 
@@ -31,10 +31,10 @@ def _as_string_or(alternative: str, input) -> str:
     return alternative
 
 
-def _add_test_case(test_suite: Element, test: TestResult) -> None:
+def _add_test_case(test_suite: Element, test: TestResult, classname: str) -> None:
     testcase = SubElement(test_suite, "testcase")
     testcase.set("name", test.name)
-    testcase.set("classname", "n/a")
+    testcase.set("classname", classname)
     testcase.set("status", str(test.status).replace("TestStatus.", ""))
     testcase.set("time", _as_string_or("n/a", test.cpu_time))
 

@@ -33,7 +33,7 @@ from ._file_mode import (
 
 from ._deduce_domain import is_supported_file
 from ._test_suite import TestSuite, TestResult, TestStatus
-from ._file_comparison import FileComparisonOptions, FileComparison
+from ._file_comparison import FileComparisonOptions, FileComparison, _suite_name
 
 
 def _add_arguments(parser: ArgumentParser):
@@ -186,7 +186,7 @@ def _do_file_comparisons(args,
             cpu_time, test_suite = _measure_time(comparator)(res_file, ref_file)
             file_comparisons.append((filename, timestamp, test_suite.with_overridden(
                 cpu_time=cpu_time,
-                name=res_file,
+                name=_suite_name(res_file),
                 shortlog=_get_failing_field_test_names(test_suite)
             )))
             sub_logger.log(

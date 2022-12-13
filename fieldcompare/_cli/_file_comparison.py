@@ -1,5 +1,6 @@
 """Class to compare two files using the CLI options"""
 
+from pathlib import Path
 from typing import Union, List, Callable, TextIO, TypeVar, Optional
 from dataclasses import dataclass
 from io import StringIO
@@ -62,12 +63,14 @@ class FileComparison:
             return _make_test_suite(
                 tests=[],
                 status=TestStatus.error,
+                name=_suite_name(res_file),
                 shortlog="Non-matching file types: '{ref_file_type}' / '{res_file_type}"
             )
         if res_file_type.domain_type == DomainType.unknown:
             return _make_test_suite(
                 tests=[],
                 status=TestStatus.error,
+                name=_suite_name(res_file),
                 shortlog="Unsupported file type"
             )
         return self._compare_files(res_file, ref_file, res_file_type)
@@ -124,6 +127,7 @@ class FileComparison:
             res_fields = _read(res_file)
         except IOError as e:
             return _make_test_suite(
+                name=_suite_name(res_file),
                 tests=[],
                 status=TestStatus.error,
                 shortlog=f"Error reading fields from '{res_file}': {e}"
@@ -133,11 +137,12 @@ class FileComparison:
             ref_fields = _read(ref_file)
         except IOError as e:
             return _make_test_suite(
+                name=_suite_name(res_file),
                 tests=[],
                 status=TestStatus.error,
                 shortlog=f"Error reading reference file '{res_file}': {e}"
             )
-        return comparison_function(res_fields, ref_fields)
+        return comparison_function(res_fields, ref_fields).with_overridden(name=_suite_name(res_file))
 
     def _run_mesh_sequence_comparison(self,
                                       res_sequence: FieldDataSequence,
@@ -326,5 +331,12 @@ def _get_indented(message: str, indentation_level: int = 0) -> str:
 
 def _make_test_suite(tests: List[TestResult],
                      status: Optional[TestStatus],
+                     name: Optional[str] = None,
                      shortlog: str = "") -> TestSuite:
-    return TestSuite(tests=tests, status=status, shortlog=shortlog)
+    return TestSuite(name=name, tests=tests, status=status, shortlog=shortlog)
+
+def _suite_name(filename: str) -> str:
+    path = Path(filename)
+    if len(path.parts) == 1:
+        return filename
+    return str(Path(*path.parts[1:]))
