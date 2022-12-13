@@ -1,4 +1,4 @@
-from fieldcompare.mesh import Mesh, PermutedMesh, sort_mesh
+from fieldcompare.mesh import Mesh, PermutedMesh
 from fieldcompare.mesh import permutations
 
 
@@ -46,21 +46,3 @@ def test_identity_permuted_mesh():
 
     permuted_mesh = PermutedMesh(mesh=mesh)
     _check_mesh_identity(mesh, permuted_mesh)
-
-
-def test_uniquely_permuted_mesh():
-    mesh = Mesh(
-        points=[[4.0 - float(i), 0.0] for i in range(5)],
-        connectivity=([("line", [[2, 1], [0, 1]])])
-    )
-
-    unique = sort_mesh(mesh)
-    unique_2 = permutations.sort_cells(
-        permutations.sort_points(
-            permutations.remove_unconnected_points(mesh)
-        )
-    )
-
-    assert len(unique.points) == 3
-    assert len(unique_2.points) == 3
-    _check_mesh_identity(unique, unique_2)

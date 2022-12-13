@@ -16,12 +16,3 @@ def sort(mesh_fields: protocols.MeshFields) -> protocols.MeshFields:
     ).permuted(
         permutations.sort_cells
     )
-
-
-def sort_mesh(mesh: protocols.Mesh) -> PermutedMesh:
-    """Sort the given mesh to arrive at a unique representation"""
-    return permutations.sort_cells(
-        permutations.sort_points(
-            permutations.remove_unconnected_points(mesh)
-        )
-    )
