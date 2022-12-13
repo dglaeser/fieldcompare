@@ -8,12 +8,8 @@ results against previously obtained results.
 
 from .__about__ import __version__
 
-from ._field import (
-    Field,
-    FieldInterface,
-    FieldContainer,
-    FieldContainerInterface
-)
+from ._field import Field
+from ._field_sequence import FieldDataSequence
 
 from ._matching import (
     find_matches,
@@ -27,5 +23,3 @@ from ._comparisons import (
     FieldComparisonResult,
     FieldComparisonSuite
 )
-
-from ._field_sequence import FieldDataSequence
