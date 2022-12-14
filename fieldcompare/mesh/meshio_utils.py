@@ -1,9 +1,12 @@
 """Utility functions for interoperability with meshio"""
 
 from typing import Dict, List
-from meshio import Mesh as MeshIOMesh
 from numpy.typing import ArrayLike
 
+from meshio import Mesh as MeshIOMesh
+from meshio._vtk_common import vtk_to_meshio_type, meshio_to_vtk_type  # type: ignore[import]
+
+from ._vtk._helpers import _VTK_CELL_TYPE_STR_TO_INDEX, _VTK_CELL_TYPE_TO_STR
 from ._mesh_fields import MeshFields, remove_cell_type_suffix
 from ._mesh import Mesh
 from .protocols import MeshFields as MeshFieldsInterface
@@ -14,10 +17,7 @@ def from_meshio(mesh: MeshIOMesh) -> MeshFields:
     return MeshFields(
         mesh=Mesh(
             mesh.points,
-            (
-                (block.type, block.data)
-                for block in mesh.cells
-            )
+            ((_from_meshio_cell_type(block.type), block.data) for block in mesh.cells)
         ),
         point_data=mesh.point_data,
         cell_data=mesh.cell_data
@@ -36,7 +36,16 @@ def to_meshio(mesh_fields: MeshFieldsInterface) -> MeshIOMesh:
 
     return MeshIOMesh(
         points=mesh_fields.domain.points,
-        cells={ct: mesh_fields.domain.connectivity(ct) for ct in types},
+        cells={_to_meshio_cell_type(ct): mesh_fields.domain.connectivity(ct) for ct in types},
         point_data={field.name: field.values for field in mesh_fields.point_fields},
         cell_data={name: data for name, data in cell_data.items()}
     )
+
+
+def _from_meshio_cell_type(cell_type: str) -> str:
+    return _VTK_CELL_TYPE_TO_STR[meshio_to_vtk_type[cell_type]]
+
+def _to_meshio_cell_type(cell_type: str) -> str:
+    if cell_type in meshio_to_vtk_type:
+        return cell_type
+    return vtk_to_meshio_type[_VTK_CELL_TYPE_STR_TO_INDEX[cell_type]]
