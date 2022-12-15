@@ -10,11 +10,14 @@ readme = "README.md"
 license = {file = "LICENSE.txt"}
 keywords = ["data comparison", "regression test"]
 requires-python = ">=3.8"
-dependencies = ["meshio[all]>=5.3", "colorama"]
+dependencies = ["numpy", "colorama"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Programming Language :: Python"
 ]
+
+[project.optional-dependencies]
+all = ["meshio[all]>=5.3"]
 
 [project.urls]
 homepage = "https://gitlab.com/dglaeser/fieldcompare"
@@ -51,6 +54,7 @@ commands =
 
 [testenv:coverage]
 deps =
+  -rrequirements.txt
   pytest-cov
 commands =
   pytest --cov-report xml:coverage.xml \
