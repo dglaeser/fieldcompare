@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<VTKFile type="UnstructuredGrid" version="2.0" header_type="UInt32" byte_order="LittleEndian" compressor="vtkZLibDataCompressor">
+  <UnstructuredGrid>
+    <Piece NumberOfPoints="9" NumberOfCells="3">
+      <PointData>
+        <DataArray Name="ptensor_custom_prec" type="Float64" format="appended" NumberOfComponents="9" offset="0                   "/>
+        <DataArray Name="pvector_custom_prec" type="Float64" format="appended" NumberOfComponents="3" offset="168                 "/>
+        <DataArray Name="pscalar_custom_prec" type="Float64" format="appended" NumberOfComponents="1" offset="312                 "/>
+        <DataArray Name="ptensor" type="Float64" format="appended" NumberOfComponents="9" offset="424                 "/>
+        <DataArray Name="pvector" type="Float64" format="appended" NumberOfComponents="3" offset="592                 "/>
+        <DataArray Name="pscalar" type="Float64" format="appended" NumberOfComponents="1" offset="736                 "/>
+      </PointData>
+      <CellData>
+        <DataArray Name="cvector_custom_prec" type="Float64" format="appended" NumberOfComponents="3" offset="848                 "/>
+        <DataArray Name="cscalar_custom_prec" type="Float64" format="appended" NumberOfComponents="1" offset="936                 "/>
+        <DataArray Name="ctensor" type="Float64" format="appended" NumberOfComponents="9" offset="1008                "/>
+        <DataArray Name="ctensor_custom_prec" type="Float64" format="appended" NumberOfComponents="9" offset="1108                "/>
+        <DataArray Name="cvector" type="Float64" format="appended" NumberOfComponents="3" offset="1208                "/>
+        <DataArray Name="cscalar" type="Float64" format="appended" NumberOfComponents="1" offset="1296                "/>
+      </CellData>
+      <Points>
+        <DataArray Name="Coordinates" type="Float64" format="appended" NumberOfComponents="3" offset="1368                "/>
+      </Points>
+      <Cells>
+        <DataArray Name="connectivity" type="UInt32" format="appended" NumberOfComponents="1" offset="1456                "/>
+        <DataArray Name="offsets" type="UInt32" format="appended" NumberOfComponents="1" offset="1520                "/>
+        <DataArray Name="types" type="UInt8" format="appended" NumberOfComponents="1" offset="1568                "/>
+      </Cells>
+    </Piece>
+  </UnstructuredGrid>
+  <AppendedData encoding="base64">
+ _AQAAAACAAACIAgAAagAAAA==eJwTXZF6M+SKgoMolGaAAlEc4kMFrBE4HDRLX8kBRhMSxwUmiEzv4GkRdIDRhMRxgXb286evGYo7wGhC4rjA/aSrqr2nuRxgNCFxXADifyEHGE1IHBfIsexadXeZsAOMJiSOCwAAVI1chQA=AQAAAACAAADYAAAAVwAAAA==eJwTXZF6M+SKgoMolGYgE6wROBw0S1/JAUbDxCeITO/gaRF0gNEw8Xb286evGYo7wGiY+P2kq6q9p7kcYDSq+UIOMBomnmPZteruMmEHGA0TBwAaDS5DAA==AQAAAACAAABIAAAAQAAAAA==eJwTXZF6M+SKggMDGlgjcDholr6SwwSR6R08LYIO7eznT18zFHe4n3RVtfc0lwNEXsghx7Jr1d1lwg4AyjUXIgA=AQAAAACAAACIAgAAagAAAA==eJwTXZF6M+SKgoMolGaAAlEc4kMFrBE4HDRLX8kBRhMSxwUmiEzv4GkRdIDRhMRxgXb286evGYo7wGhC4rjA/aSrqr2nuRxgNCFxXADifyEHGE1IHBfIsexadXeZsAOMJiSOCwAAVI1chQA=AQAAAACAAADYAAAAVwAAAA==eJwTXZF6M+SKgoMolGYgE6wROBw0S1/JAUbDxCeITO/gaRF0gNEw8Xb286evGYo7wGiY+P2kq6q9p7kcYDSq+UIOMBomnmPZteruMmEHGA0TBwAaDS5DAA==AQAAAACAAABIAAAAQAAAAA==eJwTXZF6M+SKggMDGlgjcDholr6SwwSR6R08LYIO7eznT18zFHe4n3RVtfc0lwNEXsghx7Jr1d1lwg4AyjUXIgA=AQAAAACAAABIAAAALQAAAA==eJwTXZF6M+SKgIMolGaAAq/863+X98o5wGiY+F6f6gtzf0o4wGiYOACe8xepAA==AQAAAACAAAAYAAAAIQAAAA==eJwTXZF6M+SKgINX/vW/y3vlHPb6VF+Y+1PCAQCRFwvVAA==AQAAAACAAADYAAAANgAAAA==eJwTXZF6M+SKgIMolGaAAlEc4riAV/71v8t75RxgNCFxXGCvT/WFuT8lHGA0IXFcAAAqHi9RAA==AQAAAACAAADYAAAANgAAAA==eJwTXZF6M+SKgIMolGaAAlEc4riAV/71v8t75RxgNCFxXGCvT/WFuT8lHGA0IXFcAAAqHi9RAA==AQAAAACAAABIAAAALQAAAA==eJwTXZF6M+SKgIMolGaAAq/863+X98o5wGiY+F6f6gtzf0o4wGiYOACe8xepAA==AQAAAACAAAAYAAAAIQAAAA==eJwTXZF6M+SKgINX/vW/y3vlHPb6VF+Y+1PCAQCRFwvVAA==AQAAAACAAADYAAAALwAAAA==eJxjYACBD/YMeAEheThwwC7MAhV/YY9d/AKaOBtU/AGaOMwdGO5xQBcHALAJCo8AAQAAAACAAAAwAAAAHQAAAA==eJxjYoAAdiBmRGJzQDEzELMCMRsQswAxAAScADQAAQAAAACAAAAMAAAAEQAAAA==eJxjYWBgYAdiHiAGAACkABgAAQAAAACAAAADAAAACwAAAA==eJzjZGUHAAAvABYA
+
+  </AppendedData>
+</VTKFile>

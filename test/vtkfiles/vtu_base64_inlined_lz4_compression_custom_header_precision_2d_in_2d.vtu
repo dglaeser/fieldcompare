@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<VTKFile type="UnstructuredGrid" version="2.0" header_type="UInt32" byte_order="LittleEndian" compressor="vtkLZ4DataCompressor">
+  <UnstructuredGrid>
+    <Piece NumberOfPoints="9" NumberOfCells="3">
+      <PointData>
+        <DataArray Name="ptensor_custom_prec" type="Float64" format="binary" NumberOfComponents="9">
+AQAAAACAAACIAgAAvQAAAA==hBWoZdlU1CBACAATAAEABBAABAgAAxcADwIAloSsEMNSmi8iQAgABLkABBAABAgABBgADwIABYSQFJeIDIQRQAgABCgABBAABAgABBgADwIABYSHB8/L1jEXQAgABCgABBAABAgABBgADwIABYTfYtUljcsKQAgABCgABBAABAgABBgADwIABQIAARMSIAEkEkAoAA8YAAUPAgAFhGw5iqrdphNACAAEKAAEEAAECAAEGAAPAgAAUAAAAAAAAA==
+        </DataArray>
+        <DataArray Name="pvector_custom_prec" type="Float64" format="binary" NumberOfComponents="3">
+AQAAAACAAADYAAAAZwAAAA==hBWoZdlU1CBACAAfAAEAJISsEMNSmi8iQAgABEcAhJAUl4gMhBFACAAEGACEhwfPy9YxF0AIAAQYAITfYtUljcsKQAgABBgAAlgAExJgABUSGACEbDmKqt2mE0AIAIAAAAAAAAAAAAA=
+        </DataArray>
+        <DataArray Name="pscalar_custom_prec" type="Float64" format="binary" NumberOfComponents="1">
+AQAAAACAAABIAAAAOwAAAA==mxWoZdlU1CBAAAEA8hGsEMNSmi8iQJAUl4gMhBFAhwfPy9YxF0DfYtUljcsKQCAAoBJAbDmKqt2mE0AA
+        </DataArray>
+        <DataArray Name="ptensor" type="Float64" format="binary" NumberOfComponents="9">
+AQAAAACAAACIAgAAvQAAAA==hBWoZdlU1CBACAATAAEABBAABAgAAxcADwIAloSsEMNSmi8iQAgABLkABBAABAgABBgADwIABYSQFJeIDIQRQAgABCgABBAABAgABBgADwIABYSHB8/L1jEXQAgABCgABBAABAgABBgADwIABYTfYtUljcsKQAgABCgABBAABAgABBgADwIABQIAARMSIAEkEkAoAA8YAAUPAgAFhGw5iqrdphNACAAEKAAEEAAECAAEGAAPAgAAUAAAAAAAAA==
+        </DataArray>
+        <DataArray Name="pvector" type="Float64" format="binary" NumberOfComponents="3">
+AQAAAACAAADYAAAAZwAAAA==hBWoZdlU1CBACAAfAAEAJISsEMNSmi8iQAgABEcAhJAUl4gMhBFACAAEGACEhwfPy9YxF0AIAAQYAITfYtUljcsKQAgABBgAAlgAExJgABUSGACEbDmKqt2mE0AIAIAAAAAAAAAAAAA=
+        </DataArray>
+        <DataArray Name="pscalar" type="Float64" format="binary" NumberOfComponents="1">
+AQAAAACAAABIAAAAOwAAAA==mxWoZdlU1CBAAAEA8hGsEMNSmi8iQJAUl4gMhBFAhwfPy9YxF0DfYtUljcsKQCAAoBJAbDmKqt2mE0AA
+        </DataArray>
+      </PointData>
+      <CellData>
+        <DataArray Name="cvector_custom_prec" type="Float64" format="binary" NumberOfComponents="3">
+AQAAAACAAABIAAAAMgAAAA==hBWoZdlU1BBACAATAAEAhEpv1/2njR5ACAADFwCUAL1Me9Cd+RhACACAAAAAAAAAAAAA
+        </DataArray>
+        <DataArray Name="cscalar_custom_prec" type="Float64" format="binary" NumberOfComponents="1">
+AQAAAACAAAAYAAAAGgAAAA==8AkVqGXZVNQQQEpv1/2njR5AvUx70J35GEAA
+        </DataArray>
+        <DataArray Name="ctensor" type="Float64" format="binary" NumberOfComponents="9">
+AQAAAACAAADYAAAAWAAAAA==hBWoZdlU1BBACAATAAEABBAABAgAAxcADwIABoRKb9f9p40eQAgABCkABBAABAgABBgADwIABYS9THvQnfkYQAgABCgABBAABAgABBgADwIAAFAAAAAAAAA=
+        </DataArray>
+        <DataArray Name="ctensor_custom_prec" type="Float64" format="binary" NumberOfComponents="9">
+AQAAAACAAADYAAAAWAAAAA==hBWoZdlU1BBACAATAAEABBAABAgAAxcADwIABoRKb9f9p40eQAgABCkABBAABAgABBgADwIABYS9THvQnfkYQAgABCgABBAABAgABBgADwIAAFAAAAAAAAA=
+        </DataArray>
+        <DataArray Name="cvector" type="Float64" format="binary" NumberOfComponents="3">
+AQAAAACAAABIAAAAMgAAAA==hBWoZdlU1BBACAATAAEAhEpv1/2njR5ACAADFwCUAL1Me9Cd+RhACACAAAAAAAAAAAAA
+        </DataArray>
+        <DataArray Name="cscalar" type="Float64" format="binary" NumberOfComponents="1">
+AQAAAACAAAAYAAAAGgAAAA==8AkVqGXZVNQQQEpv1/2njR5AvUx70J35GEAA
+        </DataArray>
+      </CellData>
+      <Points>
+        <DataArray Name="Coordinates" type="Float64" format="binary" NumberOfComponents="3">
+AQAAAACAAADYAAAASQAAAA==EQABACHwPwcADwIABg8gAA0FAgAVQAoACQIAEwQYABvoaAAEGAAb0BgAEwYwABvgGAAEiAAECAAFAgADMACg8D8AAAAAAAAAAAA=
+        </DataArray>
+      </Points>
+      <Cells>
+        <DataArray Name="connectivity" type="UInt32" format="binary" NumberOfComponents="1">
+AQAAAACAAAAwAAAAJgAAAA==IgIAAQBSBwAAAAELAAEMABMIBADwAQMAAAAFAAAABgAAAAQAAAAA
+        </DataArray>
+        <DataArray Name="offsets" type="UInt32" format="binary" NumberOfComponents="1">
+AQAAAACAAAAMAAAADQAAAA==wAQAAAAHAAAADAAAAAA=
+        </DataArray>
+        <DataArray Name="types" type="UInt8" format="binary" NumberOfComponents="1">
+AQAAAACAAAADAAAABAAAAA==MAkFBwA=
+        </DataArray>
+      </Cells>
+    </Piece>
+  </UnstructuredGrid>
+</VTKFile>
