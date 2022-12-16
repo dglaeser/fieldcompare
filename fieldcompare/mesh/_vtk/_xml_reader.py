@@ -151,8 +151,11 @@ class VTKXMLReader(ABC):
 
     def _get_inline_ascii_data_array_values(self, xml: ElementTree.Element) -> np.ndarray:
         assert xml.text is not None
-        dtype = vtk_type_to_dtype(xml.attrib["type"])
-        return np.array([dtype.type(v) for v in xml.text.strip("\n").strip().split()])
+        return np.fromstring(
+            xml.text.strip("\n").strip(),
+            dtype=vtk_type_to_dtype(xml.attrib["type"]),
+            sep=" "
+        )
 
     def _get_inline_binary_data_array_values(self, xml: ElementTree.Element) -> np.ndarray:
         assert xml.text is not None
