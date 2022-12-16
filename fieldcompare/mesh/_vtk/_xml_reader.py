@@ -8,7 +8,7 @@ from .._mesh import Mesh
 from .._mesh_fields import MeshFields
 from ._appendix import VTKXMLAppendix
 from ._helpers import vtk_type_to_dtype
-from ._decoders import Base64Decoder
+from ._encoders import Base64Encoder
 from ._compressors import (
     Compressor,
     NoCompressor,
@@ -162,7 +162,7 @@ class VTKXMLReader(ABC):
         return np.frombuffer(
             self._compressor.get_decompressed_data(
                 xml.text.strip().strip("\n").encode(),
-                Base64Decoder()
+                Base64Encoder()
             ),
             vtk_type_to_dtype(xml.attrib["type"]).newbyteorder(self._byte_order)
         )
@@ -171,7 +171,7 @@ class VTKXMLReader(ABC):
         return np.frombuffer(
             self._compressor.get_decompressed_data(
                 self._appendix.get(int(xml.attrib["offset"].strip())),
-                self._appendix.decoder
+                self._appendix.encoder
             ),
             vtk_type_to_dtype(xml.attrib["type"]).newbyteorder(self._byte_order)
         )

@@ -4,7 +4,7 @@ import lzma
 import typing
 import numpy as np
 
-from ._decoders import Decoder
+from ._encoders import Encoder
 
 try:
     import lz4.block  # type: ignore[import]
@@ -14,7 +14,7 @@ except ImportError:
 
 
 class Compressor(typing.Protocol):
-    def get_decompressed_data(self, data: bytes, decoder: Decoder) -> bytes:
+    def get_decompressed_data(self, data: bytes, encoder: Encoder) -> bytes:
         ...
 
 
@@ -22,76 +22,74 @@ class NoCompressor:
     def __init__(self, header_type: np.dtype) -> None:
         self._header_type = header_type
 
-    def get_decompressed_data(self, data: bytes, decoder: Decoder) -> bytes:
-        header_size = int(self._header_type.itemsize)
-        encoded_header_size = decoder.encoded_size(header_size)
-        decoded_header = decoder.decode(data[:encoded_header_size])
-        num_decoded_bytes = int(np.frombuffer(decoded_header[:header_size], self._header_type)[0])
-        num_encoded_bytes = encoded_header_size + decoder.encoded_size(num_decoded_bytes)
-        decoded = decoder.decode(data[encoded_header_size:num_encoded_bytes])
-        if num_decoded_bytes > len(decoded):
-            # in this case the header and data were maybe decoded together
-            num_encoded_bytes = decoder.encoded_size(header_size + num_decoded_bytes)
-            decoded = decoder.decode(data[:num_encoded_bytes])
-            assert len(decoded[header_size:]) == num_decoded_bytes
-            return decoded[header_size:]
-        return decoded[:num_decoded_bytes]
+    def get_decompressed_data(self, data: bytes, encoder: Encoder) -> bytes:
+        decoded = encoder.decode(data)
+        num_header_bytes = int(self._header_type.itemsize)
+        num_decoded_bytes = int(np.frombuffer(decoded[:num_header_bytes], self._header_type)[0])
+
+        if len(decoded) == num_header_bytes:
+            # header was encoded separately, decode the data...
+            header_offset = len(encoder.encode(decoded))
+            decoded_data = encoder.decode(data[header_offset:])
+            return decoded_data[:num_decoded_bytes]
+        return decoded[num_header_bytes:num_header_bytes+num_decoded_bytes]
 
 
 class CompressorBase(abc.ABC):
     def __init__(self, header_type: np.dtype) -> None:
         self._header_type = header_type
-        self._header_size = int(self._header_type.itemsize)*3
 
-    def get_decompressed_data(self, data: bytes, decoder: Decoder) -> bytes:
-        header = self._read_header(data, decoder)
-        num_blocks = int(header[0])
+    def get_decompressed_data(self, data: bytes, encoder: Encoder) -> bytes:
+        header, data_offset = self._read_header(data, encoder)
         raw_block_size = int(header[1])
-        block_sizes = self._read_block_sizes(data, decoder, num_blocks)
-        return self._uncompress_blocks(data, decoder, block_sizes, raw_block_size)
+        block_sizes = header[3:]
 
-    def _read_header(self, data: bytes, decoder: Decoder) -> np.ndarray:
-        decoded = decoder.decode(data[:decoder.encoded_size(self._header_size)])
-        return np.frombuffer(decoded[:self._header_size], self._header_type)
+        encoded_data_bytes = encoder.encoded_bytes(int(sum(s for s in block_sizes)))
+        return self._uncompress_blocks(
+            decoded_data=encoder.decode(data[data_offset:data_offset+encoded_data_bytes]),
+            block_sizes=block_sizes,
+            raw_block_size=raw_block_size
+        )
 
-    def _read_block_sizes(self, data: bytes, decoder: Decoder, num_blocks: int) -> np.ndarray:
-        decoded_size = self._decoded_header_size_with_blocks(num_blocks)
-        encoded_size = decoder.encoded_size(decoded_size)
-        decoded = decoder.decode(data[:encoded_size])
-        return np.frombuffer(decoded[:decoded_size], self._header_type)[3:]
-
-    def _uncompress_blocks(self,
-                           data: bytes,
-                           decoder: Decoder,
-                           block_sizes: np.ndarray,
-                           raw_block_size: int) -> bytes:
-        decoded_block_offsets = np.array(
-            [0] + [s for s in np.cumsum(block_sizes)],
+    def _read_header(self, data: bytes, encoder: Encoder) -> typing.Tuple[np.ndarray, int]:
+        decoded_header_bytes = int(self._header_type.itemsize)*3
+        encoded_header_bytes = encoder.encoded_bytes(decoded_header_bytes)
+        header = np.frombuffer(
+            encoder.decode(data[:encoded_header_bytes])[:decoded_header_bytes],
             dtype=self._header_type
         )
 
-        encoded_data_offset = decoder.encoded_size(
-            self._decoded_header_size_with_blocks(len(block_sizes))
-        )
-        encoded_data_size = decoder.encoded_size(decoded_block_offsets[-1])
-        decoded_data = decoder.decode(data[
-            encoded_data_offset:
-            encoded_data_offset + encoded_data_size
-        ])
-
-        decompressed = self._decompress(
-            decoded_data[decoded_block_offsets[0]:decoded_block_offsets[1]],
-            raw_block_size
-        )
-        for i in range(1, len(block_sizes)):
-            decompressed += self._decompress(
-                decoded_data[decoded_block_offsets[i]:decoded_block_offsets[i+1]],
-                raw_block_size
+        num_blocks = int(header[0])
+        decoded_block_sizes_bytes = num_blocks*int(self._header_type.itemsize)
+        encoded_block_sizes_bytes = encoder.encoded_bytes(decoded_block_sizes_bytes)
+        return np.concatenate([
+            header,
+            np.frombuffer(
+                encoder.decode(data[
+                    encoded_header_bytes:
+                    encoded_header_bytes+encoded_block_sizes_bytes
+                ])[:encoded_block_sizes_bytes],
+                dtype=self._header_type
             )
-        return decompressed
+        ]), encoded_header_bytes+encoded_block_sizes_bytes
 
-    def _decoded_header_size_with_blocks(self, num_blocks: int) -> int:
-        return self._header_size + int(self._header_type.itemsize)*num_blocks
+    def _uncompress_blocks(self,
+                           decoded_data: bytes,
+                           block_sizes: np.ndarray,
+                           raw_block_size: int) -> bytes:
+        block_offsets = np.array(
+            [0] + [int(s) for s in np.cumsum(block_sizes)],
+            dtype=self._header_type
+        )
+        return np.concatenate([
+            np.frombuffer(
+                self._decompress(
+                    decoded_data[block_offsets[i]:block_offsets[i+1]],
+                    raw_block_size
+                ),
+                dtype=np.byte
+            ) for i in range(len(block_sizes))
+        ]).tobytes()
 
     @abc.abstractmethod
     def _decompress(self, data: bytes, uncompressed_size: int) -> bytes:

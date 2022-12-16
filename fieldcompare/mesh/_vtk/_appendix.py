@@ -1,6 +1,6 @@
 from typing import Optional, Tuple
 
-from ._decoders import Decoder, NoDecoder, Base64Decoder
+from ._encoders import Encoder, NoEncoder, Base64Encoder
 
 
 class VTKXMLAppendix:
@@ -17,11 +17,11 @@ class VTKXMLAppendix:
         return self._content is None
 
     @property
-    def decoder(self) -> Decoder:
+    def encoder(self) -> Encoder:
         if self._encoding == "base64":
-            return Base64Decoder()
+            return Base64Encoder()
         if self._encoding == "raw":
-            return NoDecoder()
+            return NoEncoder()
         raise NotImplementedError(f"Unupported encoding '{self._encoding}'")
 
     def get(self, offset: int = 0) -> bytes:
