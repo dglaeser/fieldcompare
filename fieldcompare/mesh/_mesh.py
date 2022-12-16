@@ -3,20 +3,21 @@
 from typing import Iterable, Tuple, Optional
 
 from .._common import _default_base_tolerance
-from .._array import Array, ArrayLike, make_array
+from .._array import Array, ArrayLike, as_array
 from ..predicates import PredicateResult
 
 from .protocols import Mesh as MeshInterface
 from ._mesh_equal import mesh_equal
+
 
 class Mesh:
     """Represents a computational mesh"""
     def __init__(self,
                  points: ArrayLike,
                  connectivity: Iterable[Tuple[str, ArrayLike]]) -> None:
-        self._points = make_array(points)
+        self._points = as_array(points)
         self._corners = {
-            cell_type: make_array(corners)
+            cell_type: as_array(corners)
             for cell_type, corners in connectivity
         }
         self._abs_tol = _default_base_tolerance()
