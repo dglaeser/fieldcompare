@@ -33,11 +33,11 @@ class VTUReader(VTKXMLReader):
         assert len(offsets) == self._num_cells
         assert len(types) == self._num_cells
 
-        def _num_corners(cell_type) -> int:
-            for i, _t in enumerate(types):
-                if _t == cell_type:
-                    return offsets[i] - offsets[i-1] if i > 0 else offsets[i]
-            raise RuntimeError("Could not determine number of corners")
+        # prepend zero offset to access offset for cell with its index directly
+        offsets = np.append(np.array([0], dtype=offsets.dtype), offsets)
+
+        def _num_corners(cell_type_idx) -> int:
+            return offsets[cell_type_idx+1] - offsets[cell_type_idx]
 
         def _cell_type_indices(cell_type) -> np.ndarray:
             indices = np.equal(types, cell_type).nonzero()
@@ -47,23 +47,26 @@ class VTUReader(VTKXMLReader):
         def _cell_type_corners_array(cell_type) -> np.ndarray:
             indices = _cell_type_indices(cell_type)
             num_cells_with_given_type = len(indices)
-            result: np.ndarray = np.ndarray(
-                shape=(num_cells_with_given_type, _num_corners(cell_type)),
-                dtype=corners.dtype
-            )
-            for cell_idx_with_type, i in enumerate(indices):
-                result[cell_idx_with_type] = corners[(offsets[i-1] if i > 0 else 0):offsets[i]]
-            return result
+            num_cell_type_corners = _num_corners(indices[0])
+            assert num_cells_with_given_type > 0
+            return corners[
+                np.linspace(
+                    offsets[indices],
+                    offsets[indices]+num_cell_type_corners,
+                    num=num_cell_type_corners,
+                    endpoint=False,
+                    axis=1,
+                    dtype=indices.dtype
+                )
+            ]
 
-        mesh = Mesh(
+        return Mesh(
             points=points.reshape(int(len(points)/3), 3),
             connectivity=(
                 (vtk_cell_type_to_str(t), _cell_type_corners_array(t))
                 for t in ocurring_types
             )
-        )
-
-        return mesh, {vtk_cell_type_to_str(t): _cell_type_indices(t) for t in ocurring_types}
+        ), {vtk_cell_type_to_str(t): _cell_type_indices(t) for t in ocurring_types}
 
     def _get_mesh_data_arrays(self) -> Dict[str, ElementTree.Element]:
         return {

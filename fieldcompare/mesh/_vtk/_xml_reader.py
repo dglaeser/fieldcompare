@@ -1,4 +1,4 @@
-from typing import Dict, Tuple, List, Literal
+from typing import Dict, Tuple, List, Literal, Optional
 from abc import ABC, abstractmethod
 from xml.etree import ElementTree
 
@@ -20,20 +20,29 @@ from ._compressors import (
 
 CellTypeToCellIndices = Dict[str, np.ndarray]
 
-
 class VTKXMLReader(ABC):
     def __init__(self, filename: str) -> None:
-        content = open(filename, "rb").read()
-        self._appendix = VTKXMLAppendix(content)
-        if not self._appendix.is_empty:
-            app_begin = content.find(b"<AppendedData")
-            self._xml_element = ElementTree.fromstring(
-                str(content[:app_begin].decode(self._text_encoding)).rsplit(
-                    "<AppendedData"
-                )[0] + "</VTKFile>"
+        self._appendix: Optional[VTKXMLAppendix] = None
+        try:
+            self._xml_element = ElementTree.parse(filename).getroot()
+            elem = self._xml_element.find("AppendedData")
+            if elem is not None and elem.text is not None:
+                self._appendix = VTKXMLAppendix(
+                    content=elem.text.strip("_ \n").encode(self._text_encoding),
+                    encoding=elem.attrib["encoding"]
+                )
+        except ElementTree.ParseError:
+            content = open(filename, "rb").read()
+            app_begin, app_end = _find_appendix_positions(content)
+            self._appendix = VTKXMLAppendix(
+                content=content[app_begin:app_end],
+                encoding=_determine_encoding(content[app_begin-100:])
             )
-        else:
-            self._xml_element = ElementTree.fromstring(str(content.decode(self._text_encoding)))
+            content_without_appendix = content[:app_begin].decode(
+                self._text_encoding
+            ).rsplit("<AppendedData")[0] + "</VTKFile>"
+            self._xml_element = ElementTree.fromstring(content_without_appendix)
+
         self._point_data_arrays = self._get_field_data_arrays("PointData")
         self._cell_data_arrays = self._get_field_data_arrays("CellData")
 
@@ -168,6 +177,7 @@ class VTKXMLReader(ABC):
         )
 
     def _get_appended_data_array_values(self, xml: ElementTree.Element) -> np.ndarray:
+        assert self._appendix is not None
         return np.frombuffer(
             self._compressor.get_decompressed_data(
                 self._appendix.get(int(xml.attrib["offset"].strip())),
@@ -175,3 +185,56 @@ class VTKXMLReader(ABC):
             ),
             vtk_type_to_dtype(xml.attrib["type"]).newbyteorder(self._byte_order)
         )
+
+
+def _find_appendix_positions(content: bytes) -> Tuple[int, int]:
+    start_pos = content.find(b"<AppendedData")
+    assert not _is_end(start_pos)
+    positions = _find_enclosed_content_range(content, start_pos, b"<", b">")
+    assert positions is not None
+    app_begin_pos = content.find(b"_", positions[1] + len(b">"))
+    assert not _is_end(app_begin_pos)
+    app_end_pos = content.find(b"</AppendedData>")
+    assert not _is_end(app_end_pos)
+    return app_begin_pos + len(b"_"), app_end_pos
+
+
+def _determine_encoding(content: bytes) -> str:
+    pos = content.rfind(b"<AppendedData")
+    pos = content.find(b"encoding", pos)
+    encoding_range = _find_enclosed_content_range(content, pos, b'"', b'"')
+    assert encoding_range is not None
+    return str(content[encoding_range[0]:encoding_range[1]].decode("ascii"))
+
+
+def _find_enclosed_content_range(content: bytes,
+                                 start_pos: int,
+                                 open_char: bytes,
+                                 close_char: bytes) -> Optional[Tuple[int, int]]:
+    cur_pos = content.find(open_char, start_pos)
+    start_pos = cur_pos + 1
+    if _is_end(cur_pos):
+        return None
+
+    if open_char == close_char:
+        end_pos = content.find(close_char, start_pos)
+        return None if end_pos is None else (start_pos, end_pos)
+
+    open_count = 1
+    close_count = 0
+
+    while not _is_end(cur_pos):
+        next_open_pos = content.find(open_char, cur_pos + 1)
+        next_close_pos = content.find(close_char, cur_pos + 1)
+        if not _is_end(next_close_pos):
+            close_count += 1
+            if open_count == close_count and (_is_end(next_open_pos) or next_close_pos < next_open_pos):
+                return start_pos, next_close_pos
+            elif not _is_end(next_open_pos):
+                open_count += 1
+        cur_pos = max(next_open_pos, next_close_pos)
+    return None
+
+
+def _is_end(position: int) -> bool:
+    return position == -1
