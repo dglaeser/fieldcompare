@@ -1,7 +1,7 @@
 """Check the I/O facilities for vtk files"""
 
 from os import walk, remove
-from os.path import splitext
+from os.path import splitext, exists
 from pathlib import Path
 from typing import List
 
@@ -94,11 +94,15 @@ def test_vtu_appended_base64_files_lz4_compressed(filename: str):
 
 def _test(filename: str) -> bool:
     mesh_fields = read(filename)
-    meshio_mesh = meshio_utils.to_meshio(mesh_fields)
     tmp_filename = f"{splitext(filename)[0]}_from_meshio.vtu"
-    meshio_mesh.write(tmp_filename)
-    meshio_read_mesh = meshio_read(tmp_filename)
+    if splitext(filename) == ".vtu":
+        meshio_read_mesh = meshio_read(filename)
+    else:
+        meshio_mesh = meshio_utils.to_meshio(mesh_fields)
+        meshio_mesh.write(tmp_filename)
+        meshio_read_mesh = meshio_read(tmp_filename)
     meshio_mesh_fields = meshio_utils.from_meshio(meshio_read_mesh)
     comparator = FieldDataComparison(mesh_fields, meshio_mesh_fields)
-    remove(tmp_filename)
+    if exists(tmp_filename):
+        remove(tmp_filename)
     return bool(comparator())
