@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<VTKFile type="UnstructuredGrid" version="2.0" header_type="UInt64" byte_order="LittleEndian" compressor="vtkLZMADataCompressor">
+  <UnstructuredGrid>
+    <Piece NumberOfPoints="9" NumberOfCells="3">
+      <PointData>
+        <DataArray Name="pscalar" type="Float64" format="appended" NumberOfComponents="1" offset="0                   "/>
+        <DataArray Name="pvector" type="Float64" format="appended" NumberOfComponents="3" offset="208                 "/>
+        <DataArray Name="ptensor" type="Float64" format="appended" NumberOfComponents="9" offset="440                 "/>
+        <DataArray Name="pscalar_custom_prec" type="Float32" format="appended" NumberOfComponents="1" offset="700                 "/>
+        <DataArray Name="pvector_custom_prec" type="Float32" format="appended" NumberOfComponents="3" offset="864                 "/>
+        <DataArray Name="ptensor_custom_prec" type="Float32" format="appended" NumberOfComponents="9" offset="1048                "/>
+      </PointData>
+      <CellData>
+        <DataArray Name="cscalar" type="Float64" format="appended" NumberOfComponents="1" offset="1260                "/>
+        <DataArray Name="cvector" type="Float64" format="appended" NumberOfComponents="3" offset="1408                "/>
+        <DataArray Name="ctensor_custom_prec" type="Float32" format="appended" NumberOfComponents="9" offset="1584                "/>
+        <DataArray Name="ctensor" type="Float64" format="appended" NumberOfComponents="9" offset="1748                "/>
+        <DataArray Name="cscalar_custom_prec" type="Float32" format="appended" NumberOfComponents="1" offset="1944                "/>
+        <DataArray Name="cvector_custom_prec" type="Float32" format="appended" NumberOfComponents="3" offset="2076                "/>
+      </CellData>
+      <Points>
+        <DataArray Name="Coordinates" type="Float64" format="appended" NumberOfComponents="3" offset="2236                "/>
+      </Points>
+      <Cells>
+        <DataArray Name="connectivity" type="UInt64" format="appended" NumberOfComponents="1" offset="2420                "/>
+        <DataArray Name="offsets" type="UInt64" format="appended" NumberOfComponents="1" offset="2572                "/>
+        <DataArray Name="types" type="UInt8" format="appended" NumberOfComponents="1" offset="2708                "/>
+      </Cells>
+    </Piece>
+  </UnstructuredGrid>
+  <AppendedData encoding="base64">
+ _AQAAAAAAAAAAgAAAAAAAAEgAAAAAAAAAeAAAAAAAAAA=/Td6WFoAAAFpIt42AsBGSCEBFgDdqkxf4ABHAD5dAA0E4uEdjfJ2qZSDIK9bQYu3GeJBllwoI+eJ+LsP76/dQqOabrOutDTQ838kLLjyMrMHuz9jYmcFWqh1v/wAAAAAbx/e7AABVkhbhmC0kEKZDQEAAAAAAVlaAA==AQAAAAAAAAAAgAAAAAAAANgAAAAAAAAAjAAAAAAAAAA=/Td6WFoAAAFpIt42A8BS2AEhARYAAAAAig5APuAA1wBKXQANBOLhHY3ydqpFnJ8h0U/tlp92NFAvCoHCbQgBIWkySGQRIKFIwx7JrOJzh5UASHkvU3v7Aco4C/ky21HVelimdAHOdyxF67X4HAAAAFaZ90kAAWbYAQAAAGdrwRw+MA2LAgAAAAABWVoAAQAAAAAAAAAAgAAAAAAAAIgCAAAAAAAAoAAAAAAAAAA=/Td6WFoAAAFpIt42A8BliAUhARYAAAAAR9h3QuAChwBdXQANBOLhHY3ydqpFnJ8E02cEao8ffRWrNHzyvrN2gog+oX7qXFLef33ZTY9Xcl/AmSX8Q5Uur8uXqmeSBSG+qEFc5AxshAB/pFwt6fIPn8XV9JblHRhxaR48i+J9JwAAAAAA/mjntAABeYgFAAAAtYMwWT4wDYsCAAAAAAFZWgA=AQAAAAAAAAAAgAAAAAAAACQAAAAAAAAAWAAAAAAAAAA=/Td6WFoAAAFpIt42AsAoJCEBFgC7XnAxAQAjUEsoQgAAAAAAAAAAB9w1Qn0or0Fk8udBwvmFQQfctUGphMRBACc8imkAATgkAe0aC5BCmQ0BAAAAAAFZWgA=AQAAAAAAAAAAgAAAAAAAAGwAAAAAAAAAaAAAAAAAAAA=/Td6WFoAAAFpIt42AsA4bCEBFgCoTyVa4ABrADBdACgSwQLntLeusOb3sxCEIahAv3nejACbqGnCkduy0OOMLmjigNqYe7qSpie8X0L10AD349IYAAFIbFVdIlyQQpkNAQAAAAABWVoAAQAAAAAAAAAAgAAAAAAAAEQBAAAAAAAAfAAAAAAAAAA=/Td6WFoAAAFpIt42A8BExAIhARYAAAAAo0mL0OABQwA8XQAoEsEC57S3qcHMx5o/mN4rlFDfltsYXMZFcz9xpR59f04ZE8bU+lB7YsTm2uM8RRChXBsvbPmsan1dBtoA58xRQAABWMQCAAAA19gUlT4wDYsCAAAAAAFZWgA=AQAAAAAAAAAAgAAAAAAAABgAAAAAAAAATAAAAAAAAAA=/Td6WFoAAAFpIt42AsAcGCEBFgCHTkrKAQAXGhK/D2oJNUCOpab+iBhDQOwfmkQFOD9AAJZqTMgAASwY00bbCpBCmQ0BAAAAAAFZWgA=AQAAAAAAAAAAgAAAAAAAAEgAAAAAAAAAYAAAAAAAAAA=/Td6WFoAAAFpIt42AsAuSCEBFgDqJ+u74ABHACZdAA0E4uEdjfJTTD93qt01fhVxX24Oq07W2KgjunZbLBOFn4JAFybPAAAAxmkBWAABPkj0Z0QZkEKZDQEAAAAAAVlaAA==AQAAAAAAAAAAgAAAAAAAAGwAAAAAAAAAWAAAAAAAAAA=/Td6WFoAAAFpIt42AsAmbCEBFgBDLPlj4ABrAB5dACgS0Vv3+PEp3gBtgrCGAk8LhZy5SP2RkGWEdRkcWAAAAJqQdxkAATZsLQme7ZBCmQ0BAAAAAAFZWgA=AQAAAAAAAAAAgAAAAAAAANgAAAAAAAAAcAAAAAAAAAA=/Td6WFoAAAFpIt42A8A32AEhARYAAAAAvsGOCeAA1wAvXQANBOLhHY3yU0w/d6re9OvBCk4aWd1pTrvlsAN9fhU0q28bD02o7wHz35hBKj1YIAAAWRDwxQABS9gBAAAAj33zpz4wDYsCAAAAAAFZWgA=AQAAAAAAAAAAgAAAAAAAAAwAAAAAAAAAQAAAAAAAAAA=/Td6WFoAAAFpIt42AsAQDCEBFgC+v+goAQALUEuoQUjEGEIqwPlBAF5EuFQAASAMot20vJBCmQ0BAAAAAAFZWgA=AQAAAAAAAAAAgAAAAAAAACQAAAAAAAAAVAAAAAAAAAA=/Td6WFoAAAFpIt42AsAhJCEBFgBzD38W4AAjABldACgS0Vv3+PEppRs0TQE+4S7xLJIjUYO/tFoAAAAAkpRmHwABMSRIVtjakEKZDQEAAAAAAVlaAA==AQAAAAAAAAAAgAAAAAAAANgAAAAAAAAAaAAAAAAAAAA=/Td6WFoAAAFpIt42A8At2AEhARYAAAAAn9ACOeAA1wAlXQAAabpg7+4sginJK76/PsasrF56f6s8w4Vz1fXGMA5Y23AcNDT8AAAAAE7ZpfAAAUHYAQAAAOleaAY+MA2LAgAAAAABWVoAAQAAAAAAAAAAgAAAAAAAAGAAAAAAAAAAUAAAAAAAAAA=/Td6WFoAAAFpIt42AsAfYCEBFgAnl3yF4ABfABddAAEAO4EFTQMgBURnfoxbQqbWpjcUt89EAAA27fTPAAEvYB7sKH+QQpkNAQAAAAABWVoAAQAAAAAAAAAAgAAAAAAAABgAAAAAAAAARAAAAAAAAAA=/Td6WFoAAAFpIt42AsAUGCEBFgDqzBkm4AAXAAxdAAIAN+GqfZ4Q6GQAAABFuZFgAAEkGNvMAsKQQpkNAQAAAAABWVoAAQAAAAAAAAAAgAAAAAAAAAMAAAAAAAAAOAAAAAAAAAA=/Td6WFoAAAFpIt42AsAHAyEBFgBMGmu0AQACCQUHAAB7g4MTAAEXAwdgDLyQQpkNAQAAAAABWVoA
+
+  </AppendedData>
+</VTKFile>

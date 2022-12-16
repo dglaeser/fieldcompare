@@ -1,5 +1,7 @@
 """Check the I/O facilities for vtk files"""
 
+from os import chdir, getcwd
+from os.path import dirname
 from os import walk, remove
 from os.path import splitext, exists
 from pathlib import Path
@@ -9,8 +11,8 @@ import pytest
 from meshio import read as meshio_read
 
 from fieldcompare import FieldDataComparison
-from fieldcompare.mesh import meshio_utils
-from fieldcompare.mesh._vtk import read
+from fieldcompare.mesh import meshio_utils, MeshFields
+from fieldcompare.mesh import read, read_sequence
 from fieldcompare.mesh._vtk._compressors import _HAVE_LZ4
 
 
@@ -43,6 +45,16 @@ VTU_APPENDED_BASE64_LZ4_COMPRESSION = _find("vtu_", ".vtu", ["base64", "appended
 
 
 VTP_FILES = _find("vtu_", ".vtu", [""])
+PVD_FILES = _find("pvd_", ".pvd", [""])
+
+
+@pytest.mark.parametrize("filename", PVD_FILES)
+def test_pvd_files(filename: str):
+    cwd = getcwd()
+    chdir(VTK_TEST_DATA_PATH)
+    for step in read_sequence(filename):
+        _test_from_mesh(step)
+    chdir(cwd)
 
 
 @pytest.mark.parametrize("filename", VTP_FILES)
@@ -113,4 +125,15 @@ def _test(filename: str) -> bool:
     comparator = FieldDataComparison(mesh_fields, meshio_mesh_fields)
     if exists(tmp_filename):
         remove(tmp_filename)
+    return bool(comparator())
+
+
+def _test_from_mesh(mesh_fields: MeshFields) -> bool:
+    meshio_mesh = meshio_utils.to_meshio(mesh_fields)
+    tmp_filename = "_temporary_test_to_meshio.vtu"
+    meshio_mesh.write(tmp_filename)
+    meshio_mesh = meshio_read(tmp_filename)
+    meshio_mesh_fields = meshio_utils.from_meshio(meshio_mesh)
+    comparator = FieldDataComparison(mesh_fields, meshio_mesh_fields)
+    remove(tmp_filename)
     return bool(comparator())
