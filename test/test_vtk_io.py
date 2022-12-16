@@ -42,6 +42,14 @@ VTU_APPENDED_BASE64_LZMA_COMPRESSION = _find("vtu_", ".vtu", ["base64", "appende
 VTU_APPENDED_BASE64_LZ4_COMPRESSION = _find("vtu_", ".vtu", ["base64", "appended", "lz4"])
 
 
+VTP_FILES = _find("vtu_", ".vtu", [""])
+
+
+@pytest.mark.parametrize("filename", VTP_FILES)
+def test_vtp_files(filename: str):
+    _test(filename)
+
+
 @pytest.mark.parametrize("filename", VTU_ASCII_FILES)
 def test_vtu_ascii_files(filename: str):
     _test(filename)
