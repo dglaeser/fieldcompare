@@ -3,10 +3,12 @@ from os.path import splitext
 from ..._field_sequence import FieldDataSequence
 from .._mesh_fields import MeshFields
 from ._vtu_reader import VTUReader
+from ._vtp_reader import VTPReader
 
 
 _VTK_MESH_EXTENSIONS_TO_READER = {
-    ".vtu": VTUReader
+    ".vtu": VTUReader,
+    ".vtp": VTPReader
 }
 
 
