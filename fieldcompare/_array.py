@@ -22,6 +22,9 @@ def make_initialized_array(size: int, init_value, dtype=None) -> Array:
     result.fill(init_value)
     return result
 
+def make_zeros(shape: Tuple[int, ...], dtype=None) -> Array:
+    return np.zeros(shape, dtype)
+
 
 def make_array(input_array: ArrayLike, dtype=None) -> Array:
     """Make an array from the given sequence"""
@@ -42,6 +45,10 @@ def sub_array(input_array: Array, start: int, end: int) -> Array:
     if isinstance(input_array, Sequence):
         return make_array(input_array[start:end])
     raise ValueError("Provided type is neither array nor sequence")
+
+
+def concatenate(arrays: Sequence[Array]) -> Array:
+    return np.concatenate(arrays)
 
 
 def has_floats(input_array: Array) -> bool:
