@@ -57,8 +57,8 @@ deps =
   -rrequirements.txt
   pytest-cov
 commands =
-  pytest --cov-report xml:coverage.xml \
+  pytest --cov={envsitepackagesdir}/fieldcompare \
+         --cov-report xml:coverage.xml \
          --cov-report html:cov_report \
-         --cov-report term \
-         --cov={envsitepackagesdir}/fieldcompare
+         --cov-report term
 """
