@@ -46,6 +46,16 @@ VTU_APPENDED_BASE64_LZ4_COMPRESSION = _find("vtu_", ".vtu", ["base64", "appended
 
 VTP_FILES = _find("vtu_", ".vtu", [""])
 PVD_FILES = _find("pvd_", ".pvd", [""])
+PVTU_FILES = _find("pvtu_", ".pvtu", [""])
+PVTP_FILES = _find("pvtp_", ".pvtp", [""])
+
+
+@pytest.mark.parametrize("filename", PVTU_FILES + PVTP_FILES)
+def test_parallel_vtk_files(filename: str):
+    cwd = getcwd()
+    chdir(VTK_TEST_DATA_PATH)
+    _test(filename)
+    chdir(cwd)
 
 
 @pytest.mark.parametrize("filename", PVD_FILES)

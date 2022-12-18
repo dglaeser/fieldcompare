@@ -1,6 +1,5 @@
 """I/O mechanisms for fields defined on computational meshes"""
 from .._field_sequence import FieldDataSequence
-from ._mesh_fields import MeshFields
 from ._vtk import (
     is_supported as is_supported_vtk,
     is_supported_sequence as is_supported_vtk_sequence,
@@ -8,6 +7,7 @@ from ._vtk import (
     read_sequence as read_vtk_sequence
 )
 from . import meshio_utils
+from . import protocols
 
 
 def is_mesh_file(filename: str) -> bool:
@@ -23,7 +23,7 @@ def is_mesh_sequence(filename: str) -> bool:
         or meshio_utils._is_supported_sequence(filename)
 
 
-def read(filename: str) -> MeshFields:
+def read(filename: str) -> protocols.MeshFields:
     """Read the fields from the given mesh file"""
     if is_supported_vtk(filename):
         return read_vtk(filename)

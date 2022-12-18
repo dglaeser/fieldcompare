@@ -1,19 +1,27 @@
+from __future__ import annotations
 from os.path import splitext
 from xml.etree import ElementTree
+from typing import Dict
 
 from ..._field_sequence import FieldDataSequence
+
 from .._mesh_fields import MeshFields
+from .. import protocols
+
 from ._vtu_reader import VTUReader
 from ._vtp_reader import VTPReader
+from ._pvtk_readers import PVTUReader, PVTPReader, _VTKReader
 
 
-_VTK_MESH_EXTENSIONS_TO_READER = {
+_VTK_MESH_EXTENSIONS_TO_READER: Dict[str, _VTKReader] = {
     ".vtu": VTUReader,
-    ".vtp": VTPReader
+    ".vtp": VTPReader,
+    ".pvtu": PVTUReader,
+    ".pvtp": PVTPReader
 }
 
 
-def read(filename: str) -> MeshFields:
+def read(filename: str) -> protocols.MeshFields:
     """Read mesh fields from the given VTK file"""
     ext = splitext(filename)[1]
     if ext not in _VTK_MESH_EXTENSIONS_TO_READER:
@@ -54,7 +62,7 @@ class _PVDSequenceSource:
         self._step_idx += 1
         return self._step_idx < len(self._pieces)
 
-    def get(self) -> MeshFields:
+    def get(self) -> protocols.MeshFields:
         filename = self._pieces[self._step_idx]
         ext = splitext(filename)[1]
         return _VTK_MESH_EXTENSIONS_TO_READER[ext](filename).read()
