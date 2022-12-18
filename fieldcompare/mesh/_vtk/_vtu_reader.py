@@ -17,7 +17,7 @@ class VTUReader(VTKXMLReader):
         self._mesh_data_arrays = self._get_mesh_data_arrays()
         for i, _ in enumerate(self._get_element("UnstructuredGrid").findall("Piece")):
             if i > 0:
-                raise NotImplementedError("VTU file with multiple pieces")
+                raise NotImplementedError("VTU files with multiple pieces not supported (yet)")
 
     def _get_field_data_path(self) -> str:
         return "UnstructuredGrid/Piece"

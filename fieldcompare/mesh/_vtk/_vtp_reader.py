@@ -15,6 +15,9 @@ class VTPReader(VTKXMLReader):
         self._num_lines = int(self._get_attribute("PolyData/Piece", "NumberOfLines"))
         self._num_polys = int(self._get_attribute("PolyData/Piece", "NumberOfPolys"))
         self._num_strips = int(self._get_attribute("PolyData/Piece", "NumberOfStrips"))
+        for i, _ in enumerate(self._get_element("PolyData").findall("Piece")):
+            if i > 0:
+                raise NotImplementedError("VTP file with multiple pieces not supported (yet)")
 
     def _get_field_data_path(self) -> str:
         return "PolyData/Piece"
