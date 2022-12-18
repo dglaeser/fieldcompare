@@ -10,7 +10,7 @@ workflow:
     - if: '$CI_COMMIT_BRANCH =~ /^(main|releases\/)/'
 
 default:
-  image: python:3.9
+  image: python:3.10
 
 cache:
   paths:
