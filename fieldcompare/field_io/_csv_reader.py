@@ -3,7 +3,7 @@
 from csv import reader
 from typing import TextIO, List, Union
 
-from .._array import make_array
+from .._numpy_utils import make_array
 from ..tabular import Table, TabularFields
 
 

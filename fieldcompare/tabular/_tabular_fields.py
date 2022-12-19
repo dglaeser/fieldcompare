@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Iterator, Dict, Callable
 
 from .._field import Field
-from .._array import Array
+from .._numpy_utils import Array
 from ._table import Table
 from ..protocols import FieldData
 

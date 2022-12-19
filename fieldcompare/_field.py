@@ -1,7 +1,7 @@
 """Class that represents a field of values"""
 
 from dataclasses import dataclass
-from ._array import Array
+from ._numpy_utils import Array
 
 
 @dataclass

@@ -4,7 +4,7 @@ from pytest import raises
 
 from fieldcompare import Field
 from fieldcompare.predicates import FuzzyEquality, DefaultEquality, PredicateError
-from fieldcompare._array import make_array
+from fieldcompare._numpy_utils import make_array
 
 def test_fuzzy_equality_with_scalars():
     for check in [FuzzyEquality(), DefaultEquality()]:

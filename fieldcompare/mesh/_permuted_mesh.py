@@ -1,7 +1,7 @@
 """Class to represent permuted computational meshes"""
 from typing import Iterable, Optional, Dict
 
-from .._array import Array, max_element, make_array, make_uninitialized_array
+from .._numpy_utils import Array, max_element, make_array, make_uninitialized_array
 from ..predicates import PredicateResult
 
 from ._mesh_equal import mesh_equal

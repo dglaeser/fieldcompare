@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 from typing import Protocol, Callable, Iterator, Any, runtime_checkable
-from ._array import Array
+from ._numpy_utils import Array
 
 
 @runtime_checkable

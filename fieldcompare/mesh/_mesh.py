@@ -3,7 +3,7 @@
 from typing import Iterable, Tuple, Optional
 
 from .._common import _default_base_tolerance
-from .._array import Array, ArrayLike, as_array
+from .._numpy_utils import Array, ArrayLike, as_array
 from ..predicates import PredicateResult
 
 from .protocols import Mesh as MeshInterface

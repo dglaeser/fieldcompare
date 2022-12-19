@@ -3,7 +3,7 @@
 from __future__ import annotations
 from typing import Optional
 
-from .._array import Array, ArrayLike, as_array, is_index_array
+from .._numpy_utils import Array, ArrayLike, as_array, is_index_array
 from ..predicates import PredicateResult
 
 

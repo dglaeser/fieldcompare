@@ -2,7 +2,7 @@
 
 from fieldcompare import Field
 from fieldcompare.predicates import ExactEquality, DefaultEquality
-from fieldcompare._array import make_array
+from fieldcompare._numpy_utils import make_array
 
 
 def test_exact_equality_with_scalars():

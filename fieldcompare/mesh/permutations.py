@@ -2,7 +2,7 @@
 
 from typing import Dict
 
-from .._array import (
+from .._numpy_utils import (
     Array,
     flatten,
     any_true,

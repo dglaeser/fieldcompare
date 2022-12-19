@@ -8,7 +8,7 @@ from typing import (
     Union, Callable
 )
 
-from .._array import Array, as_array
+from .._numpy_utils import Array, as_array
 from .._field import Field
 
 from .protocols import Mesh, TransformedMesh

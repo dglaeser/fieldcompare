@@ -5,7 +5,7 @@ from typing import Union, List, Callable, TextIO, Optional
 from dataclasses import dataclass
 from io import StringIO
 
-from .._array import as_array, has_floats
+from .._numpy_utils import as_array, has_floats
 from ..predicates import FuzzyEquality, ExactEquality
 from .._common import _default_base_tolerance
 from .._format import (

@@ -2,7 +2,7 @@
 
 from pytest import raises
 
-from fieldcompare._array import (
+from fieldcompare._numpy_utils import (
     make_array,
     make_initialized_array,
     make_uninitialized_array,

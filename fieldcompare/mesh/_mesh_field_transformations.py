@@ -2,7 +2,7 @@
 
 from copy import deepcopy
 from typing import Optional, Dict
-from .._array import Array, concatenate, make_array, make_zeros
+from .._numpy_utils import Array, concatenate, make_array, make_zeros
 from ._mesh_fields import remove_cell_type_suffix
 
 from ._mesh import Mesh
