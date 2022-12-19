@@ -1,10 +1,11 @@
 """Definitions of the interfaces used by fieldcompare"""
 
 from __future__ import annotations
-from typing import Protocol, Callable, Iterator, Any
+from typing import Protocol, Callable, Iterator, Any, runtime_checkable
 from ._array import Array
 
 
+@runtime_checkable
 class PredicateResult(Protocol):
     """Return value from predicate functions"""
     def __bool__(self) -> bool:
@@ -20,6 +21,7 @@ class PredicateResult(Protocol):
 Predicate = Callable[[Any, Any], PredicateResult]
 
 
+@runtime_checkable
 class Domain(Protocol):
     """Represents a domain on which fields are defined"""
     def equals(self, other: Domain) -> PredicateResult:
@@ -27,6 +29,7 @@ class Domain(Protocol):
         ...
 
 
+@runtime_checkable
 class Field(Protocol):
     """Represents a single field consisting of a name and field values"""
 
@@ -41,6 +44,7 @@ class Field(Protocol):
         ...
 
 
+@runtime_checkable
 class FieldData(Protocol):
     """Contains the fields defined on a domain"""
 
@@ -58,6 +62,7 @@ class FieldData(Protocol):
         ...
 
 
+@runtime_checkable
 class FieldDataSequence(Protocol):
     """Represents a sequence of fields, for instance, a time series"""
 
