@@ -11,6 +11,7 @@ from xml.etree.ElementTree import ElementTree, Element
 from .._matching import find_matching_file_names
 from .._format import highlighted, as_warning, get_status_string
 from .._common import _measure_time
+from ..field_io import is_supported
 
 from ._junit import as_junit_xml_element
 from ._common import (
@@ -31,7 +32,6 @@ from ._file_mode import (
     _add_junit_export_arg
 )
 
-from ._deduce_domain import is_supported_file
 from ._test_suite import TestSuite, TestResult, TestStatus
 from ._file_comparison import FileComparisonOptions, FileComparison, _suite_name
 
@@ -135,7 +135,7 @@ def _categorize_files(args: dict, res_dir: str, ref_dir: str) -> CategorizedFile
     missing_references = [m for m in search_result.orphans_in_source if include_filter(m)]
 
     dropped_matches = list(set(matches).difference(set(filtered_matches)))
-    supported_files = list(filter(lambda f: is_supported_file(join(res_dir, f)), filtered_matches))
+    supported_files = list(filter(lambda f: is_supported(join(res_dir, f)), filtered_matches))
     unsupported_files = list(set(filtered_matches).difference(set(supported_files)))
 
     return CategorizedFiles(

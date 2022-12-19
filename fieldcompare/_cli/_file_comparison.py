@@ -1,12 +1,11 @@
 """Class to compare two files using the CLI options"""
 
 from pathlib import Path
-from typing import Union, List, Callable, TextIO, TypeVar, Optional
+from typing import Union, List, Callable, TextIO, Optional
 from dataclasses import dataclass
 from io import StringIO
 
 from .._array import as_array, has_floats
-from ..protocols import Field, FieldData, FieldDataSequence, Predicate
 from ..predicates import FuzzyEquality, ExactEquality
 from .._common import _default_base_tolerance
 from .._format import (
@@ -14,13 +13,6 @@ from .._format import (
     as_error,
     as_warning,
     highlighted
-)
-
-from ..tabular import read as read_table
-from ..mesh import (
-    read as read_mesh,
-    read_sequence as read_mesh_sequence,
-    permutations as mesh_permutations
 )
 
 from .._field_data_comparison import (
@@ -31,8 +23,15 @@ from .._field_data_comparison import (
 )
 
 from ._logger import CLILogger
-from ._deduce_domain import deduce_file_type, FileType, DomainType
 from ._test_suite import TestSuite, TestResult, TestStatus
+
+from .. import protocols
+from ..mesh import (
+    protocols as mesh_protocols,
+    permutations as mesh_permutations
+)
+
+from ..field_io import read as read_fields
 
 
 @dataclass
@@ -57,102 +56,56 @@ class FileComparison:
         self._logger = logger
 
     def __call__(self, res_file: str, ref_file: str) -> TestSuite:
-        res_file_type = deduce_file_type(res_file)
-        ref_file_type = deduce_file_type(ref_file)
-        if res_file_type != ref_file_type:
+        try:
+            res_fields = self._read(res_file)
+            ref_fields = self._read(ref_file)
+        except IOError:
             return _make_test_suite(
                 tests=[],
                 status=TestStatus.error,
                 name=_suite_name(res_file),
-                shortlog="Non-matching file types: '{ref_file_type}' / '{res_file_type}"
+                shortlog="Error during field reading"
             )
-        if res_file_type.domain_type == DomainType.unknown:
-            return _make_test_suite(
-                tests=[],
-                status=TestStatus.error,
-                name=_suite_name(res_file),
-                shortlog="Unsupported file type"
-            )
-        return self._compare_files(res_file, ref_file, res_file_type)
+        return self._compare_fields(res_fields, ref_fields).with_overridden(name=_suite_name(res_file))
 
-    def _compare_files(self, res_file: str, ref_file: str, file_type: FileType) -> TestSuite:
-        if file_type.domain_type == DomainType.mesh:
-            return self._run_mesh_file_comparison(res_file, ref_file, file_type)
-        if file_type.domain_type == DomainType.table:
-            return self._run_tabular_data_file_comparison(res_file, ref_file, file_type)
-        raise NotImplementedError("Unknown file type: '{file_type}'")
+    def _read(self, filename: str) -> Union[protocols.FieldData, protocols.FieldDataSequence]:
+        self._logger.log(f"Reading '{highlighted(filename)}'\n", verbosity_level=1)
+        try:
+            return read_fields(filename)
+        except IOError as e:
+            self._logger.log(f"Error: '{e}'", verbosity_level=1)
+            raise IOError(e)
 
-    def _run_mesh_file_comparison(self,
-                                  res_file: str,
-                                  ref_file: str,
-                                  file_type: FileType) -> TestSuite:
-        if file_type.is_sequence:
-            return self._run_file_comparison(
-                res_file, ref_file, "mesh sequence",
-                read_function=read_mesh_sequence,
-                comparison_function=self._run_mesh_sequence_comparison
-            )
-        else:
-            return self._run_file_comparison(
-                res_file, ref_file, "mesh",
-                read_function=read_mesh,
-                comparison_function=self._run_mesh_comparison
-            )
+    def _compare_fields(self,
+                        res_fields: Union[protocols.FieldData, protocols.FieldDataSequence],
+                        ref_fields: Union[protocols.FieldData, protocols.FieldDataSequence]) -> TestSuite:
+        if isinstance(res_fields, protocols.FieldData) \
+                and isinstance(ref_fields, protocols.FieldData):
+            return self._compare_field_data(res_fields, ref_fields)
+        elif isinstance(res_fields, protocols.FieldDataSequence) \
+                and isinstance(ref_fields, protocols.FieldDataSequence):
+            return self._compare_field_sequences(res_fields, ref_fields)
 
-    def _run_tabular_data_file_comparison(self,
-                                          res_file: str,
-                                          ref_file: str,
-                                          file_type: FileType) -> TestSuite:
-        return self._run_file_comparison(
-            res_file, ref_file, "table",
-            read_function=read_table,
-            comparison_function=lambda *args, **kwargs: self._to_test_suite(
-                self._run_field_data_comparison(*args, **kwargs)
+        def _is_unknown(fields) -> bool:
+            return not isinstance(fields, protocols.FieldData) \
+                and not isinstance(fields, protocols.FieldDataSequence)
+        if any(_is_unknown(f) for f in [res_fields, ref_fields]):
+            self._logger.log(
+                "Unknown data type (supported are 'FieldData' / 'FieldDataSequence')",
+                verbosity_level=1
             )
+            return _make_test_suite(tests=[], status=TestStatus.error, shortlog="Unknown field data type")
+        return _make_test_suite(
+            tests=[],
+            status=TestStatus.error,
+            shortlog="Cannot compare sequences atainst field data"
         )
 
-    _T = TypeVar("_T")
-
-    def _run_file_comparison(self,
-                             res_file: str,
-                             ref_file: str,
-                             domain: str,
-                             read_function: Callable[[str], _T],
-                             comparison_function: Callable[[_T, _T], TestSuite]) -> TestSuite:
-        def _read(file: str):
-            try:
-                self._logger.log(f"Reading {domain} from '{highlighted(file)}'\n", verbosity_level=1)
-                return read_function(file)
-            except IOError as e:
-                self._logger.log(f"{as_error('ERROR')} '{e}'", verbosity_level=1)
-                raise e
-
-        try:
-            res_fields = _read(res_file)
-        except IOError as e:
-            return _make_test_suite(
-                name=_suite_name(res_file),
-                tests=[],
-                status=TestStatus.error,
-                shortlog=f"Error reading fields from '{res_file}': {e}"
-            )
-
-        try:
-            ref_fields = _read(ref_file)
-        except IOError as e:
-            return _make_test_suite(
-                name=_suite_name(res_file),
-                tests=[],
-                status=TestStatus.error,
-                shortlog=f"Error reading reference file '{res_file}': {e}"
-            )
-        return comparison_function(res_fields, ref_fields).with_overridden(name=_suite_name(res_file))
-
-    def _run_mesh_sequence_comparison(self,
-                                      res_sequence: FieldDataSequence,
-                                      ref_sequence: FieldDataSequence) -> TestSuite:
+    def _compare_field_sequences(self,
+                                 res_sequence: protocols.FieldDataSequence,
+                                 ref_sequence: protocols.FieldDataSequence) -> TestSuite:
         num_steps_check: Optional[TestStatus] = None
-        num_steps_check_fail_msg = "Mesh sequences have differing lengths"
+        num_steps_check_fail_msg = "Sequences have differing lengths"
         if res_sequence.number_of_steps != ref_sequence.number_of_steps:
             if not self._opts.ignore_missing_sequence_steps:
                 num_steps_check = TestStatus.failed
@@ -185,17 +138,23 @@ class FileComparison:
         num_steps = min(res_sequence.number_of_steps, ref_sequence.number_of_steps)
         for idx, (res_step, ref_step) in enumerate(zip(res_sequence, ref_sequence)):
             self._logger.log(f"Comparing step {idx} of {num_steps}\n", verbosity_level=1)
-            sub_suite = self._run_mesh_comparison(res_step, ref_step)
+            sub_suite = self._compare_field_data(res_step, ref_step)
             suite = _merge_test_suites(suite, sub_suite, idx)
         return suite
 
-    def _set_mesh_tolerances(self, fields: FieldData) -> None:
-        fields.domain.set_tolerances(
-            abs_tol=self._opts.absolute_tolerances("domain"),
-            rel_tol=self._opts.relative_tolerances("domain")
+    def _compare_field_data(self,
+                            res_fields: protocols.FieldData,
+                            ref_fields: protocols.FieldData) -> TestSuite:
+        if isinstance(res_fields, mesh_protocols.MeshFields) \
+                and isinstance(ref_fields, mesh_protocols.MeshFields):
+            return self._compare_mesh_field_data(res_fields, ref_fields)
+        return self._to_test_suite(
+            self._run_field_data_comparison(res_fields, ref_fields)
         )
 
-    def _run_mesh_comparison(self, res_fields: FieldData, ref_fields: FieldData) -> TestSuite:
+    def _compare_mesh_field_data(self,
+                                 res_fields: mesh_protocols.MeshFields,
+                                 ref_fields: mesh_protocols.MeshFields) -> TestSuite:
         self._set_mesh_tolerances(res_fields)
         self._set_mesh_tolerances(ref_fields)
         suite = self._run_field_data_comparison(res_fields, ref_fields)
@@ -236,8 +195,8 @@ class FileComparison:
         return _make_test_suite([], TestStatus.failed, shortlog="Fields defined on different meshes")
 
     def _run_field_data_comparison(self,
-                                   result: FieldData,
-                                   reference: FieldData) -> FieldComparisonSuite:
+                                   result: protocols.FieldData,
+                                   reference: protocols.FieldData) -> FieldComparisonSuite:
         return FieldDataComparison(
             result, reference,
             self._opts.field_inclusion_filter, self._opts.field_exclusion_filter
@@ -246,7 +205,15 @@ class FileComparison:
             fieldcomp_callback=lambda comp: self._stream_field_comparison_report(comp, self._logger)
         )
 
-    def _select_predicate(self, res_field: Field, ref_field: Field) -> Predicate:
+    def _set_mesh_tolerances(self, fields: protocols.FieldData) -> None:
+        fields.domain.set_tolerances(
+            abs_tol=self._opts.absolute_tolerances("domain"),
+            rel_tol=self._opts.relative_tolerances("domain")
+        )
+
+    def _select_predicate(self,
+                          res_field: protocols.Field,
+                          ref_field: protocols.Field) -> protocols.Predicate:
         if has_floats(as_array(res_field.values)) or has_floats(as_array(ref_field.values)):
             return FuzzyEquality(
                 abs_tol=self._opts.absolute_tolerances(res_field.name),
