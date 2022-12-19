@@ -9,7 +9,7 @@ from .protocols import Mesh, TransformedMesh
 
 
 class PermutedMesh(TransformedMesh):
-    """Represents a permuted computational mesh"""
+    """Represents a computational mesh, permuted by the given index maps"""
     def __init__(self,
                  mesh: Mesh,
                  point_permutation: Optional[Array] = None,

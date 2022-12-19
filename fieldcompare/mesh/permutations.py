@@ -1,4 +1,5 @@
-"""Mesh permutations"""
+"""Mesh permutation functions"""
+
 from typing import Dict
 
 from .._array import (
