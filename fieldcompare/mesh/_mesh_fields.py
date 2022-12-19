@@ -35,6 +35,16 @@ class MeshFields(FieldData):
                  mesh: Mesh,
                  point_data: Dict[str, Array] = {},
                  cell_data: Dict[str, List[Array]] = {}) -> None:
+        """Construct mesh fields from the given mesh and point/cell data
+
+        Args:
+            mesh: The mesh
+            point_data: The field data defined on the mesh points.
+            cell_data: The field data defined on the mesh cells. The field values
+                have to be specified as a list of arrays, where each array contains
+                the values for the cells of a particular cell type. The ordering of the
+                arrays has to follow the order of the cell types as exposed by the mesh.
+        """
         self._mesh = mesh
         self._point_data = {
             name: as_array(data)

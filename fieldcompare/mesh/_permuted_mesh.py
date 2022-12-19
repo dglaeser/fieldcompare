@@ -14,6 +14,14 @@ class PermutedMesh(TransformedMesh):
                  mesh: Mesh,
                  point_permutation: Optional[Array] = None,
                  cell_permutations: Optional[Dict[str, Array]] = None) -> None:
+        """Construct a permuted mesh, using the given point & cell permutations.
+
+        Args:
+            mesh: The unpermuted mesh
+            point_permutation: The permutation (index map) to be applied on the points.
+            cell_permutations: The permutations (index maps) to be applied to the cells.
+                For each cell type of the grid, a separate permutation is specified.
+        """
         self._mesh = mesh
         self._point_permutation = point_permutation
         self._cell_permutations = cell_permutations

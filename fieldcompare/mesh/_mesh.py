@@ -15,6 +15,13 @@ class Mesh:
     def __init__(self,
                  points: ArrayLike,
                  connectivity: Iterable[Tuple[str, ArrayLike]]) -> None:
+        """Construct a mesh from given points and cell connectivity
+
+        Args:
+            points: The points of the mesh
+            connectivity: The connectivity of the grid cells, specified separately
+                for each cell type, which is indicated by its name.
+        """
         self._points = as_array(points)
         self._corners = {
             cell_type: as_array(corners)
