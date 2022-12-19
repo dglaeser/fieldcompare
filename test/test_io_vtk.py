@@ -11,7 +11,7 @@ from meshio import read as meshio_read
 
 from fieldcompare import FieldDataComparison, protocols
 from fieldcompare.mesh import meshio_utils, protocols as mesh_protocols
-from fieldcompare.io.vtk import read
+from fieldcompare.field_io.vtk import read
 
 try:
     import lz4
