@@ -23,6 +23,7 @@ from .._numpy_utils import (
 
 from .._common import _default_base_tolerance
 from ._permuted_mesh import PermutedMesh
+from ._cell_type import CellType
 from .protocols import Mesh
 
 
@@ -131,7 +132,7 @@ def _sorting_points_indices(points, cells) -> Array:
             def __lt__(self, other) -> bool:
                 return _fuzzy_lt_point(self._point, other._point)
 
-        def _compute_cell_center(cell_type: str, cell_index: int):
+        def _compute_cell_center(cell_type: CellType, cell_index: int):
             cell_corner_list = cells[cell_type][cell_index]
             return accumulate(points[cell_corner_list], axis=0)/len(cell_corner_list)
 
@@ -159,7 +160,7 @@ def _sorting_points_indices(points, cells) -> Array:
     return make_array(idx_map)
 
 
-def _get_points_to_cell_indices_map(cells, num_points) -> Dict[str, list]:
+def _get_points_to_cell_indices_map(cells, num_points) -> Dict[CellType, list]:
     def _get_cells_around_points(_cells) -> list:
         result: list = [[] for _ in range(num_points)]
         for cell_idx, _corners in enumerate(_cells):

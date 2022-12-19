@@ -8,23 +8,23 @@ from ..predicates import PredicateResult
 
 from .protocols import Mesh as MeshInterface
 from ._mesh_equal import mesh_equal
+from ._cell_type import CellType
 
 
 class Mesh:
     """Represents a computational mesh"""
     def __init__(self,
                  points: ArrayLike,
-                 connectivity: Iterable[Tuple[str, ArrayLike]]) -> None:
+                 connectivity: Iterable[Tuple[CellType, ArrayLike]]) -> None:
         """Construct a mesh from given points and cell connectivity
 
         Args:
             points: The points of the mesh
-            connectivity: The connectivity of the grid cells, specified separately
-                for each cell type, which is indicated by its name.
+            connectivity: The connectivity of the grid cells, specified separately for each cell type.
         """
         self._points = as_array(points)
         self._corners = {
-            cell_type: as_array(corners)
+            _get_assert_cell_type(cell_type): as_array(corners)
             for cell_type, corners in connectivity
         }
         self._abs_tol = _default_base_tolerance()
@@ -46,11 +46,11 @@ class Mesh:
         return self._points
 
     @property
-    def cell_types(self) -> Iterable[str]:
+    def cell_types(self) -> Iterable[CellType]:
         """Return the cell types present in this mesh"""
         return self._corners.keys()
 
-    def connectivity(self, cell_type: str) -> Array:
+    def connectivity(self, cell_type: CellType) -> Array:
         """Return the corner indices array for the cells of the given type"""
         return self._corners[cell_type]
 
@@ -64,3 +64,9 @@ class Mesh:
         """Set the tolerances used for equality checks against other meshes"""
         self._abs_tol = abs_tol if abs_tol is not None else self._abs_tol
         self._rel_tol = rel_tol if rel_tol is not None else self._rel_tol
+
+
+def _get_assert_cell_type(cell_type: CellType) -> CellType:
+    if not isinstance(cell_type, CellType):
+        raise TypeError("Cell connectivity has to be given for instances of 'CellType'")
+    return cell_type

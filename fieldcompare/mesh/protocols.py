@@ -6,6 +6,8 @@ from typing import Protocol, Iterable, Tuple, Optional, Callable, runtime_checka
 from ..protocols import FieldData, Field, PredicateResult
 from .._numpy_utils import Array
 
+from ._cell_type import CellType
+
 
 @runtime_checkable
 class Mesh(Protocol):
@@ -17,11 +19,11 @@ class Mesh(Protocol):
         ...
 
     @property
-    def cell_types(self) -> Iterable[str]:
+    def cell_types(self) -> Iterable[CellType]:
         """Return the cell types present in this mesh"""
         ...
 
-    def connectivity(self, cell_type: str) -> Array:
+    def connectivity(self, cell_type: CellType) -> Array:
         """Return the corner indices array for the cells of the given type"""
         ...
 
@@ -50,7 +52,7 @@ class TransformedMesh(Mesh, Protocol):
         """Return the transformed point data"""
         ...
 
-    def transform_cell_data(self, cell_type: str, data: Array) -> Array:
+    def transform_cell_data(self, cell_type: CellType, data: Array) -> Array:
         """Return the transformed cell data"""
         ...
 
@@ -74,7 +76,7 @@ class MeshFields(FieldData, Protocol):
         ...
 
     @property
-    def cell_fields_types(self) -> Iterable[Tuple[Field, str]]:
+    def cell_fields_types(self) -> Iterable[Tuple[Field, CellType]]:
         """Return a range over cell fields + associated cell type"""
         ...
 

@@ -4,6 +4,7 @@ from typing import Iterable, Optional, Dict
 from .._numpy_utils import Array, max_element, make_array, make_uninitialized_array
 from ..predicates import PredicateResult
 
+from ._cell_type import CellType
 from ._mesh_equal import mesh_equal
 from .protocols import Mesh, TransformedMesh
 
@@ -13,7 +14,7 @@ class PermutedMesh(TransformedMesh):
     def __init__(self,
                  mesh: Mesh,
                  point_permutation: Optional[Array] = None,
-                 cell_permutations: Optional[Dict[str, Array]] = None) -> None:
+                 cell_permutations: Optional[Dict[CellType, Array]] = None) -> None:
         """Construct a permuted mesh, using the given point & cell permutations.
 
         Args:
@@ -47,11 +48,11 @@ class PermutedMesh(TransformedMesh):
         return self._mesh.points
 
     @property
-    def cell_types(self) -> Iterable[str]:
+    def cell_types(self) -> Iterable[CellType]:
         """Return the cell types present in this mesh"""
         return self._mesh.cell_types
 
-    def connectivity(self, cell_type: str) -> Array:
+    def connectivity(self, cell_type: CellType) -> Array:
         """Return the corner indices array for the cells of the given type"""
         corner_indices = self._mesh.connectivity(cell_type)
         if self._inverse_point_permutation is not None:
@@ -64,7 +65,7 @@ class PermutedMesh(TransformedMesh):
             return data[self._point_permutation]
         return data
 
-    def transform_cell_data(self, cell_type: str, data: Array) -> Array:
+    def transform_cell_data(self, cell_type: CellType, data: Array) -> Array:
         """Transform the given cell data values"""
         if self._cell_permutations is not None:
             return data[self._cell_permutations[cell_type]]

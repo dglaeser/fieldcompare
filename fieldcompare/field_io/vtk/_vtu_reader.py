@@ -4,7 +4,7 @@ from xml.etree import ElementTree
 import numpy as np
 
 from ...mesh import Mesh
-from ._helpers import vtk_cell_type_to_str
+from ._helpers import vtk_cell_type_index_to_cell_type
 from ._xml_reader import VTKXMLReader, CellTypeToCellIndices
 from ._reader_map import _VTK_EXTENSION_TO_READER
 
@@ -65,10 +65,12 @@ class VTUReader(VTKXMLReader):
         return Mesh(
             points=points.reshape(int(len(points)/3), 3),
             connectivity=(
-                (vtk_cell_type_to_str(t), _cell_type_corners_array(t))
-                for t in ocurring_types
+                (
+                    vtk_cell_type_index_to_cell_type(t),
+                    _cell_type_corners_array(t)
+                ) for t in ocurring_types
             )
-        ), {vtk_cell_type_to_str(t): _cell_type_indices(t) for t in ocurring_types}
+        ), {vtk_cell_type_index_to_cell_type(t): _cell_type_indices(t) for t in ocurring_types}
 
     def _get_mesh_data_arrays(self) -> Dict[str, ElementTree.Element]:
         return {

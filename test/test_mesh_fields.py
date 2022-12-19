@@ -9,7 +9,7 @@ except ImportError:
     _HAVE_MESHIO = False
 
 from fieldcompare import FieldDataComparison
-from fieldcompare.mesh import Mesh, MeshFields, PermutedMesh
+from fieldcompare.mesh import Mesh, MeshFields, PermutedMesh, cell_types
 from fieldcompare.mesh import permutations, merge
 from fieldcompare.predicates import ExactEquality
 
@@ -17,7 +17,7 @@ from fieldcompare.predicates import ExactEquality
 def test_mesh_fields():
     mesh = Mesh(
         points=[[float(i), 0.0] for i in range(3)],
-        connectivity=([("line", [[0, 1], [1, 2]])])
+        connectivity=([(cell_types.line, [[0, 1], [1, 2]])])
     )
     mesh_fields = MeshFields(
         mesh=mesh,
@@ -36,7 +36,7 @@ def test_mesh_fields():
 def test_permuted_point_mesh_field():
     mesh = Mesh(
         points=[[4.0 - float(i), 0.0] for i in range(3)],
-        connectivity=([("line", [[0, 1], [1, 2]])])
+        connectivity=([(cell_types.line, [[0, 1], [1, 2]])])
     )
     mesh_fields = MeshFields(
         mesh=mesh,
@@ -50,7 +50,7 @@ def test_permuted_point_mesh_field():
 def test_permuted_cell_mesh_field():
     mesh = Mesh(
         points=[[4.0 - float(i), 0.0, 0.0] for i in range(3)],
-        connectivity=([("line", [[0, 1], [1, 2]])])
+        connectivity=([(cell_types.line, [[0, 1], [1, 2]])])
     )
     mesh_fields = MeshFields(
         mesh=mesh,
@@ -60,7 +60,7 @@ def test_permuted_cell_mesh_field():
     def _permutation(mesh):
         return PermutedMesh(
             mesh=mesh,
-            cell_permutations={"line": [1, 0]}
+            cell_permutations={cell_types.line: [1, 0]}
         )
 
     for field in mesh_fields.transformed(_permutation):
@@ -69,12 +69,12 @@ def test_permuted_cell_mesh_field():
 
 
 def test_merge_mesh_fields():
-    cell_type_name = "LINE"
+    cell_type = cell_types.line
     point_data = array([42.0, 43.0, 44.0])
     cell_data = array([42.0, 43.0])
     mesh = Mesh(
         points=[[4.0 - float(i), 0.0, 0.0] for i in range(3)],
-        connectivity=([(cell_type_name, array([[0, 1], [1, 2]]))])
+        connectivity=([(cell_type, array([[0, 1], [1, 2]]))])
     )
     mesh_fields = MeshFields(
         mesh=mesh,
@@ -88,10 +88,10 @@ def test_merge_mesh_fields():
             result.domain.points[i],
             mesh.points[i % 3]
         ))
-    assert list(result.domain.cell_types) == [cell_type_name]
-    for i in range(len(result.domain.connectivity(cell_type_name))):
-        mesh_corners = mesh.connectivity(cell_type_name)[i % 2]
-        result_corners = result.domain.connectivity(cell_type_name)[i]
+    assert list(result.domain.cell_types) == [cell_type]
+    for i in range(len(result.domain.connectivity(cell_type))):
+        mesh_corners = mesh.connectivity(cell_type)[i % 2]
+        result_corners = result.domain.connectivity(cell_type)[i]
         offset = 0 if i < 2 else 3
         assert [c for c in mesh_corners] == [c - offset for c in result_corners]
 

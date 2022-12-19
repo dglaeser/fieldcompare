@@ -1,14 +1,14 @@
 from pathlib import Path
 
 from fieldcompare import FieldDataComparison, FieldDataSequence, protocols
-from fieldcompare.mesh import Mesh, MeshFields
+from fieldcompare.mesh import Mesh, MeshFields, cell_types
 from fieldcompare.field_io import read
 
 
 def get_mesh():
     return Mesh(
         points=[[float(i), 0.0] for i in range(3)],
-        connectivity=([("line", [[0, 1], [1, 2]])])
+        connectivity=([(cell_types.line, [[0, 1], [1, 2]])])
     )
 
 

@@ -7,6 +7,7 @@ from ._mesh_fields import remove_cell_type_suffix
 
 from ._mesh import Mesh
 from ._mesh_fields import MeshFields
+from ._cell_type import CellType
 from . import protocols, permutations
 
 
@@ -43,7 +44,7 @@ def _merge(fields1: protocols.MeshFields,
 
     # merged cell connectivities
     points2_offset = len(fields1.domain.points)
-    cells_dict: Dict[str, Array] = {
+    cells_dict: Dict[CellType, Array] = {
         ct: make_array(fields1.domain.connectivity(ct))
         for ct in fields1.domain.cell_types
     }
@@ -56,7 +57,7 @@ def _merge(fields1: protocols.MeshFields,
 
     # merged cell fields
     raw_cell_field_names = set()
-    cell_fields: Dict[str, Dict[str, Array]] = {ct: {} for ct in cells_dict}
+    cell_fields: Dict[CellType, Dict[str, Array]] = {ct: {} for ct in cells_dict}
     for field, ct in fields1.cell_fields_types:
         raw_field_name = remove_cell_type_suffix(ct, field.name)
         cell_fields[ct][raw_field_name] = field.values
@@ -103,7 +104,7 @@ def _merge(fields1: protocols.MeshFields,
             points=points,
             connectivity=((ct, connectivity) for ct, connectivity in cells_dict.items())
         ),
-        point_data=point_fields,
+        point_data={name: values for name, values in point_fields.items()},
         cell_data={
             name: [cell_fields[ct][name] for ct in cells_dict]
             for name in raw_cell_field_names

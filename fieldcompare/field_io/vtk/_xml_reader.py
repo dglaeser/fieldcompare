@@ -4,7 +4,7 @@ from xml.etree import ElementTree
 
 import numpy as np
 
-from ...mesh import Mesh, MeshFields
+from ...mesh import Mesh, MeshFields, CellType
 from ._appendix import VTKXMLAppendix
 from ._helpers import vtk_type_to_dtype
 from ._encoders import Base64Encoder
@@ -17,7 +17,7 @@ from ._compressors import (
 )
 
 
-CellTypeToCellIndices = Dict[str, np.ndarray]
+CellTypeToCellIndices = Dict[CellType, np.ndarray]
 
 class VTKXMLReader(ABC):
     """Abstract base class for VTK file readers in XML format"""

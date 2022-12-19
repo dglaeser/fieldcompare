@@ -6,10 +6,16 @@ from numpy.typing import ArrayLike
 from meshio import Mesh as MeshIOMesh
 from meshio._vtk_common import vtk_to_meshio_type, meshio_to_vtk_type  # type: ignore[import]
 
-from ..field_io.vtk._helpers import _VTK_CELL_TYPE_STR_TO_INDEX, _VTK_CELL_TYPE_TO_STR
+# meshio uses the same cell-type indexing as VTK,
+# so we transform names/indices for compatibility
+from ..field_io.vtk._helpers import (
+    vtk_cell_type_index_to_cell_type,
+    cell_type_to_vtk_cell_type_index
+)
 
-from ._mesh_fields import MeshFields, remove_cell_type_suffix
 from ._mesh import Mesh
+from ._cell_type import CellType
+from ._mesh_fields import MeshFields, remove_cell_type_suffix
 from . import protocols
 
 
@@ -43,11 +49,15 @@ def to_meshio(mesh_fields: protocols.MeshFields) -> MeshIOMesh:
     )
 
 
-def _from_meshio_cell_type(cell_type: str) -> str:
-    return _VTK_CELL_TYPE_TO_STR[meshio_to_vtk_type[cell_type]]
+def _from_meshio_cell_type(cell_type: str) -> CellType:
+    return vtk_cell_type_index_to_cell_type(
+        meshio_to_vtk_type[cell_type]
+    )
 
 
-def _to_meshio_cell_type(cell_type: str) -> str:
-    if cell_type in meshio_to_vtk_type:
-        return cell_type
-    return vtk_to_meshio_type[_VTK_CELL_TYPE_STR_TO_INDEX[cell_type]]
+def _to_meshio_cell_type(cell_type: CellType) -> str:
+    if cell_type.name in meshio_to_vtk_type:
+        return str(cell_type)
+    return vtk_to_meshio_type[
+        cell_type_to_vtk_cell_type_index(cell_type)
+    ]

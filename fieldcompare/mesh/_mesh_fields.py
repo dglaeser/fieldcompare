@@ -10,21 +10,22 @@ from typing import (
 
 from .._numpy_utils import Array, as_array
 from .._field import Field
-
-from .protocols import Mesh, TransformedMesh
 from ..protocols import FieldData
 
+from ._cell_type import CellType
+from .protocols import Mesh, TransformedMesh
 
-def _cell_type_suffix(cell_type: str) -> str:
-    return f" ({cell_type})"
+
+def _cell_type_suffix(cell_type: CellType) -> str:
+    return f" ({cell_type.name})"
 
 
-def make_cell_type_field_name(cell_type: str, field_name: str) -> str:
+def make_cell_type_field_name(cell_type: CellType, field_name: str) -> str:
     """Append the cell type suffix to the field name"""
     return f"{field_name}{_cell_type_suffix(cell_type)}"
 
 
-def remove_cell_type_suffix(cell_type: str, field_name_with_suffix: str) -> str:
+def remove_cell_type_suffix(cell_type: CellType, field_name_with_suffix: str) -> str:
     """Remove the cell type suffix from the given field name"""
     return field_name_with_suffix.rstrip(_cell_type_suffix(cell_type))
 
@@ -47,13 +48,13 @@ class MeshFields(FieldData):
         """
         self._mesh = mesh
         self._point_data = {
-            name: as_array(data)
+            name: self._make_point_values(data)
             for name, data in point_data.items()
         }
         self._cell_data = {
             name: {
-                cell_type: as_array(connectivity)
-                for cell_type, connectivity in zip(mesh.cell_types, cell_data[name])
+                cell_type: self._make_cell_values(cell_type, cell_values)
+                for cell_type, cell_values in zip(mesh.cell_types, cell_data[name])
             } for name in cell_data
         }
 
@@ -77,7 +78,7 @@ class MeshFields(FieldData):
         return (_tup[0] for _tup in self.cell_fields_types)
 
     @property
-    def cell_fields_types(self) -> Iterable[Tuple[Field, str]]:
+    def cell_fields_types(self) -> Iterable[Tuple[Field, CellType]]:
         """Return a range over cell fields + associated cell type"""
         return (
             (
@@ -94,6 +95,23 @@ class MeshFields(FieldData):
     def transformed(self, transformation: Callable[[Mesh], TransformedMesh]) -> TransformedMeshFields:
         """Return the fields transformed by the given transformation"""
         return TransformedMeshFields(self, transformation)
+
+    def _make_point_values(self, values: Array) -> Array:
+        values = as_array(values)
+        if values.shape[0] != self._mesh.points.shape[0]:
+            raise ValueError(
+                "Length of the given point data does "
+                "not match number of mesh points")
+        return values
+
+    def _make_cell_values(self, cell_type: CellType, values: Array) -> Array:
+        values = as_array(values)
+        if values.shape[0] != self._mesh.connectivity(cell_type).shape[0]:
+            raise ValueError(
+                f"Length of the given cell data for '{cell_type}' "
+                "does not match the number of cells."
+            )
+        return values
 
 
 class TransformedMeshFields(FieldData):
@@ -127,7 +145,7 @@ class TransformedMeshFields(FieldData):
         return (_tup[0] for _tup in self.cell_fields_types)
 
     @property
-    def cell_fields_types(self) -> Iterable[Tuple[Field, str]]:
+    def cell_fields_types(self) -> Iterable[Tuple[Field, CellType]]:
         """Return a range over cell field / cell type tuples"""
         return (
             (self._get_permuted_cell_field(cell_type, field), cell_type)
@@ -144,7 +162,7 @@ class TransformedMeshFields(FieldData):
             self._mesh.transform_point_data(field.values)
         )
 
-    def _get_permuted_cell_field(self, cell_type: str, field: Field) -> Field:
+    def _get_permuted_cell_field(self, cell_type: CellType, field: Field) -> Field:
         return Field(
             field.name,
             self._mesh.transform_cell_data(cell_type, field.values)
