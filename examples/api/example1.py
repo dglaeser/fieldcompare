@@ -6,8 +6,8 @@ from numpy import less, all, array, ndarray
 from fieldcompare import Field, FieldDataComparison
 from fieldcompare.predicates import ExactEquality, FuzzyEquality, PredicateResult
 
-# This example uses tabular data in .csv files
-from fieldcompare.tabular import read
+# convenience function to read in field data from files
+from fieldcompare.field_io import read_field_data
 
 # Protocols you can use for type annotations
 from fieldcompare import protocols
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     my_field = Field(name="my_field", values=array([42.0, 42.0, 42.0]))
 
     # you may also use the provided functions for reading in fields from files
-    fields: protocols.FieldData = read("example2.csv")
+    fields: protocols.FieldData = read_field_data("example2.csv")
 
     # the result allows you to iterate over all fields
     # obtain their names and field values

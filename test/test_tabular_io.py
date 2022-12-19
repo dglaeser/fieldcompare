@@ -1,9 +1,8 @@
 from os import walk
 from os.path import splitext
 from pathlib import Path
-from pytest import raises
 
-from fieldcompare.tabular import read
+from fieldcompare.field_io import read
 
 
 def _get_file_name_with_extension(ext: str) -> str:
@@ -15,14 +14,5 @@ def _get_file_name_with_extension(ext: str) -> str:
     raise FileNotFoundError(f"No file found with extension {ext}")
 
 
-def _get_csv_file_name() -> str:
-    return _get_file_name_with_extension(".csv")
-
-
 def test_csv_field_reading_vtk():
-    _ = read(_get_csv_file_name())
-
-
-def test_csv_field_reading_with_vtk_throws_io_error():
-    with raises(IOError):
-        _ = read(_get_file_name_with_extension(".vtu"))
+    _ = read(_get_file_name_with_extension(".csv"))

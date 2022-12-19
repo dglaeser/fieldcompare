@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from fieldcompare.protocols import FieldData
-from fieldcompare.mesh import Mesh, MeshFields, read_sequence
-from fieldcompare import FieldDataComparison, FieldDataSequence
+from fieldcompare import FieldDataComparison, FieldDataSequence, protocols
+from fieldcompare.mesh import Mesh, MeshFields
+from fieldcompare.field_io import read
 
 
 def get_mesh():
@@ -33,7 +33,7 @@ class MockFieldDataSource:
         self._step_idx += 1
         return self._step_idx < self._num_steps
 
-    def get(self) -> FieldData:
+    def get(self) -> protocols.FieldData:
         return get_field_data(self._step_idx)
 
     @property
@@ -51,7 +51,8 @@ def test_field_data_sequence():
 
 def test_xdmf_field_data_sequence():
     xdmf_file = Path(__file__).resolve().parent / Path("data/test_time_series.xdmf")
-    sequence = read_sequence(str(xdmf_file))
+    sequence = read(str(xdmf_file))
+    assert isinstance(sequence, protocols.FieldDataSequence)
 
     mesh = None
     for field_data in sequence:

@@ -3,11 +3,12 @@
 import pytest
 from pathlib import Path
 
-from fieldcompare.mesh import read_sequence, sort, meshio_utils
+from fieldcompare.mesh import sort, protocols as mesh_protocols
+from fieldcompare.field_io import _mesh_io
 from fieldcompare.predicates import FuzzyEquality, DefaultEquality
-from fieldcompare import FieldDataComparison
+from fieldcompare import FieldDataComparison, protocols
 
-if not meshio_utils._HAVE_MESH_IO:
+if not _mesh_io._HAVE_MESHIO:
     pytest.skip(
         "Skipping xdmf time series tests because meshio was not found",
         allow_module_level=True
@@ -31,10 +32,14 @@ class CheckResult:
 
 def _compare_time_series_files(file1, file2, predicate=FuzzyEquality()) -> CheckResult:
     print("Start xdfm comparison")
-    sequence1 = read_sequence(file1)
-    sequence2 = read_sequence(file2)
+    sequence1 = _mesh_io._read(file1)
+    sequence2 = _mesh_io._read(file2)
+    assert isinstance(sequence1, protocols.FieldDataSequence)
+    assert isinstance(sequence2, protocols.FieldDataSequence)
 
     for fields1, fields2 in zip(sequence1, sequence2):
+        assert isinstance(fields1, mesh_protocols.MeshFields)
+        assert isinstance(fields2, mesh_protocols.MeshFields)
         fields1.domain.set_tolerances(abs_tol=predicate.absolute_tolerance, rel_tol=predicate.relative_tolerance)
         fields2.domain.set_tolerances(abs_tol=predicate.absolute_tolerance, rel_tol=predicate.relative_tolerance)
         fields1 = sort(fields1)

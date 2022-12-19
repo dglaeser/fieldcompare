@@ -5,8 +5,8 @@ from meshio import read as meshio_read
 
 from fieldcompare import FieldDataComparison
 
-# Convenience function to read fields from meshes
-from fieldcompare.mesh import read
+# Convenience function to read fields from files
+from fieldcompare.field_io import read
 
 # Sorting function to yield a unique permutation of mesh fields
 from fieldcompare.mesh import sort
@@ -20,11 +20,22 @@ from fieldcompare.mesh import protocols
 # Compatibility functions for meshio
 from fieldcompare.mesh import meshio_utils
 
+
+def read_as_mesh_fields(filename: str) -> protocols.MeshFields:
+    # The read function can read different kinds of field data,
+    # as well as field data sequences. Thus in this case and for
+    # the sake of type hints, we have to verify that we obtained
+    # # something that fulfills our required interface
+    fields = read(filename)
+    assert isinstance(fields, protocols.MeshFields)
+    return fields
+
+
 mesh_file = "mesh_data.vtu"
 mesh_file_permuted = "mesh_data_permuted.vtu"
 
-fields: protocols.MeshFields = read(mesh_file)
-fields_permuted: protocols.MeshFields = read(mesh_file_permuted)
+fields: protocols.MeshFields = read_as_mesh_fields(mesh_file)
+fields_permuted: protocols.MeshFields = read_as_mesh_fields(mesh_file_permuted)
 
 # The two meshes contain the same data, but in different order,
 # thus, the meshes are not equal. In such case, the field data

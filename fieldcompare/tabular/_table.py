@@ -8,6 +8,11 @@ from ..predicates import PredicateResult
 
 
 class Table:
+    """
+    Represents a table with a fixed number of rows and an index map
+    for reordering the column values (optional)
+    """
+
     def __init__(self,
                  num_rows: Optional[int] = None,
                  idx_map: Optional[ArrayLike] = None) -> None:
