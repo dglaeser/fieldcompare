@@ -3,7 +3,8 @@
 from io import StringIO
 
 from fieldcompare.predicates import ExactEquality
-from fieldcompare.tabular import CSVFieldReader, Table
+from fieldcompare.tabular import Table
+from fieldcompare.io import CSVFieldReader
 
 
 def _as_string_stream(data: dict, add_names: bool = True) -> StringIO:
