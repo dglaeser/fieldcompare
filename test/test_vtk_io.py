@@ -1,7 +1,6 @@
-"""Check the I/O facilities for vtk files"""
+"""Tests for the I/O facilities for vtk files"""
 
 from os import chdir, getcwd
-from os.path import dirname
 from os import walk, remove
 from os.path import splitext, exists
 from pathlib import Path
@@ -10,10 +9,15 @@ from typing import List
 import pytest
 from meshio import read as meshio_read
 
-from fieldcompare import FieldDataComparison
-from fieldcompare.mesh import meshio_utils, MeshFields
-from fieldcompare.mesh import read, read_sequence
-from fieldcompare.mesh._vtk._compressors import _HAVE_LZ4
+from fieldcompare import FieldDataComparison, protocols
+from fieldcompare.mesh import meshio_utils, protocols as mesh_protocols
+from fieldcompare.io.vtk import read
+
+try:
+    import lz4
+    _HAVE_LZ4 = True
+except ImportError:
+    _HAVE_LZ4 = False
 
 
 VTK_TEST_DATA_PATH = Path(__file__).resolve().parent / Path("vtkfiles")
@@ -44,7 +48,7 @@ VTU_APPENDED_BASE64_LZMA_COMPRESSION = _find("vtu_", ".vtu", ["base64", "appende
 VTU_APPENDED_BASE64_LZ4_COMPRESSION = _find("vtu_", ".vtu", ["base64", "appended", "lz4"])
 
 
-VTP_FILES = _find("vtu_", ".vtu", [""])
+VTP_FILES = _find("vtp_", ".vtp", [""])
 PVD_FILES = _find("pvd_", ".pvd", [""])
 PVTU_FILES = _find("pvtu_", ".pvtu", [""])
 PVTP_FILES = _find("pvtp_", ".pvtp", [""])
@@ -61,8 +65,11 @@ def test_parallel_vtk_files(filename: str):
 @pytest.mark.parametrize("filename", PVD_FILES)
 def test_pvd_files(filename: str):
     cwd = getcwd()
+    sequence = read(filename)
+    assert isinstance(sequence, protocols.FieldDataSequence)
     chdir(VTK_TEST_DATA_PATH)
-    for step in read_sequence(filename):
+    for step in sequence:
+        assert isinstance(step, mesh_protocols.MeshFields)
         _test_from_mesh(step)
     chdir(cwd)
 
@@ -123,14 +130,22 @@ def test_vtu_appended_base64_files_lz4_compressed(filename: str):
 
 
 def _test(filename: str) -> bool:
-    mesh_fields = read(filename)
-    tmp_filename = f"{splitext(filename)[0]}_from_meshio.vtu"
+    mesh_fields = _read_mesh_fields(filename)
+    tmp_filename = f"{splitext(filename)[0]}_from_meshio.vtk"
     if splitext(filename) == ".vtu":
         meshio_read_mesh = meshio_read(filename)
     else:
         meshio_mesh = meshio_utils.to_meshio(mesh_fields)
-        meshio_mesh.write(tmp_filename)
-        meshio_read_mesh = meshio_read(tmp_filename)
+
+        # meshio seems to fail when meshes consist of e.g. polygons
+        # with differing numbers of corners and the shape of the array
+        # is not fully determined
+        if any(block.data.dtype == "object" for block in meshio_mesh.cells):
+            meshio_read_mesh = meshio_mesh
+        else:
+            meshio_mesh.write(tmp_filename)
+            meshio_read_mesh = meshio_read(tmp_filename)
+
     meshio_mesh_fields = meshio_utils.from_meshio(meshio_read_mesh)
     comparator = FieldDataComparison(mesh_fields, meshio_mesh_fields)
     if exists(tmp_filename):
@@ -138,7 +153,7 @@ def _test(filename: str) -> bool:
     return bool(comparator())
 
 
-def _test_from_mesh(mesh_fields: MeshFields) -> bool:
+def _test_from_mesh(mesh_fields: mesh_protocols.MeshFields) -> bool:
     meshio_mesh = meshio_utils.to_meshio(mesh_fields)
     tmp_filename = "_temporary_test_to_meshio.vtu"
     meshio_mesh.write(tmp_filename)
@@ -147,3 +162,9 @@ def _test_from_mesh(mesh_fields: MeshFields) -> bool:
     comparator = FieldDataComparison(mesh_fields, meshio_mesh_fields)
     remove(tmp_filename)
     return bool(comparator())
+
+
+def _read_mesh_fields(filename: str) -> mesh_protocols.MeshFields:
+    mesh_fields = read(filename)
+    assert isinstance(mesh_fields, mesh_protocols.MeshFields)
+    return mesh_fields
