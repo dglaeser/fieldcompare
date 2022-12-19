@@ -37,16 +37,14 @@ def _find(begin: str, ext: str, keys: List[str], exclude_keys: List[str] = []) -
 
 VTU_ASCII_FILES = _find("vtu_", ".vtu", ["ascii"])
 
-VTU_INLINE_BASE64_UNCOMPRESSED = _find("vtu_", ".vtu", ["base64", "inline"], ["_compression_"])
-VTU_INLINE_BASE64_ZLIB_COMPRESSION = _find("vtu_", ".vtu", ["base64", "inline", "zlib"])
-VTU_INLINE_BASE64_LZMA_COMPRESSION = _find("vtu_", ".vtu", ["base64", "inline", "lzma"])
+VTU_INLINE_BASE64 = _find("vtu_", ".vtu", ["base64", "inline"], ["lz4"])
 VTU_INLINE_BASE64_LZ4_COMPRESSION = _find("vtu_", ".vtu", ["base64", "inline", "lz4"])
 
-VTU_APPENDED_BASE64_UNCOMPRESSED = _find("vtu_", ".vtu", ["base64", "appended"], ["_compression_"])
-VTU_APPENDED_BASE64_ZLIB_COMPRESSION = _find("vtu_", ".vtu", ["base64", "appended", "zlib"])
-VTU_APPENDED_BASE64_LZMA_COMPRESSION = _find("vtu_", ".vtu", ["base64", "appended", "lzma"])
+VTU_APPENDED_BASE64 = _find("vtu_", ".vtu", ["base64", "appended"], ["lz4"])
 VTU_APPENDED_BASE64_LZ4_COMPRESSION = _find("vtu_", ".vtu", ["base64", "appended", "lz4"])
 
+VTU_APPENDED_RAW = _find("vtu_", ".vtu", ["raw", "appended"], ["lz4"])
+VTU_APPENDED_RAW_LZ4_COMPRESSION = _find("vtu_", ".vtu", ["raw", "appended", "lz4"])
 
 VTP_FILES = _find("vtp_", ".vtp", [""])
 PVD_FILES = _find("pvd_", ".pvd", [""])
@@ -84,18 +82,8 @@ def test_vtu_ascii_files(filename: str):
     _test(filename)
 
 
-@pytest.mark.parametrize("filename", VTU_INLINE_BASE64_UNCOMPRESSED)
-def test_vtu_inline_base64_files_uncompressed(filename: str):
-    _test(filename)
-
-
-@pytest.mark.parametrize("filename", VTU_INLINE_BASE64_ZLIB_COMPRESSION)
-def test_vtu_inline_base64_files_zlib_compressed(filename: str):
-    _test(filename)
-
-
-@pytest.mark.parametrize("filename", VTU_INLINE_BASE64_LZMA_COMPRESSION)
-def test_vtu_inline_base64_files_lzma_compressed(filename: str):
+@pytest.mark.parametrize("filename", VTU_INLINE_BASE64)
+def test_vtu_inline_base64_files(filename: str):
     _test(filename)
 
 
@@ -106,23 +94,27 @@ def test_vtu_inline_base64_files_lz4_compressed(filename: str):
     else:
         _test(filename)
 
-@pytest.mark.parametrize("filename", VTU_APPENDED_BASE64_UNCOMPRESSED)
-def test_vtu_appended_base64_files_uncompressed(filename: str):
-    _test(filename)
 
-
-@pytest.mark.parametrize("filename", VTU_APPENDED_BASE64_ZLIB_COMPRESSION)
-def test_vtu_appended_base64_files_zlib_compressed(filename: str):
-    _test(filename)
-
-
-@pytest.mark.parametrize("filename", VTU_APPENDED_BASE64_LZMA_COMPRESSION)
-def test_vtu_appended_base64_files_lzma_compressed(filename: str):
+@pytest.mark.parametrize("filename", VTU_APPENDED_BASE64)
+def test_vtu_appended_base64_files(filename: str):
     _test(filename)
 
 
 @pytest.mark.parametrize("filename", VTU_APPENDED_BASE64_LZ4_COMPRESSION)
 def test_vtu_appended_base64_files_lz4_compressed(filename: str):
+    if not _HAVE_LZ4:
+        pytest.skip("LZ4 not found. Skipping tests...")
+    else:
+        _test(filename)
+
+
+@pytest.mark.parametrize("filename", VTU_APPENDED_RAW)
+def test_vtu_appended_raw_files(filename: str):
+    _test(filename)
+
+
+@pytest.mark.parametrize("filename", VTU_APPENDED_RAW_LZ4_COMPRESSION)
+def test_vtu_appended_raw_files_lz4_compressed(filename: str):
     if not _HAVE_LZ4:
         pytest.skip("LZ4 not found. Skipping tests...")
     else:
