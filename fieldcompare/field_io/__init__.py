@@ -13,8 +13,15 @@ from ._mesh_io import (
 )
 
 
-def read(filename: str) -> Union[protocols.FieldData, protocols.FieldDataSequence]:
+def read_field_data(filename: str) -> protocols.FieldData:
     """Read the field data from the given file"""
+    result = read(filename)
+    assert isinstance(result, protocols.FieldData)
+    return result
+
+
+def read(filename: str) -> Union[protocols.FieldData, protocols.FieldDataSequence]:
+    """Read the field data or field data sequence from the given file"""
     if vtk.is_supported(filename):
         return vtk.read(filename)
     if splitext(filename)[1] == ".csv":
@@ -26,7 +33,7 @@ def read(filename: str) -> Union[protocols.FieldData, protocols.FieldDataSequenc
             raise IOError(f"Error reading with meshio: '{e}'")
     raise IOError(
         f"Unsupported file '{filename}'" + (
-        "" if _HAVE_MESHIO else " (consider installing 'meshio' to have access to more file formats)"
+            "" if _HAVE_MESHIO else " (consider installing 'meshio' to have access to more file formats)"
         )
     )
 
