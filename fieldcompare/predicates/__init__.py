@@ -1,4 +1,4 @@
-"""Predicates predefined by FieldCompare"""
+"""Predicate classes predefined by FieldCompare"""
 
 from ._predicates import (
     ExactEquality,
