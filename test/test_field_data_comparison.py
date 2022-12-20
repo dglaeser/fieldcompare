@@ -9,7 +9,7 @@ from pytest import raises
 from fieldcompare import Field, FieldDataComparison
 from fieldcompare import protocols
 
-from fieldcompare.field_io import read
+from fieldcompare.io import read
 from fieldcompare.mesh import sort, permutations, protocols as mesh_protocols
 from fieldcompare.predicates import DefaultEquality, FuzzyEquality
 from fieldcompare._numpy_utils import Array, make_array

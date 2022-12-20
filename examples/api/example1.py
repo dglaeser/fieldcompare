@@ -7,7 +7,7 @@ from fieldcompare import Field, FieldDataComparison
 from fieldcompare.predicates import ExactEquality, FuzzyEquality, PredicateResult
 
 # convenience function to read in field data from files
-from fieldcompare.field_io import read_field_data
+from fieldcompare.io import read_field_data
 
 # Protocols you can use for type annotations
 from fieldcompare import protocols

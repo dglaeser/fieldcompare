@@ -2,7 +2,7 @@ from pathlib import Path
 
 from fieldcompare import FieldDataComparison, FieldDataSequence, protocols
 from fieldcompare.mesh import Mesh, MeshFields, cell_types
-from fieldcompare.field_io import read
+from fieldcompare.io import read
 
 
 def get_mesh():

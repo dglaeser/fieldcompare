@@ -11,7 +11,7 @@ from xml.etree.ElementTree import ElementTree, Element
 from .._matching import find_matching_file_names
 from .._format import highlighted, as_warning, get_status_string
 from .._common import _measure_time
-from ..field_io import is_supported
+from ..io import is_supported
 
 from ._junit import as_junit_xml_element
 from ._common import (
