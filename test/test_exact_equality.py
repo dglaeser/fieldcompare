@@ -1,8 +1,8 @@
 """Test exact equality checks on values/arrays"""
 
 from fieldcompare import Field
-from fieldcompare import make_array
-from fieldcompare import ExactEquality, DefaultEquality
+from fieldcompare.predicates import ExactEquality, DefaultEquality
+from fieldcompare._numpy_utils import make_array
 
 
 def test_exact_equality_with_scalars():

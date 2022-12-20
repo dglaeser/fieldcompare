@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<VTKFile type="PUnstructuredGrid">
+  <PUnstructuredGrid>
+    <PPointData>
+      <PDataArray Name="ptensor_custom_prec" type="Float32" format="appended"/>
+      <PDataArray Name="pvector_custom_prec" type="Float32" format="appended"/>
+      <PDataArray Name="pscalar_custom_prec" type="Float32" format="appended"/>
+      <PDataArray Name="ptensor" type="Float64" format="appended"/>
+      <PDataArray Name="pvector" type="Float64" format="appended"/>
+      <PDataArray Name="pscalar" type="Float64" format="appended"/>
+    </PPointData>
+    <PCellData>
+      <PDataArray Name="cvector_custom_prec" type="Float32" format="appended"/>
+      <PDataArray Name="cscalar_custom_prec" type="Float32" format="appended"/>
+      <PDataArray Name="ctensor" type="Float64" format="appended"/>
+      <PDataArray Name="ctensor_custom_prec" type="Float32" format="appended"/>
+      <PDataArray Name="cvector" type="Float64" format="appended"/>
+      <PDataArray Name="cscalar" type="Float64" format="appended"/>
+    </PCellData>
+    <PPoints>
+      <PDataArray NumberOfComponents="3" type="Float64"/>
+    </PPoints>
+    <Piece Source="pvtu_2d_in_2d-0.vtu"/>
+    <Piece Source="pvtu_2d_in_2d-1.vtu"/>
+  </PUnstructuredGrid>
+</VTKFile>

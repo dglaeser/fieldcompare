@@ -8,57 +8,18 @@ results against previously obtained results.
 
 from .__about__ import __version__
 
-from ._array import (
-    Array,
-    sub_array,
-    make_array,
-    make_initialized_array,
-    make_uninitialized_array
-)
-
-from ._predicates import (
-    ExactEquality,
-    FuzzyEquality,
-    DefaultEquality
-)
-
-from ._field import (
-    Field,
-    FieldInterface,
-    FieldContainer,
-    FieldContainerInterface
-)
-
-from ._field_io import (
-    read_fields,
-    make_field_reader,
-    make_mesh_field_reader,
-    is_supported_file,
-    is_mesh_file
-)
-
-from ._logging import (
-    NullDeviceLogger,
-    StandardOutputLogger,
-    StreamLogger,
-    LoggerBase,
-    LoggableBase,
-    LoggerInterface,
-    Loggable
-)
+from ._field import Field
+from ._field_sequence import FieldDataSequence
 
 from ._matching import (
-    find_matching_field_names,
-    find_matching_file_names,
-    find_matching_names
+    find_matches,
+    find_matches_by_name,
+    find_matching_file_names
 )
 
-from ._field_comparison import (
-    FieldComparison,
-    FieldComparisonOptions
-)
-
-from ._file_comparison import (
-    FileComparison,
-    FileComparisonOptions
+from ._field_data_comparison import (
+    FieldDataComparison,
+    FieldComparisonStatus,
+    FieldComparisonResult,
+    FieldComparisonSuite
 )

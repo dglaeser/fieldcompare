@@ -1,0 +1,215 @@
+<VTKFile type="PolyData" version="1.0" byte_order="LittleEndian" header_type="UInt64">
+  <PolyData>
+    <Piece NumberOfPoints="9"                    NumberOfVerts="0"                    NumberOfLines="0"                    NumberOfStrips="0"                    NumberOfPolys="3"                   >
+      <PointData>
+        <DataArray type="Float64" Name="ptensor_custom_prec" NumberOfComponents="9" format="appended" RangeMin="0"                    RangeMax="18.185948537"         offset="0"                   >
+          <InformationKey name="L2_NORM_FINITE_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              0
+            </Value>
+            <Value index="1">
+              18.185948537
+            </Value>
+          </InformationKey>
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              0
+            </Value>
+            <Value index="1">
+              18.185948537
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Float64" Name="pvector_custom_prec" NumberOfComponents="3" format="appended" RangeMin="0"                    RangeMax="12.859407532"         offset="656"                 >
+          <InformationKey name="L2_NORM_FINITE_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              0
+            </Value>
+            <Value index="1">
+              12.859407532
+            </Value>
+          </InformationKey>
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              0
+            </Value>
+            <Value index="1">
+              12.859407532
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Float64" Name="pscalar_custom_prec" format="appended" RangeMin="0"                    RangeMax="9.0929742683"         offset="880"                 >
+        </DataArray>
+        <DataArray type="Float64" Name="ptensor" NumberOfComponents="9" format="appended" RangeMin="0"                    RangeMax="18.185948537"         offset="960"                 >
+          <InformationKey name="L2_NORM_FINITE_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              0
+            </Value>
+            <Value index="1">
+              18.185948537
+            </Value>
+          </InformationKey>
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              0
+            </Value>
+            <Value index="1">
+              18.185948537
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Float64" Name="pvector" NumberOfComponents="3" format="appended" RangeMin="0"                    RangeMax="12.859407532"         offset="1616"                >
+          <InformationKey name="L2_NORM_FINITE_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              0
+            </Value>
+            <Value index="1">
+              12.859407532
+            </Value>
+          </InformationKey>
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              0
+            </Value>
+            <Value index="1">
+              12.859407532
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Float64" Name="pscalar" format="appended" RangeMin="0"                    RangeMax="9.0929742683"         offset="1840"                >
+        </DataArray>
+      </PointData>
+      <CellData>
+        <DataArray type="Float64" Name="cvector_custom_prec" NumberOfComponents="3" format="appended" RangeMin="5.9500983953"         RangeMax="10.802238577"         offset="1920"                >
+          <InformationKey name="L2_NORM_FINITE_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              5.9500983953
+            </Value>
+            <Value index="1">
+              10.802238577
+            </Value>
+          </InformationKey>
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              5.9500983953
+            </Value>
+            <Value index="1">
+              10.802238577
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Float64" Name="cscalar_custom_prec" format="appended" RangeMin="4.207354924"          RangeMax="7.6383361495"         offset="2000"                >
+        </DataArray>
+        <DataArray type="Float64" Name="ctensor" NumberOfComponents="9" format="appended" RangeMin="8.4147098481"         RangeMax="15.276672299"         offset="2032"                >
+          <InformationKey name="L2_NORM_FINITE_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              8.4147098481
+            </Value>
+            <Value index="1">
+              15.276672299
+            </Value>
+          </InformationKey>
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              8.4147098481
+            </Value>
+            <Value index="1">
+              15.276672299
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Float64" Name="ctensor_custom_prec" NumberOfComponents="9" format="appended" RangeMin="8.4147098481"         RangeMax="15.276672299"         offset="2256"                >
+          <InformationKey name="L2_NORM_FINITE_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              8.4147098481
+            </Value>
+            <Value index="1">
+              15.276672299
+            </Value>
+          </InformationKey>
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              8.4147098481
+            </Value>
+            <Value index="1">
+              15.276672299
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Float64" Name="cvector" NumberOfComponents="3" format="appended" RangeMin="5.9500983953"         RangeMax="10.802238577"         offset="2480"                >
+          <InformationKey name="L2_NORM_FINITE_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              5.9500983953
+            </Value>
+            <Value index="1">
+              10.802238577
+            </Value>
+          </InformationKey>
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              5.9500983953
+            </Value>
+            <Value index="1">
+              10.802238577
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Float64" Name="cscalar" format="appended" RangeMin="4.207354924"          RangeMax="7.6383361495"         offset="2560"                >
+        </DataArray>
+      </CellData>
+      <Points>
+        <DataArray type="Float64" Name="Coordinates" NumberOfComponents="3" format="appended" RangeMin="0"                    RangeMax="2.7950849719"         offset="2592"                >
+          <InformationKey name="L2_NORM_FINITE_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              0
+            </Value>
+            <Value index="1">
+              2.7950849719
+            </Value>
+          </InformationKey>
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              0
+            </Value>
+            <Value index="1">
+              2.7950849719
+            </Value>
+          </InformationKey>
+        </DataArray>
+      </Points>
+      <Verts>
+        <DataArray type="Int64" Name="connectivity" format="appended" RangeMin=""                     RangeMax=""                     offset="2816"                />
+        <DataArray type="Int64" Name="offsets" format="appended" RangeMin=""                     RangeMax=""                     offset="2824"                />
+      </Verts>
+      <Lines>
+        <DataArray type="Int64" Name="connectivity" format="appended" RangeMin=""                     RangeMax=""                     offset="2832"                />
+        <DataArray type="Int64" Name="offsets" format="appended" RangeMin=""                     RangeMax=""                     offset="2840"                />
+      </Lines>
+      <Strips>
+        <DataArray type="Int64" Name="connectivity" format="appended" RangeMin=""                     RangeMax=""                     offset="2848"                />
+        <DataArray type="Int64" Name="offsets" format="appended" RangeMin=""                     RangeMax=""                     offset="2856"                />
+      </Strips>
+      <Polys>
+        <DataArray type="Int64" Name="connectivity" format="appended" RangeMin=""                     RangeMax=""                     offset="2864"                />
+        <DataArray type="Int64" Name="offsets" format="appended" RangeMin=""                     RangeMax=""                     offset="2968"                />
+      </Polys>
+    </Piece>
+  </PolyData>
+  <AppendedData encoding="raw">
+   _à      ®eŸT‘ @®eŸT‘ @        ®eŸT‘ @®eŸT‘ @                                                                                                                                                                                ≠√Rö/"@≠√Rö/"@        ≠√Rö/"@≠√Rö/"@                                éóàÑ@éóàÑ@        éóàÑ@éóàÑ@                                ÉœÀ÷1@ÉœÀ÷1@        ÉœÀ÷1@ÉœÀ÷1@                                ‘b’%çÀ
+@‘b’%çÀ
+@        ‘b’%çÀ
+@‘b’%çÀ
+@                                ≠√Rö/@≠√Rö/@        ≠√Rö/@≠√Rö/@                                m9ä™›¶@m9ä™›¶@        m9ä™›¶@m9ä™›¶@                                ÿ       ®eŸT‘ @®eŸT‘ @                                                        ≠√Rö/"@≠√Rö/"@        éóàÑ@éóàÑ@        ÉœÀ÷1@ÉœÀ÷1@        ‘b’%çÀ
+@‘b’%çÀ
+@        ≠√Rö/@≠√Rö/@        m9ä™›¶@m9ä™›¶@        H       ®eŸT‘ @                ≠√Rö/"@éóàÑ@ÉœÀ÷1@‘b’%çÀ
+@≠√Rö/@m9ä™›¶@à      ®eŸT‘ @®eŸT‘ @        ®eŸT‘ @®eŸT‘ @                                                                                                                                                                                ≠√Rö/"@≠√Rö/"@        ≠√Rö/"@≠√Rö/"@                                éóàÑ@éóàÑ@        éóàÑ@éóàÑ@                                ÉœÀ÷1@ÉœÀ÷1@        ÉœÀ÷1@ÉœÀ÷1@                                ‘b’%çÀ
+@‘b’%çÀ
+@        ‘b’%çÀ
+@‘b’%çÀ
+@                                ≠√Rö/@≠√Rö/@        ≠√Rö/@≠√Rö/@                                m9ä™›¶@m9ä™›¶@        m9ä™›¶@m9ä™›¶@                                ÿ       ®eŸT‘ @®eŸT‘ @                                                        ≠√Rö/"@≠√Rö/"@        éóàÑ@éóàÑ@        ÉœÀ÷1@ÉœÀ÷1@        ‘b’%çÀ
+@‘b’%çÀ
+@        ≠√Rö/@≠√Rö/@        m9ä™›¶@m9ä™›¶@        H       ®eŸT‘ @                ≠√Rö/"@éóàÑ@ÉœÀ÷1@‘b’%çÀ
+@≠√Rö/@m9ä™›¶@H       ®eŸT‘@®eŸT‘@        Go◊˝ßç@Go◊˝ßç@        ªL{–ù˘@ªL{–ù˘@               ®eŸT‘@Go◊˝ßç@ªL{–ù˘@ÿ       ®eŸT‘@®eŸT‘@        ®eŸT‘@®eŸT‘@                                Go◊˝ßç@Go◊˝ßç@        Go◊˝ßç@Go◊˝ßç@                                ªL{–ù˘@ªL{–ù˘@        ªL{–ù˘@ªL{–ù˘@                                ÿ       ®eŸT‘@®eŸT‘@        ®eŸT‘@®eŸT‘@                                Go◊˝ßç@Go◊˝ßç@        Go◊˝ßç@Go◊˝ßç@                                ªL{–ù˘@ªL{–ù˘@        ªL{–ù˘@ªL{–ù˘@                                H       ®eŸT‘@®eŸT‘@        Go◊˝ßç@Go◊˝ßç@        ªL{–ù˘@ªL{–ù˘@               ®eŸT‘@Go◊˝ßç@ªL{–ù˘@ÿ             ?                              ?                                       @                      @      Ë?              @      –?              @      ‡?              ?      ?               @      ?                                                        `                                                                                                                         
+  </AppendedData>
+</VTKFile>

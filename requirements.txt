@@ -4,3 +4,4 @@ tox
 pytest
 flake8
 mypy
+lz4

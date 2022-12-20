@@ -5,16 +5,16 @@ from datetime import datetime
 from argparse import ArgumentParser
 
 from fieldcompare import __version__
-from fieldcompare._logging import LoggerInterface, StandardOutputLogger
 
-from ._file_compare import _add_arguments as _file_mode_add_arguments
-from ._file_compare import _run as _run_file_mode
+from ._logger import CLILogger
+from ._file_mode import _add_arguments as _file_mode_add_arguments
+from ._file_mode import _run as _run_file_mode
 
-from ._dir_compare import _add_arguments as _dir_mode_add_arguments
-from ._dir_compare import _run as _run_dir_mode
+from ._dir_mode import _add_arguments as _dir_mode_add_arguments
+from ._dir_mode import _run as _run_dir_mode
 
 
-def main(argv=None, logger: LoggerInterface = StandardOutputLogger()):
+def main(argv=None, logger: CLILogger = CLILogger()):
     parser = ArgumentParser(description="Compare fields in files of various formats")
     parser.add_argument(
         "--version", "-v",
@@ -26,9 +26,6 @@ def main(argv=None, logger: LoggerInterface = StandardOutputLogger()):
     sub_parsers = parser.add_subparsers(title="subcommands", dest="command", required=True)
     _add_file_mode_parser(sub_parsers)
     _add_directory_mode_parser(sub_parsers)
-
-    # TODO(Dennis): add value-chop option (maybe not necessary due to combo of atol/rtol)
-    # TODO(Dennis): Allow comparison & predicate maps to be passed
 
     args = parser.parse_args(argv)
     return args.func(vars(args), logger)

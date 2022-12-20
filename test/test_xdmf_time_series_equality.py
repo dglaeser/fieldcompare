@@ -1,9 +1,18 @@
 """Test equality checks for fields obtained from xdfm time series files"""
 
+import pytest
 from pathlib import Path
 
-from fieldcompare import make_mesh_field_reader, FuzzyEquality, DefaultEquality
+from fieldcompare.mesh import sort, protocols as mesh_protocols
+from fieldcompare.field_io import _mesh_io
+from fieldcompare.predicates import FuzzyEquality, DefaultEquality
+from fieldcompare import FieldDataComparison, protocols
 
+if not _mesh_io._HAVE_MESHIO:
+    pytest.skip(
+        "Skipping xdmf time series tests because meshio was not found",
+        allow_module_level=True
+    )
 
 TEST_DATA_PATH = Path(__file__).resolve().parent / Path("data")
 
@@ -23,25 +32,22 @@ class CheckResult:
 
 def _compare_time_series_files(file1, file2, predicate=FuzzyEquality()) -> CheckResult:
     print("Start xdfm comparison")
-    reader1 = make_mesh_field_reader(file1)
-    reader2 = make_mesh_field_reader(file2)
-    reader1.permute_uniquely = True
-    reader2.permute_uniquely = True
-    fields1 = reader1.read(file1)
-    fields2 = reader2.read(file2)
+    sequence1 = _mesh_io._read(file1)
+    sequence2 = _mesh_io._read(file2)
+    assert isinstance(sequence1, protocols.FieldDataSequence)
+    assert isinstance(sequence2, protocols.FieldDataSequence)
 
-    def _get_field2(name: str):
-        for field in fields2:
-            if field.name == name:
-                return field
-        raise ValueError("Field not found")
-
-    for field1 in fields1:
-        field2 = _get_field2(field1.name)
-        print(f" -- comparing field {field1.name}")
-        check = predicate(field1.values, field2.values)
-        if not check:
-            return CheckResult(False, f"Field {field1.name} has compared unequal")
+    for fields1, fields2 in zip(sequence1, sequence2):
+        assert isinstance(fields1, mesh_protocols.MeshFields)
+        assert isinstance(fields2, mesh_protocols.MeshFields)
+        fields1.domain.set_tolerances(abs_tol=predicate.absolute_tolerance, rel_tol=predicate.relative_tolerance)
+        fields2.domain.set_tolerances(abs_tol=predicate.absolute_tolerance, rel_tol=predicate.relative_tolerance)
+        fields1 = sort(fields1)
+        fields2 = sort(fields2)
+        if not FieldDataComparison(fields1, fields2)(
+            predicate_selector=lambda _, __: predicate
+        ):
+            return CheckResult(False)
     return CheckResult(True)
 
 
@@ -101,7 +107,6 @@ def test_perturbed_time_series_files():
         predicate
     )
     assert not test_result
-    assert "timestep_2" in test_result.report
 
     default_predicate.relative_tolerance = 1e-20
     default_predicate.absolute_tolerance = 1e-20
@@ -111,4 +116,3 @@ def test_perturbed_time_series_files():
         default_predicate
     )
     assert not test_result
-    assert "timestep_2" in test_result.report

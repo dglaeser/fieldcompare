@@ -15,15 +15,15 @@ the same software at an earlier time, in order to detect if changes to the code 
 changes to the behavior of the software.
 
 Simulations typically produce discrete field data defined on computational grids, and there exists
-a variety of standard and widely-used file formats. Support for a large number of grid file formats
-is achieved by using [meshio](https://github.com/nschloe/meshio) under the hood to read in the field
-data into structures that can be used for comparisons with `fieldcompare`. Besides grid files, `csv`
-files are also supported, a format that is widely used in simulation frameworks to write out secondary
-data such as e.g. error norms and convergence rates.
+a variety of standard and widely-used file formats. `fieldcompare` supports a number of
+[VTK file formats](https://kitware.github.io/vtk-examples/site/VTKFileFormats/) out-of-the box,
+a variety of further formats can be used with the help of [meshio](https://github.com/nschloe/meshio).
+Besides mesh files, `csv` files are also supported, a format that is widely used in simulation
+frameworks to write out secondary data such as e.g. error norms and convergence rates.
 
 Independent of the file type and format, `fieldcompare` reads all _fields_ from those files and allows
 you to then check all entries of the fields for equality with custom absolute and relative tolerances.
-Programmatically, you can also use predicates different from equality (e.g. "smaller-than"), while the
+Programmatically, you can provide and use custom predicates (e.g. "smaller-than"), while the
 CLI is currently hardwired to (fuzzy) equality checks, which is the most common use case.
 
 A common issue with regression testing of grid files is that the grid may be written with a different
@@ -98,4 +98,3 @@ Public License (GPL) version 3 or - at your option - any later version. The GPL
 can be [read online](https://www.gnu.org/licenses/gpl-3.0.en.html) or in the
 [LICENSE.txt](LICENSE.txt) file in this repository. See [LICENSE.txt](LICENSE.txt)
 for full copying permissions.
-

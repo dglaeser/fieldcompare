@@ -8,7 +8,7 @@ from io import StringIO
 from xml.etree import ElementTree
 
 from fieldcompare._cli import main
-from fieldcompare._logging import StreamLogger
+from fieldcompare._cli._logger import CLILogger
 from data.generate_test_meshes import _make_test_mesh, _perturb_mesh
 from data.generate_test_meshes import _get_time_series_point_data_values
 from data.generate_test_meshes import _get_time_series_cell_data_values
@@ -79,7 +79,7 @@ def test_cli_file_mode_fail_on_permuted_non_conforming_mesh_without_ghost_remova
     assert main([
         "file", str(TEST_DATA_PATH / Path("test_non_conforming_mesh.vtu")),
         "--reference", str(TEST_DATA_PATH / Path("test_non_conforming_mesh_with_ghost_points.vtu")),
-        "--disable-mesh-ghost-point-removal"
+        "--disable-mesh-orphan-point-removal"
     ]) == 1
 
 
@@ -91,13 +91,13 @@ def test_cli_file_mode_passes_without_ghost_removal_when_ghosts_do_not_overlap()
     assert main([
         "file", str(TEST_DATA_PATH / Path("test_non_conforming_mesh_with_non_overlapping_ghost_points_permutated.vtu")),
         "--reference", str(TEST_DATA_PATH / Path("test_non_conforming_mesh_with_non_overlapping_ghost_points.vtu")),
-        "--disable-mesh-ghost-point-removal"
+        "--disable-mesh-orphan-point-removal"
     ]) == 0
 
 
 def test_cli_file_mode_field_filter():
     with StringIO() as stream:
-        logger = StreamLogger(stream)
+        logger = CLILogger(output_stream=stream)
         args = [
             "file", str(TEST_DATA_PATH / Path("test_mesh.vtu")),
             "--reference", str(TEST_DATA_PATH / Path("test_mesh.vtu")),
@@ -105,7 +105,7 @@ def test_cli_file_mode_field_filter():
         ]
         assert main(args, logger) == 0
         comparison_logs = [
-            line for line in stream.getvalue().split("\n") if "Comparison of the field" in line
+            line for line in stream.getvalue().split("\n") if "Comparing the field" in line
         ]
         assert len(comparison_logs) == 1
         assert "function" in comparison_logs[0]
@@ -113,7 +113,7 @@ def test_cli_file_mode_field_filter():
 
 def test_cli_file_mode_field_exclusion_filter():
     with StringIO() as stream:
-        logger = StreamLogger(stream)
+        logger = CLILogger(output_stream=stream)
         args = [
             "file", str(TEST_DATA_PATH / Path("test_mesh.vtu")),
             "--reference", str(TEST_DATA_PATH / Path("test_mesh.vtu")),
@@ -204,21 +204,78 @@ def test_cli_file_mode_absolute_tolerance_definition():
     remove(_perturbed_mesh_filename)
 
 
-def test_cli_file_mode_missing_result_field():
+def test_cli_file_mode_missing_result_fields():
+    _mesh = _make_test_mesh()
+    _reference_mesh = _make_test_mesh()
+    _mesh.point_data = {}
+
+    _mesh_filename = "_test_cli_file_mode_missing_reference_fields.vtu"
+    _reference_mesh_filename = _mesh_filename.replace(".vtu", "_reference.vtu")
+    _mesh.write(_mesh_filename)
+    _reference_mesh.write(_reference_mesh_filename)
+
+    assert main([
+        "file", _mesh_filename,
+        "--reference", _reference_mesh_filename,
+    ]) == 1
+    assert main([
+        "file", _mesh_filename,
+        "--reference", _reference_mesh_filename,
+        "--ignore-missing-reference-fields"
+    ]) == 1
+    assert main([
+        "file", _mesh_filename,
+        "--reference", _reference_mesh_filename,
+        "--ignore-missing-source-fields"
+    ]) == 0
+
+    remove(_mesh_filename)
+    remove(_reference_mesh_filename)
+
+
+def test_cli_file_mode_missing_reference_fields():
+    _mesh = _make_test_mesh()
+    _reference_mesh = _make_test_mesh()
+    _reference_mesh.point_data = {}
+
+    _mesh_filename = "_test_cli_file_mode_missing_reference_fields.vtu"
+    _reference_mesh_filename = _mesh_filename.replace(".vtu", "_reference.vtu")
+    _mesh.write(_mesh_filename)
+    _reference_mesh.write(_reference_mesh_filename)
+
+    assert main([
+        "file", _mesh_filename,
+        "--reference", _reference_mesh_filename,
+    ]) == 1
+    assert main([
+        "file", _mesh_filename,
+        "--reference", _reference_mesh_filename,
+        "--ignore-missing-source-fields"
+    ]) == 1
+    assert main([
+        "file", _mesh_filename,
+        "--reference", _reference_mesh_filename,
+        "--ignore-missing-reference-fields"
+    ]) == 0
+
+    remove(_mesh_filename)
+    remove(_reference_mesh_filename)
+
+
+def test_cli_file_mode_missing_sequences_steps():
     _mesh = _make_test_mesh()
     _point_data_1 = _get_time_series_point_data_values(_mesh, num_time_steps=2)
     _cell_data_1 = _get_time_series_cell_data_values(_mesh, num_time_steps=2)
     _point_data_2 = _get_time_series_point_data_values(_mesh, num_time_steps=3)
     _cell_data_2 = _get_time_series_cell_data_values(_mesh, num_time_steps=3)
 
-    _mesh_1_filename = "_test_mesh_cli_file_mode_missing_result_field_1.xdmf"
-    _mesh_2_filename = "_test_mesh_cli_file_mode_missing_result_field_2.xdmf"
+    _mesh_1_filename = "_test_cli_file_mode_missing_sequences_steps_field_1.xdmf"
+    _mesh_2_filename = "_test_cli_file_mode_missing_sequences_steps_field_2.xdmf"
     _write_time_series(_mesh_1_filename, _mesh, _point_data_1, _cell_data_1, num_time_steps=2)
     _write_time_series(_mesh_2_filename, _mesh, _point_data_2, _cell_data_2, num_time_steps=3)
 
     assert main(["file", _mesh_1_filename, "--reference", _mesh_2_filename]) == 1
-    assert main(["file", _mesh_1_filename, "--reference", _mesh_2_filename, "--ignore-missing-reference-fields"]) == 1
-    assert main(["file", _mesh_1_filename, "--reference", _mesh_2_filename, "--ignore-missing-result-fields"]) == 0
+    assert main(["file", _mesh_1_filename, "--reference", _mesh_2_filename, "--ignore-missing-sequence-steps"]) == 0
 
     remove(_mesh_1_filename)
     remove(_mesh_2_filename)
@@ -226,21 +283,32 @@ def test_cli_file_mode_missing_result_field():
     remove(_mesh_2_filename.replace(".xdmf", ".h5"))
 
 
-def test_cli_file_mode_missing_reference_field():
+def test_cli_file_mode_missing_sequences_steps_force_comparison():
     _mesh = _make_test_mesh()
-    _point_data_1 = _get_time_series_point_data_values(_mesh, num_time_steps=3)
-    _cell_data_1 = _get_time_series_cell_data_values(_mesh, num_time_steps=3)
-    _point_data_2 = _get_time_series_point_data_values(_mesh, num_time_steps=2)
-    _cell_data_2 = _get_time_series_cell_data_values(_mesh, num_time_steps=2)
+    _point_data_1 = _get_time_series_point_data_values(_mesh, num_time_steps=2)
+    _cell_data_1 = _get_time_series_cell_data_values(_mesh, num_time_steps=2)
+    _point_data_2 = _get_time_series_point_data_values(_mesh, num_time_steps=3)
+    _cell_data_2 = _get_time_series_cell_data_values(_mesh, num_time_steps=3)
 
-    _mesh_1_filename = "_test_mesh_cli_file_mode_missing_reference_field_1.xdmf"
-    _mesh_2_filename = "_test_mesh_cli_file_mode_missing_reference_field_2.xdmf"
-    _write_time_series(_mesh_1_filename, _mesh, _point_data_1, _cell_data_1, num_time_steps=3)
-    _write_time_series(_mesh_2_filename, _mesh, _point_data_2, _cell_data_2, num_time_steps=2)
+    _mesh_1_filename = "_test_cli_file_mode_missing_sequences_steps_force_comparison_field_1.xdmf"
+    _mesh_2_filename = "_test_cli_file_mode_missing_sequences_steps_force_comparison_field_2.xdmf"
+    _write_time_series(_mesh_1_filename, _mesh, _point_data_1, _cell_data_1, num_time_steps=2)
+    _write_time_series(_mesh_2_filename, _mesh, _point_data_2, _cell_data_2, num_time_steps=3)
 
-    assert main(["file", _mesh_1_filename, "--reference", _mesh_2_filename]) == 1
-    assert main(["file", _mesh_1_filename, "--reference", _mesh_2_filename, "--ignore-missing-reference-fields"]) == 0
-    assert main(["file", _mesh_1_filename, "--reference", _mesh_2_filename, "--ignore-missing-result-fields"]) == 1
+    stream = StringIO()
+    assert main(
+        ["file", _mesh_1_filename, "--reference", _mesh_2_filename],
+        logger=CLILogger(output_stream=stream)
+    ) == 1
+    assert "Comparing the field" not in stream.getvalue()
+
+    stream = StringIO()
+    assert main(
+        ["file", _mesh_1_filename, "--reference", _mesh_2_filename, "--force-sequence-comparison"],
+        logger=CLILogger(output_stream=stream)
+    ) == 1
+    assert "Comparing the field" in stream.getvalue()
+
     remove(_mesh_1_filename)
     remove(_mesh_2_filename)
     remove(_mesh_1_filename.replace(".xdmf", ".h5"))
@@ -274,7 +342,7 @@ def test_cli_directory_mode_junit_report():
 
 def test_cli_directory_mode_field_filter():
     with StringIO() as stream:
-        logger = StreamLogger(stream)
+        logger = CLILogger(output_stream=stream)
         args = [
             "dir", str(TEST_DATA_PATH),
             "--reference-dir", str(TEST_DATA_PATH),
@@ -289,7 +357,7 @@ def test_cli_directory_mode_field_filter():
 
 def test_cli_directory_mode_field_exclusion_filter():
     with StringIO() as stream:
-        logger = StreamLogger(stream)
+        logger = CLILogger(output_stream=stream)
         args = [
             "dir", str(TEST_DATA_PATH),
             "--reference-dir", str(TEST_DATA_PATH),
@@ -322,7 +390,12 @@ def test_cli_directory_mode_missing_result_file():
     assert main([
         "dir", str(tmp_results_path),
         "--reference-dir", str(TEST_DATA_PATH),
-        "--ignore-missing-result-files"
+        "--ignore-missing-reference-files"
+    ]) == 1
+    assert main([
+        "dir", str(tmp_results_path),
+        "--reference-dir", str(TEST_DATA_PATH),
+        "--ignore-missing-source-files"
     ]) == 0
 
     rmtree(tmp_results_path)
@@ -348,6 +421,11 @@ def test_cli_directory_mode_missing_reference_file():
     assert main([
         "dir", str(TEST_DATA_PATH),
         "--reference-dir", str(tmp_reference_path),
+        "--ignore-missing-source-files"
+    ]) == 1
+    assert main([
+        "dir", str(TEST_DATA_PATH),
+        "--reference-dir", str(tmp_reference_path),
         "--ignore-missing-reference-files"
     ]) == 0
 
@@ -357,12 +435,12 @@ def test_cli_directory_mode_missing_reference_file():
 def test_cli_directory_mode_file_inclusion_filter():
     # check that the normal run has xdmf in the output
     with StringIO() as stream:
-        logger = StreamLogger(stream)
+        logger = CLILogger(output_stream=stream)
         main(["dir", str(TEST_DATA_PATH), "--reference-dir", str(TEST_DATA_PATH)], logger)
         assert ".xdmf" in stream.getvalue()
     # check that the normal run has xdmf in the output with verbosity=1 (which should remove filter output)
     with StringIO() as stream:
-        logger = StreamLogger(stream)
+        logger = CLILogger(output_stream=stream)
         main([
             "dir", str(TEST_DATA_PATH),
             "--reference-dir", str(TEST_DATA_PATH),
@@ -370,7 +448,7 @@ def test_cli_directory_mode_file_inclusion_filter():
         assert ".xdmf" in stream.getvalue()
     # check that xdmf disappears with a given pattern
     with StringIO() as stream:
-        logger = StreamLogger(stream)
+        logger = CLILogger(output_stream=stream)
         main([
             "dir", str(TEST_DATA_PATH),
             "--reference-dir", str(TEST_DATA_PATH),
@@ -380,7 +458,7 @@ def test_cli_directory_mode_file_inclusion_filter():
         assert ".xdmf" not in stream.getvalue()
     # check that pattern matches ONLY vtu files
     with StringIO() as stream:
-        logger = StreamLogger(stream)
+        logger = CLILogger(output_stream=stream)
         main([
             "dir", str(TEST_DATA_PATH),
             "--reference-dir", str(TEST_DATA_PATH),

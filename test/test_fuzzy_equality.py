@@ -2,9 +2,9 @@
 
 from pytest import raises
 
-from fieldcompare import Field, make_array
-from fieldcompare import FuzzyEquality, DefaultEquality
-
+from fieldcompare import Field
+from fieldcompare.predicates import FuzzyEquality, DefaultEquality, PredicateError
+from fieldcompare._numpy_utils import make_array
 
 def test_fuzzy_equality_with_scalars():
     for check in [FuzzyEquality(), DefaultEquality()]:
@@ -77,6 +77,6 @@ def test_scalar_field_fuzzy_equality_invalid_type():
     field1 = Field("something", make_array(["string1", "string2"]))
     field2 = Field("something", make_array(["string1", "string2"]))
 
-    with raises(ValueError):
+    with raises(PredicateError):
         check = FuzzyEquality()
         assert not check(field1.values, field2.values)

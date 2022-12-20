@@ -1,50 +1,97 @@
-"""In this example, we use fieldcompare to read in fields from files and compare them"""
+"""In this example, we use fieldcompare to compare fields on computational meshes"""
 
-from os import remove
-from fieldcompare import read_fields, DefaultEquality
+# we use meshio here to show how to achieve interoperability
+from meshio import read as meshio_read
 
-def _write_example_csv_file() -> None:
-    with open("example2.csv", "w") as csv_file:
-        csv_file.write("field1,field2\n")
-        csv_file.write("1.0,2.0\n")
-        csv_file.write("2.0,3.0\n")
+from fieldcompare import FieldDataComparison
 
-def _remove_example_csv_file() -> None:
-    remove("example2.csv")
+# Convenience function to read fields from files
+from fieldcompare.field_io import read
+
+# Sorting function to yield a unique permutation of mesh fields
+from fieldcompare.mesh import sort
+
+# Further available permutations for fields on meshes
+from fieldcompare.mesh import permutations
+
+# Protocols you can use for type hints
+from fieldcompare.mesh import protocols
+
+# Compatibility functions for meshio
+from fieldcompare.mesh import meshio_utils
 
 
-if __name__ == "__main__":
-    _write_example_csv_file()
+def read_as_mesh_fields(filename: str) -> protocols.MeshFields:
+    # The read function can read different kinds of field data,
+    # as well as field data sequences. Thus in this case and for
+    # the sake of type hints, we have to verify that we obtained
+    # # something that fulfills our required interface
+    fields = read(filename)
+    assert isinstance(fields, protocols.MeshFields)
+    return fields
 
-    # you may use the read_fields function to obtain the fields contained in a file
-    fields = read_fields("example2.csv")
 
-    # From the result you can get an iterable over the names of the fields
-    assert sum(1 for _ in fields.field_names) == 2
-    assert "field1" in fields.field_names
-    assert "field2" in fields.field_names
+mesh_file = "mesh_data.vtu"
+mesh_file_permuted = "mesh_data_permuted.vtu"
 
-    # Of course you can also iterate over the fields themselves
-    print("Iteration over the fields")
-    assert sum(1 for _ in fields) == 2
-    for field in fields:
-        print(f"Name -> Values: '{field.name}' -> {field.values}")
+fields: protocols.MeshFields = read_as_mesh_fields(mesh_file)
+fields_permuted: protocols.MeshFields = read_as_mesh_fields(mesh_file_permuted)
 
-    # but you can also get the fields via their names
-    print("Access via names")
-    for field_name in fields.field_names:
-        field = fields.get(field_name)
-        print(f"Name -> Values: '{field.name}' -> {field.values}")
+# The two meshes contain the same data, but in different order,
+# thus, the meshes are not equal. In such case, the field data
+# comparison exits early, yielding a "failed" comparison:
+comparator = FieldDataComparison(fields, fields_permuted)
+result = comparator()
 
-    # the latter can be useful e.g. when you want to compare the fields of two files for
-    # equality. For instance, let's assume we were reading the same data from some other
-    # source and we want to ensure that they are equal (up to fuzziness).
-    reference_fields = read_fields("example2.csv")
-    equal = DefaultEquality()
-    for field_name in fields.field_names:
-        assert equal(
-            fields.get(field_name).values,
-            reference_fields.get(field_name).values
-        )
+assert not result
+print("Comparison failed! Domain equality check report:")
+print(result.domain_equality_check.report)
+print()
 
-    _remove_example_csv_file()
+# We can solve this in this case by sorting the mesh in a unique way:
+fields_sorted = sort(fields)
+fields_permuted_sorted = sort(fields_permuted)
+comparator = FieldDataComparison(fields_sorted, fields_permuted_sorted)
+result = comparator()
+
+assert result
+print("Domain equality check passed!")
+for comparison in comparator():
+    print(f"Field '{comparison.name}': {comparison.status}")
+
+# The sort function is shorthand for removing unconnected points,
+# then sorting the points and finally sorting the cells:
+def _manual_sort(_fields: protocols.MeshFields) -> protocols.MeshFields:
+    return _fields.transformed(
+        permutations.remove_unconnected_points
+    ).transformed(
+        permutations.sort_points
+    ).transformed(
+        permutations.sort_cells
+    )
+fields_sorted = _manual_sort(fields)
+fields_permuted_sorted = _manual_sort(fields_permuted)
+assert FieldDataComparison(fields_sorted, fields_permuted_sorted)()
+
+# In our case here, sorting only the points does not yield equal meshes:
+fields_sorted = fields.transformed(permutations.sort_points)
+fields_permuted_sorted = fields_permuted.transformed(permutations.sort_points)
+assert not FieldDataComparison(fields_sorted, fields_permuted_sorted)()
+
+# Note that there are conversion functions available for meshio meshes
+# such that you can integrate fieldcompare into an existing pipeline
+# that relies on meshio.
+mesh = meshio_read(mesh_file)
+mesh_permuted = meshio_read(mesh_file_permuted)
+
+# you can convert the meshes to fieldcompare's "MeshFields" ...
+fields = meshio_utils.from_meshio(mesh)
+fields_permuted = meshio_utils.from_meshio(mesh_permuted)
+
+# ... sort the fields ...
+fields = sort(fields)
+fields_permuted = sort(fields_permuted)
+
+# ... and convert them back to meshio
+mesh = meshio_utils.to_meshio(fields)
+mesh_permuted = meshio_utils.to_meshio(fields_permuted)

@@ -4,7 +4,7 @@ from os import makedirs, remove, walk, rmdir
 from os.path import join, exists, isdir
 from typing import List
 
-from fieldcompare._matching import find_matching_file_names, MatchResult
+from fieldcompare._matching import find_matching_file_names
 
 
 def _touch(file_path: str) -> None:
@@ -46,7 +46,9 @@ def test_collect_from_same_folder():
 
     result = find_matching_file_names(test_folder, test_folder)
     result.matches.sort()  # make sure the order of the matches is unique
-    assert result == MatchResult(["one.csv", "two.csv"], [], [])
+    assert result.matches == [("one.csv", "one.csv"), ("two.csv", "two.csv")]
+    assert result.orphans_in_source == []
+    assert result.orphans_in_reference == []
 
     _delete_folder(test_folder)
 
@@ -60,7 +62,9 @@ def test_collect_missing_results():
     _create_files(references_folder, ["one.csv", "two.csv"])
 
     result = find_matching_file_names(results_folder, references_folder)
-    assert result == MatchResult(["one.csv"], [], ["two.csv"])
+    assert result.matches == [("one.csv", "one.csv")]
+    assert result.orphans_in_source == []
+    assert result.orphans_in_reference == ["two.csv"]
 
     _delete_folder(results_folder)
     _delete_folder(references_folder)
@@ -75,7 +79,9 @@ def test_collect_missing_references():
     _create_files(references_folder, ["one.csv"])
 
     result = find_matching_file_names(results_folder, references_folder)
-    assert result == MatchResult(["one.csv"], ["two.csv"], [])
+    assert result.matches == [("one.csv", "one.csv")]
+    assert result.orphans_in_source == ["two.csv"]
+    assert result.orphans_in_reference == []
 
     _delete_folder(results_folder)
     _delete_folder(references_folder)

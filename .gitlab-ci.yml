@@ -10,7 +10,7 @@ workflow:
     - if: '$CI_COMMIT_BRANCH =~ /^(main|releases\/)/'
 
 default:
-  image: python:3.9
+  image: python:3.10
 
 cache:
   paths:
@@ -48,7 +48,7 @@ file_mode_junit_report:
   script:
     - python -m pip install -r requirements.txt
     - python -m pip install .
-    - fieldcompare file test/data/test_mesh.vtu -r test/data/test_mesh.vtu --exclude-fields "*coordinates" --junit-xml file_mode_junit.xml
+    - fieldcompare file test/data/test_mesh.vtu -r test/data/test_mesh.vtu --exclude-fields "function" --junit-xml file_mode_junit.xml
   artifacts:
     reports:
       junit: file_mode_junit.xml

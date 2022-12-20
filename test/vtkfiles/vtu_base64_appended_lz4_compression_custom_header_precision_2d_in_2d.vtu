@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<VTKFile type="UnstructuredGrid" version="2.0" header_type="UInt32" byte_order="LittleEndian" compressor="vtkLZ4DataCompressor">
+  <UnstructuredGrid>
+    <Piece NumberOfPoints="9" NumberOfCells="3">
+      <PointData>
+        <DataArray Name="ptensor_custom_prec" type="Float64" format="appended" NumberOfComponents="9" offset="0                   "/>
+        <DataArray Name="pvector_custom_prec" type="Float64" format="appended" NumberOfComponents="3" offset="280                 "/>
+        <DataArray Name="pscalar_custom_prec" type="Float64" format="appended" NumberOfComponents="1" offset="444                 "/>
+        <DataArray Name="ptensor" type="Float64" format="appended" NumberOfComponents="9" offset="548                 "/>
+        <DataArray Name="pvector" type="Float64" format="appended" NumberOfComponents="3" offset="828                 "/>
+        <DataArray Name="pscalar" type="Float64" format="appended" NumberOfComponents="1" offset="992                 "/>
+      </PointData>
+      <CellData>
+        <DataArray Name="cvector_custom_prec" type="Float64" format="appended" NumberOfComponents="3" offset="1096                "/>
+        <DataArray Name="cscalar_custom_prec" type="Float64" format="appended" NumberOfComponents="1" offset="1188                "/>
+        <DataArray Name="ctensor" type="Float64" format="appended" NumberOfComponents="9" offset="1248                "/>
+        <DataArray Name="ctensor_custom_prec" type="Float64" format="appended" NumberOfComponents="9" offset="1392                "/>
+        <DataArray Name="cvector" type="Float64" format="appended" NumberOfComponents="3" offset="1536                "/>
+        <DataArray Name="cscalar" type="Float64" format="appended" NumberOfComponents="1" offset="1628                "/>
+      </CellData>
+      <Points>
+        <DataArray Name="Coordinates" type="Float64" format="appended" NumberOfComponents="3" offset="1688                "/>
+      </Points>
+      <Cells>
+        <DataArray Name="connectivity" type="UInt32" format="appended" NumberOfComponents="1" offset="1812                "/>
+        <DataArray Name="offsets" type="UInt32" format="appended" NumberOfComponents="1" offset="1888                "/>
+        <DataArray Name="types" type="UInt8" format="appended" NumberOfComponents="1" offset="1932                "/>
+      </Cells>
+    </Piece>
+  </UnstructuredGrid>
+  <AppendedData encoding="base64">
+ _AQAAAACAAACIAgAAvQAAAA==hBWoZdlU1CBACAATAAEABBAABAgAAxcADwIAloSsEMNSmi8iQAgABLkABBAABAgABBgADwIABYSQFJeIDIQRQAgABCgABBAABAgABBgADwIABYSHB8/L1jEXQAgABCgABBAABAgABBgADwIABYTfYtUljcsKQAgABCgABBAABAgABBgADwIABQIAARMSIAEkEkAoAA8YAAUPAgAFhGw5iqrdphNACAAEKAAEEAAECAAEGAAPAgAAUAAAAAAAAA==AQAAAACAAADYAAAAZwAAAA==hBWoZdlU1CBACAAfAAEAJISsEMNSmi8iQAgABEcAhJAUl4gMhBFACAAEGACEhwfPy9YxF0AIAAQYAITfYtUljcsKQAgABBgAAlgAExJgABUSGACEbDmKqt2mE0AIAIAAAAAAAAAAAAA=AQAAAACAAABIAAAAOwAAAA==mxWoZdlU1CBAAAEA8hGsEMNSmi8iQJAUl4gMhBFAhwfPy9YxF0DfYtUljcsKQCAAoBJAbDmKqt2mE0AAAQAAAACAAACIAgAAvQAAAA==hBWoZdlU1CBACAATAAEABBAABAgAAxcADwIAloSsEMNSmi8iQAgABLkABBAABAgABBgADwIABYSQFJeIDIQRQAgABCgABBAABAgABBgADwIABYSHB8/L1jEXQAgABCgABBAABAgABBgADwIABYTfYtUljcsKQAgABCgABBAABAgABBgADwIABQIAARMSIAEkEkAoAA8YAAUPAgAFhGw5iqrdphNACAAEKAAEEAAECAAEGAAPAgAAUAAAAAAAAA==AQAAAACAAADYAAAAZwAAAA==hBWoZdlU1CBACAAfAAEAJISsEMNSmi8iQAgABEcAhJAUl4gMhBFACAAEGACEhwfPy9YxF0AIAAQYAITfYtUljcsKQAgABBgAAlgAExJgABUSGACEbDmKqt2mE0AIAIAAAAAAAAAAAAA=AQAAAACAAABIAAAAOwAAAA==mxWoZdlU1CBAAAEA8hGsEMNSmi8iQJAUl4gMhBFAhwfPy9YxF0DfYtUljcsKQCAAoBJAbDmKqt2mE0AAAQAAAACAAABIAAAAMgAAAA==hBWoZdlU1BBACAATAAEAhEpv1/2njR5ACAADFwCUAL1Me9Cd+RhACACAAAAAAAAAAAAAAQAAAACAAAAYAAAAGgAAAA==8AkVqGXZVNQQQEpv1/2njR5AvUx70J35GEAAAQAAAACAAADYAAAAWAAAAA==hBWoZdlU1BBACAATAAEABBAABAgAAxcADwIABoRKb9f9p40eQAgABCkABBAABAgABBgADwIABYS9THvQnfkYQAgABCgABBAABAgABBgADwIAAFAAAAAAAAA=AQAAAACAAADYAAAAWAAAAA==hBWoZdlU1BBACAATAAEABBAABAgAAxcADwIABoRKb9f9p40eQAgABCkABBAABAgABBgADwIABYS9THvQnfkYQAgABCgABBAABAgABBgADwIAAFAAAAAAAAA=AQAAAACAAABIAAAAMgAAAA==hBWoZdlU1BBACAATAAEAhEpv1/2njR5ACAADFwCUAL1Me9Cd+RhACACAAAAAAAAAAAAAAQAAAACAAAAYAAAAGgAAAA==8AkVqGXZVNQQQEpv1/2njR5AvUx70J35GEAAAQAAAACAAADYAAAASQAAAA==EQABACHwPwcADwIABg8gAA0FAgAVQAoACQIAEwQYABvoaAAEGAAb0BgAEwYwABvgGAAEiAAECAAFAgADMACg8D8AAAAAAAAAAAA=AQAAAACAAAAwAAAAJgAAAA==IgIAAQBSBwAAAAELAAEMABMIBADwAQMAAAAFAAAABgAAAAQAAAAAAQAAAACAAAAMAAAADQAAAA==wAQAAAAHAAAADAAAAAA=AQAAAACAAAADAAAABAAAAA==MAkFBwA=
+
+  </AppendedData>
+</VTKFile>

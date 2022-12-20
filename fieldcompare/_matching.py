@@ -1,46 +1,60 @@
-"""Functions for automatic selection of files and fields to be compared"""
+"""Functions for detecting matching strings in two given iterables"""
 
+from typing import List, Tuple, Iterable, Protocol, TypeVar, Callable, Any
 from dataclasses import dataclass
-from typing import List, Iterable
 from os.path import join, relpath
 from os import walk
 
-from ._field import FieldInterface
+
+class _Named(Protocol):
+    @property
+    def name(self) -> str:
+        ...
+
 
 @dataclass
 class MatchResult:
-    """Data class to store the result of finding matching fields/files"""
-    matches: List[str]
-    orphan_results: List[str]
-    orphan_references: List[str]
-
-    def __iter__(self):
-        return iter(self.matches)
+    """Data class to store the result of finding matches in two ranges"""
+    matches: List[Tuple[Any, Any]]
+    orphans_in_source: List[Any]
+    orphans_in_reference: List[Any]
 
 
-def find_matching_names(result_names: Iterable[str],
-                        reference_names: Iterable[str]) -> MatchResult:
-    res_orphans = list(set(result_names).difference(reference_names))
-    ref_orphans = list(set(reference_names).difference(result_names))
-    matches = list(set(result_names).intersection(reference_names))
-    return MatchResult(matches, res_orphans, ref_orphans)
+T1 = TypeVar("T1")
+T2 = TypeVar("T2")
+def find_matches(source: Iterable[T1],
+                 reference: Iterable[T2],
+                 eq_predicate: Callable[[T1, T2], bool] = lambda a, b: a == b) -> MatchResult:
+    """Find matches and orphans in the two ranges using the given equality predicate"""
+    matches = []
+    orphans_source = []
+    orphans_target = list(v for v in reference)
+
+    def _find_and_add(s) -> bool:
+        for t in orphans_target:
+            if eq_predicate(s, t):
+                matches.append((s, t))
+                orphans_target.remove(t)
+                return True
+        return False
+
+    for s in source:
+        if not _find_and_add(s):
+            orphans_source.append(s)
+
+    return MatchResult(matches, orphans_source, orphans_target)
 
 
-def find_matching_field_names(result_fields: Iterable[FieldInterface],
-                              reference_fields: Iterable[FieldInterface]) -> MatchResult:
-    """Looks for matching field names in the provided results & reference fields"""
-    return find_matching_names(
-        [f.name for f in result_fields],
-        [f.name for f in reference_fields]
-    )
+def find_matches_by_name(first: Iterable[_Named], second: Iterable[_Named]) -> MatchResult:
+    """Looks for matching names in the provided objects exposing a name"""
+    return find_matches(first, second, lambda a, b: a.name == b.name)
 
 
-def find_matching_file_names(results_folder: str,
-                             references_folder: str) -> MatchResult:
+def find_matching_file_names(folder: str, reference_folder: str) -> MatchResult:
     """Looks for matching supported files in a results & reference folder to be compared"""
-    return find_matching_names(
-        _find_sub_files_recursively(results_folder),
-        _find_sub_files_recursively(references_folder)
+    return find_matches(
+        _find_sub_files_recursively(folder),
+        _find_sub_files_recursively(reference_folder)
     )
 
 

@@ -2,19 +2,30 @@
 name = "fieldcompare"
 description = "Comparison of data fields in files"
 version = "1.0"
-authors = [
-  {email = "dennis.glaeser@iws.uni-stuttgart.de"},
-  {name = "Dennis Gläser"}
-]
 readme = "README.md"
 license = {file = "LICENSE.txt"}
-keywords = ["data comparison", "regression test"]
 requires-python = ">=3.8"
-dependencies = ["meshio[all]>=5.3", "colorama"]
+dependencies = ["numpy", "colorama"]
+authors = [
+  {name = "Dennis Gläser", email = "dennis.glaeser@iws.uni-stuttgart.de"}
+]
+maintainers = [
+  {name = "Dennis Gläser", email = "dennis.glaeser@iws.uni-stuttgart.de"}
+]
+keywords = [
+  "field data comparison",
+  "regression test",
+  "numerical simulation",
+  "finite elements",
+  "finite volumes"
+]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Programming Language :: Python"
 ]
+
+[project.optional-dependencies]
+all = ["meshio[all]>=5.3", "lz4"]
 
 [project.urls]
 homepage = "https://gitlab.com/dglaeser/fieldcompare"
@@ -51,10 +62,11 @@ commands =
 
 [testenv:coverage]
 deps =
+  -rrequirements.txt
   pytest-cov
 commands =
-  pytest --cov-report xml:coverage.xml \
+  pytest --cov={envsitepackagesdir}/fieldcompare \
+         --cov-report xml:coverage.xml \
          --cov-report html:cov_report \
-         --cov-report term \
-         --cov={envsitepackagesdir}/fieldcompare
+         --cov-report term
 """
