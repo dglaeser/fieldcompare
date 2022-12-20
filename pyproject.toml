@@ -2,15 +2,23 @@
 name = "fieldcompare"
 description = "Comparison of data fields in files"
 version = "1.0"
-authors = [
-  {email = "dennis.glaeser@iws.uni-stuttgart.de"},
-  {name = "Dennis Gläser"}
-]
 readme = "README.md"
 license = {file = "LICENSE.txt"}
-keywords = ["data comparison", "regression test"]
 requires-python = ">=3.8"
 dependencies = ["numpy", "colorama"]
+authors = [
+  {name = "Dennis Gläser", email = "dennis.glaeser@iws.uni-stuttgart.de"}
+]
+maintainers = [
+  {name = "Dennis Gläser", email = "dennis.glaeser@iws.uni-stuttgart.de"}
+]
+keywords = [
+  "field data comparison",
+  "regression test",
+  "numerical simulation",
+  "finite elements",
+  "finite volumes"
+]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Programming Language :: Python"
