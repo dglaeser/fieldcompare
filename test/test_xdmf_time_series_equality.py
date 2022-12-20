@@ -4,7 +4,7 @@ import pytest
 from pathlib import Path
 
 from fieldcompare.mesh import sort, protocols as mesh_protocols
-from fieldcompare.field_io import _mesh_io
+from fieldcompare.io import _mesh_io
 from fieldcompare.predicates import FuzzyEquality, DefaultEquality
 from fieldcompare import FieldDataComparison, protocols
 

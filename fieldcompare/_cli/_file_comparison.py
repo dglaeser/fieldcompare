@@ -31,7 +31,7 @@ from ..mesh import (
     permutations as mesh_permutations
 )
 
-from ..field_io import read as read_fields
+from ..io import read as read_fields
 
 
 @dataclass

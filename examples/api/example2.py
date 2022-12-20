@@ -6,7 +6,7 @@ from meshio import read as meshio_read
 from fieldcompare import FieldDataComparison
 
 # Convenience function to read fields from files
-from fieldcompare.field_io import read
+from fieldcompare.io import read
 
 # Sorting function to yield a unique permutation of mesh fields
 from fieldcompare.mesh import sort

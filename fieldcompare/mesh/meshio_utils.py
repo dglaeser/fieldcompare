@@ -8,7 +8,7 @@ from meshio._vtk_common import vtk_to_meshio_type, meshio_to_vtk_type  # type: i
 
 # meshio uses the same cell-type indexing as VTK,
 # so we transform names/indices for compatibility
-from ..field_io.vtk._helpers import (
+from ..io.vtk._helpers import (
     vtk_cell_type_index_to_cell_type,
     cell_type_to_vtk_cell_type_index
 )

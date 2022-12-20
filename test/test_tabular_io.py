@@ -2,7 +2,7 @@ from os import walk
 from os.path import splitext
 from pathlib import Path
 
-from fieldcompare.field_io import read
+from fieldcompare.io import read
 
 
 def _get_file_name_with_extension(ext: str) -> str:
