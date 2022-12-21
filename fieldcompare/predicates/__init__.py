@@ -1,4 +1,4 @@
-"""Predicate classes predefined by FieldCompare"""
+"""Predefined predicate classes for comparing field values."""
 
 from ._predicates import (
     ExactEquality,
@@ -7,3 +7,11 @@ from ._predicates import (
     PredicateResult,
     PredicateError
 )
+
+__all__ = [
+    "ExactEquality",
+    "FuzzyEquality",
+    "DefaultEquality",
+    "PredicateResult",
+    "PredicateError"
+]

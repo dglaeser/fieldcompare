@@ -1,4 +1,4 @@
-"""I/O facilities to read field data from files"""
+"""I/O facilities to read field data from files."""
 
 from os.path import splitext
 from typing import Union
