@@ -1,4 +1,4 @@
-"""Domain implementation for tabular data"""
+"""Domain implementation for tabular data."""
 
 from __future__ import annotations
 from typing import Optional
@@ -9,8 +9,12 @@ from ..predicates import PredicateResult
 
 class Table:
     """
-    Represents a table with a fixed number of rows and an index map
-    for reordering the column values (optional)
+    Represents a table with a fixed number of rows and/or an index map
+    for reordering the column values (optional).
+
+    Args:
+        num_rows: The number of rows of the table (may be omitted if idx_map is provided)
+        idx_map: The index map with which to reorder/filter the tabular data (optional).
     """
 
     def __init__(self,
@@ -35,11 +39,16 @@ class Table:
 
     @property
     def indices(self) -> Optional[Array]:
-        """Return the index map used for filtering the data columns"""
+        """Return the index map used for filtering the data columns."""
         return self._idx_map
 
     def equals(self, other: Table) -> PredicateResult:
-        """Check if this table is equal to the given one (true if number of rows are equal)"""
+        """
+        Check if this table is equal to the given one (true if number of rows are equal).
+
+        Args:
+            other: The table against which to check for equality.
+        """
         if self.number_of_rows != other.number_of_rows:
             return PredicateResult(False, "Differing number of rows")
         return PredicateResult(True)
