@@ -2,7 +2,12 @@
 
 
 class CellType:
-    """Represents the type of a mesh cell"""
+    """
+    Represents the type of a mesh cell.
+
+    Args:
+        id: The cell type id (we reuse the ids of VTK, see https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html).
+    """
     def __init__(self, id: int) -> None:
         if id not in _CELL_TYPE_INDEX_TO_STR:
             raise ValueError(f"Unknown cell type with id '{id}'")
@@ -10,12 +15,12 @@ class CellType:
 
     @property
     def id(self) -> int:
-        """Return the type id of this cell type"""
+        """Return the type id of this cell type."""
         return self._id
 
     @property
     def name(self) -> str:
-        """Return the name of this cell type"""
+        """Return the name of this cell type."""
         return _CELL_TYPE_INDEX_TO_STR[self._id]
 
     def __repr__(self) -> str:
@@ -31,7 +36,12 @@ class CellType:
 
 
 def cell_type_from_name(name: str) -> CellType:
-    """Return the cell type with the given name"""
+    """
+    Return the cell type with the given name.
+
+    Args:
+        name: The cell type name.
+    """
     return CellType(_CELL_TYPE_STR_TO_INDEX[name])
 
 
