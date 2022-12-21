@@ -1,4 +1,4 @@
-"""Classes to represent fields on computational meshes"""
+"""Classes to represent fields on computational meshes."""
 
 from __future__ import annotations
 from itertools import chain
