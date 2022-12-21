@@ -1,4 +1,4 @@
-"""Transformation functions for mesh fields"""
+"""Transformation functions for mesh fields."""
 
 from copy import deepcopy
 from typing import Optional, Dict
@@ -12,7 +12,12 @@ from . import protocols, permutations
 
 
 def sort(mesh_fields: protocols.MeshFields) -> protocols.MeshFields:
-    """Sort the given mesh fields to arrive at a unique representation"""
+    """
+    Sort the given mesh fields to arrive at a unique representation.
+
+    Args:
+        mesh_fields: The mesh fields to be sorted.
+    """
     return mesh_fields.transformed(
         permutations.remove_unconnected_points
     ).transformed(
@@ -23,7 +28,12 @@ def sort(mesh_fields: protocols.MeshFields) -> protocols.MeshFields:
 
 
 def merge(*mesh_fields: protocols.MeshFields) -> protocols.MeshFields:
-    """Merge the given mesh fields into a single one"""
+    """
+    Merge the given mesh fields into a single one
+
+    Args:
+        mesh_fields: the mesh fields to be merged.
+    """
     result: Optional[protocols.MeshFields] = None
     for i, fields in enumerate(mesh_fields):
         if i == 0:

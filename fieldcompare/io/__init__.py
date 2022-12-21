@@ -1,4 +1,4 @@
-"""I/O facilities to read field data from files"""
+"""I/O facilities to read field data from files."""
 
 from os.path import splitext
 from typing import Union
@@ -14,14 +14,24 @@ from ._mesh_io import (
 
 
 def read_field_data(filename: str) -> protocols.FieldData:
-    """Read the field data from the given file"""
+    """
+    Read the field data from the given file
+
+    Args:
+        filename: Path to the file from which to read.
+    """
     result = read(filename)
     assert isinstance(result, protocols.FieldData)
     return result
 
 
 def read(filename: str) -> Union[protocols.FieldData, protocols.FieldDataSequence]:
-    """Read the field data or field data sequence from the given file"""
+    """
+    Read the field data or field data sequence from the given file
+
+    Args:
+        filename: Path to the file from which to read.
+    """
     if vtk.is_supported(filename):
         return vtk.read(filename)
     if splitext(filename)[1] == ".csv":
@@ -39,7 +49,19 @@ def read(filename: str) -> Union[protocols.FieldData, protocols.FieldDataSequenc
 
 
 def is_supported(filename: str) -> bool:
-    """Return true if the given file is supported for field-I/O"""
+    """
+    Return true if the given file is supported for field-I/O.
+
+    Args:
+        filename: Path to the file for which to check if it is supported.
+    """
     return vtk.is_supported(filename) \
         or splitext(filename)[1] == ".csv" \
         or _supported_by_meshio(filename)
+
+
+__all__ = [
+    "read_field_data",
+    "read",
+    "is_supported"
+]

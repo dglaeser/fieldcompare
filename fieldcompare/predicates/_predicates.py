@@ -1,5 +1,6 @@
 """Predicate classes for comparing arrays"""
 
+from __future__ import annotations
 from dataclasses import dataclass
 
 from .._common import _default_base_tolerance
@@ -17,16 +18,26 @@ class PredicateError(Exception):
 
 @dataclass
 class PredicateResult:
+    """Contains the result of a predicate evaluation."""
     value: bool
     report: str = ""
 
     def __bool__(self) -> bool:
+        """Return true if the predicate evaluation is considered successful"""
         return self.value
 
 
 class ExactEquality:
-    """Compares the given arrays for exact equality"""
+    """Compares arrays for exact equality"""
+
     def __call__(self, first: ArrayLike, second: ArrayLike) -> PredicateResult:
+        """
+        Evaluate the predicate for the two given arrays:
+
+        Args:
+            first: The first array.
+            second: The second array.
+        """
         try:
             return self._check(first, second)
         except Exception as e:
@@ -54,7 +65,13 @@ class ExactEquality:
 
 
 class FuzzyEquality:
-    """Compares the given arrays for fuzzy equality"""
+    """
+    Compares arrays for fuzzy equality.
+
+    Args:
+        rel_tol: The relative tolerance to be used.
+        abs_tol: The absolute tolerance to be used.
+    """
     def __init__(self,
                  rel_tol: float = _default_base_tolerance(),
                  abs_tol: float = _default_base_tolerance()) -> None:
@@ -68,7 +85,12 @@ class FuzzyEquality:
 
     @relative_tolerance.setter
     def relative_tolerance(self, value: float) -> None:
-        """Set the relative tolerance to be used for fuzzy comparisons."""
+        """
+        Set the relative tolerance to be used for fuzzy comparisons.
+
+        Args:
+            value: The relative tolerance to be used.
+        """
         self._rel_tol = value
 
     @property
@@ -78,10 +100,22 @@ class FuzzyEquality:
 
     @absolute_tolerance.setter
     def absolute_tolerance(self, value: float) -> None:
-        """Set the absolute tolerance to be used for fuzzy comparisons."""
+        """
+        Set the absolute tolerance to be used for fuzzy comparisons.
+
+        Args:
+            value: The absolute tolerance to be used.
+        """
         self._abs_tol = value
 
     def __call__(self, first: ArrayLike, second: ArrayLike) -> PredicateResult:
+        """
+        Evaluate the predicate for the two given arrays:
+
+        Args:
+            first: The first array.
+            second: The second array.
+        """
         try:
             return self._check(first, second)
         except Exception as e:
@@ -126,6 +160,13 @@ class DefaultEquality(FuzzyEquality):
         super().__init__(*args, **kwargs)
 
     def __call__(self, first, second) -> PredicateResult:
+        """
+        Evaluate the predicate for the two given arrays:
+
+        Args:
+            first: The first array.
+            second: The second array.
+        """
         first = as_array(first)
         second = as_array(second)
         if has_floats(first) or has_floats(second):

@@ -8,7 +8,7 @@ try:
 except ImportError:
     _HAVE_MESHIO = False
 
-from fieldcompare import FieldDataComparison
+from fieldcompare import FieldDataComparator
 from fieldcompare.mesh import Mesh, MeshFields, PermutedMesh, cell_types
 from fieldcompare.mesh import permutations, merge
 from fieldcompare.predicates import ExactEquality
@@ -109,7 +109,7 @@ def test_merge_mesh_fields():
         as_meshio.write(tmp_file_name)
         as_meshio = meshio.read(tmp_file_name)
         as_fields = meshio_utils.from_meshio(as_meshio)
-        comparator = FieldDataComparison(as_fields, result)
+        comparator = FieldDataComparator(as_fields, result)
         print(comparator().domain_equality_check)
         assert comparator()
         remove(tmp_file_name)

@@ -1,4 +1,4 @@
-"""Classes to represent fields on computational meshes"""
+"""Classes to represent fields on computational meshes."""
 
 from __future__ import annotations
 from itertools import chain
@@ -10,10 +10,10 @@ from typing import (
 
 from .._numpy_utils import Array, as_array
 from .._field import Field
-from ..protocols import FieldData
-
 from ._cell_type import CellType
-from .protocols import Mesh, TransformedMesh
+
+from . import protocols
+from .. import protocols as fc_protocols
 
 
 def _cell_type_suffix(cell_type: CellType) -> str:
@@ -21,31 +21,31 @@ def _cell_type_suffix(cell_type: CellType) -> str:
 
 
 def make_cell_type_field_name(cell_type: CellType, field_name: str) -> str:
-    """Append the cell type suffix to the field name"""
+    """Append the cell type suffix to the field name."""
     return f"{field_name}{_cell_type_suffix(cell_type)}"
 
 
 def remove_cell_type_suffix(cell_type: CellType, field_name_with_suffix: str) -> str:
-    """Remove the cell type suffix from the given field name"""
+    """Remove the cell type suffix from the given field name."""
     return field_name_with_suffix.rstrip(_cell_type_suffix(cell_type))
 
 
-class MeshFields(FieldData):
-    """Class to represent field data on a computational mesh"""
+class MeshFields(fc_protocols.FieldData):
+    """
+    Represents field data on a computational mesh.
+
+    Args:
+        mesh: The underlying mesh.
+        point_data: The fields defined on the points of the mesh.
+        cell_data: The field data defined on the mesh cells. The field values
+                   have to be specified as a list of arrays, where each array contains
+                   the values for the cells of a particular cell type. The ordering of the
+                   arrays has to follow the order of the cell types as exposed by the mesh.
+    """
     def __init__(self,
-                 mesh: Mesh,
+                 mesh: protocols.Mesh,
                  point_data: Dict[str, Array] = {},
                  cell_data: Dict[str, List[Array]] = {}) -> None:
-        """Construct mesh fields from the given mesh and point/cell data
-
-        Args:
-            mesh: The mesh
-            point_data: The field data defined on the mesh points.
-            cell_data: The field data defined on the mesh cells. The field values
-                have to be specified as a list of arrays, where each array contains
-                the values for the cells of a particular cell type. The ordering of the
-                arrays has to follow the order of the cell types as exposed by the mesh.
-        """
         self._mesh = mesh
         self._point_data = {
             name: self._make_point_values(data)
@@ -59,27 +59,27 @@ class MeshFields(FieldData):
         }
 
     @property
-    def domain(self) -> Mesh:
-        """Return the mesh on which these fields are defined"""
+    def domain(self) -> protocols.Mesh:
+        """Return the mesh on which these fields are defined."""
         return self._mesh
 
     def __iter__(self) -> Iterator[Field]:
-        """Return an iterator over the contained fields"""
+        """Return an iterator over the contained fields."""
         return chain(self.point_fields, self.cell_fields)
 
     @property
     def point_fields(self) -> Iterable[Field]:
-        """Return an range over the contained point fields"""
+        """Return an range over the contained point fields."""
         return (Field(name, values) for name, values in self._point_data.items())
 
     @property
     def cell_fields(self) -> Iterable[Field]:
-        """Return an range over the contained cell fields"""
+        """Return an range over the contained cell fields."""
         return (_tup[0] for _tup in self.cell_fields_types)
 
     @property
     def cell_fields_types(self) -> Iterable[Tuple[Field, CellType]]:
-        """Return a range over cell fields + associated cell type"""
+        """Return a range over cell fields + associated cell type."""
         return (
             (
                 Field(
@@ -92,8 +92,16 @@ class MeshFields(FieldData):
             for name in self._cell_data
         )
 
-    def transformed(self, transformation: Callable[[Mesh], TransformedMesh]) -> TransformedMeshFields:
-        """Return the fields transformed by the given transformation"""
+    def transformed(
+        self,
+        transformation: Callable[[protocols.Mesh], protocols.TransformedMesh]
+    ) -> TransformedMeshFields:
+        """
+        Return the fields transformed by the given transformation.
+
+        Args:
+            transformation: The mesh transformation to be applied.
+        """
         return TransformedMeshFields(self, transformation)
 
     def _make_point_values(self, values: Array) -> Array:
@@ -114,25 +122,31 @@ class MeshFields(FieldData):
         return values
 
 
-class TransformedMeshFields(FieldData):
-    """Exposes field data on transformed meshes"""
+class TransformedMeshFields(fc_protocols.FieldData):
+    """
+    Exposes field data on transformed meshes.
+
+    Args:
+        field_data: The untransformed mesh fields.
+        transformation: The mesh transformation to be applied.
+    """
     def __init__(self,
-                 field_data: Union[MeshFields, TransformedMeshFields],
-                 permutation: Callable[[Mesh], TransformedMesh]) -> None:
+                 field_data: Union[protocols.MeshFields, TransformedMeshFields],
+                 transformation: Callable[[protocols.Mesh], protocols.TransformedMesh]) -> None:
         self._field_data = field_data
-        self._mesh = permutation(self._field_data.domain)
+        self._mesh = transformation(self._field_data.domain)
 
     @property
-    def domain(self) -> TransformedMesh:
+    def domain(self) -> protocols.TransformedMesh:
         """Return the mesh on which these fields are defined"""
         return self._mesh
 
-    def __iter__(self) -> Iterator[Field]:
+    def __iter__(self) -> Iterator[fc_protocols.Field]:
         """Return an iterator over the contained fields"""
         return chain(self.point_fields, self.cell_fields)
 
     @property
-    def point_fields(self) -> Iterable[Field]:
+    def point_fields(self) -> Iterable[fc_protocols.Field]:
         """Return a range over the contained point fields"""
         return (
             self._get_permuted_point_field(_field)
@@ -152,17 +166,25 @@ class TransformedMeshFields(FieldData):
             for field, cell_type in self._field_data.cell_fields_types
         )
 
-    def transformed(self, transformation: Callable[[Mesh], TransformedMesh]) -> TransformedMeshFields:
-        """Return the fields transformed by the given transformation"""
+    def transformed(
+        self,
+        transformation: Callable[[protocols.Mesh], protocols.TransformedMesh]
+    ) -> TransformedMeshFields:
+        """
+        Return the fields transformed by the given transformation.
+
+        Args:
+            transformation: The mesh transformation to be applied.
+        """
         return TransformedMeshFields(self, transformation)
 
-    def _get_permuted_point_field(self, field: Field) -> Field:
+    def _get_permuted_point_field(self, field: fc_protocols.Field) -> fc_protocols.Field:
         return Field(
             field.name,
             self._mesh.transform_point_data(field.values)
         )
 
-    def _get_permuted_cell_field(self, cell_type: CellType, field: Field) -> Field:
+    def _get_permuted_cell_field(self, cell_type: CellType, field: fc_protocols.Field) -> Field:
         return Field(
             field.name,
             self._mesh.transform_cell_data(cell_type, field.values)

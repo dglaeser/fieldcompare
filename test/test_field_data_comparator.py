@@ -6,14 +6,14 @@ from io import StringIO
 
 from pytest import raises
 
-from fieldcompare import Field, FieldDataComparison
+from fieldcompare import FieldDataComparator
 from fieldcompare import protocols
 
 from fieldcompare.io import read
 from fieldcompare.mesh import sort, permutations, protocols as mesh_protocols
 from fieldcompare.predicates import DefaultEquality, FuzzyEquality
 from fieldcompare._numpy_utils import Array, make_array
-
+from fieldcompare._field import Field
 
 TEST_DATA_PATH = Path(__file__).resolve().parent / Path("data")
 
@@ -34,7 +34,7 @@ def _compare_vtk_files(file1,
         fields2 = fields2.transformed(permutations.sort_points).transformed(permutations.sort_cells)
     fields1.domain.set_tolerances(abs_tol=predicate.absolute_tolerance, rel_tol=predicate.relative_tolerance)
     fields2.domain.set_tolerances(abs_tol=predicate.absolute_tolerance, rel_tol=predicate.relative_tolerance)
-    result = FieldDataComparison(fields1, fields2)(
+    result = FieldDataComparator(fields1, fields2)(
         predicate_selector=lambda _, __: predicate,
         fieldcomp_callback=lambda c: print(f"{c.name}: {c.status}")
     )
@@ -82,7 +82,7 @@ def get_number_of_lines(msg: str) -> int:
 
 def compare_and_stream_output(source, reference):
     out_stream = StringIO()
-    comparison = FieldDataComparison(source, reference)
+    comparison = FieldDataComparator(source, reference)
     suite = comparison(
         predicate_selector=lambda _, __: DefaultEquality(),
         fieldcomp_callback=lambda p: out_stream.write("--\n")

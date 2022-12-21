@@ -2,6 +2,7 @@ stages:
   - test
   - reporting
   - coverage
+  - documentation
   - pages
 
 workflow:
@@ -24,7 +25,7 @@ cache:
 
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
-  PY_VERSION: "3.9"
+  PY_VERSION: "3.10"
 
 test:
   image: python:$PY_VERSION
@@ -80,6 +81,19 @@ test_coverage_report:
       - cov_report
     expire_in: 30 minutes
 
+build_docs:
+  stage: documentation
+  extends: .install_dependencies
+  script:
+    - pip install sphinx sphinx-mdinclude pydata-sphinx-theme -r requirements.txt
+    - cd docs
+    - sphinx-apidoc -f -o build ../
+    - make html
+  artifacts:
+    paths:
+      - docs/build
+    expire_in: 30 minutes
+
 pages:
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -87,9 +101,12 @@ pages:
   needs:
     - job: test_coverage_report
       artifacts: true
+    - job: build_docs
+      artifacts: true
   script:
-    - mkdir public
-    - mv cov_report/* public/
+    - mkdir -p public/coverage
+    - mv cov_report/* public/coverage/
+    - mv docs/build/html/* public/
   artifacts:
     paths:
       - public

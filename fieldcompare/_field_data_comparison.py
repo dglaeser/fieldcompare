@@ -1,4 +1,4 @@
-"""Class to perform field data comparisons"""
+"""Functionality for field data comparisons"""
 
 from typing import Callable, Optional, List, Tuple, Iterator, Iterable, Any
 from dataclasses import dataclass
@@ -12,7 +12,7 @@ from ._common import _measure_time
 
 
 class FieldComparisonStatus(Enum):
-    """Represents the status of a field comparison"""
+    """Represents the status of a single field comparison."""
     passed = auto()
     failed = auto()
     error = auto()
@@ -21,12 +21,13 @@ class FieldComparisonStatus(Enum):
     filtered = auto()
 
     def __bool__(self) -> bool:
+        """Return true if the status is considered successful."""
         return self not in [FieldComparisonStatus.failed, FieldComparisonStatus.error]
 
 
 @dataclass
-class FieldComparisonResult:
-    """Stores information on a performed field comparison"""
+class FieldComparison:
+    """Stores information on the results of a single field comparison."""
     name: str
     status: FieldComparisonStatus
     predicate: str
@@ -34,50 +35,57 @@ class FieldComparisonResult:
     cpu_time: Optional[float] = None
 
     def __bool__(self) -> bool:
+        """Return true if the field comparison is considered successful."""
         return not self.is_failure
 
     @property
     def is_failure(self) -> bool:
-        return self.status == FieldComparisonStatus.failed \
-            or self.status == FieldComparisonStatus.error
+        """Return true if the field comparison is considered unsuccessful."""
+        return not self.status
 
 
 class FieldComparisonSuite:
-    """Contains the information on a suite of field comparisons"""
+    """
+    Stores the results of a field data comparison.
+
+    Args:
+        domain_eq_check: Result of the domain equality check
+        comparisons: Results of all performed field comparisons.
+    """
     def __init__(self,
                  domain_eq_check: PredicateResult,
-                 comparisons: List[FieldComparisonResult] = []) -> None:
+                 comparisons: List[FieldComparison] = []) -> None:
         self._domain_eq_check = domain_eq_check
         self._comparisons = comparisons
 
     def __bool__(self) -> bool:
-        """Return true if the suite is considered to have passed successfully"""
+        """Return true if the suite is considered to have passed successfully."""
         if not self._domain_eq_check:
             return False
         return not any(c.is_failure for c in self._comparisons)
 
-    def __iter__(self) -> Iterator[FieldComparisonResult]:
-        """Return an iterator over all contained field comparison results"""
+    def __iter__(self) -> Iterator[FieldComparison]:
+        """Return an iterator over all contained field comparison results."""
         return iter(self._comparisons)
 
     @property
     def domain_equality_check(self) -> PredicateResult:
-        """Return the result of the domain equality check"""
+        """Return the result of the domain equality check."""
         return self._domain_eq_check
 
     @property
-    def passed(self) -> Iterable[FieldComparisonResult]:
-        """Return a range over all passed comparisons"""
+    def passed(self) -> Iterable[FieldComparison]:
+        """Return a range over all passed comparisons."""
         return (c for c in self._comparisons if c.status == FieldComparisonStatus.passed)
 
     @property
-    def failed(self) -> Iterable[FieldComparisonResult]:
-        """Return a range over all failed comparisons"""
+    def failed(self) -> Iterable[FieldComparison]:
+        """Return a range over all failed comparisons."""
         return (c for c in self._comparisons if c.is_failure)
 
     @property
-    def skipped(self) -> Iterable[FieldComparisonResult]:
-        """Return a range over all skipped comparisons"""
+    def skipped(self) -> Iterable[FieldComparison]:
+        """Return a range over all skipped comparisons."""
         return (c for c in self._comparisons if c.status in [
             FieldComparisonStatus.missing_source,
             FieldComparisonStatus.missing_reference
@@ -85,10 +93,18 @@ class FieldComparisonSuite:
 
 
 PredicateSelector = Callable[[Field, Field], Predicate]
-FieldComparisonCallback = Callable[[FieldComparisonResult], Any]
+FieldComparisonCallback = Callable[[FieldComparison], Any]
 
-class FieldDataComparison:
-    """Compares all fields in two given field data objects"""
+class FieldDataComparator:
+    """
+    Compares all fields in two given objects of :class:`.FieldData`.
+
+    Args:
+        source: Field data to be compared.
+        reference: Reference field data to compare against.
+        field_inclusion_filter: Filter to select the fields to be compared (optional).
+        field_exclusion_filter: Filter to exclude fields from being compared (optional).
+    """
     def __init__(self,
                  source: FieldData,
                  reference: FieldData,
@@ -102,7 +118,17 @@ class FieldDataComparison:
     def __call__(self,
                  predicate_selector: PredicateSelector = lambda _, __: DefaultEquality(),
                  fieldcomp_callback: FieldComparisonCallback = lambda _: None) -> FieldComparisonSuite:
-        """Compare all fields in the field data objects using the given predicates"""
+        """
+        Compare all fields in the field data objects using the given predicates.
+
+        Args:
+            predicate_selector: Selector function taking the two fields to be compared,
+                                returning a predicate to be used for comparing the field values.
+                                Default: :class:`.DefaultEquality`.
+            fieldcomp_callback: Function that is invoked with the results of individual
+                                field comparison results as soon as they are available (e.g. to
+                                print intermediate output). Default: no-op lambda.
+        """
         domain_eq_check = self._source.domain.equals(self._reference.domain)
         if not domain_eq_check:
             return FieldComparisonSuite(domain_eq_check=domain_eq_check)
@@ -130,7 +156,7 @@ class FieldDataComparison:
     def _compare_matches(self,
                          query: MatchResult,
                          predicate_selector: PredicateSelector,
-                         fieldcomp_callback: FieldComparisonCallback) -> List[FieldComparisonResult]:
+                         fieldcomp_callback: FieldComparisonCallback) -> List[FieldComparison]:
         comparisons = []
         for source, reference in query.matches:
             predicate = predicate_selector(source, reference)
@@ -145,9 +171,9 @@ class FieldDataComparison:
     def _perform_comparison(self,
                             source: Field,
                             reference: Field,
-                            predicate: Predicate) -> FieldComparisonResult:
+                            predicate: Predicate) -> FieldComparison:
         runtime, result = _measure_time(predicate)(source.values, reference.values)
-        return FieldComparisonResult(
+        return FieldComparison(
             name=source.name,
             status=FieldComparisonStatus.passed if result else FieldComparisonStatus.failed,
             predicate=str(predicate),
@@ -158,8 +184,8 @@ class FieldDataComparison:
     def _make_exception_comparison(self,
                                    name: str,
                                    predicate: Predicate,
-                                   exception: Exception) -> FieldComparisonResult:
-        return FieldComparisonResult(
+                                   exception: Exception) -> FieldComparison:
+        return FieldComparison(
             name=name,
             status=FieldComparisonStatus.error,
             predicate=str(predicate),
@@ -167,9 +193,9 @@ class FieldDataComparison:
             cpu_time=None
         )
 
-    def _missing_source_comparisons(self, query: MatchResult) -> List[FieldComparisonResult]:
+    def _missing_source_comparisons(self, query: MatchResult) -> List[FieldComparison]:
         return [
-            FieldComparisonResult(
+            FieldComparison(
                 name=field.name,
                 status=FieldComparisonStatus.missing_source,
                 predicate="",
@@ -177,9 +203,9 @@ class FieldDataComparison:
             ) for field in query.orphans_in_reference
         ]
 
-    def _missing_reference_comparisons(self, query: MatchResult) -> List[FieldComparisonResult]:
+    def _missing_reference_comparisons(self, query: MatchResult) -> List[FieldComparison]:
         return [
-            FieldComparisonResult(
+            FieldComparison(
                 name=field.name,
                 status=FieldComparisonStatus.missing_reference,
                 predicate="",
@@ -187,9 +213,9 @@ class FieldDataComparison:
             ) for field in query.orphans_in_source
         ]
 
-    def _filtered_comparisons(self, filtered: List[Field]) -> List[FieldComparisonResult]:
+    def _filtered_comparisons(self, filtered: List[Field]) -> List[FieldComparison]:
         return [
-            FieldComparisonResult(
+            FieldComparison(
                 name=field.name,
                 status=FieldComparisonStatus.filtered,
                 predicate="",

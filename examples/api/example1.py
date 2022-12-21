@@ -1,9 +1,9 @@
 """In this example, we use fieldcompare to read in fields from files and compare them"""
 
 from os import remove
-from numpy import less, all, array, ndarray
+from numpy import less, all, ndarray
 
-from fieldcompare import Field, FieldDataComparison
+from fieldcompare import FieldDataComparator
 from fieldcompare.predicates import ExactEquality, FuzzyEquality, PredicateResult
 
 # convenience function to read in field data from files
@@ -46,9 +46,6 @@ def _select_predicate(source_field: protocols.Field,
 if __name__ == "__main__":
     _write_example_csv_file()
 
-    # a field in FieldCompare is an array of values with an associated name
-    my_field = Field(name="my_field", values=array([42.0, 42.0, 42.0]))
-
     # you may also use the provided functions for reading in fields from files
     fields: protocols.FieldData = read_field_data("example2.csv")
 
@@ -62,7 +59,7 @@ if __name__ == "__main__":
     # against reference data. Here, we simply compare the fields against
     # themselves. The constructor takes the field data to be compared,
     # while the actual comparison is carried out via the call-operator.
-    comparator = FieldDataComparison(source=fields, reference=fields)
+    comparator = FieldDataComparator(source=fields, reference=fields)
     comparisons = comparator()
 
     def _print_field_comp_result(field_comparison) -> None:

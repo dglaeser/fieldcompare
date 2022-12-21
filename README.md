@@ -1,11 +1,13 @@
+# FieldCompare
+
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 
 [![Test Pipelines.](https://gitlab.com/dglaeser/fieldcompare/badges/main/pipeline.svg)](https://gitlab.com/dglaeser/fieldcompare/-/pipelines?page=1&scope=all&ref=main)
 
-[![Coverage Report.](https://gitlab.com/dglaeser/fieldcompare/badges/main/coverage.svg)](https://dglaeser.gitlab.io/fieldcompare/)
+[![Coverage Report.](https://gitlab.com/dglaeser/fieldcompare/badges/main/coverage.svg)](https://dglaeser.gitlab.io/fieldcompare/coverage)
 
+[![API Documentation.](https://img.shields.io/badge/doc-API-ff69b4)](https://dglaeser.gitlab.io/fieldcompare/)
 
-# FieldCompare
 
 `fieldcompare` is a python package with command-line interface (CLI) that can be used to compare
 datasets for (fuzzy) equality. It was designed mainly to serve as a tool to realize regression tests

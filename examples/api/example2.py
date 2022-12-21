@@ -3,7 +3,7 @@
 # we use meshio here to show how to achieve interoperability
 from meshio import read as meshio_read
 
-from fieldcompare import FieldDataComparison
+from fieldcompare import FieldDataComparator
 
 # Convenience function to read fields from files
 from fieldcompare.io import read
@@ -40,7 +40,7 @@ fields_permuted: protocols.MeshFields = read_as_mesh_fields(mesh_file_permuted)
 # The two meshes contain the same data, but in different order,
 # thus, the meshes are not equal. In such case, the field data
 # comparison exits early, yielding a "failed" comparison:
-comparator = FieldDataComparison(fields, fields_permuted)
+comparator = FieldDataComparator(fields, fields_permuted)
 result = comparator()
 
 assert not result
@@ -51,7 +51,7 @@ print()
 # We can solve this in this case by sorting the mesh in a unique way:
 fields_sorted = sort(fields)
 fields_permuted_sorted = sort(fields_permuted)
-comparator = FieldDataComparison(fields_sorted, fields_permuted_sorted)
+comparator = FieldDataComparator(fields_sorted, fields_permuted_sorted)
 result = comparator()
 
 assert result
@@ -71,12 +71,12 @@ def _manual_sort(_fields: protocols.MeshFields) -> protocols.MeshFields:
     )
 fields_sorted = _manual_sort(fields)
 fields_permuted_sorted = _manual_sort(fields_permuted)
-assert FieldDataComparison(fields_sorted, fields_permuted_sorted)()
+assert FieldDataComparator(fields_sorted, fields_permuted_sorted)()
 
 # In our case here, sorting only the points does not yield equal meshes:
 fields_sorted = fields.transformed(permutations.sort_points)
 fields_permuted_sorted = fields_permuted.transformed(permutations.sort_points)
-assert not FieldDataComparison(fields_sorted, fields_permuted_sorted)()
+assert not FieldDataComparator(fields_sorted, fields_permuted_sorted)()
 
 # Note that there are conversion functions available for meshio meshes
 # such that you can integrate fieldcompare into an existing pipeline
