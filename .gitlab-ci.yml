@@ -24,7 +24,7 @@ cache:
 
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
-  PY_VERSION: "3.9"
+  PY_VERSION: "3.10"
 
 test:
   image: python:$PY_VERSION
