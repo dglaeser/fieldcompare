@@ -24,11 +24,21 @@ class Mesh(Protocol):
         ...
 
     def connectivity(self, cell_type: CellType) -> Array:
-        """Return the corner indices array for the cells of the given type"""
+        """
+        Return the corner indices array for the cells of the given type.
+
+        Args:
+            cell_type: The cell type for which to return the connectivity.
+        """
         ...
 
     def equals(self, other: Mesh) -> PredicateResult:
-        """Check if this mesh is equal to the given one"""
+        """
+        Check whether this mesh is equal to the given one.
+
+        Args:
+            other: mesh against with to check equality.
+        """
         ...
 
     @property
@@ -42,44 +52,67 @@ class Mesh(Protocol):
         ...
 
     def set_tolerances(self, abs_tol: Optional[float] = None, rel_tol: Optional[float] = None) -> None:
-        """Set the tolerances used for equality checks against other meshes"""
+        """
+        Set the tolerances to be used for equality checks against other meshes.
+
+        Args:
+            abs_tol: Absolute tolerance to use.
+            rel_tol: Relative tolerance to use.
+        """
         ...
 
 
 @runtime_checkable
 class TransformedMesh(Mesh, Protocol):
     def transform_point_data(self, data: Array) -> Array:
-        """Return the transformed point data"""
+        """
+        Return the transformed point data.
+
+        Args:
+            data: The point data array to be transformed.
+        """
         ...
 
     def transform_cell_data(self, cell_type: CellType, data: Array) -> Array:
-        """Return the transformed cell data"""
+        """
+        Return the transformed cell data.
+
+        Args:
+            cell_type: The cell type for which the data is defined.
+            data: The data array to be transformed.
+        """
         ...
 
 
 @runtime_checkable
 class MeshFields(FieldData, Protocol):
-    """Represents fields defined on a computational mesh"""
+    """Represents fields defined on a computational mesh."""
+
     @property
     def domain(self) -> Mesh:
-        """Return the mesh on which the fields are defined"""
+        """Return the mesh on which the fields are defined."""
         ...
 
     @property
     def point_fields(self) -> Iterable[Field]:
-        """Return an range over the contained point fields"""
+        """Return an range over the contained point fields."""
         ...
 
     @property
     def cell_fields(self) -> Iterable[Field]:
-        """Return an range over the contained cell fields"""
+        """Return an range over the contained cell fields."""
         ...
 
     @property
     def cell_fields_types(self) -> Iterable[Tuple[Field, CellType]]:
-        """Return a range over cell fields + associated cell type"""
+        """Return a range over cell fields + associated cell type."""
         ...
 
     def transformed(self, transformation: Callable[[Mesh], TransformedMesh]) -> MeshFields:
-        """Transform the mesh fields by the given mesh transformation"""
+        """
+        Transform the mesh fields by the given mesh transformation.
+
+        Args:
+            transformation: Transform the fields with the given mesh transformation.
+        """
         ...
