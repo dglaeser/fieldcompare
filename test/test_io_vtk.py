@@ -9,7 +9,7 @@ from typing import List
 import pytest
 from meshio import read as meshio_read
 
-from fieldcompare import FieldDataComparison, protocols
+from fieldcompare import FieldDataComparator, protocols
 from fieldcompare.mesh import meshio_utils, protocols as mesh_protocols
 from fieldcompare.io.vtk import read
 
@@ -139,7 +139,7 @@ def _test(filename: str) -> bool:
             meshio_read_mesh = meshio_read(tmp_filename)
 
     meshio_mesh_fields = meshio_utils.from_meshio(meshio_read_mesh)
-    comparator = FieldDataComparison(mesh_fields, meshio_mesh_fields)
+    comparator = FieldDataComparator(mesh_fields, meshio_mesh_fields)
     if exists(tmp_filename):
         remove(tmp_filename)
     return bool(comparator())
@@ -151,7 +151,7 @@ def _test_from_mesh(mesh_fields: mesh_protocols.MeshFields) -> bool:
     meshio_mesh.write(tmp_filename)
     meshio_mesh = meshio_read(tmp_filename)
     meshio_mesh_fields = meshio_utils.from_meshio(meshio_mesh)
-    comparator = FieldDataComparison(mesh_fields, meshio_mesh_fields)
+    comparator = FieldDataComparator(mesh_fields, meshio_mesh_fields)
     remove(tmp_filename)
     return bool(comparator())
 

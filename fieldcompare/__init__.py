@@ -1,25 +1,25 @@
 """
-The fieldcompare module
-
-Prodives a framework to compare fields of values for relational properties as e.g. equality.
-This can be useful, for instance, in regression-testing simulation software, comparing simulation
-results against previously obtained results.
+fieldcompare provides functionality to compare field data, where field data are collections of
+fields (each consisting of a name and an associated array of values) defined on domains. An example
+would be discrete numerical solutions (fields) defined on a computational mesh (domain). This top-level
+module exposes central classes in this context, mostly operating on the protocols defined in the 'protocol'
+module. Implementations of these protocols can be found in the submodules.
 """
 
 from .__about__ import __version__
 
-from ._field import Field
 from ._field_sequence import FieldDataSequence
-
-from ._matching import (
-    find_matches,
-    find_matches_by_name,
-    find_matching_file_names
-)
-
 from ._field_data_comparison import (
-    FieldDataComparison,
-    FieldComparisonStatus,
-    FieldComparisonResult,
-    FieldComparisonSuite
+    FieldDataComparator,
+    FieldComparisonSuite,
+    FieldComparison,
+    FieldComparisonStatus
 )
+
+__all__ = [
+    "FieldDataComparator",
+    "FieldComparisonSuite",
+    "FieldComparison",
+    "FieldComparisonStatus",
+    "__version__"
+]

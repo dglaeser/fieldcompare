@@ -2,7 +2,6 @@
 
 from pytest import raises
 
-from fieldcompare import Field
 from fieldcompare.predicates import FuzzyEquality, DefaultEquality, PredicateError
 from fieldcompare._numpy_utils import make_array
 
@@ -38,45 +37,36 @@ def test_fuzzy_equality_with_arrays():
         assert check(make_array([1.0, 1.0]), make_array([1.0, 1.0 + 1e-2]))
 
 
-def test_fuzzy_equality_with_field_values():
-    for check in [FuzzyEquality(), DefaultEquality()]:
-        field1 = Field("f1", make_array([1.0, 1.0]))
-        field2 = Field("f2", make_array([1.0, 1.0 + 1e-2]))
-        assert not check(field1.values, field2.values)
-        check.relative_tolerance = 0.1
-        assert check(field1.values, field2.values)
-
-
-def test_vector_field_fuzzy_equality():
-    field1 = Field("something", make_array([
+def test_vector_array_fuzzy_equality():
+    field1 = make_array([
         make_array([0.1, 0.2]),
         make_array([0.3, 0.5])
-    ]))
-    field2 = Field("something", make_array([
+    ])
+    field2 = make_array([
         make_array([0.1, 0.2]),
         make_array([0.3, 0.5 + 1e-6])
-    ]))
+    ])
 
     for check in [FuzzyEquality(), DefaultEquality()]:
-        assert not check(field1.values, field2.values)
+        assert not check(field1, field2)
         check.relative_tolerance = 1e-3
-        assert check(field1.values, field2.values)
+        assert check(field1, field2)
 
 
-def test_vector_field_fuzzy_equality_mixed_shapes():
-    field1 = Field("something", make_array([[0.1, 0.2], [0.3]], dtype="object"))
-    field2 = Field("something", make_array([[0.1 + 1e-6, 0.2], [0.3]], dtype="object"))
+def test_vector_array_fuzzy_equality_mixed_shapes():
+    field1 = make_array([[0.1, 0.2], [0.3]], dtype="object")
+    field2 = make_array([[0.1 + 1e-6, 0.2], [0.3]], dtype="object")
 
     for check in [FuzzyEquality(), DefaultEquality()]:
-        assert not check(field1.values, field2.values)
+        assert not check(field1, field2)
         check.relative_tolerance = 1e-3
-        assert check(field1.values, field2.values)
+        assert check(field1, field2)
 
 
-def test_scalar_field_fuzzy_equality_invalid_type():
-    field1 = Field("something", make_array(["string1", "string2"]))
-    field2 = Field("something", make_array(["string1", "string2"]))
+def test_scalar_array_fuzzy_equality_invalid_type():
+    field1 = make_array(["string1", "string2"])
+    field2 = make_array(["string1", "string2"])
 
     with raises(PredicateError):
         check = FuzzyEquality()
-        assert not check(field1.values, field2.values)
+        assert not check(field1, field2)

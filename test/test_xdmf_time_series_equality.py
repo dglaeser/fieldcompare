@@ -6,7 +6,7 @@ from pathlib import Path
 from fieldcompare.mesh import sort, protocols as mesh_protocols
 from fieldcompare.io import _mesh_io
 from fieldcompare.predicates import FuzzyEquality, DefaultEquality
-from fieldcompare import FieldDataComparison, protocols
+from fieldcompare import FieldDataComparator, protocols
 
 if not _mesh_io._HAVE_MESHIO:
     pytest.skip(
@@ -44,7 +44,7 @@ def _compare_time_series_files(file1, file2, predicate=FuzzyEquality()) -> Check
         fields2.domain.set_tolerances(abs_tol=predicate.absolute_tolerance, rel_tol=predicate.relative_tolerance)
         fields1 = sort(fields1)
         fields2 = sort(fields2)
-        if not FieldDataComparison(fields1, fields2)(
+        if not FieldDataComparator(fields1, fields2)(
             predicate_selector=lambda _, __: predicate
         ):
             return CheckResult(False)

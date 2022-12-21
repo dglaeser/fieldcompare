@@ -16,9 +16,9 @@ from .._format import (
 )
 
 from .._field_data_comparison import (
-    FieldDataComparison,
+    FieldDataComparator,
     FieldComparisonSuite,
-    FieldComparisonResult,
+    FieldComparison,
     FieldComparisonStatus
 )
 
@@ -197,7 +197,7 @@ class FileComparison:
     def _run_field_data_comparison(self,
                                    result: protocols.FieldData,
                                    reference: protocols.FieldData) -> FieldComparisonSuite:
-        return FieldDataComparison(
+        return FieldDataComparator(
             result, reference,
             self._opts.field_inclusion_filter, self._opts.field_exclusion_filter
         )(
@@ -223,7 +223,7 @@ class FileComparison:
             return ExactEquality()
 
     def _stream_field_comparison_report(self,
-                                        result: FieldComparisonResult,
+                                        result: FieldComparison,
                                         device: Union[CLILogger, TextIO]) -> None:
         def _log(message: str, verbosity_level: int) -> None:
             if isinstance(device, CLILogger):
@@ -251,7 +251,7 @@ class FileComparison:
     def _to_test_suite(self, suite: FieldComparisonSuite) -> TestSuite:
         return TestSuite([self._to_test_result(c) for c in suite])
 
-    def _to_test_result(self, comp_result: FieldComparisonResult) -> TestResult:
+    def _to_test_result(self, comp_result: FieldComparison) -> TestResult:
         def _get_stdout() -> str:
             stream = StringIO()
             self._stream_field_comparison_report(comp_result, stream)

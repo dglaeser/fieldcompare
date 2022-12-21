@@ -1,6 +1,5 @@
 """Test exact equality checks on values/arrays"""
 
-from fieldcompare import Field
 from fieldcompare.predicates import ExactEquality, DefaultEquality
 from fieldcompare._numpy_utils import make_array
 
@@ -30,13 +29,6 @@ def test_exact_equality_with_arrays():
         assert not check(make_array([1, 2]), make_array([1, 1]))
         assert not check(make_array([1.0, 2.0]), make_array([1.0, 1.0]))
         assert not check(make_array([1.0, 1.0]), make_array([1.0, 1.0 + 1e-4]))
-
-
-def test_exact_equality_with_field_values():
-    field1 = Field("f1", make_array([1.0, 1.0]))
-    field2 = Field("f2", make_array([1.0, 1.0 + 1e-4]))
-    for check in [ExactEquality(), DefaultEquality()]:
-        assert not check(field1.values, field2.values)
 
 
 def test_vector_field_exact_equality():

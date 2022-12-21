@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from fieldcompare import FieldDataComparison, FieldDataSequence, protocols
+from fieldcompare import FieldDataComparator, FieldDataSequence, protocols
 from fieldcompare.mesh import Mesh, MeshFields, cell_types
 from fieldcompare.io import read
 
@@ -46,7 +46,7 @@ def test_field_data_sequence():
     reference_mesh = get_mesh()
     for step_idx, field_data in enumerate(sequence):
         assert field_data.domain.equals(reference_mesh)
-        assert FieldDataComparison(field_data, get_field_data(step_idx))()
+        assert FieldDataComparator(field_data, get_field_data(step_idx))()
 
 
 def test_xdmf_field_data_sequence():
