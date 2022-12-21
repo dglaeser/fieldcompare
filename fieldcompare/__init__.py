@@ -2,7 +2,7 @@
 fieldcompare provides functionality to compare field data, where field data are collections of
 fields (each consisting of a name and an associated array of values) defined on domains. An example
 would be discrete numerical solutions (fields) defined on a computational mesh (domain). This top-level
-module exposes central classes in this context, mostly operating on the protocols defined in the 'protocol'
+module exposes central classes in this context, mostly operating on the protocols defined in the "protocols"
 module. Implementations of these protocols can be found in the submodules.
 """
 
