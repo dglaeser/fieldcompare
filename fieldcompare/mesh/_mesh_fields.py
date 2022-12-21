@@ -10,10 +10,10 @@ from typing import (
 
 from .._numpy_utils import Array, as_array
 from .._field import Field
-from ..protocols import FieldData
-
 from ._cell_type import CellType
+
 from . import protocols
+from .. import protocols as fc_protocols
 
 
 def _cell_type_suffix(cell_type: CellType) -> str:
@@ -30,7 +30,7 @@ def remove_cell_type_suffix(cell_type: CellType, field_name_with_suffix: str) ->
     return field_name_with_suffix.rstrip(_cell_type_suffix(cell_type))
 
 
-class MeshFields(FieldData):
+class MeshFields(fc_protocols.FieldData):
     """
     Represents field data on a computational mesh.
 
@@ -122,7 +122,7 @@ class MeshFields(FieldData):
         return values
 
 
-class TransformedMeshFields(FieldData):
+class TransformedMeshFields(fc_protocols.FieldData):
     """
     Exposes field data on transformed meshes.
 
@@ -141,12 +141,12 @@ class TransformedMeshFields(FieldData):
         """Return the mesh on which these fields are defined"""
         return self._mesh
 
-    def __iter__(self) -> Iterator[Field]:
+    def __iter__(self) -> Iterator[fc_protocols.Field]:
         """Return an iterator over the contained fields"""
         return chain(self.point_fields, self.cell_fields)
 
     @property
-    def point_fields(self) -> Iterable[Field]:
+    def point_fields(self) -> Iterable[fc_protocols.Field]:
         """Return a range over the contained point fields"""
         return (
             self._get_permuted_point_field(_field)
@@ -178,13 +178,13 @@ class TransformedMeshFields(FieldData):
         """
         return TransformedMeshFields(self, transformation)
 
-    def _get_permuted_point_field(self, field: Field) -> Field:
+    def _get_permuted_point_field(self, field: fc_protocols.Field) -> fc_protocols.Field:
         return Field(
             field.name,
             self._mesh.transform_point_data(field.values)
         )
 
-    def _get_permuted_cell_field(self, cell_type: CellType, field: Field) -> Field:
+    def _get_permuted_cell_field(self, cell_type: CellType, field: fc_protocols.Field) -> Field:
         return Field(
             field.name,
             self._mesh.transform_cell_data(cell_type, field.values)
