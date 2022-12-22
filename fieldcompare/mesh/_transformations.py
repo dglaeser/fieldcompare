@@ -61,7 +61,7 @@ def merge(*mesh_fields: protocols.MeshFields) -> protocols.MeshFields:
     return result
 
 
-def strip_orphan_points(fields: protocols.MeshFields) -> TransformedMeshFields:
+def strip_orphan_points(fields: protocols.MeshFields) -> protocols.MeshFields:
     """Remove unconnected points from the given mesh fields and return the result"""
     return TransformedMeshFields(
         field_data=fields,
@@ -72,7 +72,7 @@ def strip_orphan_points(fields: protocols.MeshFields) -> TransformedMeshFields:
     )
 
 
-def sort_points(fields: protocols.MeshFields) -> TransformedMeshFields:
+def sort_points(fields: protocols.MeshFields) -> protocols.MeshFields:
     """Sorts the mesh points by their coordinates (lexicographically)"""
     try:
         def _get_permuted(mesh: protocols.Mesh) -> PermutedMesh:
@@ -98,7 +98,7 @@ def sort_points(fields: protocols.MeshFields) -> TransformedMeshFields:
         raise ValueError(f"Caught an exception when sorting the mesh points: {e}")
 
 
-def sort_cells(fields: protocols.MeshFields) -> TransformedMeshFields:
+def sort_cells(fields: protocols.MeshFields) -> protocols.MeshFields:
     """Sorts the cells of the map by their connectivity (lexicographically)"""
     return TransformedMeshFields(
         field_data=fields,

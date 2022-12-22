@@ -5,7 +5,8 @@ from itertools import chain
 from typing import (
     Iterator, Iterable,
     Dict, List, Tuple,
-    Callable
+    Callable, Protocol,
+    runtime_checkable
 )
 
 from .._numpy_utils import Array, as_array
@@ -118,14 +119,35 @@ class TransformedMeshFields(fc_protocols.FieldData):
         field_data: The untransformed mesh fields.
         transformation: The mesh transformation to be applied.
     """
+    @runtime_checkable
+    class TransformedMesh(protocols.Mesh, Protocol):
+        def transform_point_data(self, data: Array) -> Array:
+            """
+            Return the transformed point data.
+
+            Args:
+                data: The point data array to be transformed.
+            """
+            ...
+
+        def transform_cell_data(self, cell_type: CellType, data: Array) -> Array:
+            """
+            Return the transformed cell data.
+
+            Args:
+                cell_type: The cell type for which the data is defined.
+                data: The data array to be transformed.
+            """
+            ...
+
     def __init__(self,
                  field_data: protocols.MeshFields,
-                 transformation: Callable[[protocols.Mesh], protocols.TransformedMesh]) -> None:
+                 transformation: Callable[[protocols.Mesh], TransformedMesh]) -> None:
         self._field_data = field_data
         self._mesh = transformation(self._field_data.domain)
 
     @property
-    def domain(self) -> protocols.TransformedMesh:
+    def domain(self) -> TransformedMesh:
         """Return the mesh on which these fields are defined"""
         return self._mesh
 

@@ -8,12 +8,13 @@ try:
     from meshio import read as _meshio_read, Mesh as _MeshIOMesh
     from meshio import extension_to_filetypes as _MESHIO_SUPPORTED_EXTENSIONS
     from meshio.xdmf import TimeSeriesReader as _MeshioTimeSeriesReader
+    from ..mesh import meshio_utils
     _HAVE_MESHIO = True
 except ImportError:
     _HAVE_MESHIO = False
 
 from .. import protocols, FieldDataSequence
-from ..mesh import meshio_utils, MeshFields
+from ..mesh import MeshFields
 
 
 def _read(filename: str) -> Union[protocols.FieldData, protocols.FieldDataSequence]:

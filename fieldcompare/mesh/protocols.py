@@ -63,28 +63,6 @@ class Mesh(Protocol):
 
 
 @runtime_checkable
-class TransformedMesh(Mesh, Protocol):
-    def transform_point_data(self, data: Array) -> Array:
-        """
-        Return the transformed point data.
-
-        Args:
-            data: The point data array to be transformed.
-        """
-        ...
-
-    def transform_cell_data(self, cell_type: CellType, data: Array) -> Array:
-        """
-        Return the transformed cell data.
-
-        Args:
-            cell_type: The cell type for which the data is defined.
-            data: The data array to be transformed.
-        """
-        ...
-
-
-@runtime_checkable
 class MeshFields(FieldData, Protocol):
     """Represents fields defined on a computational mesh."""
 

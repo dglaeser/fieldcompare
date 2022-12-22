@@ -7,10 +7,10 @@ from ..predicates import PredicateResult
 
 from ._cell_type import CellType
 from ._mesh_equal import mesh_equal
-from .protocols import Mesh, TransformedMesh
+from . import protocols
 
 
-class PermutedMesh(TransformedMesh):
+class PermutedMesh:
     """
     Represents a computational mesh, permuted by the given index maps.
 
@@ -21,7 +21,7 @@ class PermutedMesh(TransformedMesh):
                            For each cell type of the grid, a separate permutation is specified.
     """
     def __init__(self,
-                 mesh: Mesh,
+                 mesh: protocols.Mesh,
                  point_permutation: Optional[Array] = None,
                  cell_permutations: Optional[Dict[CellType, Array]] = None) -> None:
         self._mesh = mesh
@@ -88,7 +88,7 @@ class PermutedMesh(TransformedMesh):
             return data[self._cell_permutations[cell_type]]
         return data
 
-    def equals(self, other: Mesh) -> PredicateResult:
+    def equals(self, other: protocols.Mesh) -> PredicateResult:
         """
         Check whether this mesh is equal to the given one.
 
