@@ -1,7 +1,7 @@
 """Defines the interfaces used by the fieldcompare.mesh module"""
 
 from __future__ import annotations
-from typing import Protocol, Iterable, Tuple, Optional, Callable, runtime_checkable
+from typing import Protocol, Iterable, Tuple, Optional, runtime_checkable
 
 from ..protocols import FieldData, Field, PredicateResult
 from .._numpy_utils import Array
@@ -106,13 +106,4 @@ class MeshFields(FieldData, Protocol):
     @property
     def cell_fields_types(self) -> Iterable[Tuple[Field, CellType]]:
         """Return a range over cell fields + associated cell type."""
-        ...
-
-    def transformed(self, transformation: Callable[[Mesh], TransformedMesh]) -> MeshFields:
-        """
-        Transform the mesh fields by the given mesh transformation.
-
-        Args:
-            transformation: Transform the fields with the given mesh transformation.
-        """
         ...

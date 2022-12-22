@@ -5,7 +5,7 @@ from itertools import chain
 from typing import (
     Iterator, Iterable,
     Dict, List, Tuple,
-    Union, Callable
+    Callable
 )
 
 from .._numpy_utils import Array, as_array
@@ -92,18 +92,6 @@ class MeshFields(fc_protocols.FieldData):
             for name in self._cell_data
         )
 
-    def transformed(
-        self,
-        transformation: Callable[[protocols.Mesh], protocols.TransformedMesh]
-    ) -> TransformedMeshFields:
-        """
-        Return the fields transformed by the given transformation.
-
-        Args:
-            transformation: The mesh transformation to be applied.
-        """
-        return TransformedMeshFields(self, transformation)
-
     def _make_point_values(self, values: Array) -> Array:
         values = as_array(values)
         if values.shape[0] != self._mesh.points.shape[0]:
@@ -131,7 +119,7 @@ class TransformedMeshFields(fc_protocols.FieldData):
         transformation: The mesh transformation to be applied.
     """
     def __init__(self,
-                 field_data: Union[protocols.MeshFields, TransformedMeshFields],
+                 field_data: protocols.MeshFields,
                  transformation: Callable[[protocols.Mesh], protocols.TransformedMesh]) -> None:
         self._field_data = field_data
         self._mesh = transformation(self._field_data.domain)
@@ -165,18 +153,6 @@ class TransformedMeshFields(fc_protocols.FieldData):
             (self._get_permuted_cell_field(cell_type, field), cell_type)
             for field, cell_type in self._field_data.cell_fields_types
         )
-
-    def transformed(
-        self,
-        transformation: Callable[[protocols.Mesh], protocols.TransformedMesh]
-    ) -> TransformedMeshFields:
-        """
-        Return the fields transformed by the given transformation.
-
-        Args:
-            transformation: The mesh transformation to be applied.
-        """
-        return TransformedMeshFields(self, transformation)
 
     def _get_permuted_point_field(self, field: fc_protocols.Field) -> fc_protocols.Field:
         return Field(

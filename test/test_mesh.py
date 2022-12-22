@@ -1,5 +1,4 @@
 from fieldcompare.mesh import Mesh, PermutedMesh, cell_types
-from fieldcompare.mesh import permutations
 
 
 def _check_mesh_identity(mesh1, mesh2) -> None:

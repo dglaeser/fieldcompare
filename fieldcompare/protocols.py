@@ -62,15 +62,6 @@ class FieldData(Protocol):
         """Return an iterator over the contained fields."""
         ...
 
-    def transformed(self, transformation) -> FieldData:
-        """
-        Return this field data transformed by the given transformation.
-
-        Args:
-            transformation: Transformation to be applied.
-        """
-        ...
-
 
 @runtime_checkable
 class FieldDataSequence(Protocol):

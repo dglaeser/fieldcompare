@@ -1,6 +1,7 @@
 """Mesh permutation functions"""
 
-from typing import Dict
+from copy import deepcopy
+from typing import Dict, Optional
 
 from .._numpy_utils import (
     Array,
@@ -18,33 +19,75 @@ from .._numpy_utils import (
     get_sorting_index_map,
     get_lex_sorting_index_map,
     make_initialized_array,
-    make_array
+    make_array,
+    concatenate,
+    make_zeros
 )
 
 from .._common import _default_base_tolerance
-from ._permuted_mesh import PermutedMesh
 from ._cell_type import CellType
-from .protocols import Mesh
+from ._mesh import Mesh
+from ._permuted_mesh import PermutedMesh
+from ._mesh_fields import MeshFields, TransformedMeshFields, remove_cell_type_suffix
+
+from . import protocols
 
 
-def remove_unconnected_points(mesh: Mesh) -> PermutedMesh:
-    """Return a mesh with unconnected points removed"""
-    return PermutedMesh(
-        mesh=mesh,
-        point_permutation=_unconnected_points_filter_map(mesh)
+def sort(mesh_fields: protocols.MeshFields) -> protocols.MeshFields:
+    """
+    Sort the given mesh fields to arrive at a unique representation.
+
+    Args:
+        mesh_fields: The mesh fields to be sorted.
+    """
+    return sort_cells(sort_points(strip_orphan_points(mesh_fields)))
+
+
+def merge(*mesh_fields: protocols.MeshFields) -> protocols.MeshFields:
+    """
+    Merge the given mesh fields into a single one
+
+    Args:
+        mesh_fields: the mesh fields to be merged.
+    """
+    result: Optional[protocols.MeshFields] = None
+    for i, fields in enumerate(mesh_fields):
+        if i == 0:
+            result = fields
+        else:
+            assert result is not None
+            result = _merge(result, fields)
+    assert result is not None
+    return result
+
+
+def strip_orphan_points(fields: protocols.MeshFields) -> TransformedMeshFields:
+    """Remove unconnected points from the given mesh fields and return the result"""
+    return TransformedMeshFields(
+        field_data=fields,
+        transformation=lambda mesh: PermutedMesh(
+            mesh=mesh,
+            point_permutation=_unconnected_points_filter_map(mesh)
+        )
     )
 
 
-def sort_points(mesh: Mesh) -> PermutedMesh:
-    """Sorts the points of the mesh by their coordinates (lexicographically)"""
+def sort_points(fields: protocols.MeshFields) -> TransformedMeshFields:
+    """Sorts the mesh points by their coordinates (lexicographically)"""
     try:
-        point_map = _sorting_points_indices(
-            mesh.points,
-            {ct: mesh.connectivity(ct) for ct in mesh.cell_types}
+        def _get_permuted(mesh: protocols.Mesh) -> PermutedMesh:
+            point_map = _sorting_points_indices(
+                mesh.points,
+                {ct: mesh.connectivity(ct) for ct in mesh.cell_types}
+            )
+            return PermutedMesh(mesh=mesh, point_permutation=point_map)
+
+        return TransformedMeshFields(
+            field_data=fields,
+            transformation=lambda mesh: _get_permuted(mesh)
         )
-        return PermutedMesh(mesh=mesh, point_permutation=point_map)
     except ValueError as e:
-        if len(_unconnected_points_filter_map(mesh)) != len(mesh.points):
+        if len(_unconnected_points_filter_map(fields.domain)) != len(fields.domain.points):
             raise ValueError(
                 "Could not sort the point coordinates. Your mesh seems to have\n"
                 "unconnected points, which is known to cause the sorting algorithm\n"
@@ -55,18 +98,21 @@ def sort_points(mesh: Mesh) -> PermutedMesh:
         raise ValueError(f"Caught an exception when sorting the mesh points: {e}")
 
 
-def sort_cells(mesh: Mesh) -> PermutedMesh:
+def sort_cells(fields: protocols.MeshFields) -> TransformedMeshFields:
     """Sorts the cells of the map by their connectivity (lexicographically)"""
-    return PermutedMesh(
-        mesh=mesh,
-        cell_permutations={
-            ct: _get_cell_corners_sorting_index_map(mesh.connectivity(ct))
-            for ct in mesh.cell_types
-        }
+    return TransformedMeshFields(
+        field_data=fields,
+        transformation=lambda mesh: PermutedMesh(
+            mesh=mesh,
+            cell_permutations={
+                ct: _get_cell_corners_sorting_index_map(mesh.connectivity(ct))
+                for ct in mesh.cell_types
+            }
+        )
     )
 
 
-def _unconnected_points_filter_map(mesh: Mesh) -> Array:
+def _unconnected_points_filter_map(mesh: protocols.Mesh) -> Array:
     is_unconnected = make_initialized_array(
         size=len(mesh.points),
         dtype=bool,
@@ -194,3 +240,80 @@ def _get_indices_with_zero_adjacent_diffs(adjacent_diffs: Array, tolerance: floa
     is_zero_diff = all_true(is_zero_diff, axis=1)
     is_zero_diff = append_to_array(is_zero_diff, False)
     return is_zero_diff
+
+
+def _merge(fields1: protocols.MeshFields,
+           fields2: protocols.MeshFields) -> MeshFields:
+    points = concatenate((
+        fields1.domain.points,
+        fields2.domain.points
+    ))
+
+    # merged cell connectivities
+    points2_offset = len(fields1.domain.points)
+    cells_dict: Dict[CellType, Array] = {
+        ct: make_array(fields1.domain.connectivity(ct))
+        for ct in fields1.domain.cell_types
+    }
+    for ct in fields2.domain.cell_types:
+        connectivity_with_offset = make_array(fields2.domain.connectivity(ct) + points2_offset)
+        if ct in cells_dict:
+            cells_dict[ct] = concatenate((cells_dict[ct], connectivity_with_offset))
+        else:
+            cells_dict[ct] = connectivity_with_offset
+
+    # merged cell fields
+    raw_cell_field_names = set()
+    cell_fields: Dict[CellType, Dict[str, Array]] = {ct: {} for ct in cells_dict}
+    for field, ct in fields1.cell_fields_types:
+        raw_field_name = remove_cell_type_suffix(ct, field.name)
+        cell_fields[ct][raw_field_name] = field.values
+        raw_cell_field_names.add(raw_field_name)
+    for field, ct in fields2.cell_fields_types:
+        raw_field_name = remove_cell_type_suffix(ct, field.name)
+        raw_cell_field_names.add(raw_field_name)
+        if raw_field_name in cell_fields[ct]:
+            cell_fields[ct][raw_field_name] = concatenate((
+                cell_fields[ct][raw_field_name],
+                field.values
+            ))
+        else:
+            cell_fields[ct][raw_field_name] = field.values
+
+    # merged point fields
+    point_fields1: Dict[str, Array] = {f.name: f.values for f in fields1.point_fields}
+    point_fields2: Dict[str, Array] = {f.name: f.values for f in fields2.point_fields}
+    point_fields: Dict[str, Array] = {}
+    for name in point_fields1:
+        if name in point_fields2:
+            point_fields[name] = concatenate((point_fields1[name], point_fields2[name]))
+        else:
+            zero = make_zeros(shape=point_fields1[name].shape[1:], dtype=point_fields1[name].dtype)
+            point_fields[name] = concatenate((
+                make_array(point_fields1[name]),
+                make_array(
+                    [deepcopy(zero) for _ in range(len(fields2.domain.points))],
+                    dtype=point_fields1[name].dtype
+                )
+            ))
+    for name in filter(lambda n: n not in point_fields, point_fields2):
+        zero = make_zeros(shape=point_fields2[name].shape[1:], dtype=point_fields2[name].dtype)
+        point_fields[name] = concatenate((
+            make_array(
+                [deepcopy(zero) for _ in range(points2_offset)],
+                dtype=point_fields2[name].dtype
+            ),
+            make_array(point_fields2[name])
+        ))
+
+    return MeshFields(
+        mesh=Mesh(
+            points=points,
+            connectivity=((ct, connectivity) for ct, connectivity in cells_dict.items())
+        ),
+        point_data={name: values for name, values in point_fields.items()},
+        cell_data={
+            name: [cell_fields[ct][name] for ct in cells_dict]
+            for name in raw_cell_field_names
+        }
+    )
