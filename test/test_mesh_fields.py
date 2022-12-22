@@ -9,13 +9,12 @@ except ImportError:
     _HAVE_MESHIO = False
 
 from fieldcompare import FieldDataComparator
-from fieldcompare.mesh import (
-    Mesh, MeshFields,
-    PermutedMesh, TransformedMeshFields,
-    cell_types
-)
+from fieldcompare.mesh import Mesh, MeshFields, cell_types
 from fieldcompare.mesh import sort_points, merge
 from fieldcompare.predicates import ExactEquality
+
+from fieldcompare.mesh._permuted_mesh import PermutedMesh
+from fieldcompare.mesh._mesh_fields import TransformedMeshFields
 
 
 def test_mesh_fields():

@@ -1,5 +1,5 @@
-from fieldcompare.mesh import Mesh, PermutedMesh, cell_types
-
+from fieldcompare.mesh import Mesh, cell_types
+from fieldcompare.mesh._permuted_mesh import PermutedMesh
 
 def _check_mesh_identity(mesh1, mesh2) -> None:
     for a, b in zip(mesh1.points, mesh2.points):
