@@ -9,8 +9,12 @@ except ImportError:
     _HAVE_MESHIO = False
 
 from fieldcompare import FieldDataComparator
-from fieldcompare.mesh import Mesh, MeshFields, PermutedMesh, cell_types
-from fieldcompare.mesh import permutations, merge
+from fieldcompare.mesh import (
+    Mesh, MeshFields,
+    PermutedMesh, TransformedMeshFields,
+    cell_types
+)
+from fieldcompare.mesh import sort_points, merge
 from fieldcompare.predicates import ExactEquality
 
 
@@ -42,7 +46,7 @@ def test_permuted_point_mesh_field():
         mesh=mesh,
         point_data={"pd": [42.0, 43.0, 44.0]}
     )
-    for field in mesh_fields.transformed(permutations.sort_points):
+    for field in sort_points(mesh_fields):
         assert "pd" in field.name
         assert ExactEquality()(field.values, [44.0, 43.0, 42.0])
 
@@ -63,7 +67,7 @@ def test_permuted_cell_mesh_field():
             cell_permutations={cell_types.line: [1, 0]}
         )
 
-    for field in mesh_fields.transformed(_permutation):
+    for field in TransformedMeshFields(mesh_fields, _permutation):
         assert "cd" in field.name
         assert ExactEquality()(field.values, [43.0, 42.0])
 

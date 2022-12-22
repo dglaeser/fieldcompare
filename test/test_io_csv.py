@@ -3,7 +3,7 @@
 from io import StringIO
 
 from fieldcompare.predicates import ExactEquality
-from fieldcompare.tabular import Table
+from fieldcompare.tabular import Table, transform
 from fieldcompare.io import CSVFieldReader
 
 
@@ -60,7 +60,8 @@ def test_csv_field_permutation():
 
     stream = _as_string_stream(reference_data)
     fields = CSVFieldReader(delimiter=",").read(stream)
-    fields_permuted = fields.transformed(
+    fields_permuted = transform(
+        fields,
         lambda _: Table(
             num_rows=num_rows,
             idx_map=list(reversed(list(range(num_rows))))

@@ -10,7 +10,8 @@ from fieldcompare import FieldDataComparator
 from fieldcompare import protocols
 
 from fieldcompare.io import read
-from fieldcompare.mesh import sort, permutations, protocols as mesh_protocols
+from fieldcompare.mesh import protocols as mesh_protocols
+from fieldcompare.mesh import sort, sort_cells, sort_points
 from fieldcompare.predicates import DefaultEquality, FuzzyEquality
 from fieldcompare._numpy_utils import Array, make_array
 from fieldcompare._field import Field
@@ -30,8 +31,10 @@ def _compare_vtk_files(file1,
         fields1 = sort(fields1)
         fields2 = sort(fields2)
     else:
-        fields1 = fields1.transformed(permutations.sort_points).transformed(permutations.sort_cells)
-        fields2 = fields2.transformed(permutations.sort_points).transformed(permutations.sort_cells)
+        fields1 = sort_cells(sort_points(fields1))
+        fields2 = sort_cells(sort_points(fields2))
+    assert isinstance(fields1, mesh_protocols.MeshFields)
+    assert isinstance(fields2, mesh_protocols.MeshFields)
     fields1.domain.set_tolerances(abs_tol=predicate.absolute_tolerance, rel_tol=predicate.relative_tolerance)
     fields2.domain.set_tolerances(abs_tol=predicate.absolute_tolerance, rel_tol=predicate.relative_tolerance)
     result = FieldDataComparator(fields1, fields2)(

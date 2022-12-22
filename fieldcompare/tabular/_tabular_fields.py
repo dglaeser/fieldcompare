@@ -43,14 +43,15 @@ class TabularFields(FieldData):
             for name, values in self._fields.items()
         )
 
-    def transformed(self, transformation: Callable[[Table], Table]) -> TabularFields:
-        """
-        Return these fields transformed by the given transformation.
 
-        Args:
-            transformation: The transformation to be applied.
-        """
-        return TabularFields(
-            domain=transformation(self.domain),
-            fields=self._fields
-        )
+def transform(self, transformation: Callable[[Table], Table]) -> TabularFields:
+    """
+    Return these fields transformed by the given transformation.
+
+    Args:
+        transformation: The transformation to be applied.
+    """
+    return TabularFields(
+        domain=transformation(self.domain),
+        fields=self._fields
+    )

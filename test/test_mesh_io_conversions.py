@@ -3,7 +3,7 @@ from pathlib import Path
 from meshio import read
 
 from fieldcompare import FieldDataComparator
-from fieldcompare.mesh import meshio_utils, permutations, sort
+from fieldcompare.mesh import meshio_utils, sort
 
 TEST_DATA_PATH = Path(__file__).resolve().parent / Path("data")
 

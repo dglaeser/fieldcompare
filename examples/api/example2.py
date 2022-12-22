@@ -9,10 +9,7 @@ from fieldcompare import FieldDataComparator
 from fieldcompare.io import read
 
 # Sorting function to yield a unique permutation of mesh fields
-from fieldcompare.mesh import sort
-
-# Further available permutations for fields on meshes
-from fieldcompare.mesh import permutations
+from fieldcompare.mesh import sort, sort_points, sort_cells, strip_orphan_points
 
 # Protocols you can use for type hints
 from fieldcompare.mesh import protocols
@@ -62,20 +59,15 @@ for comparison in comparator():
 # The sort function is shorthand for removing unconnected points,
 # then sorting the points and finally sorting the cells:
 def _manual_sort(_fields: protocols.MeshFields) -> protocols.MeshFields:
-    return _fields.transformed(
-        permutations.remove_unconnected_points
-    ).transformed(
-        permutations.sort_points
-    ).transformed(
-        permutations.sort_cells
-    )
+    return sort_cells(sort_points(strip_orphan_points(_fields)))
+
 fields_sorted = _manual_sort(fields)
 fields_permuted_sorted = _manual_sort(fields_permuted)
 assert FieldDataComparator(fields_sorted, fields_permuted_sorted)()
 
 # In our case here, sorting only the points does not yield equal meshes:
-fields_sorted = fields.transformed(permutations.sort_points)
-fields_permuted_sorted = fields_permuted.transformed(permutations.sort_points)
+fields_sorted = sort_points(fields)
+fields_permuted_sorted = sort_points(fields_permuted)
 assert not FieldDataComparator(fields_sorted, fields_permuted_sorted)()
 
 # Note that there are conversion functions available for meshio meshes
