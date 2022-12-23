@@ -62,7 +62,7 @@ def merge(*mesh_fields: protocols.MeshFields) -> protocols.MeshFields:
 
 
 def strip_orphan_points(fields: protocols.MeshFields) -> protocols.MeshFields:
-    """Remove unconnected points from the given mesh fields and return the result"""
+    """Remove unconnected points from the given mesh fields"""
     return TransformedMeshFields(
         field_data=fields,
         transformation=lambda mesh: PermutedMesh(
@@ -73,7 +73,7 @@ def strip_orphan_points(fields: protocols.MeshFields) -> protocols.MeshFields:
 
 
 def sort_points(fields: protocols.MeshFields) -> protocols.MeshFields:
-    """Sorts the mesh points by their coordinates (lexicographically)"""
+    """Sort the mesh points by their coordinates (lexicographically)"""
     try:
         def _get_permuted(mesh: protocols.Mesh) -> PermutedMesh:
             point_map = _sorting_points_indices(
@@ -99,7 +99,7 @@ def sort_points(fields: protocols.MeshFields) -> protocols.MeshFields:
 
 
 def sort_cells(fields: protocols.MeshFields) -> protocols.MeshFields:
-    """Sorts the cells of the map by their connectivity (lexicographically)"""
+    """Sort the cells of the mesh by their connectivity (lexicographically)"""
     return TransformedMeshFields(
         field_data=fields,
         transformation=lambda mesh: PermutedMesh(
