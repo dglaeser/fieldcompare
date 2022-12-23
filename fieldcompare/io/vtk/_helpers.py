@@ -1,6 +1,6 @@
 import numpy as np
 
-from ...mesh._cell_type import CellType, cell_type_from_name
+from ...mesh._cell_type import CellType
 from ...mesh._cell_type import _CELL_TYPE_INDEX_TO_STR, _CELL_TYPE_STR_TO_INDEX
 
 
@@ -9,7 +9,7 @@ def vtk_type_to_dtype(vtk_type: str) -> np.dtype:
 
 
 def vtk_cell_type_index_to_cell_type(vtk_cell_type: int) -> CellType:
-    return cell_type_from_name(_VTK_CELL_TYPE_TO_STR[vtk_cell_type])
+    return CellType.from_name(_VTK_CELL_TYPE_TO_STR[vtk_cell_type])
 
 
 def cell_type_to_vtk_cell_type_index(cell_type: CellType) -> int:

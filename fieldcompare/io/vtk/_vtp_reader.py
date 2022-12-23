@@ -2,7 +2,7 @@ from typing import Tuple
 
 import numpy as np
 
-from ...mesh import Mesh, cell_type_from_name
+from ...mesh import Mesh, CellType
 from ._xml_reader import VTKXMLReader, CellTypeToCellIndices
 from ._reader_map import _VTK_EXTENSION_TO_READER
 
@@ -30,16 +30,16 @@ class VTPReader(VTKXMLReader):
         sizes = []
 
         if self._num_verts > 0:
-            cells.append((cell_type_from_name("POLY_VERTEX"), self._get_connectivity("Verts")))
+            cells.append((CellType.from_name("POLY_VERTEX"), self._get_connectivity("Verts")))
             sizes.append(self._num_verts)
         if self._num_lines > 0:
-            cells.append((cell_type_from_name("POLY_LINE"), self._get_connectivity("Lines")))
+            cells.append((CellType.from_name("POLY_LINE"), self._get_connectivity("Lines")))
             sizes.append(self._num_lines)
         if self._num_polys > 0:
-            cells.append((cell_type_from_name("POLYGON"), self._get_connectivity("Polys")))
+            cells.append((CellType.from_name("POLYGON"), self._get_connectivity("Polys")))
             sizes.append(self._num_polys)
         if self._num_strips > 0:
-            cells.append((cell_type_from_name("TRIANGLE_STRIP"), self._get_connectivity("Strips")))
+            cells.append((CellType.from_name("TRIANGLE_STRIP"), self._get_connectivity("Strips")))
             sizes.append(self._num_strips)
 
         offsets = np.cumsum(np.append(

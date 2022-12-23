@@ -1,5 +1,7 @@
 """Class to represent the type of a mesh cell"""
 
+from __future__ import annotations
+
 
 class CellType:
     """
@@ -34,15 +36,15 @@ class CellType:
             return NotImplemented
         return self._id == other._id
 
+    @staticmethod
+    def from_name(name: str) -> CellType:
+        """
+        Return the cell type with the given name.
 
-def cell_type_from_name(name: str) -> CellType:
-    """
-    Return the cell type with the given name.
-
-    Args:
-        name: The cell type name.
-    """
-    return CellType(_CELL_TYPE_STR_TO_INDEX[name])
+        Args:
+            name: The cell type name.
+        """
+        return CellType(_CELL_TYPE_STR_TO_INDEX[name])
 
 
 # We use the cell types as defined/used by VTK
