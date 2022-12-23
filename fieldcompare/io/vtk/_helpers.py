@@ -1,7 +1,7 @@
 import numpy as np
 
 from ...mesh._cell_type import CellType
-from ...mesh._cell_type import _CELL_TYPE_INDEX_TO_STR, _CELL_TYPE_STR_TO_INDEX
+from ...mesh._cell_type_maps import _CELL_TYPE_INDEX_TO_STR, _CELL_TYPE_STR_TO_INDEX
 
 
 def vtk_type_to_dtype(vtk_type: str) -> np.dtype:
@@ -23,6 +23,6 @@ _VTK_TYPE_TO_DTYPE = {
 }
 
 
-# we actually use the same type indices and names as VTK
+# we actually use the same type indices (and names) as VTK
 _VTK_CELL_TYPE_TO_STR = _CELL_TYPE_INDEX_TO_STR
 _VTK_CELL_TYPE_STR_TO_INDEX = _CELL_TYPE_STR_TO_INDEX

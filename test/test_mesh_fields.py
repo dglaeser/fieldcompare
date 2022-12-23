@@ -9,7 +9,7 @@ except ImportError:
     _HAVE_MESHIO = False
 
 from fieldcompare import FieldDataComparator
-from fieldcompare.mesh import Mesh, MeshFields, cell_types
+from fieldcompare.mesh import Mesh, MeshFields, CellTypes
 from fieldcompare.mesh import sort_points, merge
 from fieldcompare.predicates import ExactEquality
 
@@ -20,7 +20,7 @@ from fieldcompare.mesh._mesh_fields import TransformedMeshFields
 def test_mesh_fields():
     mesh = Mesh(
         points=[[float(i), 0.0] for i in range(3)],
-        connectivity=([(cell_types.line, [[0, 1], [1, 2]])])
+        connectivity=([(CellTypes.line, [[0, 1], [1, 2]])])
     )
     mesh_fields = MeshFields(
         mesh=mesh,
@@ -39,7 +39,7 @@ def test_mesh_fields():
 def test_permuted_point_mesh_field():
     mesh = Mesh(
         points=[[4.0 - float(i), 0.0] for i in range(3)],
-        connectivity=([(cell_types.line, [[0, 1], [1, 2]])])
+        connectivity=([(CellTypes.line, [[0, 1], [1, 2]])])
     )
     mesh_fields = MeshFields(
         mesh=mesh,
@@ -53,7 +53,7 @@ def test_permuted_point_mesh_field():
 def test_permuted_cell_mesh_field():
     mesh = Mesh(
         points=[[4.0 - float(i), 0.0, 0.0] for i in range(3)],
-        connectivity=([(cell_types.line, [[0, 1], [1, 2]])])
+        connectivity=([(CellTypes.line, [[0, 1], [1, 2]])])
     )
     mesh_fields = MeshFields(
         mesh=mesh,
@@ -63,7 +63,7 @@ def test_permuted_cell_mesh_field():
     def _permutation(mesh):
         return PermutedMesh(
             mesh=mesh,
-            cell_permutations={cell_types.line: [1, 0]}
+            cell_permutations={CellTypes.line: [1, 0]}
         )
 
     for field in TransformedMeshFields(mesh_fields, _permutation):
@@ -72,7 +72,7 @@ def test_permuted_cell_mesh_field():
 
 
 def test_merge_mesh_fields():
-    cell_type = cell_types.line
+    cell_type = CellTypes.line
     point_data = array([42.0, 43.0, 44.0])
     cell_data = array([42.0, 43.0])
     mesh = Mesh(
