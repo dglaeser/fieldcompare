@@ -1,4 +1,4 @@
-from fieldcompare.mesh import Mesh, cell_types
+from fieldcompare.mesh import Mesh, CellTypes
 from fieldcompare.mesh._permuted_mesh import PermutedMesh
 
 def _check_mesh_identity(mesh1, mesh2) -> None:
@@ -20,7 +20,7 @@ def _check_mesh_identity(mesh1, mesh2) -> None:
 def test_mesh_construction():
     mesh = Mesh(
         points=[[float(i), 0.0] for i in range(3)],
-        connectivity=([(cell_types.line, [[0, 1], [1, 2]])])
+        connectivity=([(CellTypes.line, [[0, 1], [1, 2]])])
     )
     assert mesh.points[0][0] == 0.0
     assert mesh.points[0][1] == 0.0
@@ -40,7 +40,7 @@ def test_mesh_construction():
 def test_identity_permuted_mesh():
     mesh = Mesh(
         points=[[float(i), 0.0] for i in range(3)],
-        connectivity=([(cell_types.line, [[0, 1], [1, 2]])])
+        connectivity=([(CellTypes.line, [[0, 1], [1, 2]])])
     )
 
     permuted_mesh = PermutedMesh(mesh=mesh)
