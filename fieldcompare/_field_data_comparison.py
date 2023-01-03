@@ -9,6 +9,8 @@ from .protocols import Field, FieldData, Predicate
 
 from ._matching import MatchResult, find_matches_by_name
 from ._common import _measure_time
+from ._format import remove_annotation
+from ._field import Field as FieldImpl
 
 
 class FieldComparisonStatus(Enum):
@@ -167,7 +169,10 @@ class FieldDataComparator:
                          fieldcomp_callback: FieldComparisonCallback) -> List[FieldComparison]:
         comparisons = []
         for source, reference in query.matches:
-            predicate = predicate_selector(source, reference)
+            predicate = predicate_selector(
+                self._without_annotation(source),
+                self._without_annotation(reference)
+            )
             try:
                 comp = self._perform_comparison(source, reference, predicate)
             except Exception as e:
@@ -175,6 +180,12 @@ class FieldDataComparator:
             fieldcomp_callback(comp)
             comparisons.append(comp)
         return comparisons
+
+    def _without_annotation(self, field: Field) -> Field:
+        return FieldImpl(
+            name=remove_annotation(field.name),
+            values=field.values
+        )
 
     def _perform_comparison(self,
                             source: Field,
