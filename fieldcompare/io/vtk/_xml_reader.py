@@ -109,7 +109,7 @@ class VTKXMLReader(ABC):
 
     def _get_attribute_from(self, elem: ElementTree.Element, key: str) -> str:
         if key not in elem.attrib:
-            raise ValueError(f"Attribute '{key}' not in xml element '{elem.tag}'")
+            raise KeyError(f"Attribute '{key}' not in xml element '{elem.tag}'")
         return elem.attrib[key]
 
     def _get_element(self, path: str) -> ElementTree.Element:
