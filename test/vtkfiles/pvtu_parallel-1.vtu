@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<VTKFile type="UnstructuredGrid" version="2.0" header_type="UInt64" byte_order="LittleEndian" compressor="vtkLZMADataCompressor">
+  <UnstructuredGrid>
+    <Piece NumberOfPoints="4" NumberOfCells="1">
+      <PointData>
+        <DataArray Name="pscalar" type="Float64" format="ascii" NumberOfComponents="1">
+          1 4 5 2
+        </DataArray>
+      </PointData>
+      <CellData>
+        <DataArray Name="cscalar" type="Float64" format="ascii" NumberOfComponents="1">
+          1
+        </DataArray>
+      </CellData>
+      <Points>
+        <DataArray Name="Coordinates" type="Float64" format="ascii" NumberOfComponents="3">
+          1 0 0 2 0 0 2 1 0 1 1 0
+        </DataArray>
+      </Points>
+      <Cells>
+        <DataArray Name="connectivity" type="UInt64" format="ascii" NumberOfComponents="1">
+          0 1 2 3
+        </DataArray>
+        <DataArray Name="offsets" type="UInt64" format="ascii" NumberOfComponents="1">
+          4
+        </DataArray>
+        <DataArray Name="types" type="UInt8" format="ascii" NumberOfComponents="1">
+          9
+        </DataArray>
+      </Cells>
+    </Piece>
+  </UnstructuredGrid>
+</VTKFile>

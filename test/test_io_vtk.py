@@ -11,7 +11,7 @@ from meshio import read as meshio_read
 
 from fieldcompare import FieldDataComparator, protocols
 from fieldcompare.mesh import meshio_utils, protocols as mesh_protocols
-from fieldcompare.io.vtk import read
+from fieldcompare.io.vtk import read, PVTUReader
 
 try:
     import lz4
@@ -50,6 +50,24 @@ VTP_FILES = _find("vtp_", ".vtp", [""])
 PVD_FILES = _find("pvd_", ".pvd", [""])
 PVTU_FILES = _find("pvtu_", ".pvtu", [""])
 PVTP_FILES = _find("pvtp_", ".pvtp", [""])
+
+
+def test_parallel_against_sequential_vtk_file():
+    cwd = getcwd()
+    chdir(VTK_TEST_DATA_PATH)
+    par_fields = _read_mesh_fields("pvtu_parallel.pvtu")
+    seq_fields = _read_mesh_fields("pvtu_sequential_reference.vtu")
+    assert FieldDataComparator(par_fields, seq_fields)()
+    chdir(cwd)
+
+
+def test_parallel_against_sequential_vtk_file_fails_without_duplicates_removal():
+    cwd = getcwd()
+    chdir(VTK_TEST_DATA_PATH)
+    par_fields = PVTUReader(filename="pvtu_parallel.pvtu", remove_duplicate_points=False).read()
+    seq_fields = _read_mesh_fields("pvtu_sequential_reference.vtu")
+    assert not FieldDataComparator(par_fields, seq_fields)()
+    chdir(cwd)
 
 
 @pytest.mark.parametrize("filename", PVTU_FILES + PVTP_FILES)
