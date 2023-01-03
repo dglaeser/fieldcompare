@@ -13,10 +13,10 @@ class VTPReader(VTKXMLReader):
     def __init__(self, filename: str) -> None:
         super().__init__(filename)
         self._num_points = int(self._get_attribute("PolyData/Piece", "NumberOfPoints"))
-        self._num_verts = int(self._get_attribute("PolyData/Piece", "NumberOfVerts"))
-        self._num_lines = int(self._get_attribute("PolyData/Piece", "NumberOfLines"))
-        self._num_polys = int(self._get_attribute("PolyData/Piece", "NumberOfPolys"))
-        self._num_strips = int(self._get_attribute("PolyData/Piece", "NumberOfStrips"))
+        self._num_verts = int(self._get_attribute_or("PolyData/Piece", "NumberOfVerts", "0"))
+        self._num_lines = int(self._get_attribute_or("PolyData/Piece", "NumberOfLines", "0"))
+        self._num_polys = int(self._get_attribute_or("PolyData/Piece", "NumberOfPolys", "0"))
+        self._num_strips = int(self._get_attribute_or("PolyData/Piece", "NumberOfStrips", "0"))
         for i, _ in enumerate(self._get_element("PolyData").findall("Piece")):
             if i > 0:
                 raise NotImplementedError("VTP file with multiple pieces not supported (yet)")

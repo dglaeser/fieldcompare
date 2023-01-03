@@ -99,7 +99,18 @@ class VTKXMLReader(ABC):
         return values if ncomps <= 1 else values.reshape(int(len(values)/ncomps), ncomps)
 
     def _get_attribute(self, path: str, key: str) -> str:
-        return self._get_element(path).attrib[key]
+        return self._get_attribute_from(self._get_element(path), key)
+
+    def _get_attribute_or(self, path: str, key: str, default: str) -> str:
+        elem = self._xml_element.find(path)
+        if elem is None:
+            return default
+        return elem.attrib[key] if key in elem.attrib else default
+
+    def _get_attribute_from(self, elem: ElementTree.Element, key: str) -> str:
+        if key not in elem.attrib:
+            raise KeyError(f"Attribute '{key}' not in xml element '{elem.tag}'")
+        return elem.attrib[key]
 
     def _get_element(self, path: str) -> ElementTree.Element:
         elem = self._xml_element.find(path)
