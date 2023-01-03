@@ -11,12 +11,14 @@ from ._reader_map import _VTKReader, _VTK_EXTENSION_TO_READER
 
 class _PVTKReader:
     def __init__(self,
-                 filename: str,
                  vtk_grid_type: str,
-                 piece_reader: _VTKReader) -> None:
+                 piece_reader: _VTKReader,
+                 filename: str,
+                 remove_duplicate_points: bool = True) -> None:
         self._grid_type = vtk_grid_type
         self._pieces = self._get_pieces(filename)
         self._piece_reader = piece_reader
+        self._remove_duplicate_points = remove_duplicate_points
 
     def read(self) -> protocols.FieldData:
         if not self._pieces:
@@ -24,7 +26,11 @@ class _PVTKReader:
 
         mesh_fields = self._read_piece(0)
         for piece_idx in range(1, len(self._pieces)):
-            mesh_fields = merge(mesh_fields, self._read_piece(piece_idx))
+            mesh_fields = merge(
+                mesh_fields,
+                self._read_piece(piece_idx),
+                remove_duplicate_points=self._remove_duplicate_points
+            )
         return mesh_fields
 
     def _get_pieces(self, filename: str) -> List[str]:
@@ -41,14 +47,14 @@ class _PVTKReader:
 
 class PVTUReader(_PVTKReader):
     """Reads meshes from the VTK file format for parallel unstructured grids"""
-    def __init__(self, filename: str) -> None:
-        super().__init__(filename, "UnstructuredGrid", VTUReader)
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__("UnstructuredGrid", VTUReader, *args, **kwargs)
 
 
 class PVTPReader(_PVTKReader):
     """Reads meshes from the VTK file format for parallel polydata"""
-    def __init__(self, filename: str) -> None:
-        super().__init__(filename, "PolyData", VTPReader)
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__("PolyData", VTPReader, *args, **kwargs)
 
 
 _VTK_EXTENSION_TO_READER[".pvtu"] = PVTUReader
