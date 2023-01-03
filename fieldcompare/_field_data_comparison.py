@@ -13,6 +13,11 @@ from ._format import remove_annotation
 from ._field import Field as FieldImpl
 
 
+class Status(Enum):
+    passed = auto()
+    failed = auto()
+
+
 class FieldComparisonStatus(Enum):
     """Represents the status of a single field comparison."""
     passed = auto()
@@ -84,21 +89,19 @@ class FieldComparisonSuite:
         if not self._domain_eq_check:
             return "Domain equality check failed"
 
-        def _as_plural(msg: str, count: int) -> str:
-            return f"{msg}{'s' if count > 1 else ''}"
+        return f"{self._num_passed()} {FieldComparisonStatus.passed}" \
+            f", {self._num_failed()} {FieldComparisonStatus.failed}" \
+            f", {self._num_skipped()} SKIPPED " \
+            "field comparisons"
 
-        num_failed = sum(1 for _ in self.failed)
-        if num_failed > 0:
-            return _as_plural(f"{num_failed} failed field comparison", num_failed)
-
-        num_passed = sum(1 for _ in self.passed)
-        report = _as_plural(f"{num_passed} field comparison", num_passed) + " passed"
-
-        num_skipped = sum(1 for _ in self.skipped)
-        if num_skipped > 0:
-            report += f" ({num_skipped} were skipped)"
-
-        return report
+    @property
+    def status(self) -> Status:
+        """Return combined status performed comparisons."""
+        if not self._domain_eq_check:
+            return Status.failed
+        if self._num_failed() > 0:
+            return Status.failed
+        return Status.passed
 
     @property
     def domain_equality_check(self) -> PredicateResult:
@@ -122,6 +125,15 @@ class FieldComparisonSuite:
             FieldComparisonStatus.missing_source,
             FieldComparisonStatus.missing_reference
         ])
+
+    def _num_failed(self) -> int:
+        return sum(1 for _ in self.failed)
+
+    def _num_skipped(self) -> int:
+        return sum(1 for _ in self.skipped)
+
+    def _num_passed(self) -> int:
+        return sum(1 for _ in self.passed)
 
 
 PredicateSelector = Callable[[Field, Field], Predicate]
