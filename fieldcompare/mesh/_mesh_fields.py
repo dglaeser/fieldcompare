@@ -15,20 +15,19 @@ from ._cell_type import CellType
 
 from . import protocols
 from .. import protocols as fc_protocols
-
-
-def _cell_type_suffix(cell_type: CellType) -> str:
-    return f" ({cell_type.name})"
+from .._format import add_annotation, split_annotation
 
 
 def make_cell_type_field_name(cell_type: CellType, field_name: str) -> str:
     """Append the cell type suffix to the field name."""
-    return f"{field_name}{_cell_type_suffix(cell_type)}"
+    return add_annotation(field_name, f"{cell_type.name}")
 
 
 def remove_cell_type_suffix(cell_type: CellType, field_name_with_suffix: str) -> str:
     """Remove the cell type suffix from the given field name."""
-    return field_name_with_suffix.rstrip(_cell_type_suffix(cell_type))
+    name, annotation = split_annotation(field_name_with_suffix)
+    assert cell_type.name in annotation
+    return name
 
 
 class MeshFields(fc_protocols.FieldData):
