@@ -24,6 +24,10 @@ class FieldComparisonStatus(Enum):
         """Return true if the status is considered successful."""
         return self not in [FieldComparisonStatus.failed, FieldComparisonStatus.error]
 
+    def __str__(self):
+        """Use uppercase string representation without class name prefix"""
+        return f"{self.name.upper()}"
+
 
 @dataclass
 class FieldComparison:
