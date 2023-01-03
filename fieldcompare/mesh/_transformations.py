@@ -347,25 +347,33 @@ def _map_duplicate_points(source: protocols.Mesh,
                           target: protocols.Mesh) -> Dict[int, int]:
     sort_idx_map_source = get_lex_sorting_index_map(source.points)
 
-    def _is_ge(p1: Array, p2: Array) -> bool:
+    def _is_smaller(p1: Array, p2: Array) -> bool:
         for x1, x2 in zip(p1, p2):
             if x1 < x2:
+                return True
+            if x1 > x2:
                 return False
-        return True
+        return False
+
+    def _find_candidate(target_point: Array) -> Optional[int]:
+        lower = 0
+        upper = len(source.points)
+        while lower < upper:
+            mid = (lower + upper) // 2
+            mid_mapped = sort_idx_map_source[mid]
+            if _is_smaller(source.points[mid_mapped], target_point):
+                lower = mid + 1
+            else:
+                upper = mid
+        return sort_idx_map_source[lower] if lower < len(source.points) else None
 
     result = {}
     for pidx_target in range(len(target.points)):
-        try:
-            pidx_iter_source = iter(sort_idx_map_source)
-            pidx_source = next(pidx_iter_source)
-            while not _is_ge(source.points[pidx_source], target.points[pidx_target]):
-                pidx_source = next(pidx_iter_source)
-        except StopIteration:
+        equal_candidate_idx = _find_candidate(target.points[pidx_target])
+        if equal_candidate_idx is None:
             continue
-
-        if (target.points[pidx_target] == source.points[pidx_source]).all():
-            result[pidx_source] = pidx_target
-
+        if (source.points[equal_candidate_idx] == target.points[pidx_target]).all():
+            result[equal_candidate_idx] = pidx_target
     return result
 
 
