@@ -41,7 +41,8 @@ comparator = FieldDataComparator(fields, fields_permuted)
 result = comparator()
 
 assert not result
-print("Comparison failed! Domain equality check report:")
+print(f"Comparison failed! Report: '{result.report}'")
+print("Domain equality check report:")
 print(result.domain_equality_check.report)
 print()
 
