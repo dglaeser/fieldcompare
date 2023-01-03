@@ -101,6 +101,12 @@ class VTKXMLReader(ABC):
     def _get_attribute(self, path: str, key: str) -> str:
         return self._get_element(path).attrib[key]
 
+    def _get_attribute_or(self, path: str, key: str, default: str) -> str:
+        elem = self._xml_element.find(path)
+        if elem is None:
+            return default
+        return elem.attrib[key]
+
     def _get_element(self, path: str) -> ElementTree.Element:
         elem = self._xml_element.find(path)
         if elem is not None:
