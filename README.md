@@ -41,15 +41,47 @@ If you want to use `fieldcompare` in your GitHub actions, you may want to check 
 perform regression tests within your GitHub workflows.
 
 
-# Installation
+# Getting started
 
-After cloning this repository, you can simply install `fieldcompare` via pip by navigating to the top
-folder of this repository and then typing `python -m pip install .`. In case you don't want to install
-into your system, you can simply create a virtual environment beforehand using [venv](https://docs.python.org/3/library/venv.html).
-The pip command will also install the CLI, which is then available as the `fieldcompare` command.
+## Installation
+
+Via `pip`, you can install `fieldcompare` directly from the git repository with
+
+```sh
+pip install "git+https://gitlab.com/dglaeser/fieldcompare#egg=fieldcompare[all]
+```
+
+The suffix `[all]` instructs `pip` to also install all optional dependencies (for instance `meshio`).
+Omit this suffix if you want to install only the required dependencies.
+
+For an installation from a local copy, navigate to the top folder of this repository and type
+`pip install .`, or , `pip install .[all]` for an installation with all optional dependencies.
+
+## First steps & examples
+
+The following code snippet reads the fields from two files (assuming their format is supported)
+and prints a message depending on if the success of their comparison:
+
+```py
+from fieldcompare import FieldDataComparator
+from fieldcompare.io import read_field_data
+
+fields1 = read_field_data("FILENAME1")
+fields2 = read_field_data("FILENAME2")
+comparator = FieldDataComparator(fields1, fields2)
+
+if comparator():
+    print("Comparison PASSED")
+else:
+    print("Comparison failed")
+```
+
+There are many more options you may use, and infos you can collect on performed comparisons. In the
+folder [examples/api](examples/api) you can find examples with instructions on how to use the API of
+`fieldcompare`.
 
 
-# Command-line Interface
+## Command-line interface
 
 The CLI exposes two subcommands, namely `file` and `dir`, where the former is used to compare two files
 for equality, and the latter can be used to compare all files with matching names in two given directories.
@@ -75,13 +107,6 @@ them all in a single command. For more info on the CLI options available, type i
 fieldcompare file --help
 fieldcompare dir --help
 ```
-
-
-# Examples
-
-In [examples/api](examples/api) you can find a few examples with instructions on how to use the API of `fieldcompare`.
-However, the examples do not cover some of the more advanced functions and classes, but we are planning
-to add more examples soon.
 
 
 # Contribution Guidelines
