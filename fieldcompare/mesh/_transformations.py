@@ -253,11 +253,11 @@ def _merge(fields1: protocols.MeshFields,
         source=fields2.domain,
         target=fields1.domain
     ) if remove_duplicate_points else {}
-    points2_filter = _get_filter(
+    points2_filter = _filter_external_indices(
         num_values=len(fields2.domain.points),
-        external_indices_map=duplicate_point_idx_map
+        external_indices=duplicate_point_idx_map
     )
-    points2_map = _get_map(
+    points2_map = _map_external_indices(
         num_values=len(fields2.domain.points),
         external_indices_map=duplicate_point_idx_map,
         external_indices_offset=len(fields1.domain.points)
@@ -347,7 +347,7 @@ def _map_duplicate_points(source: protocols.Mesh,
                           target: protocols.Mesh) -> Dict[int, int]:
     sort_idx_map_source = get_lex_sorting_index_map(source.points)
 
-    def _is_smaller(p1: Array, p2: Array) -> bool:
+    def _is_lex_smaller(p1: Array, p2: Array) -> bool:
         for x1, x2 in zip(p1, p2):
             if x1 < x2:
                 return True
@@ -361,7 +361,7 @@ def _map_duplicate_points(source: protocols.Mesh,
         while lower < upper:
             mid = (lower + upper) // 2
             mid_mapped = sort_idx_map_source[mid]
-            if _is_smaller(source.points[mid_mapped], target_point):
+            if _is_lex_smaller(source.points[mid_mapped], target_point):
                 lower = mid + 1
             else:
                 upper = mid
@@ -377,13 +377,13 @@ def _map_duplicate_points(source: protocols.Mesh,
     return result
 
 
-def _get_filter(num_values: int, external_indices_map: Dict[int, int]) -> Array:
-    return make_array([i for i in range(num_values) if i not in external_indices_map])
+def _filter_external_indices(num_values: int, external_indices) -> Array:
+    return make_array([i for i in range(num_values) if i not in external_indices])
 
 
-def _get_map(num_values: int,
-             external_indices_map: Dict[int, int],
-             external_indices_offset: int) -> Array:
+def _map_external_indices(num_values: int,
+                          external_indices_map: Dict[int, int],
+                          external_indices_offset: int) -> Array:
     result = make_array([i for i in range(num_values)])
     mapped_index_offset = 0
     for i in range(num_values):
