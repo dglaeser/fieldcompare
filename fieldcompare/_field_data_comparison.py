@@ -17,6 +17,14 @@ class Status(Enum):
     passed = auto()
     failed = auto()
 
+    def __bool__(self) -> bool:
+        """Return true if the status is considered successful."""
+        return self not in (Status.failed,)
+
+    def __str__(self):
+        """Use uppercase string representation without class name prefix"""
+        return f"{self.name.upper()}"
+
 
 class FieldComparisonStatus(Enum):
     """Represents the status of a single field comparison."""
