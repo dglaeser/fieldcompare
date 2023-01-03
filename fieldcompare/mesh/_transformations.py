@@ -43,12 +43,16 @@ def sort(mesh_fields: protocols.MeshFields) -> protocols.MeshFields:
     return sort_cells(sort_points(strip_orphan_points(mesh_fields)))
 
 
-def merge(*mesh_fields: protocols.MeshFields) -> protocols.MeshFields:
+def merge(*mesh_fields: protocols.MeshFields,
+          remove_duplicate_points: bool = True) -> protocols.MeshFields:
     """
-    Merge the given mesh fields into a single one
+    Merge the given mesh fields into a single one.
 
     Args:
         mesh_fields: the mesh fields to be merged.
+        remove_duplicate_points: if set to true, duplicate points between the meshes are removed.
+                                 Points and associated field values are taken from those meshes
+                                 that come first in the provided list of arguments.
     """
     result: Optional[protocols.MeshFields] = None
     for i, fields in enumerate(mesh_fields):
@@ -56,7 +60,7 @@ def merge(*mesh_fields: protocols.MeshFields) -> protocols.MeshFields:
             result = fields
         else:
             assert result is not None
-            result = _merge(result, fields)
+            result = _merge(result, fields, remove_duplicate_points)
     assert result is not None
     return result
 
@@ -243,24 +247,44 @@ def _get_indices_with_zero_adjacent_diffs(adjacent_diffs: Array, tolerance: floa
 
 
 def _merge(fields1: protocols.MeshFields,
-           fields2: protocols.MeshFields) -> MeshFields:
+           fields2: protocols.MeshFields,
+           remove_duplicate_points: bool) -> protocols.MeshFields:
+    duplicate_point_idx_map = _map_duplicate_points(
+        source=fields2.domain,
+        target=fields1.domain
+    ) if remove_duplicate_points else {}
+    points2_filter = _get_filter(
+        num_values=len(fields2.domain.points),
+        external_indices_map=duplicate_point_idx_map
+    )
+    points2_map = _get_map(
+        num_values=len(fields2.domain.points),
+        external_indices_map=duplicate_point_idx_map,
+        external_indices_offset=len(fields1.domain.points)
+    )
+
+    if len(points2_filter) == 0:
+        return fields1
+
+    # merged points
     points = concatenate((
         fields1.domain.points,
-        fields2.domain.points
+        fields2.domain.points[points2_filter]
     ))
 
     # merged cell connectivities
-    points2_offset = len(fields1.domain.points)
     cells_dict: Dict[CellType, Array] = {
         ct: make_array(fields1.domain.connectivity(ct))
         for ct in fields1.domain.cell_types
     }
     for ct in fields2.domain.cell_types:
-        connectivity_with_offset = make_array(fields2.domain.connectivity(ct) + points2_offset)
+        mapped_connectivity = make_array(fields2.domain.connectivity(ct))
+        for cell_idx, cell_corners in enumerate(mapped_connectivity):
+            mapped_connectivity[cell_idx] = points2_map[cell_corners]
         if ct in cells_dict:
-            cells_dict[ct] = concatenate((cells_dict[ct], connectivity_with_offset))
+            cells_dict[ct] = concatenate((cells_dict[ct], mapped_connectivity))
         else:
-            cells_dict[ct] = connectivity_with_offset
+            cells_dict[ct] = mapped_connectivity
 
     # merged cell fields
     raw_cell_field_names = set()
@@ -282,7 +306,7 @@ def _merge(fields1: protocols.MeshFields,
 
     # merged point fields
     point_fields1: Dict[str, Array] = {f.name: f.values for f in fields1.point_fields}
-    point_fields2: Dict[str, Array] = {f.name: f.values for f in fields2.point_fields}
+    point_fields2: Dict[str, Array] = {f.name: f.values[points2_filter] for f in fields2.point_fields}
     point_fields: Dict[str, Array] = {}
     for name in point_fields1:
         if name in point_fields2:
@@ -300,7 +324,7 @@ def _merge(fields1: protocols.MeshFields,
         zero = make_zeros(shape=point_fields2[name].shape[1:], dtype=point_fields2[name].dtype)
         point_fields[name] = concatenate((
             make_array(
-                [deepcopy(zero) for _ in range(points2_offset)],
+                [deepcopy(zero) for _ in range(len(fields1.domain.points))],
                 dtype=point_fields2[name].dtype
             ),
             make_array(point_fields2[name])
@@ -317,3 +341,47 @@ def _merge(fields1: protocols.MeshFields,
             for name in raw_cell_field_names
         }
     )
+
+
+def _map_duplicate_points(source: protocols.Mesh,
+                          target: protocols.Mesh) -> Dict[int, int]:
+    sort_idx_map_source = get_lex_sorting_index_map(source.points)
+
+    def _is_ge(p1: Array, p2: Array) -> bool:
+        for x1, x2 in zip(p1, p2):
+            if x1 < x2:
+                return False
+        return True
+
+    result = {}
+    for pidx_target in range(len(target.points)):
+        try:
+            pidx_iter_source = iter(sort_idx_map_source)
+            pidx_source = next(pidx_iter_source)
+            while not _is_ge(source.points[pidx_source], target.points[pidx_target]):
+                pidx_source = next(pidx_iter_source)
+        except StopIteration:
+            continue
+
+        if (target.points[pidx_target] == source.points[pidx_source]).all():
+            result[pidx_source] = pidx_target
+
+    return result
+
+
+def _get_filter(num_values: int, external_indices_map: Dict[int, int]) -> Array:
+    return make_array([i for i in range(num_values) if i not in external_indices_map])
+
+
+def _get_map(num_values: int,
+             external_indices_map: Dict[int, int],
+             external_indices_offset: int) -> Array:
+    result = make_array([i for i in range(num_values)])
+    mapped_index_offset = 0
+    for i in range(num_values):
+        if i in external_indices_map:
+            result[i] = external_indices_map[i]
+            mapped_index_offset += 1
+        else:
+            result[i] = result[i] + external_indices_offset - mapped_index_offset
+    return result
