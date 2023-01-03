@@ -107,10 +107,12 @@ class FieldComparisonSuite:
         if not self._domain_eq_check:
             return "Domain equality check failed"
 
-        return f"{self.num_passed} {FieldComparisonStatus.passed}" \
-            f", {self.num_failed} {FieldComparisonStatus.failed}" \
-            f", {self.num_skipped} SKIPPED " \
-            "field comparisons"
+        return (
+            f"{self.__len__()} field comparisons"
+            f" with {self.num_passed} {FieldComparisonStatus.passed}"
+            f", {self.num_failed} {FieldComparisonStatus.failed}"
+            f", {self.num_skipped} SKIPPED"
+        )
 
     @property
     def status(self) -> Status:
