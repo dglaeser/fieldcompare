@@ -77,7 +77,7 @@ def _run(args: dict, in_logger: CLILogger) -> int:
             )
 
     except Exception as e:
-        logger.log(f"Error upon file comparison: {str(e)}")
+        logger.log(f"Error upon file comparison: {str(e)}\n")
         passed = False
 
     return _bool_to_exit_code(passed)
