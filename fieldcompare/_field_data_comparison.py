@@ -1,8 +1,9 @@
 """Functionality for field data comparisons"""
 
-from typing import Callable, Optional, List, Tuple, Iterator, Iterable, Any
+from typing import Callable, Optional, List, Tuple, Iterator, Any
 from dataclasses import dataclass
 from enum import Enum, auto
+from itertools import chain
 
 from .predicates import DefaultEquality, PredicateResult
 from .protocols import Field, FieldData, Predicate
@@ -11,6 +12,19 @@ from ._matching import MatchResult, find_matches_by_name
 from ._common import _measure_time
 from ._format import remove_annotation
 from ._field import Field as FieldImpl
+
+
+class Status(Enum):
+    passed = auto()
+    failed = auto()
+
+    def __bool__(self) -> bool:
+        """Return true if the status is considered successful."""
+        return self not in (Status.failed,)
+
+    def __str__(self):
+        """Use uppercase string representation without class name prefix"""
+        return f"{self.name.upper()}"
 
 
 class FieldComparisonStatus(Enum):
@@ -62,21 +76,52 @@ class FieldComparisonSuite:
                  domain_eq_check: PredicateResult,
                  comparisons: List[FieldComparison] = []) -> None:
         self._domain_eq_check = domain_eq_check
-        self._comparisons = comparisons
+        self._passed: List[FieldComparison] = []
+        self._failed: List[FieldComparison] = []
+        self._skipped: List[FieldComparison] = []
+        for c in comparisons:
+            if c.status == FieldComparisonStatus.passed:
+                self._passed.append(c)
+            elif not c:
+                self._failed.append(c)
+            else:
+                self._skipped.append(c)
 
     def __bool__(self) -> bool:
         """Return true if the suite is considered to have passed successfully."""
         if not self._domain_eq_check:
             return False
-        return not any(c.is_failure for c in self._comparisons)
+        return not len(self._failed)
 
     def __iter__(self) -> Iterator[FieldComparison]:
         """Return an iterator over all contained field comparison results."""
-        return iter(self._comparisons)
+        return iter(chain(self._failed, self._passed, self._skipped))
 
     def __len__(self) -> int:
         """Return the number of comparisons in the suite."""
-        return len(self._comparisons)
+        return len(self._failed) + len(self._passed) + len(self._skipped)
+
+    @property
+    def report(self) -> str:
+        """Return information about performed comparisons."""
+        if not self._domain_eq_check:
+            return "Domain equality check failed"
+
+        return (
+            f"{self.__len__()} field comparisons"
+            f" with {self.num_passed} {FieldComparisonStatus.passed}"
+            f", {self.num_failed} {FieldComparisonStatus.failed}"
+            f", {self.num_skipped} SKIPPED"
+        )
+
+    @property
+    def status(self) -> Status:
+        """Return combined status performed comparisons."""
+        if not self._domain_eq_check:
+            return Status.failed
+        if self.num_failed > 0:
+            return Status.failed
+        return Status.passed
 
     @property
     def domain_equality_check(self) -> PredicateResult:
@@ -84,22 +129,34 @@ class FieldComparisonSuite:
         return self._domain_eq_check
 
     @property
-    def passed(self) -> Iterable[FieldComparison]:
+    def passed(self) -> List[FieldComparison]:
         """Return a range over all passed comparisons."""
-        return (c for c in self._comparisons if c.status == FieldComparisonStatus.passed)
+        return self._passed
 
     @property
-    def failed(self) -> Iterable[FieldComparison]:
+    def failed(self) -> List[FieldComparison]:
         """Return a range over all failed comparisons."""
-        return (c for c in self._comparisons if c.is_failure)
+        return self._failed
 
     @property
-    def skipped(self) -> Iterable[FieldComparison]:
+    def skipped(self) -> List[FieldComparison]:
         """Return a range over all skipped comparisons."""
-        return (c for c in self._comparisons if c.status in [
-            FieldComparisonStatus.missing_source,
-            FieldComparisonStatus.missing_reference
-        ])
+        return self._skipped
+
+    @property
+    def num_failed(self) -> int:
+        """Return the number of failed field comparisons"""
+        return len(self._failed)
+
+    @property
+    def num_skipped(self) -> int:
+        """Return the number of skipped field comparisons"""
+        return len(self._skipped)
+
+    @property
+    def num_passed(self) -> int:
+        """Return the number of passed field comparisons"""
+        return len(self._passed)
 
 
 PredicateSelector = Callable[[Field, Field], Predicate]

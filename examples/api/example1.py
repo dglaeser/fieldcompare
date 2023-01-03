@@ -62,23 +62,29 @@ if __name__ == "__main__":
     comparator = FieldDataComparator(source=fields, reference=fields)
     comparisons = comparator()
 
+    # The result contains information on the comparisons of all fields,
+    # and it also exposes a report:
+    print(f"Report of the comparison: '{comparisons.report}'")
+
     def _print_field_comp_result(field_comparison) -> None:
-        print(f"\nResults for field '{field_comparison.name}'")
+        print(f"Results for field '{field_comparison.name}'")
         print(f" -- Status: {field_comparison.status}")
         print(f" -- Predicate used: {field_comparison.predicate}")
         print(f" -- Report: {field_comparison.report}")
 
-    # The result contains the results of the comparisons of all fields
-    # contained in the source and reference data
-    for field_comparison in comparisons:
-        _print_field_comp_result(field_comparison)
+    def _print_all_results(comparison_suite) -> None:
+        print("\nField comparison info:")
+        for field_comparison in comparison_suite:
+            _print_field_comp_result(field_comparison)
+
+    # Let us print more detailed information on all performed comparisons
+    _print_all_results(comparisons)
 
     # As can be seen from the above, for each comparison one can get
     # information on the predicate that was used for the comparison.
     # You can also specify which predicate to use:
     comparisons = comparator(predicate_selector=_select_predicate)
-    for field_comparison in comparisons:
-        _print_field_comp_result(field_comparison)
+    _print_all_results(comparisons)
 
     # For very large fields, the individual comparisons may take some
     # time. In case you want to generate output during the comparisons,
