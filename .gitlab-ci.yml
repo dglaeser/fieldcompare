@@ -116,7 +116,14 @@ pages:
 pypi:
   stage: deploy
   script:
-    - pip install --upgrade build twine
+    - echo "Check that fieldcompare version matches the current git tag..."
+    - python -m pip install -e .
+    - python -c "import fieldcompare; print(fieldcompare.__version__)" > fieldcompare_version.txt
+    - git describe --tags > git_version.txt
+    - diff fieldcompare_version.txt git_version.txt
+    - python -m pip uninstall --yes fieldcompare
+    - echo "Build fieldcompare package and upload to PyPI..."
+    - python -m pip install --upgrade build twine
     - python -m build
     - python -m twine upload dist/*
   only:
