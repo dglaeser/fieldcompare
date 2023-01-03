@@ -120,4 +120,6 @@ pypi:
     - python -m build
     - python -m twine upload dist/*
   only:
-    - tags
+    - /^(\d+\.)?(\d+\.)?(\*|\d+)$/
+  except:
+    - branches
