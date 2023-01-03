@@ -23,7 +23,7 @@ class _PVTKReader:
             raise IOError("No pieces found in the given parallel vtk file")
 
         mesh_fields = self._read_piece(0)
-        for piece_idx in range(len(self._pieces)):
+        for piece_idx in range(1, len(self._pieces)):
             mesh_fields = merge(mesh_fields, self._read_piece(piece_idx))
         return mesh_fields
 
