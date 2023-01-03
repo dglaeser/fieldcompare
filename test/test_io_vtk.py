@@ -52,6 +52,15 @@ PVTU_FILES = _find("pvtu_", ".pvtu", [""])
 PVTP_FILES = _find("pvtp_", ".pvtp", [""])
 
 
+def test_parallel_against_sequential_vtk_file():
+    cwd = getcwd()
+    chdir(VTK_TEST_DATA_PATH)
+    par_fields = _read_mesh_fields("pvtu_parallel.pvtu")
+    seq_fields = _read_mesh_fields("pvtu_sequential_reference.vtu")
+    assert FieldDataComparator(par_fields, seq_fields)()
+    chdir(cwd)
+
+
 @pytest.mark.parametrize("filename", PVTU_FILES + PVTP_FILES)
 def test_parallel_vtk_files(filename: str):
     cwd = getcwd()
