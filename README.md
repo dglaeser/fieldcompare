@@ -1,3 +1,5 @@
+[![fieldcompare Logo](https://gitlab.com/dglaeser/fieldcompare/-/raw/9018885c0c8675c63c051ae5119a5ecba465a517/logo/logo.svg)](https://dglaeser.gitlab.io/fieldcompare/)
+
 # FieldCompare
 
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
