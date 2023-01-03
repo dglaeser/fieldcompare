@@ -96,7 +96,7 @@ class FileComparison:
         return _make_test_suite(
             tests=[],
             status=TestStatus.error,
-            shortlog="Cannot compare sequences atainst field data"
+            shortlog="Cannot compare sequences against field data"
         )
 
     def _compare_field_sequences(self,
