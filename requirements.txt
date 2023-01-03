@@ -1,4 +1,5 @@
 meshio[all]>=5.3
+black~=22.0
 colorama
 tox
 pytest
