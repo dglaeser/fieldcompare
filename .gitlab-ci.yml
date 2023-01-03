@@ -4,6 +4,7 @@ stages:
   - coverage
   - documentation
   - pages
+  - deploy
 
 workflow:
   rules:
@@ -111,3 +112,12 @@ pages:
     paths:
       - public
     expire_in: 30 minutes
+
+pypi:
+  stage: deploy
+  script:
+    - pip install --upgrade build twine
+    - python -m build
+    - python -m twine upload dist/*
+  only:
+    - tags
