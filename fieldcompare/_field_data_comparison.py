@@ -68,6 +68,10 @@ class FieldComparisonSuite:
         """Return an iterator over all contained field comparison results."""
         return iter(self._comparisons)
 
+    def __len__(self) -> int:
+        """Return the number of comparisons in the suite."""
+        return len(self._comparisons)
+
     @property
     def domain_equality_check(self) -> PredicateResult:
         """Return the result of the domain equality check."""
