@@ -1,6 +1,6 @@
 """Logging output formatting helpers"""
 
-from typing import Optional
+from typing import Optional, Tuple
 from enum import Enum
 
 import colorama
@@ -95,3 +95,20 @@ def as_success(text: str) -> str:
 
 def highlighted(text: str) -> str:
     return make_colored(text, style=TextStyle.bright)
+
+
+def add_annotation(text: str, annotation: str) -> str:
+    return f"{text}{_ANNOTATION_SEPARATOR}{annotation}"
+
+
+def remove_annotation(text: str) -> str:
+    return split_annotation(text)[0]
+
+
+def split_annotation(text: str) -> Tuple[str, str]:
+    result = text.rsplit(_ANNOTATION_SEPARATOR, 1)
+    assert len(result) <= 2
+    return (result[0], result[1] if len(result) > 1 else "")
+
+
+_ANNOTATION_SEPARATOR = " @ "
