@@ -13,7 +13,9 @@ from ._field_data_comparison import (
     FieldDataComparator,
     FieldComparisonSuite,
     FieldComparison,
-    FieldComparisonStatus
+    FieldComparisonStatus,
+    DefaultFieldComparisonCallback,
+    field_comparison_report
 )
 
 __all__ = [
