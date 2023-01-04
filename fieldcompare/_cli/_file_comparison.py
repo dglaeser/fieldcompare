@@ -88,16 +88,8 @@ class FileComparison:
             return not isinstance(fields, protocols.FieldData) \
                 and not isinstance(fields, protocols.FieldDataSequence)
         if any(_is_unknown(f) for f in [res_fields, ref_fields]):
-            self._logger.log(
-                "Unknown data type (supported are 'FieldData' / 'FieldDataSequence')",
-                verbosity_level=1
-            )
-            return _make_test_suite(tests=[], status=TestStatus.error, shortlog="Unknown field data type")
-        return _make_test_suite(
-            tests=[],
-            status=TestStatus.error,
-            shortlog="Cannot compare sequences against field data"
-        )
+            raise ValueError("Unknown data type (supported are 'FieldData' / 'FieldDataSequence')")
+        raise ValueError("Cannot compare sequences against field data")
 
     def _compare_field_sequences(self,
                                  res_sequence: protocols.FieldDataSequence,
