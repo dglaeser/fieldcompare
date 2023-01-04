@@ -169,3 +169,7 @@ release:
     tag_name: "$FIELDCOMPARE_RELEASE_VERSION"
     description: "fielcompare release $FIELDCOMPARE_RELEASE_VERSION"
     ref: "$CI_COMMIT_SHA"
+    assets:
+      links:
+        - name: 'Python package on PyPI'
+          url: 'https://pypi.org/project/fieldcompare/$FIELDCOMPARE_RELEASE_VERSION/'
