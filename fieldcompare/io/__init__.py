@@ -39,7 +39,7 @@ def read(filename: str) -> Union[protocols.FieldData, protocols.FieldDataSequenc
     if _HAVE_MESHIO and _supported_by_meshio(filename):
         try:
             return _meshio_read(filename)
-        except IOError as e:
+        except Exception as e:
             raise IOError(f"Error reading with meshio: '{e}'")
     raise IOError(
         f"Unsupported file '{filename}'" + (
