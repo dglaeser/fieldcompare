@@ -6,7 +6,7 @@ from meshio import read as meshio_read
 from fieldcompare import FieldDataComparator
 
 # Convenience function to read fields from files
-from fieldcompare.io import read
+from fieldcompare.io import read_field_data
 
 # Sorting function to yield a unique permutation of mesh fields
 from fieldcompare.mesh import sort, sort_points, sort_cells, strip_orphan_points
@@ -19,11 +19,10 @@ from fieldcompare.mesh import meshio_utils
 
 
 def read_as_mesh_fields(filename: str) -> protocols.MeshFields:
-    # The read function can read different kinds of field data,
-    # as well as field data sequences. Thus in this case and for
-    # the sake of type hints, we have to verify that we obtained
-    # # something that fulfills our required interface
-    fields = read(filename)
+    # The read function can read different kinds of field data.
+    # In this example we are working with mesh fields, and for
+    # the sake of type hints, let us verify that.
+    fields = read_field_data(filename)
     assert isinstance(fields, protocols.MeshFields)
     return fields
 
@@ -50,11 +49,11 @@ print()
 fields_sorted = sort(fields)
 fields_permuted_sorted = sort(fields_permuted)
 comparator = FieldDataComparator(fields_sorted, fields_permuted_sorted)
-result = comparator()
+result = comparator(fieldcomp_callback=lambda _: None)
 
 assert result
 print("Domain equality check passed!")
-for comparison in comparator():
+for comparison in result:
     print(f"Field '{comparison.name}': {comparison.status}")
 
 # The sort function is shorthand for removing unconnected points,
@@ -64,12 +63,16 @@ def _manual_sort(_fields: protocols.MeshFields) -> protocols.MeshFields:
 
 fields_sorted = _manual_sort(fields)
 fields_permuted_sorted = _manual_sort(fields_permuted)
-assert FieldDataComparator(fields_sorted, fields_permuted_sorted)()
+assert FieldDataComparator(fields_sorted, fields_permuted_sorted)(
+    fieldcomp_callback=lambda _: None
+)
 
 # In our case here, sorting only the points does not yield equal meshes:
 fields_sorted = sort_points(fields)
 fields_permuted_sorted = sort_points(fields_permuted)
-assert not FieldDataComparator(fields_sorted, fields_permuted_sorted)()
+assert not FieldDataComparator(fields_sorted, fields_permuted_sorted)(
+    fieldcomp_callback=lambda _: None
+)
 
 # Note that there are conversion functions available for meshio meshes
 # such that you can integrate fieldcompare into an existing pipeline

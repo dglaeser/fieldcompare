@@ -1,9 +1,9 @@
 """In this example, we use fieldcompare to read in fields from files and compare them"""
 
-from os import remove
+from io import StringIO
 from numpy import less, all, ndarray
 
-from fieldcompare import FieldDataComparator
+from fieldcompare import FieldDataComparator, FieldComparison, DefaultFieldComparisonCallback
 from fieldcompare.predicates import ExactEquality, FuzzyEquality, PredicateResult
 
 # convenience function to read in field data from files
@@ -14,6 +14,8 @@ from fieldcompare import protocols
 
 
 class MyPredicate:
+    """Exemplary implementation for a custom predicate"""
+
     def __call__(self, values1: ndarray, values2: ndarray) -> PredicateResult:
         """Check if all entries of values1 are smaller than those of values2"""
         return PredicateResult(
@@ -25,17 +27,6 @@ class MyPredicate:
         return "My-very-own-predicate"
 
 
-def _write_example_csv_file() -> None:
-    with open("example2.csv", "w") as csv_file:
-        csv_file.write("field1,field2\n")
-        csv_file.write("1.0,2.0\n")
-        csv_file.write("2.0,3.0\n")
-
-
-def _remove_example_csv_file() -> None:
-    remove("example2.csv")
-
-
 def _select_predicate(source_field: protocols.Field,
                       target_field: protocols.Field) -> protocols.Predicate:
     if source_field.name == "field1":
@@ -44,13 +35,10 @@ def _select_predicate(source_field: protocols.Field,
 
 
 if __name__ == "__main__":
-    _write_example_csv_file()
+    # You can use the provided functions to conveniently read in fields from files
+    fields: protocols.FieldData = read_field_data("example1.csv")
 
-    # you may also use the provided functions for reading in fields from files
-    fields: protocols.FieldData = read_field_data("example2.csv")
-
-    # the result allows you to iterate over all fields
-    # obtain their names and field values
+    # FieldData allows you to iterate over all fields and obtain their names and values
     for field in fields:
         assert field.name in ["field1", "field2"]
         print(f"Name -> values: {field.name} -> {field.values}")
@@ -60,47 +48,74 @@ if __name__ == "__main__":
     # themselves. The constructor takes the field data to be compared,
     # while the actual comparison is carried out via the call-operator.
     comparator = FieldDataComparator(source=fields, reference=fields)
-    comparisons = comparator()
 
-    # The result contains information on the comparisons of all fields,
-    # and it also exposes a report:
-    print(f"Report of the comparison: '{comparisons.report}'")
+    print("\nPerforming comparison...")
+    result = comparator()
+    print("done.")
 
-    def _print_field_comp_result(field_comparison) -> None:
-        print(f"Results for field '{field_comparison.name}'")
+    # The result contains a report, and it allows us to extract
+    # information on all performed comparisons
+    print(f"\nReport: {result.report}")
+
+    def _print_field_comparison(field_comparison: FieldComparison) -> None:
+        print(f"Field '{field_comparison.name}'")
         print(f" -- Status: {field_comparison.status}")
         print(f" -- Predicate used: {field_comparison.predicate}")
         print(f" -- Report: {field_comparison.report}")
 
-    def _print_all_results(comparison_suite) -> None:
-        print("\nField comparison info:")
-        for field_comparison in comparison_suite:
-            _print_field_comp_result(field_comparison)
+    print("Printing reports for all comparisons:")
+    for comparison in result:
+        _print_field_comparison(comparison)
 
-    # Let us print more detailed information on all performed comparisons
-    _print_all_results(comparisons)
+    # During the execution of the comparison, some information on the
+    # performed comparisons was already printed to the terminal. You
+    # can customize this by passing a callback function that accepts
+    # a field comparison result.
+    print("\nPerforming comparison without any output")
+    result = comparator(fieldcomp_callback=lambda _: None)
+    print("done.")
 
-    # As can be seen from the above, for each comparison one can get
-    # information on the predicate that was used for the comparison.
-    # You can also specify which predicate to use:
-    comparisons = comparator(predicate_selector=_select_predicate)
-    _print_all_results(comparisons)
+    print("\nPerforming comparison with custom output")
+    result = comparator(fieldcomp_callback=lambda comp: _print_field_comparison(comp))
+    print("done.")
 
-    # For very large fields, the individual comparisons may take some
-    # time. In case you want to generate output during the comparisons,
-    # you can pass a callback function that is invoked with each result
-    # once it is finished. To achieve the same output as before, we can write:
-    comparisons = comparator(
+    # You can also reuse & customize the default callback...
+    print("\nPerforming comparison with modified default output (no colors)")
+    result = comparator(fieldcomp_callback=DefaultFieldComparisonCallback(use_colors=False))
+    print("done.")
+
+    print("\nPerforming comparison with modified default output (increased verbosity)")
+    result = comparator(fieldcomp_callback=DefaultFieldComparisonCallback(verbosity=2))
+    print("done.")
+
+    # You can also pass the output to a stream
+    print("\nPerforming comparison with default output piped into a string")
+    with StringIO() as stream:
+        result = comparator(fieldcomp_callback=DefaultFieldComparisonCallback(stream=stream, use_colors=False))
+        print("done.")
+        print("Output collected as string:")
+        print(stream.getvalue())
+
+    # The comparator also allows you to select a custom predicate for
+    # each pair of fields that are to be compared
+    print("\nPerforming comparison with custom predicate selector and no output")
+    result = comparator(
         predicate_selector=_select_predicate,
-        fieldcomp_callback=lambda field_comp: _print_field_comp_result(field_comp)
+        fieldcomp_callback=lambda _: None
     )
+    print("done")
+    print("Printing collected results (notice the predicate choices)")
+    for comparison in result:
+        _print_field_comparison(comparison)
 
     # A predicate simply takes to arrays and returns something that fulfills the
     # `PredicateResult` protocol, i.e. something that is convertible to bool
     # and allows for gathering a report about the predicate evaluation:
-    copmarisons = comparator(
+    print("\nPerforming comparison with custom predicate class")
+    result = comparator(
         predicate_selector=lambda _, __: MyPredicate(),
-        fieldcomp_callback=lambda field_comp: _print_field_comp_result(field_comp)
+        fieldcomp_callback=DefaultFieldComparisonCallback(verbosity=2)
     )
-
-    _remove_example_csv_file()
+    print("done")
+    print("Our predicate evaluated to false, see the final report:")
+    print(result.report)
