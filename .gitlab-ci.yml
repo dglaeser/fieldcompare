@@ -27,15 +27,11 @@ cache:
 
 .deploy_job_rules:
   rules:
-    - if: $FIELDCOMPARE_RELEASE_VERSION
-      when: never
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $FIELDCOMPARE_RELEASE_VERSION == null'
 
 .release_job_rules:
   rules:
-    - if: $FIELDCOMPARE_RELEASE_VERSION =~ /^([0-9]{1,2}.)?([0-9]{1,2}.)?([0-9]+)?(-.*)?$/
-    - if: $CI_PIPELINE_SOURCE == "trigger"
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: '$FIELDCOMPARE_RELEASE_VERSION =~ /^([0-9]{1,2}.)?([0-9]{1,2}.)?([0-9]+)?(-.*)?$/ && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "trigger"'
 
 .install_dependencies:
   extends: .regular_job_rules
