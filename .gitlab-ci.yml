@@ -5,6 +5,7 @@ stages:
   - documentation
   - pages
   - deploy
+  - release
 
 workflow:
   rules:
@@ -114,20 +115,53 @@ pages:
     expire_in: 30 minutes
 
 pypi:
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        paths:
+          - pyproject.toml
+    - if: $FIELDCOMPARE_RELEASE_VERSION
+      when: never
   stage: deploy
   script:
-    - echo "Check that fieldcompare version matches the current git tag..."
+    - echo "Check if fieldcompare version increased since the last release tag..."
     - python -m pip install -e .
-    - python -c "import fieldcompare; print(fieldcompare.__version__)" > fieldcompare_version.txt
-    - git describe --tags > git_version.txt
-    - diff fieldcompare_version.txt git_version.txt
+    - python -c "import fieldcompare; print(fieldcompare.__version__)" > current_fieldcompare_version.txt
+    - git fetch --tags
+    - git checkout $(git describe --tags $(git rev-list --tags --max-count=1))
+    - python -c "import fieldcompare; print(fieldcompare.__version__)" > old_fieldcompare_version.txt
     - python -m pip uninstall --yes fieldcompare
-    - echo "Build fieldcompare package and upload to PyPI..."
-    - python -m pip install --upgrade build twine
-    - python -m build
-    - python -m twine upload dist/*
-  only:
-    - /^(\d+\.)?(\d+\.)?(\*|\d+)$/
-  except:
-    - branches
+    - git reset --hard $CI_COMMIT_SHA
+    - |
+      if diff current_fieldcompare_version.txt old_fieldcompare_version.txt; then
+          echo "Build fieldcompare package and upload to PyPI..."
+          python -m pip install --upgrade build twine
+          python -m build
+          python -m twine upload dist/*
+          FIELDCOMPARE_RELEASE_VERSION=$(cat current_fieldcompare_version.txt | xargs echo)"
+          if [[ "$FIELDCOMPARE_RELEASE_VERSION" =~ ^(\d+\.)?(\d+\.)?(\*|\d+)$ ]]; then
+              echo "Trigger release tag $FIELDCOMPARE_RELEASE_VERSION"
+              curl --request POST --form "token=$CI_JOB_TOKEN" \
+                                  --form ref=$CI_COMMIT_BRANCH \
+                                  --form "variables[FIELDCOMPARE_RELEASE_VERSION]=$FIELDCOMPARE_RELEASE_VERSION" \
+                                  "https://gitlab.com/api/v4/projects/32838547/trigger/pipeline"
+          else
+              echo "Version string $FIELDCOMPARE_RELEASE_VERSION is not a valid version. Refusing to deploy."
+          fi
+      else
+          echo "Version is still the same. Skipping deployment."
+      fi
   when: on_success
+
+release:
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "trigger"
+    - if: $FIELDCOMPARE_RELEASE_VERSION =~ /^(\d+\.)?(\d+\.)?(\*|\d+)$/
+  stage: release
+  script:
+    - echo "Releasing fieldcompare version $FIELDCOMPARE_RELEASE_VERSION"
+  release:
+    tag_name: "$FIELDCOMPARE_RELEASE_VERSION"
+    description: "fielcompare release $FIELDCOMPARE_RELEASE_VERSION"
+    ref: "$CI_COMMIT_SHA"
