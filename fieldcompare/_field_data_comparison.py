@@ -252,9 +252,11 @@ class FieldDataComparator:
         self._field_inclusion_filter = field_inclusion_filter
         self._field_exclusion_filter = field_exclusion_filter
 
-    def __call__(self,
-                 predicate_selector: PredicateSelector = lambda _, __: DefaultEquality(),
-                 fieldcomp_callback: FieldComparisonCallback = DefaultFieldComparisonCallback()) -> FieldComparisonSuite:
+    def __call__(
+        self,
+        predicate_selector: PredicateSelector = lambda _, __: DefaultEquality(),
+        fieldcomp_callback: FieldComparisonCallback = DefaultFieldComparisonCallback()
+    ) -> FieldComparisonSuite:
         """
         Compare all fields in the field data objects using the given predicates.
 

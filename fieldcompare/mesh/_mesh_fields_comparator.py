@@ -9,7 +9,8 @@ from .._field_data_comparison import (
     FieldDataComparator,
     PredicateSelector,
     FieldComparisonCallback,
-    FieldComparisonSuite
+    FieldComparisonSuite,
+    DefaultFieldComparisonCallback
 )
 
 
@@ -39,7 +40,7 @@ class MeshFieldsComparator:
 
     def __call__(self,
                  predicate_selector: PredicateSelector = lambda _, __: DefaultEquality(),
-                 fieldcomp_callback: FieldComparisonCallback = lambda _: None,
+                 fieldcomp_callback: FieldComparisonCallback = DefaultFieldComparisonCallback(),
                  reordering_callback: Callable[[str], None] = lambda _: None) -> FieldComparisonSuite:
         """
         Compare all fields in the mesh field data objects using the given predicates.
@@ -50,7 +51,7 @@ class MeshFieldsComparator:
                                 Default: :class:`.DefaultEquality`.
             fieldcomp_callback: Function that is invoked with the results of individual
                                 field comparison results as soon as they are available (e.g. to
-                                print intermediate output). Default: no-op lambda.
+                                print intermediate output). Defaults to :class:`.DefaultFieldComparisonCallback`.
             reordering_callback: Function that is invoked with status messages about the reordering
                                  steps that are performed. Default: no-op lambda.
         """
