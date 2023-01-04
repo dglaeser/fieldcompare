@@ -31,7 +31,7 @@ cache:
 
 .release_job_rules:
   rules:
-    - if: '$FIELDCOMPARE_RELEASE_VERSION =~ /^([0-9]{1,2}.)?([0-9]{1,2}.)?([0-9]+)?(-.*)?$/ && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "trigger"'
+    - if: '$FIELDCOMPARE_RELEASE_VERSION =~ /^([0-9]{1,2}.)?([0-9]{1,2}.)?([0-9]+)?(-.*)?$/ && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_TRIGGERED'
 
 .install_dependencies:
   extends: .regular_job_rules
@@ -149,9 +149,9 @@ pypi:
               python -m build
               python -m twine upload dist/*
               echo "Trigger release tag $FIELDCOMPARE_RELEASE_VERSION"
-              curl --request POST --form "token=$CI_JOB_TOKEN" \
-                                  --form "ref=$CI_COMMIT_BRANCH" \
-                                  --form "variables[FIELDCOMPARE_RELEASE_VERSION]=$FIELDCOMPARE_RELEASE_VERSION" \
+              curl --request POST --form token=$CI_JOB_TOKEN \
+                                  --form ref=$CI_COMMIT_BRANCH \
+                                  --form 'variables[FIELDCOMPARE_RELEASE_VERSION]="$FIELDCOMPARE_RELEASE_VERSION"' \
                                   "https://gitlab.com/api/v4/projects/32838547/trigger/pipeline"
           else
               echo "Version string $FIELDCOMPARE_RELEASE_VERSION is not a valid version. Refusing to deploy."
