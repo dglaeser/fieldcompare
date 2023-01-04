@@ -79,7 +79,7 @@ else:
 ```
 
 There are many more options you may use, and infos you can collect on performed comparisons. In the
-folder [examples/api](examples/api) you can find examples with instructions on how to use the API of
+folder [examples/api](https://gitlab.com/dglaeser/fieldcompare/-/tree/main/examples/api) you can find examples with instructions on how to use the API of
 `fieldcompare`.
 
 
