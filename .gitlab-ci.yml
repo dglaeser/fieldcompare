@@ -145,9 +145,9 @@ pypi:
     - git checkout $(git describe --tags $(git rev-list --tags --max-count=1))
     - python -c "import fieldcompare; print(fieldcompare.__version__)" > old_fieldcompare_version.txt
     - python -m pip uninstall --yes fieldcompare
-    - git reset --hard $CI_COMMIT_SHA
+    - git checkout $CI_COMMIT_SHA
     - |
-      if diff current_fieldcompare_version.txt old_fieldcompare_version.txt; then
+      if cmp -s current_fieldcompare_version.txt old_fieldcompare_version.txt; then
           echo "Build fieldcompare package and upload to PyPI..."
           python -m pip install --upgrade build twine
           python -m build
@@ -176,7 +176,7 @@ release:
     - echo $FIELDCOMPARE_RELEASE_VERSION > release_version.txt
     - python -m pip install -e .
     - python -c "import fieldcompare; print(fieldcompare.__version__)" > fieldcompare_version.txt
-    - diff fieldcompare_version.txt release_version.txt
+    - cmp -s fieldcompare_version.txt release_version.txt
     - echo "Releasing fieldcompare version $FIELDCOMPARE_RELEASE_VERSION"
   release:
     tag_name: "$FIELDCOMPARE_RELEASE_VERSION"
