@@ -213,7 +213,7 @@ class DefaultFieldComparisonCallback:
         stream: Stream to write to (optional). Defaults to stdout.
     """
     def __init__(self,
-                 verbosity: int = 2,
+                 verbosity: int = 1,
                  use_colors: bool = True,
                  stream: TextIO = sys.stdout) -> None:
         self._verbosity = verbosity
