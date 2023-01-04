@@ -59,7 +59,9 @@ class MeshFieldsComparator:
         if suite.domain_equality_check:
             return suite
 
-        reordering_callback("Meshes did not compare equal. Retrying with sorted points...")
+        reordering_callback("Meshes did not compare equal ({}). Retrying with sorted points...".format(
+            suite.domain_equality_check.report
+        ))
         def _permute(mesh_fields):
             if not self._disable_orphan_point_removal:
                 mesh_fields = strip_orphan_points(mesh_fields)
@@ -70,7 +72,9 @@ class MeshFieldsComparator:
         if suite.domain_equality_check:
             return suite
 
-        reordering_callback("Meshes did not compare equal. Retrying with sorted cells...")
+        reordering_callback("Meshes did not compare equal ({}). Retrying with sorted cells...".format(
+            suite.domain_equality_check.report
+        ))
         self._source = sort_cells(self._source)
         self._reference = sort_cells(self._reference)
         return self._make_comparator()(predicate_selector, fieldcomp_callback)
