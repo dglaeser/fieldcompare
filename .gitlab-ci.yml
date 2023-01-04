@@ -19,19 +19,22 @@ cache:
   paths:
     - .cache/pip
 
-.regular_job:
+.regular_job_rules:
   rules:
     - if: $FIELDCOMPARE_RELEASE_VERSION
       when: never
     - when: on_success
 
-.release_job:
+.deploy_job_rules:
   rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-    - if: $FIELDCOMPARE_RELEASE_VERSION =~ /^([0-9]{1,2}.)?([0-9]{1,2}.)?([0-9]+)?(-.*)?$/
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $FIELDCOMPARE_RELEASE_VERSION == null'
+
+.release_job_rules:
+  rules:
+    - if: '$FIELDCOMPARE_RELEASE_VERSION =~ /^([0-9]{1,2}.)?([0-9]{1,2}.)?([0-9]+)?(-.*)?$/ && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "trigger"'
 
 .install_dependencies:
-  extends: .regular_job
+  extends: .regular_job_rules
   before_script:
       - python --version
       - pip install --upgrade pip
@@ -110,9 +113,7 @@ build_docs:
 
 pages:
   stage: pages
-  extends: .regular_job
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  extends: .deploy_job_rules
   needs:
     - job: test_coverage_report
       artifacts: true
@@ -129,14 +130,7 @@ pages:
 
 pypi:
   stage: deploy
-  extends: .regular_job
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-    - if: $FIELDCOMPARE_RELEASE_VERSION
-      when: never
-      changes:
-        paths:
-          - pyproject.toml
+  extends: .deploy_job_rules
   script:
     - echo "Check if fieldcompare version increased since the last release tag..."
     - python -m pip install -e .
@@ -167,16 +161,21 @@ pypi:
       fi
   when: on_success
 
-release:
+release_check:
   stage: release
-  extends: .release_job
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "trigger"
+  extends: .release_job_rules
   script:
     - echo $FIELDCOMPARE_RELEASE_VERSION > release_version.txt
     - python -m pip install -e .
     - python -c "import fieldcompare; print(fieldcompare.__version__)" > fieldcompare_version.txt
     - cmp -s fieldcompare_version.txt release_version.txt
+
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  extends: .release_job_rules
+  needs: ["release_check"]
+  script:
     - echo "Releasing fieldcompare version $FIELDCOMPARE_RELEASE_VERSION"
   release:
     tag_name: "$FIELDCOMPARE_RELEASE_VERSION"
