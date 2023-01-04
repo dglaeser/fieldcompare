@@ -19,7 +19,8 @@ from .._field_data_comparison import (
     FieldDataComparator,
     FieldComparisonSuite,
     FieldComparison,
-    FieldComparisonStatus
+    FieldComparisonStatus,
+    DefaultFieldComparisonCallback
 )
 from ..mesh import MeshFieldsComparator
 
@@ -187,9 +188,16 @@ class FileComparison:
         )
 
     def _invoke_comparator(self, comparator, **kwargs) -> FieldComparisonSuite:
+        class Stream:
+            def __init__(self, logger: CLILogger) -> None:
+                self._logger = logger
+            def write(self, message: str) -> None:
+                self._logger.log(message)
+
+        callback = DefaultFieldComparisonCallback(stream=Stream(self._logger), verbosity=self._logger.verbosity_level)
         return comparator(
             predicate_selector=lambda res, ref: self._select_predicate(res, ref),
-            fieldcomp_callback=lambda comp: self._stream_field_comparison_report(comp, self._logger),
+            fieldcomp_callback=lambda comp: callback(comp),
             **kwargs
         )
 
@@ -210,39 +218,13 @@ class FileComparison:
         else:
             return ExactEquality()
 
-    def _stream_field_comparison_report(self,
-                                        result: FieldComparison,
-                                        device: Union[CLILogger, TextIO]) -> None:
-        def _log(message: str, verbosity_level: int) -> None:
-            if isinstance(device, CLILogger):
-                device.log(f"{message}\n", verbosity_level)
-            else:
-                device.write(f"{message}\n")
-
-        _log(
-            message=_get_indented(
-                f"Comparing the field '{highlighted(result.name)}': "
-                f"{self._status_string(self._parse_status(result.status))}",
-                indentation_level=1
-            ),
-            verbosity_level=(2 if result.status else 1)
-        )
-        _log(
-            message=_get_indented(
-                f"Report: {result.report if result.report else 'n/a'}\n"
-                f"Predicate: {result.predicate if result.predicate else 'n/a'}",
-                indentation_level=2
-            ),
-            verbosity_level=(3 if result.status else 1)
-        )
-
     def _to_test_suite(self, suite: FieldComparisonSuite) -> TestSuite:
         return TestSuite([self._to_test_result(c) for c in suite])
 
     def _to_test_result(self, comp_result: FieldComparison) -> TestResult:
         def _get_stdout() -> str:
             stream = StringIO()
-            self._stream_field_comparison_report(comp_result, stream)
+            DefaultFieldComparisonCallback(stream=stream, verbosity=100)(comp_result)
             return stream.getvalue()
 
         shortlog = comp_result.report
@@ -288,13 +270,6 @@ class FileComparison:
             return as_error("FAILED")
         return as_warning("SKIPPED")
 
-
-def _get_indented(message: str, indentation_level: int = 0) -> str:
-    if indentation_level > 0:
-        lines = message.rstrip("\n").split("\n")
-        lines = [" " + "  "*(indentation_level-1) + f"-- {line}" for line in lines]
-        message = "\n".join(lines)
-    return message
 
 def _make_test_suite(tests: List[TestResult],
                      status: Optional[TestStatus],

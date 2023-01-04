@@ -15,6 +15,10 @@ class CLILogger:
         self._output_stream = output_stream
         self._line_prefix = line_prefix
 
+    @property
+    def verbosity_level(self) -> int:
+        return self._verbosity
+
     def log(self, message: str, verbosity_level: int = 1) -> None:
         if self._verbosity > 0 and self._verbosity >= verbosity_level:
             self._output_stream.write(indent(message, self._line_prefix))
