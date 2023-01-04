@@ -19,19 +19,14 @@ cache:
   paths:
     - .cache/pip
 
-.regular_job:
+.regular_job_rules:
   rules:
     - if: $FIELDCOMPARE_RELEASE_VERSION
       when: never
     - when: on_success
 
-.release_job:
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-    - if: $FIELDCOMPARE_RELEASE_VERSION =~ /^([0-9]{1,2}.)?([0-9]{1,2}.)?([0-9]+)?(-.*)?$/
-
 .install_dependencies:
-  extends: .regular_job
+  extends: .regular_job_rules
   before_script:
       - python --version
       - pip install --upgrade pip
@@ -110,9 +105,10 @@ build_docs:
 
 pages:
   stage: pages
-  extends: .regular_job
   rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $FIELDCOMPARE_RELEASE_VERSION
+      when: never
+    - when: on_success
   needs:
     - job: test_coverage_report
       artifacts: true
@@ -129,14 +125,14 @@ pages:
 
 pypi:
   stage: deploy
-  extends: .regular_job
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-    - if: $FIELDCOMPARE_RELEASE_VERSION
-      when: never
       changes:
         paths:
           - pyproject.toml
+    - if: $FIELDCOMPARE_RELEASE_VERSION
+      when: never
+    - when: on_success
   script:
     - echo "Check if fieldcompare version increased since the last release tag..."
     - python -m pip install -e .
@@ -169,9 +165,10 @@ pypi:
 
 release:
   stage: release
-  extends: .release_job
   rules:
     - if: $CI_PIPELINE_SOURCE == "trigger"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $FIELDCOMPARE_RELEASE_VERSION =~ /^([0-9]{1,2}.)?([0-9]{1,2}.)?([0-9]+)?(-.*)?$/
   script:
     - echo $FIELDCOMPARE_RELEASE_VERSION > release_version.txt
     - python -m pip install -e .
