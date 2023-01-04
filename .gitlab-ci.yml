@@ -152,11 +152,11 @@ pypi:
           python -m pip install --upgrade build twine
           python -m build
           python -m twine upload dist/*
-          FIELDCOMPARE_RELEASE_VERSION=$(cat current_fieldcompare_version.txt | xargs echo)"
+          FIELDCOMPARE_RELEASE_VERSION=$(cat current_fieldcompare_version.txt | xargs echo)
           if [[ "$FIELDCOMPARE_RELEASE_VERSION" =~ ^(\d+\.)?(\d+\.)?(\*|\d+)$ ]]; then
               echo "Trigger release tag $FIELDCOMPARE_RELEASE_VERSION"
               curl --request POST --form "token=$CI_JOB_TOKEN" \
-                                  --form ref=$CI_COMMIT_BRANCH \
+                                  --form "ref=$CI_COMMIT_BRANCH" \
                                   --form "variables[FIELDCOMPARE_RELEASE_VERSION]=$FIELDCOMPARE_RELEASE_VERSION" \
                                   "https://gitlab.com/api/v4/projects/32838547/trigger/pipeline"
           else
