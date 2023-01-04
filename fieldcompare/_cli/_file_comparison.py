@@ -43,6 +43,7 @@ class FileComparisonOptions:
     field_inclusion_filter: Callable[[str], bool] = lambda _: True
     field_exclusion_filter: Callable[[str], bool] = lambda _: False
     disable_unconnected_points_removal: bool = False
+    disable_mesh_space_dimension_matching: bool = False
     disable_mesh_reordering: bool = False
 
 
@@ -169,7 +170,9 @@ class FileComparison:
         return self._invoke_comparator(
             MeshFieldsComparator(
                 result, reference,
+                disable_mesh_reordering=self._opts.disable_mesh_reordering,
                 disable_orphan_point_removal=self._opts.disable_unconnected_points_removal,
+                disable_space_dimension_matching=self._opts.disable_mesh_space_dimension_matching,
                 field_inclusion_filter=self._opts.field_inclusion_filter,
                 field_exclusion_filter=self._opts.field_exclusion_filter
             ),
