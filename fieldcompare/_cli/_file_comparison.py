@@ -21,13 +21,13 @@ from .._field_data_comparison import (
     FieldComparison,
     FieldComparisonStatus
 )
+from ..mesh import MeshFieldsComparator
 
 from ._logger import CLILogger
 from ._test_suite import TestSuite, TestResult, TestStatus
 
 from .. import protocols
 from ..mesh import protocols as mesh_protocols
-from ..mesh import strip_orphan_points, sort_points, sort_cells
 
 from ..io import read as read_fields
 
@@ -147,36 +147,15 @@ class FileComparison:
                                  ref_fields: mesh_protocols.MeshFields) -> TestSuite:
         self._set_mesh_tolerances(res_fields)
         self._set_mesh_tolerances(ref_fields)
-        suite = self._run_field_data_comparison(res_fields, ref_fields)
-        if suite.domain_equality_check:
-            return self._to_test_suite(suite)
-
         if self._opts.disable_mesh_reordering:
+            suite = self._run_field_data_comparison(res_fields, ref_fields)
+            if suite.domain_equality_check:
+                return self._to_test_suite(suite)
             msg = "Non-reordered meshes have compared unequal"
             self._logger.log(f"{self._status_string(TestStatus.failed)}: {msg}")
             return _make_test_suite([], TestStatus.failed, shortlog=msg)
 
-        self._logger.log(
-            "Meshes did not compare equal. Retrying with sorted points...\n",
-            verbosity_level=1
-        )
-        def _permute(mesh_fields):
-            if not self._opts.disable_unconnected_points_removal:
-                mesh_fields = strip_orphan_points(mesh_fields)
-            return sort_points(mesh_fields)
-        res_fields = _permute(res_fields)
-        ref_fields = _permute(ref_fields)
-        suite = self._run_field_data_comparison(res_fields, ref_fields)
-        if suite.domain_equality_check:
-            return self._to_test_suite(suite)
-
-        self._logger.log(
-            "Meshes did not compare equal. Retrying with sorted cells...\n",
-            verbosity_level=1
-        )
-        res_fields = sort_cells(res_fields)
-        ref_fields = sort_cells(ref_fields)
-        suite = self._run_field_data_comparison(res_fields, ref_fields)
+        suite = self._run_mesh_fields_comparison(res_fields, ref_fields)
         if suite.domain_equality_check:
             return self._to_test_suite(suite)
 
@@ -184,15 +163,34 @@ class FileComparison:
         self._logger.log(f"{self._status_string(TestStatus.failed)}: {msg}")
         return _make_test_suite([], TestStatus.failed, shortlog="Fields defined on different meshes")
 
+    def _run_mesh_fields_comparison(self,
+                                    result: mesh_protocols.MeshFields,
+                                    reference: mesh_protocols.MeshFields) -> FieldComparisonSuite:
+        return self._invoke_comparator(
+            MeshFieldsComparator(
+                result, reference,
+                disable_orphan_point_removal=self._opts.disable_unconnected_points_removal,
+                field_inclusion_filter=self._opts.field_inclusion_filter,
+                field_exclusion_filter=self._opts.field_exclusion_filter
+            ),
+            reordering_callback=lambda msg: self._logger.log(f"{msg}\n")
+        )
+
     def _run_field_data_comparison(self,
                                    result: protocols.FieldData,
                                    reference: protocols.FieldData) -> FieldComparisonSuite:
-        return FieldDataComparator(
-            result, reference,
-            self._opts.field_inclusion_filter, self._opts.field_exclusion_filter
-        )(
+        return self._invoke_comparator(
+            FieldDataComparator(
+                result, reference,
+                self._opts.field_inclusion_filter, self._opts.field_exclusion_filter
+            )
+        )
+
+    def _invoke_comparator(self, comparator, **kwargs) -> FieldComparisonSuite:
+        return comparator(
             predicate_selector=lambda res, ref: self._select_predicate(res, ref),
-            fieldcomp_callback=lambda comp: self._stream_field_comparison_report(comp, self._logger)
+            fieldcomp_callback=lambda comp: self._stream_field_comparison_report(comp, self._logger),
+            **kwargs
         )
 
     def _set_mesh_tolerances(self, fields: protocols.FieldData) -> None:
