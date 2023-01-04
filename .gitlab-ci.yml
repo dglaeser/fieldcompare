@@ -178,6 +178,7 @@ release:
   stage: release
   image: registry.gitlab.com/gitlab-org/release-cli:latest
   extends: .release_job_rules
+  needs: ["release_check"]
   script:
     - echo "Releasing fieldcompare version $FIELDCOMPARE_RELEASE_VERSION"
   release:
