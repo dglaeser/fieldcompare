@@ -1,5 +1,6 @@
 from xml.etree import ElementTree
 from typing import List
+from os.path import isabs, join, exists, dirname
 
 from ... import protocols
 from ...mesh import merge, protocols as mesh_protocols
@@ -19,6 +20,7 @@ class _PVTKReader:
         self._pieces = self._get_pieces(filename)
         self._piece_reader = piece_reader
         self._remove_duplicate_points = remove_duplicate_points
+        self._dirname = dirname(filename)
 
     def read(self) -> protocols.FieldData:
         if not self._pieces:
@@ -40,7 +42,11 @@ class _PVTKReader:
         return [c.attrib["Source"] for c in filter(lambda c: c.tag == "Piece", grid)]
 
     def _read_piece(self, idx: int) -> mesh_protocols.MeshFields:
-        result = self._piece_reader(self._pieces[idx]).read()
+        piece = self._pieces[idx]
+        if not exists(piece) and not isabs(piece) and exists(join(self._dirname, piece)):
+            piece = join(self._dirname, piece)
+
+        result = self._piece_reader(piece).read()
         assert isinstance(result, mesh_protocols.MeshFields)
         return result
 
