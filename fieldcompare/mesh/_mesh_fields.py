@@ -144,6 +144,10 @@ class TransformedMeshFields(fc_protocols.FieldData):
                  transformation: Callable[[protocols.Mesh], TransformedMesh]) -> None:
         self._field_data = field_data
         self._mesh = transformation(self._field_data.domain)
+        self._mesh.set_tolerances(
+            abs_tol=self._field_data.domain.absolute_tolerance,
+            rel_tol=self._field_data.domain.relative_tolerance
+        )
 
     @property
     def domain(self) -> TransformedMesh:
