@@ -103,6 +103,24 @@ def test_cli_file_mode_passes_without_ghost_removal_when_ghosts_do_not_overlap()
     ]) == 0
 
 
+def test_cli_file_fails_without_space_dimension_matching():
+    args = [
+        "file",
+        str(TEST_DATA_PATH / Path("poisson_time_series_3d.pvd")),
+        str(TEST_DATA_PATH / Path("poisson_time_series_2d.xdmf")),
+        "-rtol", "1e-7"
+    ]
+    assert main(args) == 0
+    args = [
+        "file",
+        str(TEST_DATA_PATH / Path("poisson_time_series_3d.pvd")),
+        str(TEST_DATA_PATH / Path("poisson_time_series_2d.xdmf")),
+        "--disable-mesh-space-dimension-matching",
+        "-rtol", "1e-7"
+    ]
+    assert main(args) == 1
+
+
 def test_cli_file_mode_field_filter():
     with StringIO() as stream:
         logger = CLILogger(output_stream=stream)
