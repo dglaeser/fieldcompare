@@ -222,11 +222,12 @@ class DefaultFieldComparisonCallback:
 
     def __call__(self, result: FieldComparison) -> None:
         """Write info on the performed field comparison into the given stream."""
-        self._stream.write(f"""{field_comparison_report(
+        msg = field_comparison_report(
             comparison=result,
             use_colors=self._use_colors,
             verbosity=self._verbosity
-        )}\n""")
+        )
+        self._stream.write(f"{msg}\n" if msg else "")
 
 
 PredicateSelector = Callable[[Field, Field], Predicate]
