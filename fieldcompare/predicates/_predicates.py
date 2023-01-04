@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 from dataclasses import dataclass
+from typing import Tuple
 
 from .._common import _default_base_tolerance
 
-from .._numpy_utils import ArrayLike, as_array, as_string, has_floats
+from .._numpy_utils import ArrayLike, Array, as_array, as_string, has_floats
 from .._numpy_utils import find_first_unequal
 from .._numpy_utils import find_first_fuzzy_unequal
 from .._numpy_utils import rel_diff, abs_diff, max_column_elements
@@ -47,13 +48,11 @@ class ExactEquality:
         return "ExactEquality"
 
     def _check(self, first: ArrayLike, second: ArrayLike) -> PredicateResult:
-        first = as_array(first)
-        second = as_array(second)
-        if first.shape != second.shape:
-            return PredicateResult(
-                value=False,
-                report=f"Array shapes not equal: {first.shape} / {second.shape}"
-            )
+        first, second = _reshape(first, second)
+        shape_check = _check_shapes(first, second)
+        if not shape_check:
+            return shape_check
+
         unequals = find_first_unequal(first, second)
         if unequals is not None:
             val1, val2 = unequals
@@ -128,13 +127,11 @@ class FuzzyEquality:
         )
 
     def _check(self, first: ArrayLike, second: ArrayLike) -> PredicateResult:
-        first = as_array(first)
-        second = as_array(second)
-        if first.shape != second.shape:
-            return PredicateResult(
-                value=False,
-                report=f"Array shapes not equal: {first.shape} / {second.shape}"
-            )
+        first, second = _reshape(first, second)
+        shape_check = _check_shapes(first, second)
+        if not shape_check:
+            return shape_check
+
         unequals = find_first_fuzzy_unequal(first, second, self._rel_tol, self._abs_tol)
         if unequals is not None:
             val1, val2 = unequals
@@ -206,3 +203,25 @@ def _success_result() -> PredicateResult:
         True,
         report="All field values have compared equal"
     )
+
+def _reshape(arr1: ArrayLike, arr2: ArrayLike) -> Tuple[Array, Array]:
+    arr1 = as_array(arr1)
+    arr2 = as_array(arr2)
+    dim1 = len(arr1.shape)
+    dim2 = len(arr2.shape)
+
+    # reshape the arrays in case scalars are compared against 1d vectors
+    if dim1 == dim2 + 1 and arr1.shape[-1] == 1:
+        arr2 = arr2.reshape(*arr2.shape, 1)
+    if dim2 == dim1 + 1 and arr2.shape[-1] == 1:
+        arr1 = arr1.reshape(*arr1.shape, 1)
+
+    return arr1, arr2
+
+def _check_shapes(arr1: Array, arr2: Array) -> PredicateResult:
+    if arr1.shape != arr2.shape:
+        return PredicateResult(
+            value=False,
+            report=f"Array shapes not equal: {arr1.shape} / {arr2.shape}"
+        )
+    return PredicateResult(True)
