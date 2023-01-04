@@ -1,4 +1,4 @@
-from os.path import splitext
+from os.path import splitext, exists, join, dirname, isabs
 from xml.etree import ElementTree
 
 from ... import protocols, FieldDataSequence
@@ -18,6 +18,7 @@ class PVDReader:
                 if dataset.tag == "DataSet"
             ]
             self._step_idx = 0
+            self._dirname = dirname(filename)
 
         def reset(self) -> None:
             self._step_idx = 0
@@ -28,6 +29,9 @@ class PVDReader:
 
         def get(self) -> protocols.FieldData:
             filename = self._pieces[self._step_idx]
+            if not exists(filename) and not isabs(filename) and exists(join(self._dirname, filename)):
+                filename = join(self._dirname, filename)
+
             ext = splitext(filename)[1]
             fields = _VTK_EXTENSION_TO_READER[ext](filename).read()
             assert isinstance(fields, protocols.FieldData)
