@@ -1,9 +1,8 @@
 """Class to compare two files using the CLI options"""
 
 from pathlib import Path
-from typing import Union, List, Callable, TextIO, Optional
+from typing import Union, List, Callable, Optional
 from dataclasses import dataclass
-from io import StringIO
 
 from .._numpy_utils import as_array, has_floats
 from ..predicates import FuzzyEquality, ExactEquality
@@ -20,7 +19,7 @@ from .._field_data_comparison import (
     FieldComparisonSuite,
     FieldComparison,
     FieldComparisonStatus,
-    DefaultFieldComparisonCallback
+    field_comparison_report
 )
 from ..mesh import MeshFieldsComparator
 
@@ -188,16 +187,24 @@ class FileComparison:
         )
 
     def _invoke_comparator(self, comparator, **kwargs) -> FieldComparisonSuite:
-        class Stream:
+        class Callback:
             def __init__(self, logger: CLILogger) -> None:
                 self._logger = logger
-            def write(self, message: str) -> None:
-                self._logger.log(message)
 
-        callback = DefaultFieldComparisonCallback(stream=Stream(self._logger), verbosity=self._logger.verbosity_level)
+            def __call__(self, result: FieldComparison) -> None:
+                if self._logger.verbosity_level == 0:
+                    return
+                if result and self._logger.verbosity_level == 1:
+                    return
+                msg = field_comparison_report(
+                    result,
+                    verbosity=max(1, self._logger.verbosity_level-1)
+                )
+                self._logger.log(f"{msg}\n")
+
         return comparator(
             predicate_selector=lambda res, ref: self._select_predicate(res, ref),
-            fieldcomp_callback=lambda comp: callback(comp),
+            fieldcomp_callback=Callback(logger=self._logger),
             **kwargs
         )
 
@@ -223,9 +230,7 @@ class FileComparison:
 
     def _to_test_result(self, comp_result: FieldComparison) -> TestResult:
         def _get_stdout() -> str:
-            stream = StringIO()
-            DefaultFieldComparisonCallback(stream=stream, verbosity=100)(comp_result)
-            return stream.getvalue()
+            return field_comparison_report(comp_result, verbosity=100)
 
         shortlog = comp_result.report
         if comp_result.status == FieldComparisonStatus.missing_reference:
