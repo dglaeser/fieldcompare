@@ -11,8 +11,14 @@ from .protocols import Field, FieldData, Predicate
 
 from ._matching import MatchResult, find_matches_by_name
 from ._common import _measure_time
-from ._format import remove_annotation, as_error, as_success, highlighted
 from ._field import Field as FieldImpl
+from ._format import (
+    remove_annotation,
+    as_error,
+    as_success,
+    highlighted,
+    remove_color_codes
+)
 
 
 class Status(Enum):
@@ -160,54 +166,67 @@ class FieldComparisonSuite:
         return len(self._passed)
 
 
-class DefaultFieldComparisonCallback:
+def field_comparison_report(comparison: FieldComparison,
+                            use_colors: bool = True,
+                            verbosity: int = 1) -> str:
     """
-    Writes default status messages for each field comparison to the given stream.
+    Returns a report for a given :class:`.FieldComparison`.
 
     Args:
-        verbosity: Integer to control the verbosity of the written output (optional). Default: 2
-        stream: stream to write to (optional). Defaults to stdout.
+        comparison: The comparison result.
+        use_colors: Switch on/off colors.
+        verbosity: Control the verbosity of the report.
     """
-    def __init__(self,
-                 verbosity: int = 2,
-                 stream: TextIO = sys.stdout) -> None:
-        self._verbosity = verbosity
-        self._stream = stream
-
-    def __call__(self, result: FieldComparison) -> None:
-        """Write info on the performed field comparison into the given stream."""
-        self._write_to_stream(
-            message=self._get_indented(
-                f"Comparing the field '{highlighted(result.name)}': "
-                f"{self._status_string(result.status)}",
-                indentation_level=1
-            ),
-            verbosity_level=(2 if result.status else 1)
-        )
-        self._write_to_stream(
-            message=self._get_indented(
-                f"Report: {result.report if result.report else 'n/a'}\n"
-                f"Predicate: {result.predicate if result.predicate else 'n/a'}",
-                indentation_level=2
-            ),
-            verbosity_level=(3 if result.status else 1)
-        )
-
-    def _write_to_stream(self, message: str, verbosity_level: int) -> None:
-        if self._verbosity is None or self._verbosity >= verbosity_level:
-            self._stream.write(f"{message}\n")
-
-    def _get_indented(self, message: str, indentation_level: int = 0) -> str:
+    def _get_indented(message: str, indentation_level: int = 0) -> str:
         if indentation_level > 0:
             lines = message.rstrip("\n").split("\n")
             lines = [" " + "  "*(indentation_level-1) + f"-- {line}" for line in lines]
             message = "\n".join(lines)
         return message
 
-    def _status_string(self, status: FieldComparisonStatus) -> str:
-        if not status:
-            return as_error("FAILED")
-        return as_success("PASSED")
+    status_string = as_error("FAILED") if not comparison else as_success("PASSED")
+    report = ""
+    if verbosity >= 1:
+        report += _get_indented(
+            f"Comparing the field '{highlighted(comparison.name)}': {status_string}",
+            indentation_level=1
+        )
+    if verbosity >= 2 or (verbosity >= 1 and not comparison):
+        report += "\n"
+        report += _get_indented(
+            f"Report: {comparison.report if comparison.report else 'n/a'}\n"
+            f"Predicate: {comparison.predicate if comparison.predicate else 'n/a'}",
+            indentation_level=2
+        )
+    if not use_colors:
+        report = remove_color_codes(report)
+    return report
+
+
+class DefaultFieldComparisonCallback:
+    """
+    Writes default status messages for each field comparison to the given stream.
+
+    Args:
+        verbosity: Integer to control the verbosity of the written output (optional). Default: 2
+        use_colors: Switch on/off colors.
+        stream: Stream to write to (optional). Defaults to stdout.
+    """
+    def __init__(self,
+                 verbosity: int = 2,
+                 use_colors: bool = True,
+                 stream: TextIO = sys.stdout) -> None:
+        self._verbosity = verbosity
+        self._use_colors = use_colors
+        self._stream = stream
+
+    def __call__(self, result: FieldComparison) -> None:
+        """Write info on the performed field comparison into the given stream."""
+        self._stream.write(f"""{field_comparison_report(
+            comparison=result,
+            use_colors=self._use_colors,
+            verbosity=self._verbosity
+        )}\n""")
 
 
 PredicateSelector = Callable[[Field, Field], Predicate]
