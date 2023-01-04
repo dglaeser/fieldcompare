@@ -1,6 +1,7 @@
 """Functionality for field data comparisons"""
 
-from typing import Callable, Optional, List, Tuple, Iterator, Any
+import sys
+from typing import Callable, Optional, List, Tuple, Iterator, Any, TextIO
 from dataclasses import dataclass
 from enum import Enum, auto
 from itertools import chain
@@ -10,7 +11,7 @@ from .protocols import Field, FieldData, Predicate
 
 from ._matching import MatchResult, find_matches_by_name
 from ._common import _measure_time
-from ._format import remove_annotation
+from ._format import remove_annotation, as_error, as_success, highlighted
 from ._field import Field as FieldImpl
 
 
@@ -159,6 +160,56 @@ class FieldComparisonSuite:
         return len(self._passed)
 
 
+class DefaultFieldComparisonCallback:
+    """
+    Writes default status messages for each field comparison to the given stream.
+
+    Args:
+        verbosity: Integer to control the verbosity of the written output (optional). Default: 2
+        stream: stream to write to (optional). Defaults to stdout.
+    """
+    def __init__(self,
+                 verbosity: int = 2,
+                 stream: TextIO = sys.stdout) -> None:
+        self._verbosity = verbosity
+        self._stream = stream
+
+    def __call__(self, result: FieldComparison) -> None:
+        """Write info on the performed field comparison into the given stream."""
+        self._write_to_stream(
+            message=self._get_indented(
+                f"Comparing the field '{highlighted(result.name)}': "
+                f"{self._status_string(result.status)}",
+                indentation_level=1
+            ),
+            verbosity_level=(2 if result.status else 1)
+        )
+        self._write_to_stream(
+            message=self._get_indented(
+                f"Report: {result.report if result.report else 'n/a'}\n"
+                f"Predicate: {result.predicate if result.predicate else 'n/a'}",
+                indentation_level=2
+            ),
+            verbosity_level=(3 if result.status else 1)
+        )
+
+    def _write_to_stream(self, message: str, verbosity_level: int) -> None:
+        if self._verbosity is None or self._verbosity >= verbosity_level:
+            self._stream.write(f"{message}\n")
+
+    def _get_indented(self, message: str, indentation_level: int = 0) -> str:
+        if indentation_level > 0:
+            lines = message.rstrip("\n").split("\n")
+            lines = [" " + "  "*(indentation_level-1) + f"-- {line}" for line in lines]
+            message = "\n".join(lines)
+        return message
+
+    def _status_string(self, status: FieldComparisonStatus) -> str:
+        if not status:
+            return as_error("FAILED")
+        return as_success("PASSED")
+
+
 PredicateSelector = Callable[[Field, Field], Predicate]
 FieldComparisonCallback = Callable[[FieldComparison], Any]
 
@@ -184,7 +235,7 @@ class FieldDataComparator:
 
     def __call__(self,
                  predicate_selector: PredicateSelector = lambda _, __: DefaultEquality(),
-                 fieldcomp_callback: FieldComparisonCallback = lambda _: None) -> FieldComparisonSuite:
+                 fieldcomp_callback: FieldComparisonCallback = DefaultFieldComparisonCallback()) -> FieldComparisonSuite:
         """
         Compare all fields in the field data objects using the given predicates.
 
@@ -194,7 +245,7 @@ class FieldDataComparator:
                                 Default: :class:`.DefaultEquality`.
             fieldcomp_callback: Function that is invoked with the results of individual
                                 field comparison results as soon as they are available (e.g. to
-                                print intermediate output). Default: no-op lambda.
+                                print intermediate output). Defaults to :class:`.DefaultFieldComparisonCallback`.
         """
         domain_eq_check = self._source.domain.equals(self._reference.domain)
         if not domain_eq_check:
