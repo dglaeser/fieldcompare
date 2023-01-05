@@ -22,13 +22,12 @@ from ._common import (
 
 def _add_arguments(parser: ArgumentParser):
     parser.add_argument(
-        "file",
+        "source",
         type=str,
         help="The file which is to be compared against a reference file"
     )
     parser.add_argument(
-        "-r", "--reference",
-        required=True,
+        "reference",
         type=str,
         help="The reference file against which to compare"
     )
@@ -64,7 +63,7 @@ def _run(args: dict, in_logger: CLILogger) -> int:
 
     try:
         comparator = FileComparison(opts, logger)
-        cpu_time, test_suite = _measure_time(comparator)(args["file"], args["reference"])
+        cpu_time, test_suite = _measure_time(comparator)(args["source"], args["reference"])
         passed = bool(test_suite)
         logger.log("\n")
         _log_suite_summary(test_suite, "field", logger)

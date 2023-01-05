@@ -38,13 +38,12 @@ from ._file_comparison import FileComparisonOptions, FileComparison, _suite_name
 
 def _add_arguments(parser: ArgumentParser):
     parser.add_argument(
-        "dir",
+        "source-dir",
         type=str,
         help="The directory containing the files to be compared against references"
     )
     parser.add_argument(
-        "-r", "--reference-dir",
-        required=True,
+        "reference-dir",
         type=str,
         help="The directory with the reference files"
     )
@@ -85,8 +84,8 @@ def _add_arguments(parser: ArgumentParser):
 def _run(args: dict, in_logger: CLILogger) -> int:
     logger = in_logger.with_verbosity(args["verbosity"])
 
-    res_dir = args["dir"]
-    ref_dir = args["reference_dir"]
+    res_dir = args["source-dir"]
+    ref_dir = args["reference-dir"]
     logger.log("Comparing files in the directories '{}' and '{}'\n\n".format(
         highlighted(res_dir),
         highlighted(ref_dir)),
@@ -158,8 +157,8 @@ def _do_file_comparisons(args,
     file_comparisons = []
     for i, filename in enumerate(filenames):
         timestamp = datetime.now().isoformat()
-        res_file = join(args["dir"], filename)
-        ref_file = join(args["reference_dir"], filename)
+        res_file = join(args["source-dir"], filename)
+        ref_file = join(args["reference-dir"], filename)
 
         logger.log(("\n" if i > 0 else ""), verbosity_level=1)
         logger.log(

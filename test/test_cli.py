@@ -20,8 +20,9 @@ TEST_DATA_PATH = Path(__file__).resolve().parent / Path("data")
 
 def test_cli_file_mode_pass():
     assert main([
-        "file", str(TEST_DATA_PATH / Path("test_mesh.vtu")),
-        "--reference", str(TEST_DATA_PATH / Path("test_mesh.vtu"))
+        "file",
+        str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+        str(TEST_DATA_PATH / Path("test_mesh.vtu"))
     ]) == 0
 
 
@@ -30,8 +31,9 @@ def test_cli_file_mode_junit_report():
     if isfile(report_filename):
         remove(report_filename)
     assert main([
-        "file", str(TEST_DATA_PATH / Path("test_mesh.vtu")),
-        "--reference", str(TEST_DATA_PATH / Path("test_mesh_permutated.vtu")),
+        "file",
+        str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+        str(TEST_DATA_PATH / Path("test_mesh_permutated.vtu")),
         "--junit-xml", report_filename
     ]) == 0
     assert isfile(report_filename)
@@ -47,7 +49,7 @@ def test_cli_file_mode_fail_on_perturbed_mesh():
     _perturbed_mesh_filename = _mesh_filename.replace(".vtu", "_reference.vtu")
     _mesh.write(_mesh_filename)
     _perturbed_mesh.write(_perturbed_mesh_filename)
-    assert main(["file", _mesh_filename, "--reference", _perturbed_mesh_filename]) == 1
+    assert main(["file", _mesh_filename, _perturbed_mesh_filename]) == 1
 
     remove(_mesh_filename)
     remove(_perturbed_mesh_filename)
@@ -56,14 +58,16 @@ def test_cli_file_mode_fail_on_perturbed_mesh():
 def test_cli_file_mode_fail_on_perturbed_mesh_without_mesh_reordering():
     # pass with mesh-reordering
     assert main([
-        "file", str(TEST_DATA_PATH / Path("test_mesh.vtu")),
-        "--reference", str(TEST_DATA_PATH / Path("test_mesh_permutated.vtu"))
+        "file",
+        str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+        str(TEST_DATA_PATH / Path("test_mesh_permutated.vtu"))
     ]) == 0
 
     # fail without mesh-reordering
     assert main([
-        "file", str(TEST_DATA_PATH / Path("test_mesh.vtu")),
-        "--reference", str(TEST_DATA_PATH / Path("test_mesh_permutated.vtu")),
+        "file",
+        str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+        str(TEST_DATA_PATH / Path("test_mesh_permutated.vtu")),
         "--disable-mesh-reordering"
     ]) == 1
 
@@ -71,26 +75,30 @@ def test_cli_file_mode_fail_on_perturbed_mesh_without_mesh_reordering():
 def test_cli_file_mode_fail_on_permuted_non_conforming_mesh_without_ghost_removal():
     # pass with mesh-reordering
     assert main([
-        "file", str(TEST_DATA_PATH / Path("test_non_conforming_mesh.vtu")),
-        "--reference", str(TEST_DATA_PATH / Path("test_non_conforming_mesh_with_ghost_points.vtu"))
+        "file",
+        str(TEST_DATA_PATH / Path("test_non_conforming_mesh.vtu")),
+        str(TEST_DATA_PATH / Path("test_non_conforming_mesh_with_ghost_points.vtu"))
     ]) == 0
 
     # fail without mesh-reordering
     assert main([
-        "file", str(TEST_DATA_PATH / Path("test_non_conforming_mesh.vtu")),
-        "--reference", str(TEST_DATA_PATH / Path("test_non_conforming_mesh_with_ghost_points.vtu")),
+        "file",
+        str(TEST_DATA_PATH / Path("test_non_conforming_mesh.vtu")),
+        str(TEST_DATA_PATH / Path("test_non_conforming_mesh_with_ghost_points.vtu")),
         "--disable-mesh-orphan-point-removal"
     ]) == 1
 
 
 def test_cli_file_mode_passes_without_ghost_removal_when_ghosts_do_not_overlap():
     assert main([
-        "file", str(TEST_DATA_PATH / Path("test_non_conforming_mesh_with_non_overlapping_ghost_points_permutated.vtu")),
-        "--reference", str(TEST_DATA_PATH / Path("test_non_conforming_mesh_with_non_overlapping_ghost_points.vtu"))
+        "file",
+        str(TEST_DATA_PATH / Path("test_non_conforming_mesh_with_non_overlapping_ghost_points_permutated.vtu")),
+        str(TEST_DATA_PATH / Path("test_non_conforming_mesh_with_non_overlapping_ghost_points.vtu"))
     ]) == 0
     assert main([
-        "file", str(TEST_DATA_PATH / Path("test_non_conforming_mesh_with_non_overlapping_ghost_points_permutated.vtu")),
-        "--reference", str(TEST_DATA_PATH / Path("test_non_conforming_mesh_with_non_overlapping_ghost_points.vtu")),
+        "file",
+        str(TEST_DATA_PATH / Path("test_non_conforming_mesh_with_non_overlapping_ghost_points_permutated.vtu")),
+        str(TEST_DATA_PATH / Path("test_non_conforming_mesh_with_non_overlapping_ghost_points.vtu")),
         "--disable-mesh-orphan-point-removal"
     ]) == 0
 
@@ -99,8 +107,9 @@ def test_cli_file_mode_field_filter():
     with StringIO() as stream:
         logger = CLILogger(output_stream=stream)
         args = [
-            "file", str(TEST_DATA_PATH / Path("test_mesh.vtu")),
-            "--reference", str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+            "file",
+            str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+            str(TEST_DATA_PATH / Path("test_mesh.vtu")),
             "--include-fields", "function"
         ]
         assert main(args, logger) == 0
@@ -115,8 +124,9 @@ def test_cli_file_mode_field_exclusion_filter():
     with StringIO() as stream:
         logger = CLILogger(output_stream=stream)
         args = [
-            "file", str(TEST_DATA_PATH / Path("test_mesh.vtu")),
-            "--reference", str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+            "file",
+            str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+            str(TEST_DATA_PATH / Path("test_mesh.vtu")),
             "--exclude-fields", "function"
         ]
         assert main(args, logger) == 0
@@ -140,22 +150,26 @@ def test_cli_file_mode_relative_tolerance_definition():
     _mesh.write(_mesh_filename)
     _perturbed_mesh.write(_perturbed_mesh_filename)
     assert main([
-        "file", _mesh_filename,
-        "--reference", _perturbed_mesh_filename
+        "file",
+        _mesh_filename,
+        _perturbed_mesh_filename
     ]) == 1
     assert main([
-        "file", _mesh_filename,
-        "--reference", _perturbed_mesh_filename,
+        "file",
+        _mesh_filename,
+        _perturbed_mesh_filename,
         "--relative-tolerance", f"wrong_field:{str(_rel_perturbation*2.0)}"
     ]) == 1
     assert main([
-        "file", _mesh_filename,
-        "--reference", _perturbed_mesh_filename,
+        "file",
+        _mesh_filename,
+        _perturbed_mesh_filename,
         "--relative-tolerance", f"function:{str(_rel_perturbation*2.0)}"
     ]) == 0
     assert main([
-        "file", _mesh_filename,
-        "--reference", _perturbed_mesh_filename,
+        "file",
+        _mesh_filename,
+        _perturbed_mesh_filename,
         "--relative-tolerance", str(_rel_perturbation*2.0)
     ]) == 0
 
@@ -177,25 +191,29 @@ def test_cli_file_mode_absolute_tolerance_definition():
     _mesh.write(_mesh_filename)
     _perturbed_mesh.write(_perturbed_mesh_filename)
     assert main([
-        "file", _mesh_filename,
-        "--reference", _perturbed_mesh_filename,
+        "file",
+        _mesh_filename,
+        _perturbed_mesh_filename,
         "--relative-tolerance", "0",
     ]) == 1
     assert main([
-        "file", _mesh_filename,
-        "--reference", _perturbed_mesh_filename,
+        "file",
+        _mesh_filename,
+        _perturbed_mesh_filename,
         "--relative-tolerance", "0",
         "--absolute-tolerance", f"wrong_field:{str(_abs_perturbation*2.0)}"
     ]) == 1
     assert main([
-        "file", _mesh_filename,
-        "--reference", _perturbed_mesh_filename,
+        "file",
+        _mesh_filename,
+        _perturbed_mesh_filename,
         "--relative-tolerance", "0",
         "--absolute-tolerance", f"function:{str(_abs_perturbation*2.0)}"
     ]) == 0
     assert main([
-        "file", _mesh_filename,
-        "--reference", _perturbed_mesh_filename,
+        "file",
+        _mesh_filename,
+        _perturbed_mesh_filename,
         "--relative-tolerance", "0",
         "--absolute-tolerance", str(_abs_perturbation*2.0)
     ]) == 0
@@ -215,17 +233,20 @@ def test_cli_file_mode_missing_result_fields():
     _reference_mesh.write(_reference_mesh_filename)
 
     assert main([
-        "file", _mesh_filename,
-        "--reference", _reference_mesh_filename,
+        "file",
+        _mesh_filename,
+        _reference_mesh_filename,
     ]) == 1
     assert main([
-        "file", _mesh_filename,
-        "--reference", _reference_mesh_filename,
+        "file",
+        _mesh_filename,
+        _reference_mesh_filename,
         "--ignore-missing-reference-fields"
     ]) == 1
     assert main([
-        "file", _mesh_filename,
-        "--reference", _reference_mesh_filename,
+        "file",
+        _mesh_filename,
+        _reference_mesh_filename,
         "--ignore-missing-source-fields"
     ]) == 0
 
@@ -244,17 +265,20 @@ def test_cli_file_mode_missing_reference_fields():
     _reference_mesh.write(_reference_mesh_filename)
 
     assert main([
-        "file", _mesh_filename,
-        "--reference", _reference_mesh_filename,
+        "file",
+        _mesh_filename,
+        _reference_mesh_filename,
     ]) == 1
     assert main([
-        "file", _mesh_filename,
-        "--reference", _reference_mesh_filename,
+        "file",
+        _mesh_filename,
+        _reference_mesh_filename,
         "--ignore-missing-source-fields"
     ]) == 1
     assert main([
-        "file", _mesh_filename,
-        "--reference", _reference_mesh_filename,
+        "file",
+        _mesh_filename,
+        _reference_mesh_filename,
         "--ignore-missing-reference-fields"
     ]) == 0
 
@@ -274,8 +298,8 @@ def test_cli_file_mode_missing_sequences_steps():
     _write_time_series(_mesh_1_filename, _mesh, _point_data_1, _cell_data_1, num_time_steps=2)
     _write_time_series(_mesh_2_filename, _mesh, _point_data_2, _cell_data_2, num_time_steps=3)
 
-    assert main(["file", _mesh_1_filename, "--reference", _mesh_2_filename]) == 1
-    assert main(["file", _mesh_1_filename, "--reference", _mesh_2_filename, "--ignore-missing-sequence-steps"]) == 0
+    assert main(["file", _mesh_1_filename, _mesh_2_filename]) == 1
+    assert main(["file", _mesh_1_filename, _mesh_2_filename, "--ignore-missing-sequence-steps"]) == 0
 
     remove(_mesh_1_filename)
     remove(_mesh_2_filename)
@@ -297,14 +321,14 @@ def test_cli_file_mode_missing_sequences_steps_force_comparison():
 
     stream = StringIO()
     assert main(
-        ["file", _mesh_1_filename, "--reference", _mesh_2_filename],
+        ["file", _mesh_1_filename, _mesh_2_filename],
         logger=CLILogger(output_stream=stream)
     ) == 1
     assert "Comparing the field" not in stream.getvalue()
 
     stream = StringIO()
     assert main(
-        ["file", _mesh_1_filename, "--reference", _mesh_2_filename, "--force-sequence-comparison"],
+        ["file", _mesh_1_filename, _mesh_2_filename, "--force-sequence-comparison"],
         logger=CLILogger(output_stream=stream)
     ) == 1
     assert "Comparing the field" in stream.getvalue()
@@ -316,7 +340,7 @@ def test_cli_file_mode_missing_sequences_steps_force_comparison():
 
 
 def test_cli_directory_mode_pass():
-    assert main(["dir", str(TEST_DATA_PATH), "--reference-dir", str(TEST_DATA_PATH)]) == 0
+    assert main(["dir", str(TEST_DATA_PATH), str(TEST_DATA_PATH)]) == 0
 
 
 def test_cli_directory_mode_junit_report():
@@ -330,8 +354,9 @@ def test_cli_directory_mode_junit_report():
     if isfile(report_filename):
         remove(report_filename)
     assert main([
-        "dir", str(TEST_DATA_PATH),
-        "--reference-dir", str(tmp_results_path),
+        "dir",
+        str(TEST_DATA_PATH),
+        str(tmp_results_path),
         "--junit-xml", report_filename
     ]) == 0
     assert isfile(report_filename)
@@ -344,8 +369,9 @@ def test_cli_directory_mode_field_filter():
     with StringIO() as stream:
         logger = CLILogger(output_stream=stream)
         args = [
-            "dir", str(TEST_DATA_PATH),
-            "--reference-dir", str(TEST_DATA_PATH),
+            "dir",
+            str(TEST_DATA_PATH),
+            str(TEST_DATA_PATH),
             "--include-fields", "function"
         ]
         assert main(args, logger) == 0
@@ -359,8 +385,9 @@ def test_cli_directory_mode_field_exclusion_filter():
     with StringIO() as stream:
         logger = CLILogger(output_stream=stream)
         args = [
-            "dir", str(TEST_DATA_PATH),
-            "--reference-dir", str(TEST_DATA_PATH),
+            "dir",
+            str(TEST_DATA_PATH),
+            str(TEST_DATA_PATH),
             "--exclude-fields", "function"
         ]
         assert main(args, logger) == 0
@@ -373,7 +400,7 @@ def test_cli_directory_mode_field_exclusion_filter():
 def test_cli_directory_mode_missing_result_file():
     tmp_results_path = TEST_DATA_PATH.resolve().parent / Path("cli_dir_test_results_data")
     copytree(TEST_DATA_PATH, tmp_results_path, dirs_exist_ok=True)
-    assert main(["dir", str(tmp_results_path), "--reference-dir", str(TEST_DATA_PATH)]) == 0
+    assert main(["dir", str(tmp_results_path), str(TEST_DATA_PATH)]) == 0
 
     # remove one file from temporary results directory
     for first_vtu_file in filter(
@@ -384,17 +411,20 @@ def test_cli_directory_mode_missing_result_file():
         break
 
     assert main([
-        "dir", str(tmp_results_path),
-        "--reference-dir", str(TEST_DATA_PATH)
+        "dir",
+        str(tmp_results_path),
+        str(TEST_DATA_PATH)
     ]) == 1
     assert main([
-        "dir", str(tmp_results_path),
-        "--reference-dir", str(TEST_DATA_PATH),
+        "dir",
+        str(tmp_results_path),
+        str(TEST_DATA_PATH),
         "--ignore-missing-reference-files"
     ]) == 1
     assert main([
-        "dir", str(tmp_results_path),
-        "--reference-dir", str(TEST_DATA_PATH),
+        "dir",
+        str(tmp_results_path),
+        str(TEST_DATA_PATH),
         "--ignore-missing-source-files"
     ]) == 0
 
@@ -404,7 +434,7 @@ def test_cli_directory_mode_missing_result_file():
 def test_cli_directory_mode_missing_reference_file():
     tmp_reference_path = TEST_DATA_PATH.resolve().parent / Path("cli_dir_test_ref_data")
     copytree(TEST_DATA_PATH, tmp_reference_path, dirs_exist_ok=True)
-    assert main(["dir", str(TEST_DATA_PATH), "--reference-dir", str(tmp_reference_path)]) == 0
+    assert main(["dir", str(TEST_DATA_PATH), str(tmp_reference_path)]) == 0
 
     # remove one file from temporary reference path
     for first_vtu_file in filter(
@@ -415,17 +445,20 @@ def test_cli_directory_mode_missing_reference_file():
         break
 
     assert main([
-        "dir", str(TEST_DATA_PATH),
-        "--reference-dir", str(tmp_reference_path)
+        "dir",
+        str(TEST_DATA_PATH),
+        str(tmp_reference_path)
     ]) == 1
     assert main([
-        "dir", str(TEST_DATA_PATH),
-        "--reference-dir", str(tmp_reference_path),
+        "dir",
+        str(TEST_DATA_PATH),
+        str(tmp_reference_path),
         "--ignore-missing-source-files"
     ]) == 1
     assert main([
-        "dir", str(TEST_DATA_PATH),
-        "--reference-dir", str(tmp_reference_path),
+        "dir",
+        str(TEST_DATA_PATH),
+        str(tmp_reference_path),
         "--ignore-missing-reference-files"
     ]) == 0
 
@@ -436,22 +469,24 @@ def test_cli_directory_mode_file_inclusion_filter():
     # check that the normal run has xdmf in the output
     with StringIO() as stream:
         logger = CLILogger(output_stream=stream)
-        main(["dir", str(TEST_DATA_PATH), "--reference-dir", str(TEST_DATA_PATH)], logger)
+        main(["dir", str(TEST_DATA_PATH), str(TEST_DATA_PATH)], logger)
         assert ".xdmf" in stream.getvalue()
     # check that the normal run has xdmf in the output with verbosity=1 (which should remove filter output)
     with StringIO() as stream:
         logger = CLILogger(output_stream=stream)
         main([
-            "dir", str(TEST_DATA_PATH),
-            "--reference-dir", str(TEST_DATA_PATH),
+            "dir",
+            str(TEST_DATA_PATH),
+            str(TEST_DATA_PATH),
             "--verbosity=1"], logger)
         assert ".xdmf" in stream.getvalue()
     # check that xdmf disappears with a given pattern
     with StringIO() as stream:
         logger = CLILogger(output_stream=stream)
         main([
-            "dir", str(TEST_DATA_PATH),
-            "--reference-dir", str(TEST_DATA_PATH),
+            "dir",
+            str(TEST_DATA_PATH),
+            str(TEST_DATA_PATH),
             "--include-files",
             "*.vtu",
             "--verbosity=1"], logger)
@@ -460,8 +495,9 @@ def test_cli_directory_mode_file_inclusion_filter():
     with StringIO() as stream:
         logger = CLILogger(output_stream=stream)
         main([
-            "dir", str(TEST_DATA_PATH),
-            "--reference-dir", str(TEST_DATA_PATH),
+            "dir",
+            str(TEST_DATA_PATH),
+            str(TEST_DATA_PATH),
             "--include-files",
             "*.pvtu",
             "--verbosity=1"], logger)
@@ -487,25 +523,29 @@ def test_cli_directory_mode_relative_tolerance_definition():
     _mesh.write(join(res_dir, _mesh_filename))
     _perturbed_mesh.write(join(ref_dir, _mesh_filename))
     assert main([
-        "dir", res_dir,
-        "--reference-dir", ref_dir,
+        "dir",
+        res_dir,
+        ref_dir,
         "--absolute-tolerance", "0",
     ]) == 1
     assert main([
-        "dir", res_dir,
-        "--reference-dir", ref_dir,
+        "dir",
+        res_dir,
+        ref_dir,
         "--absolute-tolerance", "0",
         "--relative-tolerance", f"wrong_field:{str(_rel_perturbation*2.0)}"
     ]) == 1
     assert main([
-        "dir", res_dir,
-        "--reference-dir", ref_dir,
+        "dir",
+        res_dir,
+        ref_dir,
         "--relative-tolerance", "0",
         "--relative-tolerance", f"function:{str(_rel_perturbation*2.0)}"
     ]) == 0
     assert main([
-        "dir", res_dir,
-        "--reference-dir", ref_dir,
+        "dir",
+        res_dir,
+        ref_dir,
         "--absolute-tolerance", "0",
         "--relative-tolerance", str(_rel_perturbation*2.0)
     ]) == 0
@@ -533,25 +573,29 @@ def test_cli_directory_mode_absolute_tolerance_definition():
     _mesh.write(join(res_dir, _mesh_filename))
     _perturbed_mesh.write(join(ref_dir, _mesh_filename))
     assert main([
-        "dir", res_dir,
-        "--reference-dir", ref_dir,
+        "dir",
+        res_dir,
+        ref_dir,
         "--relative-tolerance", "0",
     ]) == 1
     assert main([
-        "dir", res_dir,
-        "--reference-dir", ref_dir,
+        "dir",
+        res_dir,
+        ref_dir,
         "--relative-tolerance", "0",
         "--absolute-tolerance", f"wrong_field:{str(_abs_perturbation*2.0)}"
     ]) == 1
     assert main([
-        "dir", res_dir,
-        "--reference-dir", ref_dir,
+        "dir",
+        res_dir,
+        ref_dir,
         "--relative-tolerance", "0",
         "--absolute-tolerance", f"function:{str(_abs_perturbation*2.0)}"
     ]) == 0
     assert main([
-        "dir", res_dir,
-        "--reference-dir", ref_dir,
+        "dir",
+        res_dir,
+        ref_dir,
         "--relative-tolerance", "0",
         "--absolute-tolerance", str(_abs_perturbation*2.0)
     ]) == 0
