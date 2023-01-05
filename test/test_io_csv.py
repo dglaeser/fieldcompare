@@ -21,9 +21,9 @@ def _as_string_stream(data: dict, add_names: bool = True) -> StringIO:
 
 def get_reference_data():
     return {
-        "int_field": [0, 3, 8],
-        "float_field": [1.0, 4.0, 10.0],
-        "str_field": ["value0", "value1", "value2"]
+        "int_field": [0, 3, 8, 10],
+        "float_field": [1.0, 4.0, 10.0, 12],
+        "str_field": ["value0", "value1", "value2", "value3"]
     }
 
 
@@ -45,12 +45,11 @@ def test_csv_field_extraction_no_names():
     stream = _as_string_stream(reference_data)
     fields = CSVFieldReader(delimiter=",", use_names=False, skip_rows=1).read(stream)
 
-    for field in fields:
-        assert any(
-            ExactEquality()(
-                field.values,
-                reference_data[ref_field_name]
-            ) for ref_field_name in reference_data
+    ref_field_names = list(reference_data.keys())
+    for i, field in enumerate(fields):
+        assert ExactEquality()(
+            field.values,
+            reference_data[ref_field_names[i]]
         )
 
 
