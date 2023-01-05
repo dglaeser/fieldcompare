@@ -1,9 +1,8 @@
 """Class to compare two files using the CLI options"""
 
 from pathlib import Path
-from typing import Union, List, Callable, TextIO, Optional
+from typing import Union, List, Callable, Optional
 from dataclasses import dataclass
-from io import StringIO
 
 from .._numpy_utils import as_array, has_floats
 from ..predicates import FuzzyEquality, ExactEquality
@@ -19,15 +18,16 @@ from .._field_data_comparison import (
     FieldDataComparator,
     FieldComparisonSuite,
     FieldComparison,
-    FieldComparisonStatus
+    FieldComparisonStatus,
+    field_comparison_report
 )
+from ..mesh import MeshFieldsComparator
 
 from ._logger import CLILogger
 from ._test_suite import TestSuite, TestResult, TestStatus
 
 from .. import protocols
 from ..mesh import protocols as mesh_protocols
-from ..mesh import strip_orphan_points, sort_points, sort_cells
 
 from ..io import read as read_fields
 
@@ -147,36 +147,15 @@ class FileComparison:
                                  ref_fields: mesh_protocols.MeshFields) -> TestSuite:
         self._set_mesh_tolerances(res_fields)
         self._set_mesh_tolerances(ref_fields)
-        suite = self._run_field_data_comparison(res_fields, ref_fields)
-        if suite.domain_equality_check:
-            return self._to_test_suite(suite)
-
         if self._opts.disable_mesh_reordering:
+            suite = self._run_field_data_comparison(res_fields, ref_fields)
+            if suite.domain_equality_check:
+                return self._to_test_suite(suite)
             msg = "Non-reordered meshes have compared unequal"
             self._logger.log(f"{self._status_string(TestStatus.failed)}: {msg}")
             return _make_test_suite([], TestStatus.failed, shortlog=msg)
 
-        self._logger.log(
-            "Meshes did not compare equal. Retrying with sorted points...\n",
-            verbosity_level=1
-        )
-        def _permute(mesh_fields):
-            if not self._opts.disable_unconnected_points_removal:
-                mesh_fields = strip_orphan_points(mesh_fields)
-            return sort_points(mesh_fields)
-        res_fields = _permute(res_fields)
-        ref_fields = _permute(ref_fields)
-        suite = self._run_field_data_comparison(res_fields, ref_fields)
-        if suite.domain_equality_check:
-            return self._to_test_suite(suite)
-
-        self._logger.log(
-            "Meshes did not compare equal. Retrying with sorted cells...\n",
-            verbosity_level=1
-        )
-        res_fields = sort_cells(res_fields)
-        ref_fields = sort_cells(ref_fields)
-        suite = self._run_field_data_comparison(res_fields, ref_fields)
+        suite = self._run_mesh_fields_comparison(res_fields, ref_fields)
         if suite.domain_equality_check:
             return self._to_test_suite(suite)
 
@@ -184,15 +163,49 @@ class FileComparison:
         self._logger.log(f"{self._status_string(TestStatus.failed)}: {msg}")
         return _make_test_suite([], TestStatus.failed, shortlog="Fields defined on different meshes")
 
+    def _run_mesh_fields_comparison(self,
+                                    result: mesh_protocols.MeshFields,
+                                    reference: mesh_protocols.MeshFields) -> FieldComparisonSuite:
+        return self._invoke_comparator(
+            MeshFieldsComparator(
+                result, reference,
+                disable_orphan_point_removal=self._opts.disable_unconnected_points_removal,
+                field_inclusion_filter=self._opts.field_inclusion_filter,
+                field_exclusion_filter=self._opts.field_exclusion_filter
+            ),
+            reordering_callback=lambda msg: self._logger.log(f"{msg}\n")
+        )
+
     def _run_field_data_comparison(self,
                                    result: protocols.FieldData,
                                    reference: protocols.FieldData) -> FieldComparisonSuite:
-        return FieldDataComparator(
-            result, reference,
-            self._opts.field_inclusion_filter, self._opts.field_exclusion_filter
-        )(
+        return self._invoke_comparator(
+            FieldDataComparator(
+                result, reference,
+                self._opts.field_inclusion_filter, self._opts.field_exclusion_filter
+            )
+        )
+
+    def _invoke_comparator(self, comparator, **kwargs) -> FieldComparisonSuite:
+        class Callback:
+            def __init__(self, logger: CLILogger) -> None:
+                self._logger = logger
+
+            def __call__(self, result: FieldComparison) -> None:
+                if self._logger.verbosity_level == 0:
+                    return
+                if result and self._logger.verbosity_level == 1:
+                    return
+                msg = field_comparison_report(
+                    result,
+                    verbosity=max(1, self._logger.verbosity_level-1)
+                )
+                self._logger.log(f"{msg}\n")
+
+        return comparator(
             predicate_selector=lambda res, ref: self._select_predicate(res, ref),
-            fieldcomp_callback=lambda comp: self._stream_field_comparison_report(comp, self._logger)
+            fieldcomp_callback=Callback(logger=self._logger),
+            **kwargs
         )
 
     def _set_mesh_tolerances(self, fields: protocols.FieldData) -> None:
@@ -212,40 +225,12 @@ class FileComparison:
         else:
             return ExactEquality()
 
-    def _stream_field_comparison_report(self,
-                                        result: FieldComparison,
-                                        device: Union[CLILogger, TextIO]) -> None:
-        def _log(message: str, verbosity_level: int) -> None:
-            if isinstance(device, CLILogger):
-                device.log(f"{message}\n", verbosity_level)
-            else:
-                device.write(f"{message}\n")
-
-        _log(
-            message=_get_indented(
-                f"Comparing the field '{highlighted(result.name)}': "
-                f"{self._status_string(self._parse_status(result.status))}",
-                indentation_level=1
-            ),
-            verbosity_level=(2 if result.status else 1)
-        )
-        _log(
-            message=_get_indented(
-                f"Report: {result.report if result.report else 'n/a'}\n"
-                f"Predicate: {result.predicate if result.predicate else 'n/a'}",
-                indentation_level=2
-            ),
-            verbosity_level=(3 if result.status else 1)
-        )
-
     def _to_test_suite(self, suite: FieldComparisonSuite) -> TestSuite:
         return TestSuite([self._to_test_result(c) for c in suite])
 
     def _to_test_result(self, comp_result: FieldComparison) -> TestResult:
         def _get_stdout() -> str:
-            stream = StringIO()
-            self._stream_field_comparison_report(comp_result, stream)
-            return stream.getvalue()
+            return field_comparison_report(comp_result, verbosity=100)
 
         shortlog = comp_result.report
         if comp_result.status == FieldComparisonStatus.missing_reference:
@@ -290,13 +275,6 @@ class FileComparison:
             return as_error("FAILED")
         return as_warning("SKIPPED")
 
-
-def _get_indented(message: str, indentation_level: int = 0) -> str:
-    if indentation_level > 0:
-        lines = message.rstrip("\n").split("\n")
-        lines = [" " + "  "*(indentation_level-1) + f"-- {line}" for line in lines]
-        message = "\n".join(lines)
-    return message
 
 def _make_test_suite(tests: List[TestResult],
                      status: Optional[TestStatus],

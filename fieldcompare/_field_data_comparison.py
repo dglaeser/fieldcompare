@@ -1,6 +1,7 @@
 """Functionality for field data comparisons"""
 
-from typing import Callable, Optional, List, Tuple, Iterator, Any
+import sys
+from typing import Callable, Optional, List, Tuple, Iterator, Any, TextIO
 from dataclasses import dataclass
 from enum import Enum, auto
 from itertools import chain
@@ -10,8 +11,14 @@ from .protocols import Field, FieldData, Predicate
 
 from ._matching import MatchResult, find_matches_by_name
 from ._common import _measure_time
-from ._format import remove_annotation
 from ._field import Field as FieldImpl
+from ._format import (
+    remove_annotation,
+    as_error,
+    as_success,
+    highlighted,
+    remove_color_codes
+)
 
 
 class Status(Enum):
@@ -159,6 +166,70 @@ class FieldComparisonSuite:
         return len(self._passed)
 
 
+def field_comparison_report(comparison: FieldComparison,
+                            use_colors: bool = True,
+                            verbosity: int = 1) -> str:
+    """
+    Returns a report for a given :class:`.FieldComparison`.
+
+    Args:
+        comparison: The comparison result.
+        use_colors: Switch on/off colors.
+        verbosity: Control the verbosity of the report.
+    """
+    def _get_indented(message: str, indentation_level: int = 0) -> str:
+        if indentation_level > 0:
+            lines = message.rstrip("\n").split("\n")
+            lines = [" " + "  "*(indentation_level-1) + f"-- {line}" for line in lines]
+            message = "\n".join(lines)
+        return message
+
+    status_string = as_error("FAILED") if not comparison else as_success("PASSED")
+    report = ""
+    if verbosity >= 1:
+        report += _get_indented(
+            f"Comparing the field '{highlighted(comparison.name)}': {status_string}",
+            indentation_level=1
+        )
+    if verbosity >= 2 or (verbosity >= 1 and not comparison):
+        report += "\n"
+        report += _get_indented(
+            f"Report: {comparison.report if comparison.report else 'n/a'}\n"
+            f"Predicate: {comparison.predicate if comparison.predicate else 'n/a'}",
+            indentation_level=2
+        )
+    if not use_colors:
+        report = remove_color_codes(report)
+    return report
+
+
+class DefaultFieldComparisonCallback:
+    """
+    Writes default status messages for each field comparison to the given stream.
+
+    Args:
+        verbosity: Integer to control the verbosity of the written output (optional). Default: 2
+        use_colors: Switch on/off colors.
+        stream: Stream to write to (optional). Defaults to stdout.
+    """
+    def __init__(self,
+                 verbosity: int = 1,
+                 use_colors: bool = True,
+                 stream: TextIO = sys.stdout) -> None:
+        self._verbosity = verbosity
+        self._use_colors = use_colors
+        self._stream = stream
+
+    def __call__(self, result: FieldComparison) -> None:
+        """Write info on the performed field comparison into the given stream."""
+        msg = field_comparison_report(
+            comparison=result,
+            use_colors=self._use_colors,
+            verbosity=self._verbosity
+        )
+        self._stream.write(f"{msg}\n" if msg else "")
+
+
 PredicateSelector = Callable[[Field, Field], Predicate]
 FieldComparisonCallback = Callable[[FieldComparison], Any]
 
@@ -182,9 +253,11 @@ class FieldDataComparator:
         self._field_inclusion_filter = field_inclusion_filter
         self._field_exclusion_filter = field_exclusion_filter
 
-    def __call__(self,
-                 predicate_selector: PredicateSelector = lambda _, __: DefaultEquality(),
-                 fieldcomp_callback: FieldComparisonCallback = lambda _: None) -> FieldComparisonSuite:
+    def __call__(
+        self,
+        predicate_selector: PredicateSelector = lambda _, __: DefaultEquality(),
+        fieldcomp_callback: FieldComparisonCallback = DefaultFieldComparisonCallback()
+    ) -> FieldComparisonSuite:
         """
         Compare all fields in the field data objects using the given predicates.
 
@@ -194,7 +267,7 @@ class FieldDataComparator:
                                 Default: :class:`.DefaultEquality`.
             fieldcomp_callback: Function that is invoked with the results of individual
                                 field comparison results as soon as they are available (e.g. to
-                                print intermediate output). Default: no-op lambda.
+                                print intermediate output). Defaults to :class:`.DefaultFieldComparisonCallback`.
         """
         domain_eq_check = self._source.domain.equals(self._reference.domain)
         if not domain_eq_check:
