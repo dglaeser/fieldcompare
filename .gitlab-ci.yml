@@ -141,7 +141,7 @@ pypi:
     - python -m pip uninstall --yes fieldcompare
     - git checkout $CI_COMMIT_SHA
     - |
-      if cmp -s current_fieldcompare_version.txt old_fieldcompare_version.txt; then
+      if ! cmp -s current_fieldcompare_version.txt old_fieldcompare_version.txt; then
           FIELDCOMPARE_RELEASE_VERSION=$(cat current_fieldcompare_version.txt | xargs echo)
           if [[ "$FIELDCOMPARE_RELEASE_VERSION" =~ ^([0-9]{1,2}.)?([0-9]{1,2}.)?([0-9]+)?(-.*)?$ ]]; then
               echo "Build fieldcompare package and upload to PyPI..."
