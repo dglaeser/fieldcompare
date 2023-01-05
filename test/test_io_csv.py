@@ -7,14 +7,14 @@ from fieldcompare.tabular import Table, transform
 from fieldcompare.io import CSVFieldReader
 
 
-def _as_string_stream(data: dict, add_names: bool = True) -> StringIO:
+def _as_string_stream(data: dict, add_names: bool = True, delimiter=",") -> StringIO:
     stream = StringIO()
     if add_names:
-        stream.write(",".join(data.keys()) + "\n")
+        stream.write(delimiter.join(data.keys()) + "\n")
     values = list(data.values())
     num_rows = len(values[0])
     for row_idx in range(num_rows):
-        stream.write(",".join(str(values[col][row_idx]) for col in range(len(values))) + "\n")
+        stream.write(delimiter.join(str(values[col][row_idx]) for col in range(len(values))) + "\n")
     stream.seek(0)
     return stream
 
@@ -38,6 +38,20 @@ def test_csv_field_extraction():
             field.values,
             reference_data[field.name]
         )
+
+
+def test_csv_field_extraction_deduced_delimiters():
+    reference_data = get_reference_data()
+    for delimiter in [",", ";", "#", " "]:
+        stream = _as_string_stream(reference_data)
+        fields = CSVFieldReader(use_names=True).read(stream)
+
+        for field in fields:
+            assert reference_data.get(field.name) is not None
+            assert ExactEquality()(
+                field.values,
+                reference_data[field.name]
+            )
 
 
 def test_csv_field_extraction_no_names():
