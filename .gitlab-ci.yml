@@ -66,7 +66,7 @@ file_mode_junit_report:
   script:
     - python -m pip install -r requirements.txt
     - python -m pip install .
-    - fieldcompare file test/data/test_mesh.vtu -r test/data/test_mesh.vtu --exclude-fields "function" --junit-xml file_mode_junit.xml
+    - fieldcompare file test/data/test_mesh.vtu test/data/test_mesh.vtu --exclude-fields "function" --junit-xml file_mode_junit.xml
   artifacts:
     reports:
       junit: file_mode_junit.xml
@@ -78,7 +78,7 @@ dir_mode_junit_report:
   script:
     - python -m pip install -r requirements.txt
     - python -m pip install .
-    - fieldcompare dir test/data/ -r test/data/ --include-files "*.vtu" --junit-xml dir_mode_junit.xml
+    - fieldcompare dir test/data/ test/data/ --include-files "*.vtu" --junit-xml dir_mode_junit.xml
   artifacts:
     reports:
       junit: dir_mode_junit.xml
