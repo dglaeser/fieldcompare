@@ -29,12 +29,14 @@ class CSVFieldReader:
             ndmin=2,
         )
 
-        # (maybe) overwrite with our default field names
         if not use_names:
-            num_fields = (
-                len(data.dtype.names) if data.dtype.names is not None else (len(data[0]) if len(data) > 0 else 0)
-            )
-            data.dtype.names = tuple(f"field_{i}" for i in range(num_fields))
+            # overwrite with our default field names
+            # create a structured type if it isn't one yet
+            if data.dtype.names is None:
+                num_fields = 0 if len(data) == 0 else len(data[0])
+                data = data.astype(np.dtype([(f"field_{i}", data.dtype) for i in range(num_fields)]))
+            else:
+                data.dtype.names = tuple(f"field_{i}" for i in range(len(data.dtype.names)))
 
         # access arrays by their name
         return TabularFields(
