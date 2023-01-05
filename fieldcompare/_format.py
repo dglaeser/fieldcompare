@@ -4,6 +4,7 @@ from typing import Optional, Tuple
 from enum import Enum
 
 import colorama
+
 colorama.init()
 
 
@@ -32,15 +33,16 @@ class _AnsiiColorBackend:
     def _setup_color_map(self, use_colors: bool) -> None:
         self._color_map: dict = {}
         for name in dir(colorama.Fore):
-            if not name.startswith('_'):
+            if not name.startswith("_"):
                 self._color_map[name.lower()] = getattr(colorama.Fore, name) if use_colors else ""
 
     def _setup_style_map(self, use_styles: bool) -> None:
         self._style_map: dict = {}
         for name in dir(colorama.Style):
-            if not name.startswith('_'):
+            if not name.startswith("_"):
                 self._style_map[name.lower()] = getattr(colorama.Style, name) if use_styles else ""
         assert self._reset_key in self._style_map
+
 
 _COLOR_BACKEND = _AnsiiColorBackend()
 
@@ -65,9 +67,7 @@ class TextStyle(Enum):
         return str(self.value)
 
 
-def make_colored(text: str,
-                 color: Optional[TextColor] = None,
-                 style: Optional[TextStyle] = None) -> str:
+def make_colored(text: str, color: Optional[TextColor] = None, style: Optional[TextStyle] = None) -> str:
     return _COLOR_BACKEND.make_colored(text, color, style)  # type: ignore
 
 

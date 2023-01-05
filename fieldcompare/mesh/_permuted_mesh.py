@@ -20,10 +20,13 @@ class PermutedMesh:
         cell_permutations: The permutations (index maps) to be applied to the cell connectivities.
                            For each cell type of the grid, a separate permutation is specified.
     """
-    def __init__(self,
-                 mesh: protocols.Mesh,
-                 point_permutation: Optional[Array] = None,
-                 cell_permutations: Optional[Dict[CellType, Array]] = None) -> None:
+
+    def __init__(
+        self,
+        mesh: protocols.Mesh,
+        point_permutation: Optional[Array] = None,
+        cell_permutations: Optional[Dict[CellType, Array]] = None,
+    ) -> None:
         self._mesh = mesh
         self._point_permutation = point_permutation
         self._cell_permutations = cell_permutations
@@ -96,14 +99,13 @@ class PermutedMesh:
             other: mesh against with to check equality.
         """
         return mesh_equal(
-            self, other,
+            self,
+            other,
             abs_tol=self.absolute_tolerance,
             rel_tol=self.relative_tolerance,
         )
 
-    def set_tolerances(self,
-                       abs_tol: Optional[float] = None,
-                       rel_tol: Optional[float] = None) -> None:
+    def set_tolerances(self, abs_tol: Optional[float] = None, rel_tol: Optional[float] = None) -> None:
         """
         Set the tolerances to be used for equality checks against other meshes.
 
@@ -119,6 +121,6 @@ class PermutedMesh:
             return None
         index_map = self._point_permutation
         max_index = max_element(index_map)
-        inverse = make_uninitialized_array(max_index+1, dtype=int)
+        inverse = make_uninitialized_array(max_index + 1, dtype=int)
         inverse[index_map] = make_array(list(range(len(index_map))))
         return inverse

@@ -7,5 +7,6 @@ from ._numpy_utils import Array
 @dataclass
 class Field:
     """Represents a field with a name and an array of values"""
+
     name: str
     values: Array

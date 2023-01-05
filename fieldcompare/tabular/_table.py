@@ -17,9 +17,7 @@ class Table:
         idx_map: The index map with which to reorder/filter the tabular data (optional).
     """
 
-    def __init__(self,
-                 num_rows: Optional[int] = None,
-                 idx_map: Optional[ArrayLike] = None) -> None:
+    def __init__(self, num_rows: Optional[int] = None, idx_map: Optional[ArrayLike] = None) -> None:
         self._idx_map = as_array(idx_map) if idx_map is not None else idx_map
         if self._idx_map is not None:
             self._num_rows = len(self._idx_map)

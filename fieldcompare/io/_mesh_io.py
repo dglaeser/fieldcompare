@@ -9,6 +9,7 @@ try:
     from meshio import extension_to_filetypes as _MESHIO_SUPPORTED_EXTENSIONS
     from meshio.xdmf import TimeSeriesReader as _MeshioTimeSeriesReader
     from ..mesh import meshio_utils
+
     _HAVE_MESHIO = True
 except ImportError:
     _HAVE_MESHIO = False
@@ -36,8 +37,7 @@ def _is_xdmf_sequence(filename: str) -> bool:
         return False
     for domain in filter(lambda d: d.tag == "Domain", root):
         for grid in filter(lambda g: g.tag == "Grid", domain):
-            if grid.get("GridType") == "Collection" \
-                    and grid.get("CollectionType") == "Temporal":
+            if grid.get("GridType") == "Collection" and grid.get("CollectionType") == "Temporal":
                 return True
     return False
 
@@ -45,9 +45,7 @@ def _is_xdmf_sequence(filename: str) -> bool:
 class _XDMFSequenceSource:
     def __init__(self, filename: str) -> None:
         self._meshio_reader = _MeshioTimeSeriesReader(filename)
-        self._mesh = meshio_utils.from_meshio(
-            _MeshIOMesh(*self._meshio_reader.read_points_cells())
-        ).domain
+        self._mesh = meshio_utils.from_meshio(_MeshIOMesh(*self._meshio_reader.read_points_cells())).domain
         self._step_idx = 0
 
     def reset(self) -> None:
@@ -59,11 +57,7 @@ class _XDMFSequenceSource:
 
     def get(self) -> MeshFields:
         _, point_data, cell_data = self._meshio_reader.read_data(self._step_idx)
-        return MeshFields(
-            mesh=self._mesh,
-            point_data=point_data,
-            cell_data=cell_data
-        )
+        return MeshFields(mesh=self._mesh, point_data=point_data, cell_data=cell_data)
 
     @property
     def number_of_steps(self) -> int:

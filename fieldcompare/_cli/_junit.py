@@ -53,10 +53,7 @@ def _add_test_case(test_suite: Element, test: TestResult, classname: str) -> Non
         stderr.text = stdout.text
 
 
-def _set_with_message(test_case: Element,
-                      child: str,
-                      msg: str,
-                      stdout: Optional[str] = None) -> None:
+def _set_with_message(test_case: Element, child: str, msg: str, stdout: Optional[str] = None) -> None:
     test_case = SubElement(test_case, child)
     test_case.set("message", msg)
     if stdout is not None:

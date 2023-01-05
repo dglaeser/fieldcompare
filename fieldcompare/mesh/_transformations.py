@@ -21,7 +21,7 @@ from .._numpy_utils import (
     make_initialized_array,
     make_array,
     concatenate,
-    make_zeros
+    make_zeros,
 )
 
 from .._common import _default_base_tolerance
@@ -44,7 +44,7 @@ def extend_space_dimension_to(space_dimension: int, mesh_fields: protocols.MeshF
         assert len(vector.shape) == 1
         assert vector.shape[0] <= mesh_space_dim
         result = [vector.dtype.type(0) for _ in range(space_dimension)]
-        result[:len(vector)] = vector
+        result[: len(vector)] = vector
         return result
 
     def _resize_vector_field_values(values: Array) -> Array:
@@ -52,10 +52,7 @@ def extend_space_dimension_to(space_dimension: int, mesh_fields: protocols.MeshF
 
     def _resize_tensor_field_values(values: Array) -> Array:
         assert len(values.shape) == 2
-        return make_array([
-            [_resized_vector(row) for row in tensor]
-            for tensor in values
-        ])
+        return make_array([[_resized_vector(row) for row in tensor] for tensor in values])
 
     def _resized_field_values(values: Array) -> Array:
         dim = len(values.shape)
@@ -80,19 +77,17 @@ def extend_space_dimension_to(space_dimension: int, mesh_fields: protocols.MeshF
     extended_mesh = Mesh(
         points=_resize_vector_field_values(mesh_fields.domain.points),
         connectivity=[
-            (cell_type, mesh_fields.domain.connectivity(cell_type))
-            for cell_type in mesh_fields.domain.cell_types
+            (cell_type, mesh_fields.domain.connectivity(cell_type)) for cell_type in mesh_fields.domain.cell_types
         ],
     )
     extended_mesh.set_tolerances(
-        abs_tol=mesh_fields.domain.absolute_tolerance,
-        rel_tol=mesh_fields.domain.relative_tolerance
+        abs_tol=mesh_fields.domain.absolute_tolerance, rel_tol=mesh_fields.domain.relative_tolerance
     )
 
     return MeshFields(
         mesh=extended_mesh,
         point_data={f.name: _resized_field_values(f.values) for f in mesh_fields.point_fields},
-        cell_data=_resized_cell_fields()
+        cell_data=_resized_cell_fields(),
     )
 
 
@@ -106,8 +101,7 @@ def sort(mesh_fields: protocols.MeshFields) -> protocols.MeshFields:
     return sort_cells(sort_points(strip_orphan_points(mesh_fields)))
 
 
-def merge(*mesh_fields: protocols.MeshFields,
-          remove_duplicate_points: bool = True) -> protocols.MeshFields:
+def merge(*mesh_fields: protocols.MeshFields, remove_duplicate_points: bool = True) -> protocols.MeshFields:
     """
     Merge the given mesh fields into a single one.
 
@@ -132,27 +126,19 @@ def strip_orphan_points(fields: protocols.MeshFields) -> protocols.MeshFields:
     """Remove unconnected points from the given mesh fields"""
     return TransformedMeshFields(
         field_data=fields,
-        transformation=lambda mesh: PermutedMesh(
-            mesh=mesh,
-            point_permutation=_unconnected_points_filter_map(mesh)
-        )
+        transformation=lambda mesh: PermutedMesh(mesh=mesh, point_permutation=_unconnected_points_filter_map(mesh)),
     )
 
 
 def sort_points(fields: protocols.MeshFields) -> protocols.MeshFields:
     """Sort the mesh points by their coordinates (lexicographically)"""
     try:
+
         def _get_permuted(mesh: protocols.Mesh) -> PermutedMesh:
-            point_map = _sorting_points_indices(
-                mesh.points,
-                {ct: mesh.connectivity(ct) for ct in mesh.cell_types}
-            )
+            point_map = _sorting_points_indices(mesh.points, {ct: mesh.connectivity(ct) for ct in mesh.cell_types})
             return PermutedMesh(mesh=mesh, point_permutation=point_map)
 
-        return TransformedMeshFields(
-            field_data=fields,
-            transformation=lambda mesh: _get_permuted(mesh)
-        )
+        return TransformedMeshFields(field_data=fields, transformation=lambda mesh: _get_permuted(mesh))
     except ValueError as e:
         if len(_unconnected_points_filter_map(fields.domain)) != len(fields.domain.points):
             raise ValueError(
@@ -172,19 +158,14 @@ def sort_cells(fields: protocols.MeshFields) -> protocols.MeshFields:
         transformation=lambda mesh: PermutedMesh(
             mesh=mesh,
             cell_permutations={
-                ct: _get_cell_corners_sorting_index_map(mesh.connectivity(ct))
-                for ct in mesh.cell_types
-            }
-        )
+                ct: _get_cell_corners_sorting_index_map(mesh.connectivity(ct)) for ct in mesh.cell_types
+            },
+        ),
     )
 
 
 def _unconnected_points_filter_map(mesh: protocols.Mesh) -> Array:
-    is_unconnected = make_initialized_array(
-        size=len(mesh.points),
-        dtype=bool,
-        init_value=True
-    )
+    is_unconnected = make_initialized_array(size=len(mesh.points), dtype=bool, init_value=True)
     for cell_type in mesh.cell_types:
         for point_index in flatten(mesh.connectivity(cell_type)):
             is_unconnected[point_index] = False
@@ -204,10 +185,13 @@ def _get_cell_corners_sorting_index_map(corners_array: Array) -> Array:
 
 def _sorting_points_indices(points, cells) -> Array:
     tolerance = _get_point_cloud_tolerance(points)
+
     def _fuzzy_lt(val1, val2) -> bool:
         return val1 < val2 - tolerance
+
     def _fuzzy_gt(val1, val2) -> bool:
         return val1 > val2 + tolerance
+
     def _fuzzy_lt_point(p1, p2) -> bool:
         for v1, v2 in zip(p1, p2):
             if _fuzzy_lt(v1, v2):
@@ -219,11 +203,9 @@ def _sorting_points_indices(points, cells) -> Array:
     class _IndexedFuzzySortHelper:
         def __init__(self, idx: int) -> None:
             self._idx = idx
+
         def __lt__(self, other) -> bool:
-            return _fuzzy_lt_point(
-                points[self._idx],
-                points[other._idx]
-            )
+            return _fuzzy_lt_point(points[self._idx], points[other._idx])
 
     # let numpy do a quick pre sorting without fuzziness
     idx_map = list(get_lex_sorting_index_map(points))
@@ -242,19 +224,22 @@ def _sorting_points_indices(points, cells) -> Array:
         class _FuzzyPointSortHelper:
             def __init__(self, point):
                 self._point = point
+
             def __lt__(self, other) -> bool:
                 return _fuzzy_lt_point(self._point, other._point)
 
         def _compute_cell_center(cell_type: CellType, cell_index: int):
             cell_corner_list = cells[cell_type][cell_index]
-            return accumulate(points[cell_corner_list], axis=0)/len(cell_corner_list)
+            return accumulate(points[cell_corner_list], axis=0) / len(cell_corner_list)
 
         def _get_min_cell_center_around_point(point_idx):
-            return min([
-                _FuzzyPointSortHelper(_compute_cell_center(cell_type, cell_index))
-                for cell_type in cells
-                for cell_index in point_to_cells_map[cell_type][point_idx]
-            ])
+            return min(
+                [
+                    _FuzzyPointSortHelper(_compute_cell_center(cell_type, cell_index))
+                    for cell_type in cells
+                    for cell_index in point_to_cells_map[cell_type][point_idx]
+                ]
+            )
 
         equal_chunk_start_index = None
         for list_idx, is_zero in enumerate(zero_diffs):
@@ -265,9 +250,7 @@ def _sorting_points_indices(points, cells) -> Array:
                 start = equal_chunk_start_index
                 stop = list_idx + 1
                 equal_point_indices = list(range(start, stop))
-                equal_point_indices.sort(
-                    key=lambda _idx: _get_min_cell_center_around_point(idx_map[_idx])
-                )
+                equal_point_indices.sort(key=lambda _idx: _get_min_cell_center_around_point(idx_map[_idx]))
                 idx_map[start:stop] = [idx_map[_idx] for _idx in equal_point_indices]
                 equal_chunk_start_index = None
     return make_array(idx_map)
@@ -281,10 +264,7 @@ def _get_points_to_cell_indices_map(cells, num_points) -> Dict[CellType, list]:
                 result[_corner_idx].append(cell_idx)
         return result
 
-    return {
-        cell_type: _get_cells_around_points(corners)
-        for cell_type, corners in cells.items()
-    }
+    return {cell_type: _get_cells_around_points(corners) for cell_type, corners in cells.items()}
 
 
 def _get_point_cloud_tolerance(points):
@@ -292,7 +272,7 @@ def _get_point_cloud_tolerance(points):
     _min = [min_element(points[:, i]) for i in range(dim)]
     _max = [max_element(points[:, i]) for i in range(dim)]
     max_delta = max([_max[i] - _min[i] for i in range(dim)])
-    return max_delta*_default_base_tolerance()
+    return max_delta * _default_base_tolerance()
 
 
 def _get_absolute_adjacent_diffs(points: Array) -> Array:
@@ -309,36 +289,30 @@ def _get_indices_with_zero_adjacent_diffs(adjacent_diffs: Array, tolerance: floa
     return is_zero_diff
 
 
-def _merge(fields1: protocols.MeshFields,
-           fields2: protocols.MeshFields,
-           remove_duplicate_points: bool) -> protocols.MeshFields:
-    duplicate_point_idx_map = _map_duplicate_points(
-        source=fields2.domain,
-        target=fields1.domain
-    ) if remove_duplicate_points else {}
+def _merge(
+    fields1: protocols.MeshFields, fields2: protocols.MeshFields, remove_duplicate_points: bool
+) -> protocols.MeshFields:
+    duplicate_point_idx_map = (
+        _map_duplicate_points(source=fields2.domain, target=fields1.domain) if remove_duplicate_points else {}
+    )
     points2_filter = _filter_external_indices(
-        num_values=len(fields2.domain.points),
-        external_indices=duplicate_point_idx_map
+        num_values=len(fields2.domain.points), external_indices=duplicate_point_idx_map
     )
     points2_map = _map_external_indices(
         num_values=len(fields2.domain.points),
         external_indices_map=duplicate_point_idx_map,
-        external_indices_offset=len(fields1.domain.points)
+        external_indices_offset=len(fields1.domain.points),
     )
 
     if len(points2_filter) == 0:
         return fields1
 
     # merged points
-    points = concatenate((
-        fields1.domain.points,
-        fields2.domain.points[points2_filter]
-    ))
+    points = concatenate((fields1.domain.points, fields2.domain.points[points2_filter]))
 
     # merged cell connectivities
     cells_dict: Dict[CellType, Array] = {
-        ct: make_array(fields1.domain.connectivity(ct))
-        for ct in fields1.domain.cell_types
+        ct: make_array(fields1.domain.connectivity(ct)) for ct in fields1.domain.cell_types
     }
     for ct in fields2.domain.cell_types:
         mapped_connectivity = make_array(fields2.domain.connectivity(ct))
@@ -360,10 +334,7 @@ def _merge(fields1: protocols.MeshFields,
         raw_field_name = remove_cell_type_suffix(ct, field.name)
         raw_cell_field_names.add(raw_field_name)
         if raw_field_name in cell_fields[ct]:
-            cell_fields[ct][raw_field_name] = concatenate((
-                cell_fields[ct][raw_field_name],
-                field.values
-            ))
+            cell_fields[ct][raw_field_name] = concatenate((cell_fields[ct][raw_field_name], field.values))
         else:
             cell_fields[ct][raw_field_name] = field.values
 
@@ -376,38 +347,33 @@ def _merge(fields1: protocols.MeshFields,
             point_fields[name] = concatenate((point_fields1[name], point_fields2[name]))
         else:
             zero = make_zeros(shape=point_fields1[name].shape[1:], dtype=point_fields1[name].dtype)
-            point_fields[name] = concatenate((
-                make_array(point_fields1[name]),
-                make_array(
-                    [deepcopy(zero) for _ in range(len(fields2.domain.points))],
-                    dtype=point_fields1[name].dtype
+            point_fields[name] = concatenate(
+                (
+                    make_array(point_fields1[name]),
+                    make_array(
+                        [deepcopy(zero) for _ in range(len(fields2.domain.points))], dtype=point_fields1[name].dtype
+                    ),
                 )
-            ))
+            )
     for name in filter(lambda n: n not in point_fields, point_fields2):
         zero = make_zeros(shape=point_fields2[name].shape[1:], dtype=point_fields2[name].dtype)
-        point_fields[name] = concatenate((
-            make_array(
-                [deepcopy(zero) for _ in range(len(fields1.domain.points))],
-                dtype=point_fields2[name].dtype
-            ),
-            make_array(point_fields2[name])
-        ))
+        point_fields[name] = concatenate(
+            (
+                make_array(
+                    [deepcopy(zero) for _ in range(len(fields1.domain.points))], dtype=point_fields2[name].dtype
+                ),
+                make_array(point_fields2[name]),
+            )
+        )
 
     return MeshFields(
-        mesh=Mesh(
-            points=points,
-            connectivity=((ct, connectivity) for ct, connectivity in cells_dict.items())
-        ),
+        mesh=Mesh(points=points, connectivity=((ct, connectivity) for ct, connectivity in cells_dict.items())),
         point_data={name: values for name, values in point_fields.items()},
-        cell_data={
-            name: [cell_fields[ct][name] for ct in cells_dict]
-            for name in raw_cell_field_names
-        }
+        cell_data={name: [cell_fields[ct][name] for ct in cells_dict] for name in raw_cell_field_names},
     )
 
 
-def _map_duplicate_points(source: protocols.Mesh,
-                          target: protocols.Mesh) -> Dict[int, int]:
+def _map_duplicate_points(source: protocols.Mesh, target: protocols.Mesh) -> Dict[int, int]:
     sort_idx_map_source = get_lex_sorting_index_map(source.points)
 
     def _is_lex_smaller(p1: Array, p2: Array) -> bool:
@@ -444,9 +410,7 @@ def _filter_external_indices(num_values: int, external_indices) -> Array:
     return make_array([i for i in range(num_values) if i not in external_indices])
 
 
-def _map_external_indices(num_values: int,
-                          external_indices_map: Dict[int, int],
-                          external_indices_offset: int) -> Array:
+def _map_external_indices(num_values: int, external_indices_map: Dict[int, int], external_indices_offset: int) -> Array:
     result = make_array([i for i in range(num_values)])
     mapped_index_offset = 0
     for i in range(num_values):

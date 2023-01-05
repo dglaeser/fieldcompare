@@ -4,14 +4,7 @@ from ._mesh import Mesh
 from ._cell_type import CellType, CellTypes
 from ._mesh_fields import MeshFields
 from ._mesh_fields_comparator import MeshFieldsComparator
-from ._transformations import (
-    strip_orphan_points,
-    sort_points,
-    sort_cells,
-    sort,
-    merge,
-    extend_space_dimension_to
-)
+from ._transformations import strip_orphan_points, sort_points, sort_cells, sort, merge, extend_space_dimension_to
 
 __all__ = [
     "Mesh",
@@ -22,5 +15,5 @@ __all__ = [
     "sort_points",
     "sort_cells",
     "sort",
-    "merge"
+    "merge",
 ]

@@ -31,7 +31,7 @@ class VTUReader(VTKXMLReader):
         types = self._get_data_array_values(self._mesh_data_arrays["types"])
         ocurring_types = np.unique(types)
 
-        assert len(points) == self._num_points*3
+        assert len(points) == self._num_points * 3
         assert len(offsets) == self._num_cells
         assert len(types) == self._num_cells
 
@@ -39,7 +39,7 @@ class VTUReader(VTKXMLReader):
         offsets = np.append(np.array([0], dtype=offsets.dtype), offsets)
 
         def _num_corners(cell_type_idx) -> int:
-            return offsets[cell_type_idx+1] - offsets[cell_type_idx]
+            return offsets[cell_type_idx + 1] - offsets[cell_type_idx]
 
         def _cell_type_indices(cell_type) -> np.ndarray:
             indices = np.equal(types, cell_type).nonzero()
@@ -54,22 +54,17 @@ class VTUReader(VTKXMLReader):
             return corners[
                 np.linspace(
                     offsets[indices],
-                    offsets[indices]+num_cell_type_corners,
+                    offsets[indices] + num_cell_type_corners,
                     num=num_cell_type_corners,
                     endpoint=False,
                     axis=1,
-                    dtype=indices.dtype
+                    dtype=indices.dtype,
                 )
             ]
 
         return Mesh(
-            points=points.reshape(int(len(points)/3), 3),
-            connectivity=(
-                (
-                    vtk_cell_type_index_to_cell_type(t),
-                    _cell_type_corners_array(t)
-                ) for t in ocurring_types
-            )
+            points=points.reshape(int(len(points) / 3), 3),
+            connectivity=((vtk_cell_type_index_to_cell_type(t), _cell_type_corners_array(t)) for t in ocurring_types),
         ), {vtk_cell_type_index_to_cell_type(t): _cell_type_indices(t) for t in ocurring_types}
 
     def _get_mesh_data_arrays(self) -> Dict[str, ElementTree.Element]:
@@ -78,7 +73,7 @@ class VTUReader(VTKXMLReader):
             **{
                 data_array.attrib["Name"]: data_array
                 for data_array in self._get_element("UnstructuredGrid/Piece/Cells")
-            }
+            },
         }
 
 

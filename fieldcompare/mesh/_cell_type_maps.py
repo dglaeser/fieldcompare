@@ -67,9 +67,7 @@ _CELL_TYPE_INDEX_TO_STR = {
     78: "BEZIER_TETRAHEDRON",
     79: "BEZIER_HEXAHEDRON",
     80: "BEZIER_WEDGE",
-    81: "BEZIER_PYRAMID"
+    81: "BEZIER_PYRAMID",
 }
 
-_CELL_TYPE_STR_TO_INDEX = {
-    v: k for k, v in _CELL_TYPE_INDEX_TO_STR.items()
-}
+_CELL_TYPE_STR_TO_INDEX = {v: k for k, v in _CELL_TYPE_INDEX_TO_STR.items()}

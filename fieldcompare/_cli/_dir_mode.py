@@ -21,7 +21,7 @@ from ._common import (
     _parse_field_tolerances,
     _log_suite_summary,
     _include_all,
-    _exclude_all
+    _exclude_all,
 )
 
 from ._file_mode import (
@@ -29,7 +29,7 @@ from ._file_mode import (
     _add_field_options_args,
     _add_field_filter_options_args,
     _add_mesh_reorder_options_args,
-    _add_junit_export_arg
+    _add_junit_export_arg,
 )
 
 from ._test_suite import TestSuite, TestResult, TestStatus
@@ -38,42 +38,30 @@ from ._file_comparison import FileComparisonOptions, FileComparison, _suite_name
 
 def _add_arguments(parser: ArgumentParser):
     parser.add_argument(
-        "source-dir",
-        type=str,
-        help="The directory containing the files to be compared against references"
+        "source-dir", type=str, help="The directory containing the files to be compared against references"
     )
-    parser.add_argument(
-        "reference-dir",
-        type=str,
-        help="The directory with the reference files"
-    )
+    parser.add_argument("reference-dir", type=str, help="The directory with the reference files")
     parser.add_argument(
         "--ignore-missing-source-files",
         required=False,
         action="store_true",
-        help="Use this flag to suppress errors from missing source files"
+        help="Use this flag to suppress errors from missing source files",
     )
     parser.add_argument(
         "--ignore-missing-reference-files",
         required=False,
         action="store_true",
-        help="Use this flag to suppress errors from missing reference files"
+        help="Use this flag to suppress errors from missing reference files",
     )
     parser.add_argument(
         "--include-files",
         required=False,
         action="append",
         help="Pass a Unix-style wildcard pattern to filter files to be compared. This option can "
-             "be used multiple times. Files that match any of the patterns are considered. "
-             "If this option is not specified, all files found in the directories are considered."
+        "be used multiple times. Files that match any of the patterns are considered. "
+        "If this option is not specified, all files found in the directories are considered.",
     )
-    parser.add_argument(
-        "--verbosity",
-        required=False,
-        default=2,
-        type=int,
-        help="Set the verbosity level"
-    )
+    parser.add_argument("--verbosity", required=False, default=2, type=int, help="Set the verbosity level")
     _add_field_options_args(parser)
     _add_field_filter_options_args(parser)
     _add_tolerance_options_args(parser)
@@ -86,16 +74,13 @@ def _run(args: dict, in_logger: CLILogger) -> int:
 
     res_dir = args["source-dir"]
     ref_dir = args["reference-dir"]
-    logger.log("Comparing files in the directories '{}' and '{}'\n\n".format(
-        highlighted(res_dir),
-        highlighted(ref_dir)),
-        verbosity_level=1
+    logger.log(
+        "Comparing files in the directories '{}' and '{}'\n\n".format(highlighted(res_dir), highlighted(ref_dir)),
+        verbosity_level=1,
     )
 
     categories = _categorize_files(args, res_dir, ref_dir)
-    comparisons = _do_file_comparisons(
-        args, categories.files_to_compare, logger
-    )
+    comparisons = _do_file_comparisons(args, categories.files_to_compare, logger)
 
     _add_unhandled_comparisons(args, categories, comparisons)
 
@@ -106,10 +91,7 @@ def _run(args: dict, in_logger: CLILogger) -> int:
         ElementTree(suites).write(args["junit_xml"], xml_declaration=True)
 
     logger.log("\n")
-    _log_suite_summary(
-        list(suite for _, _, suite in comparisons), "file",
-        logger
-    )
+    _log_suite_summary(list(suite for _, _, suite in comparisons), "file", logger)
 
     passed = all(comp for _, _, comp in comparisons)
     return _bool_to_exit_code(passed)
@@ -142,15 +124,14 @@ def _categorize_files(args: dict, res_dir: str, ref_dir: str) -> CategorizedFile
         missing_sources=missing_sources,
         missing_references=missing_references,
         filtered_files=dropped_matches,
-        unsupported_files=unsupported_files
+        unsupported_files=unsupported_files,
     )
 
 
 FileComparisons = List[Tuple[str, str, TestSuite]]
 
-def _do_file_comparisons(args,
-                         filenames: Iterable[str],
-                         logger: CLILogger) -> FileComparisons:
+
+def _do_file_comparisons(args, filenames: Iterable[str], logger: CLILogger) -> FileComparisons:
     _rel_tol_map = _parse_field_tolerances(args.get("relative_tolerance"))
     _abs_tol_map = _parse_field_tolerances(args.get("absolute_tolerance"))
 
@@ -161,11 +142,7 @@ def _do_file_comparisons(args,
         ref_file = join(args["reference-dir"], filename)
 
         logger.log(("\n" if i > 0 else ""), verbosity_level=1)
-        logger.log(
-            f"Comparing '{highlighted(res_file)}'\n"
-            f"      and '{highlighted(ref_file)}'\n",
-            verbosity_level=1
-        )
+        logger.log(f"Comparing '{highlighted(res_file)}'\n" f"      and '{highlighted(ref_file)}'\n", verbosity_level=1)
 
         opts = FileComparisonOptions(
             ignore_missing_source_fields=args["ignore_missing_source_fields"],
@@ -177,17 +154,23 @@ def _do_file_comparisons(args,
             field_exclusion_filter=PatternFilter(args["exclude_fields"]) if args["exclude_fields"] else _exclude_all(),
             disable_mesh_reordering=True if args["disable_mesh_reordering"] else False,
             disable_mesh_space_dimension_matching=True if args["disable_mesh_space_dimension_matching"] else False,
-            disable_unconnected_points_removal=True if args["disable_mesh_orphan_point_removal"] else False
+            disable_unconnected_points_removal=True if args["disable_mesh_orphan_point_removal"] else False,
         )
         try:
             sub_logger = logger.with_prefix("  ")
             comparator = FileComparison(opts, sub_logger.with_modified_verbosity(-1))
             cpu_time, test_suite = _measure_time(comparator)(res_file, ref_file)
-            file_comparisons.append((filename, timestamp, test_suite.with_overridden(
-                cpu_time=cpu_time,
-                name=_suite_name(res_file),
-                shortlog=_get_failing_field_test_names(test_suite)
-            )))
+            file_comparisons.append(
+                (
+                    filename,
+                    timestamp,
+                    test_suite.with_overridden(
+                        cpu_time=cpu_time,
+                        name=_suite_name(res_file),
+                        shortlog=_get_failing_field_test_names(test_suite),
+                    ),
+                )
+            )
             sub_logger.log(
                 "File comparison {} with {} {} / {} {} / {} {}\n".format(
                     get_status_string(bool(test_suite)),
@@ -196,24 +179,22 @@ def _do_file_comparisons(args,
                     sum(1 for t in test_suite if not t.status),
                     get_status_string(False),
                     sum(1 for t in test_suite if t.status and t.status != TestStatus.passed),
-                    as_warning("SKIPPED")
+                    as_warning("SKIPPED"),
                 ),
-                verbosity_level=1
+                verbosity_level=1,
             )
         except Exception as e:
             output = f"Error upon file comparison: {str(e)}"
             logger.log(output, verbosity_level=1)
-            file_comparisons.append((
-                filename,
-                timestamp,
-                TestSuite(
-                    tests=[],
-                    name=filename,
-                    status=TestStatus.error,
-                    shortlog="Exception raised",
-                    stdout=output
+            file_comparisons.append(
+                (
+                    filename,
+                    timestamp,
+                    TestSuite(
+                        tests=[], name=filename, status=TestStatus.error, shortlog="Exception raised", stdout=output
+                    ),
                 )
-            ))
+            )
 
     return file_comparisons
 
@@ -233,37 +214,20 @@ def _get_failing_field_test_names(test_suite: TestSuite) -> Optional[str]:
     return names_string
 
 
-def _add_unhandled_comparisons(args: dict,
-                               categories: CategorizedFiles,
-                               comparisons: FileComparisons) -> None:
+def _add_unhandled_comparisons(args: dict, categories: CategorizedFiles, comparisons: FileComparisons) -> None:
     _add_skipped_file_comparisons(
-        comparisons,
-        categories.missing_sources,
-        "Missing source file",
-        not args["ignore_missing_source_files"]
+        comparisons, categories.missing_sources, "Missing source file", not args["ignore_missing_source_files"]
     )
     _add_skipped_file_comparisons(
-        comparisons,
-        categories.missing_references,
-        "Missing reference file",
-        not args["ignore_missing_reference_files"]
+        comparisons, categories.missing_references, "Missing reference file", not args["ignore_missing_reference_files"]
     )
-    _add_skipped_file_comparisons(
-        comparisons,
-        categories.unsupported_files,
-        "Unsupported file format"
-    )
-    _add_skipped_file_comparisons(
-        comparisons,
-        categories.filtered_files,
-        "Filtered out by given wildcard patterns"
-    )
+    _add_skipped_file_comparisons(comparisons, categories.unsupported_files, "Unsupported file format")
+    _add_skipped_file_comparisons(comparisons, categories.filtered_files, "Filtered out by given wildcard patterns")
 
 
-def _add_skipped_file_comparisons(comparisons: FileComparisons,
-                                  names: List[str],
-                                  reason: str,
-                                  treat_as_failure: bool = False):
+def _add_skipped_file_comparisons(
+    comparisons: FileComparisons, names: List[str], reason: str, treat_as_failure: bool = False
+):
     status = TestStatus.failed if treat_as_failure else TestStatus.skipped
     for name in names:
         # insert a dummy testcase such that junit readers show a (skipped/failed) test
@@ -271,6 +235,6 @@ def _add_skipped_file_comparisons(comparisons: FileComparisons,
             tests=[TestResult("file comparison", status, shortlog=reason, stdout=reason, cpu_time=None)],
             name=name,
             status=status,
-            shortlog=reason
+            shortlog=reason,
         )
         comparisons.append((name, datetime.now().isoformat(), suite))

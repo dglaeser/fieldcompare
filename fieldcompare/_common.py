@@ -10,6 +10,8 @@ def _default_base_tolerance() -> float:
 
 
 T = TypeVar("T")
+
+
 def _measure_time(action: Callable[..., T]) -> Callable[..., Tuple[float, T]]:
     @wraps(action)
     def _wrapper_measure_time(*args, **kwargs) -> Tuple[float, T]:
@@ -17,4 +19,5 @@ def _measure_time(action: Callable[..., T]) -> Callable[..., Tuple[float, T]]:
         result = action(*args, **kwargs)
         after = time()
         return (after - before), result
+
     return _wrapper_measure_time

@@ -16,28 +16,14 @@ from ._common import (
     _parse_field_tolerances,
     _include_all,
     _exclude_all,
-    _log_suite_summary
+    _log_suite_summary,
 )
 
 
 def _add_arguments(parser: ArgumentParser):
-    parser.add_argument(
-        "source",
-        type=str,
-        help="The file which is to be compared against a reference file"
-    )
-    parser.add_argument(
-        "reference",
-        type=str,
-        help="The reference file against which to compare"
-    )
-    parser.add_argument(
-        "--verbosity",
-        required=False,
-        default=2,
-        type=int,
-        help="Set the verbosity level"
-    )
+    parser.add_argument("source", type=str, help="The file which is to be compared against a reference file")
+    parser.add_argument("reference", type=str, help="The reference file against which to compare")
+    parser.add_argument("--verbosity", required=False, default=2, type=int, help="Set the verbosity level")
     _add_field_options_args(parser)
     _add_tolerance_options_args(parser)
     _add_field_filter_options_args(parser)
@@ -59,7 +45,7 @@ def _run(args: dict, in_logger: CLILogger) -> int:
         field_exclusion_filter=PatternFilter(args["exclude_fields"]) if args["exclude_fields"] else _exclude_all(),
         disable_mesh_reordering=True if args["disable_mesh_reordering"] else False,
         disable_mesh_space_dimension_matching=True if args["disable_mesh_space_dimension_matching"] else False,
-        disable_unconnected_points_removal=True if args["disable_mesh_orphan_point_removal"] else False
+        disable_unconnected_points_removal=True if args["disable_mesh_orphan_point_removal"] else False,
     )
 
     try:
@@ -70,9 +56,7 @@ def _run(args: dict, in_logger: CLILogger) -> int:
         _log_suite_summary(test_suite, "field", logger)
 
         if args["junit_xml"] is not None:
-            ElementTree(
-                as_junit_xml_element(test_suite.with_overridden(cpu_time=cpu_time), timestamp)
-            ).write(
+            ElementTree(as_junit_xml_element(test_suite.with_overridden(cpu_time=cpu_time), timestamp)).write(
                 args["junit_xml"], xml_declaration=True
             )
 
@@ -89,26 +73,26 @@ def _add_mesh_reorder_options_args(parser: ArgumentParser) -> None:
         required=False,
         action="store_true",
         help="For fields defined on meshes, the mesh is reordered in a unique way in case differences "
-             "in the point coordinates or the mesh connectivity are detected. This ensures that the "
-             "comparisons pass also for meshes that are differently ordered when the field data matches. "
-             "Use this flag to disable this behaviour in case you want to test for identical mesh ordering."
+        "in the point coordinates or the mesh connectivity are detected. This ensures that the "
+        "comparisons pass also for meshes that are differently ordered when the field data matches. "
+        "Use this flag to disable this behaviour in case you want to test for identical mesh ordering.",
     )
     parser.add_argument(
         "--disable-mesh-orphan-point-removal",
         required=False,
         action="store_true",
         help="Per default, orphan (unconnected) points are removed from the mesh before a reordering "
-             "of the points is carried out, since on meshes with multiple orphan points at the same "
-             "position there is no way to sort them uniquely. Use this flag to deactivate this behaviour "
-             "in case you want to test the orphan points also on reordered meshes. Keep in mind that this "
-             "may not work on meshes where orphan points coincide with any other points."
+        "of the points is carried out, since on meshes with multiple orphan points at the same "
+        "position there is no way to sort them uniquely. Use this flag to deactivate this behaviour "
+        "in case you want to test the orphan points also on reordered meshes. Keep in mind that this "
+        "may not work on meshes where orphan points coincide with any other points.",
     )
     parser.add_argument(
         "--disable-mesh-space-dimension-matching",
         required=False,
         action="store_true",
         help="Per default, the space dimension of meshes and associated vector/tensor fields is matched by "
-             "filling up the fields with zeros. Use this flag to deactivate this behaviour."
+        "filling up the fields with zeros. Use this flag to deactivate this behaviour.",
     )
 
 
@@ -118,15 +102,15 @@ def _add_field_filter_options_args(parser: ArgumentParser) -> None:
         required=False,
         action="append",
         help="Pass a Unix-style wildcard pattern to filter fields to be compared. This option can "
-             "be used multiple times. Field names that match any of the patterns are considered. "
-             "If this argument is not specified, all fields are considered."
+        "be used multiple times. Field names that match any of the patterns are considered. "
+        "If this argument is not specified, all fields are considered.",
     )
     parser.add_argument(
         "--exclude-fields",
         required=False,
         action="append",
         help="Pass a Unix-style wildcard pattern to exclude fields from the comparisons. This option can "
-             "be used multiple times. Field names that match any of the patterns are excluded. "
+        "be used multiple times. Field names that match any of the patterns are excluded. ",
     )
 
 
@@ -135,53 +119,53 @@ def _add_field_options_args(parser: ArgumentParser) -> None:
         "--ignore-missing-source-fields",
         required=False,
         action="store_true",
-        help="Use this flag to treat missing source fields as warnings only"
+        help="Use this flag to treat missing source fields as warnings only",
     )
     parser.add_argument(
         "--ignore-missing-reference-fields",
         required=False,
         action="store_true",
-        help="Use this flag to treat missing reference fields as warnings only"
+        help="Use this flag to treat missing reference fields as warnings only",
     )
     parser.add_argument(
         "--ignore-missing-sequence-steps",
         required=False,
         action="store_true",
-        help="Treat missing sequence steps as warning and compare only the common steps"
+        help="Treat missing sequence steps as warning and compare only the common steps",
     )
     parser.add_argument(
         "--force-sequence-comparison",
         required=False,
         action="store_true",
         help="This flag forces the comparison of common steps in two sequences although the "
-             "sequences have different lengths. The comparison is considered failed because "
-             "of the different sequences lengths, but the output of the comparison of common "
-             "steps is produced. To treat differing lengths as warnings, see 'ignore-missing-sequence-steps"
+        "sequences have different lengths. The comparison is considered failed because "
+        "of the different sequences lengths, but the output of the comparison of common "
+        "steps is produced. To treat differing lengths as warnings, see 'ignore-missing-sequence-steps",
     )
 
 
 def _add_tolerance_options_args(parser: ArgumentParser) -> None:
     parser.add_argument(
-        "-rtol", "--relative-tolerance",
+        "-rtol",
+        "--relative-tolerance",
         required=False,
         nargs="*",
         help="Specify the relative tolerance to be used. "
-             "Use e.g. '-rtol pressure:1e-3' to set the tolerance for a field named 'pressure', "
-             "or '-rtol domain:1e-3' to define the tolerance used when checking the domains for equality."
+        "Use e.g. '-rtol pressure:1e-3' to set the tolerance for a field named 'pressure', "
+        "or '-rtol domain:1e-3' to define the tolerance used when checking the domains for equality.",
     )
     parser.add_argument(
-        "-atol", "--absolute-tolerance",
+        "-atol",
+        "--absolute-tolerance",
         required=False,
         nargs="*",
         help="Specify the absolute tolerance to be used. "
-             "Use e.g. '-atol pressure:1e-3' to set the tolerance for a field named 'pressure' "
-             "or '-atol domain:1e-3' to define the tolerance used when checking the domains for equality."
+        "Use e.g. '-atol pressure:1e-3' to set the tolerance for a field named 'pressure' "
+        "or '-atol domain:1e-3' to define the tolerance used when checking the domains for equality.",
     )
 
 
 def _add_junit_export_arg(parser: ArgumentParser) -> None:
     parser.add_argument(
-        "--junit-xml",
-        required=False,
-        help="Pass the filename into which a junit report should be written"
+        "--junit-xml", required=False, help="Pass the filename into which a junit report should be written"
     )

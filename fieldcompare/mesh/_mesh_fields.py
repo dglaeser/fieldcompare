@@ -2,12 +2,7 @@
 
 from __future__ import annotations
 from itertools import chain
-from typing import (
-    Iterator, Iterable,
-    Dict, List, Tuple,
-    Callable, Protocol,
-    runtime_checkable
-)
+from typing import Iterator, Iterable, Dict, List, Tuple, Callable, Protocol, runtime_checkable
 
 from .._numpy_utils import Array, as_array
 from .._field import Field
@@ -42,20 +37,18 @@ class MeshFields(fc_protocols.FieldData):
                    the values for the cells of a particular cell type. The ordering of the
                    arrays has to follow the order of the cell types as exposed by the mesh.
     """
-    def __init__(self,
-                 mesh: protocols.Mesh,
-                 point_data: Dict[str, Array] = {},
-                 cell_data: Dict[str, List[Array]] = {}) -> None:
+
+    def __init__(
+        self, mesh: protocols.Mesh, point_data: Dict[str, Array] = {}, cell_data: Dict[str, List[Array]] = {}
+    ) -> None:
         self._mesh = mesh
-        self._point_data = {
-            name: self._make_point_values(data)
-            for name, data in point_data.items()
-        }
+        self._point_data = {name: self._make_point_values(data) for name, data in point_data.items()}
         self._cell_data = {
             name: {
                 cell_type: self._make_cell_values(cell_type, cell_values)
                 for cell_type, cell_values in zip(mesh.cell_types, cell_data[name])
-            } for name in cell_data
+            }
+            for name in cell_data
         }
 
     @property
@@ -81,13 +74,7 @@ class MeshFields(fc_protocols.FieldData):
     def cell_fields_types(self) -> Iterable[Tuple[Field, CellType]]:
         """Return a range over cell fields + associated cell type."""
         return (
-            (
-                Field(
-                    make_cell_type_field_name(cell_type, name),
-                    self._cell_data[name][cell_type]
-                ),
-                cell_type
-            )
+            (Field(make_cell_type_field_name(cell_type, name), self._cell_data[name][cell_type]), cell_type)
             for cell_type in self._mesh.cell_types
             for name in self._cell_data
         )
@@ -95,18 +82,13 @@ class MeshFields(fc_protocols.FieldData):
     def _make_point_values(self, values: Array) -> Array:
         values = as_array(values)
         if values.shape[0] != self._mesh.points.shape[0]:
-            raise ValueError(
-                "Length of the given point data does "
-                "not match number of mesh points")
+            raise ValueError("Length of the given point data does " "not match number of mesh points")
         return values
 
     def _make_cell_values(self, cell_type: CellType, values: Array) -> Array:
         values = as_array(values)
         if values.shape[0] != self._mesh.connectivity(cell_type).shape[0]:
-            raise ValueError(
-                f"Length of the given cell data for '{cell_type}' "
-                "does not match the number of cells."
-            )
+            raise ValueError(f"Length of the given cell data for '{cell_type}' " "does not match the number of cells.")
         return values
 
 
@@ -118,6 +100,7 @@ class TransformedMeshFields(fc_protocols.FieldData):
         field_data: The untransformed mesh fields.
         transformation: The mesh transformation to be applied.
     """
+
     @runtime_checkable
     class TransformedMesh(protocols.Mesh, Protocol):
         def transform_point_data(self, data: Array) -> Array:
@@ -139,14 +122,13 @@ class TransformedMeshFields(fc_protocols.FieldData):
             """
             ...
 
-    def __init__(self,
-                 field_data: protocols.MeshFields,
-                 transformation: Callable[[protocols.Mesh], TransformedMesh]) -> None:
+    def __init__(
+        self, field_data: protocols.MeshFields, transformation: Callable[[protocols.Mesh], TransformedMesh]
+    ) -> None:
         self._field_data = field_data
         self._mesh = transformation(self._field_data.domain)
         self._mesh.set_tolerances(
-            abs_tol=self._field_data.domain.absolute_tolerance,
-            rel_tol=self._field_data.domain.relative_tolerance
+            abs_tol=self._field_data.domain.absolute_tolerance, rel_tol=self._field_data.domain.relative_tolerance
         )
 
     @property
@@ -161,10 +143,7 @@ class TransformedMeshFields(fc_protocols.FieldData):
     @property
     def point_fields(self) -> Iterable[fc_protocols.Field]:
         """Return a range over the contained point fields"""
-        return (
-            self._get_permuted_point_field(_field)
-            for _field in self._field_data.point_fields
-        )
+        return (self._get_permuted_point_field(_field) for _field in self._field_data.point_fields)
 
     @property
     def cell_fields(self) -> Iterable[Field]:
@@ -180,13 +159,7 @@ class TransformedMeshFields(fc_protocols.FieldData):
         )
 
     def _get_permuted_point_field(self, field: fc_protocols.Field) -> fc_protocols.Field:
-        return Field(
-            field.name,
-            self._mesh.transform_point_data(field.values)
-        )
+        return Field(field.name, self._mesh.transform_point_data(field.values))
 
     def _get_permuted_cell_field(self, cell_type: CellType, field: fc_protocols.Field) -> Field:
-        return Field(
-            field.name,
-            self._mesh.transform_cell_data(cell_type, field.values)
-        )
+        return Field(field.name, self._mesh.transform_cell_data(cell_type, field.values))

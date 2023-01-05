@@ -12,13 +12,7 @@ from .protocols import Field, FieldData, Predicate
 from ._matching import MatchResult, find_matches_by_name
 from ._common import _measure_time
 from ._field import Field as FieldImpl
-from ._format import (
-    remove_annotation,
-    as_error,
-    as_success,
-    highlighted,
-    remove_color_codes
-)
+from ._format import remove_annotation, as_error, as_success, highlighted, remove_color_codes
 
 
 class Status(Enum):
@@ -36,6 +30,7 @@ class Status(Enum):
 
 class FieldComparisonStatus(Enum):
     """Represents the status of a single field comparison."""
+
     passed = auto()
     failed = auto()
     error = auto()
@@ -55,6 +50,7 @@ class FieldComparisonStatus(Enum):
 @dataclass
 class FieldComparison:
     """Stores information on the results of a single field comparison."""
+
     name: str
     status: FieldComparisonStatus
     predicate: str
@@ -79,9 +75,8 @@ class FieldComparisonSuite:
         domain_eq_check: Result of the domain equality check
         comparisons: Results of all performed field comparisons.
     """
-    def __init__(self,
-                 domain_eq_check: PredicateResult,
-                 comparisons: List[FieldComparison] = []) -> None:
+
+    def __init__(self, domain_eq_check: PredicateResult, comparisons: List[FieldComparison] = []) -> None:
         self._domain_eq_check = domain_eq_check
         self._passed: List[FieldComparison] = []
         self._failed: List[FieldComparison] = []
@@ -166,9 +161,7 @@ class FieldComparisonSuite:
         return len(self._passed)
 
 
-def field_comparison_report(comparison: FieldComparison,
-                            use_colors: bool = True,
-                            verbosity: int = 1) -> str:
+def field_comparison_report(comparison: FieldComparison, use_colors: bool = True, verbosity: int = 1) -> str:
     """
     Returns a report for a given :class:`.FieldComparison`.
 
@@ -177,10 +170,11 @@ def field_comparison_report(comparison: FieldComparison,
         use_colors: Switch on/off colors.
         verbosity: Control the verbosity of the report.
     """
+
     def _get_indented(message: str, indentation_level: int = 0) -> str:
         if indentation_level > 0:
             lines = message.rstrip("\n").split("\n")
-            lines = [" " + "  "*(indentation_level-1) + f"-- {line}" for line in lines]
+            lines = [" " + "  " * (indentation_level - 1) + f"-- {line}" for line in lines]
             message = "\n".join(lines)
         return message
 
@@ -188,15 +182,14 @@ def field_comparison_report(comparison: FieldComparison,
     report = ""
     if verbosity >= 1:
         report += _get_indented(
-            f"Comparing the field '{highlighted(comparison.name)}': {status_string}",
-            indentation_level=1
+            f"Comparing the field '{highlighted(comparison.name)}': {status_string}", indentation_level=1
         )
     if verbosity >= 2 or (verbosity >= 1 and not comparison):
         report += "\n"
         report += _get_indented(
             f"Report: {comparison.report if comparison.report else 'n/a'}\n"
             f"Predicate: {comparison.predicate if comparison.predicate else 'n/a'}",
-            indentation_level=2
+            indentation_level=2,
         )
     if not use_colors:
         report = remove_color_codes(report)
@@ -212,26 +205,21 @@ class DefaultFieldComparisonCallback:
         use_colors: Switch on/off colors.
         stream: Stream to write to (optional). Defaults to stdout.
     """
-    def __init__(self,
-                 verbosity: int = 1,
-                 use_colors: bool = True,
-                 stream: TextIO = sys.stdout) -> None:
+
+    def __init__(self, verbosity: int = 1, use_colors: bool = True, stream: TextIO = sys.stdout) -> None:
         self._verbosity = verbosity
         self._use_colors = use_colors
         self._stream = stream
 
     def __call__(self, result: FieldComparison) -> None:
         """Write info on the performed field comparison into the given stream."""
-        msg = field_comparison_report(
-            comparison=result,
-            use_colors=self._use_colors,
-            verbosity=self._verbosity
-        )
+        msg = field_comparison_report(comparison=result, use_colors=self._use_colors, verbosity=self._verbosity)
         self._stream.write(f"{msg}\n" if msg else "")
 
 
 PredicateSelector = Callable[[Field, Field], Predicate]
 FieldComparisonCallback = Callable[[FieldComparison], Any]
+
 
 class FieldDataComparator:
     """
@@ -243,11 +231,14 @@ class FieldDataComparator:
         field_inclusion_filter: Filter to select the fields to be compared (optional).
         field_exclusion_filter: Filter to exclude fields from being compared (optional).
     """
-    def __init__(self,
-                 source: FieldData,
-                 reference: FieldData,
-                 field_inclusion_filter: Callable[[str], bool] = lambda _: True,
-                 field_exclusion_filter: Callable[[str], bool] = lambda _: False) -> None:
+
+    def __init__(
+        self,
+        source: FieldData,
+        reference: FieldData,
+        field_inclusion_filter: Callable[[str], bool] = lambda _: True,
+        field_exclusion_filter: Callable[[str], bool] = lambda _: False,
+    ) -> None:
         self._source = source
         self._reference = reference
         self._field_inclusion_filter = field_inclusion_filter
@@ -256,7 +247,7 @@ class FieldDataComparator:
     def __call__(
         self,
         predicate_selector: PredicateSelector = lambda _, __: DefaultEquality(),
-        fieldcomp_callback: FieldComparisonCallback = DefaultFieldComparisonCallback()
+        fieldcomp_callback: FieldComparisonCallback = DefaultFieldComparisonCallback(),
     ) -> FieldComparisonSuite:
         """
         Compare all fields in the field data objects using the given predicates.
@@ -285,24 +276,19 @@ class FieldDataComparator:
         filtered = []
         matching_pairs = []
         for i, (source, target) in enumerate(query.matches):
-            if not self._field_inclusion_filter(source.name) \
-                    or self._field_exclusion_filter(source.name):
+            if not self._field_inclusion_filter(source.name) or self._field_exclusion_filter(source.name):
                 filtered.append(source)
             else:
                 matching_pairs.append((source, target))
         query.matches = matching_pairs
         return query, filtered
 
-    def _compare_matches(self,
-                         query: MatchResult,
-                         predicate_selector: PredicateSelector,
-                         fieldcomp_callback: FieldComparisonCallback) -> List[FieldComparison]:
+    def _compare_matches(
+        self, query: MatchResult, predicate_selector: PredicateSelector, fieldcomp_callback: FieldComparisonCallback
+    ) -> List[FieldComparison]:
         comparisons = []
         for source, reference in query.matches:
-            predicate = predicate_selector(
-                self._without_annotation(source),
-                self._without_annotation(reference)
-            )
+            predicate = predicate_selector(self._without_annotation(source), self._without_annotation(reference))
             try:
                 comp = self._perform_comparison(source, reference, predicate)
             except Exception as e:
@@ -312,34 +298,25 @@ class FieldDataComparator:
         return comparisons
 
     def _without_annotation(self, field: Field) -> Field:
-        return FieldImpl(
-            name=remove_annotation(field.name),
-            values=field.values
-        )
+        return FieldImpl(name=remove_annotation(field.name), values=field.values)
 
-    def _perform_comparison(self,
-                            source: Field,
-                            reference: Field,
-                            predicate: Predicate) -> FieldComparison:
+    def _perform_comparison(self, source: Field, reference: Field, predicate: Predicate) -> FieldComparison:
         runtime, result = _measure_time(predicate)(source.values, reference.values)
         return FieldComparison(
             name=source.name,
             status=FieldComparisonStatus.passed if result else FieldComparisonStatus.failed,
             predicate=str(predicate),
             report=result.report,
-            cpu_time=runtime
+            cpu_time=runtime,
         )
 
-    def _make_exception_comparison(self,
-                                   name: str,
-                                   predicate: Predicate,
-                                   exception: Exception) -> FieldComparison:
+    def _make_exception_comparison(self, name: str, predicate: Predicate, exception: Exception) -> FieldComparison:
         return FieldComparison(
             name=name,
             status=FieldComparisonStatus.error,
             predicate=str(predicate),
             report=f"Exception raised: {exception}",
-            cpu_time=None
+            cpu_time=None,
         )
 
     def _missing_source_comparisons(self, query: MatchResult) -> List[FieldComparison]:
@@ -348,8 +325,9 @@ class FieldDataComparator:
                 name=field.name,
                 status=FieldComparisonStatus.missing_source,
                 predicate="",
-                report="Missing source field"
-            ) for field in query.orphans_in_reference
+                report="Missing source field",
+            )
+            for field in query.orphans_in_reference
         ]
 
     def _missing_reference_comparisons(self, query: MatchResult) -> List[FieldComparison]:
@@ -358,8 +336,9 @@ class FieldDataComparator:
                 name=field.name,
                 status=FieldComparisonStatus.missing_reference,
                 predicate="",
-                report="Missing reference field"
-            ) for field in query.orphans_in_source
+                report="Missing reference field",
+            )
+            for field in query.orphans_in_source
         ]
 
     def _filtered_comparisons(self, filtered: List[Field]) -> List[FieldComparison]:
@@ -368,6 +347,7 @@ class FieldDataComparator:
                 name=field.name,
                 status=FieldComparisonStatus.filtered,
                 predicate="",
-                report="Filtered out by given rules"
-            ) for field in filtered
+                report="Filtered out by given rules",
+            )
+            for field in filtered
         ]

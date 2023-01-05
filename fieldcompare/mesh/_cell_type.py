@@ -12,6 +12,7 @@ class CellType:
     Args:
         id: The cell type id (we reuse the ids of VTK, see https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html).
     """
+
     def __init__(self, id: int) -> None:
         if id not in _CELL_TYPE_INDEX_TO_STR:
             raise ValueError(f"Unknown cell type with id '{id}'")
@@ -51,6 +52,7 @@ class CellType:
 
 class CellTypes:
     """Predefined cell type instances for the most commonly used ones"""
+
     vertex = CellType.from_name("VERTEX")
     line = CellType.from_name("LINE")
     triangle = CellType.from_name("TRIANGLE")

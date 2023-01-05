@@ -12,11 +12,7 @@ class PVDReader:
         def __init__(self, filename: str) -> None:
             collection = ElementTree.parse(filename).find("Collection")
             assert collection is not None
-            self._pieces = [
-                dataset.attrib["file"]
-                for dataset in collection
-                if dataset.tag == "DataSet"
-            ]
+            self._pieces = [dataset.attrib["file"] for dataset in collection if dataset.tag == "DataSet"]
             self._step_idx = 0
             self._dirname = dirname(filename)
 
@@ -47,9 +43,7 @@ class PVDReader:
 
     def read(self) -> protocols.FieldDataSequence:
         """Return the sequence read from the file given upon construction"""
-        return FieldDataSequence(
-            source=self._PVDSequenceSource(self._filename)
-        )
+        return FieldDataSequence(source=self._PVDSequenceSource(self._filename))
 
 
 # register this reader in the map

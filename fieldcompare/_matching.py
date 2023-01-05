@@ -15,6 +15,7 @@ class _Named(Protocol):
 @dataclass
 class MatchResult:
     """Data class to store the result of finding matches in two ranges"""
+
     matches: List[Tuple[Any, Any]]
     orphans_in_source: List[Any]
     orphans_in_reference: List[Any]
@@ -22,9 +23,11 @@ class MatchResult:
 
 T1 = TypeVar("T1")
 T2 = TypeVar("T2")
-def find_matches(source: Iterable[T1],
-                 reference: Iterable[T2],
-                 eq_predicate: Callable[[T1, T2], bool] = lambda a, b: a == b) -> MatchResult:
+
+
+def find_matches(
+    source: Iterable[T1], reference: Iterable[T2], eq_predicate: Callable[[T1, T2], bool] = lambda a, b: a == b
+) -> MatchResult:
     """Find matches and orphans in the two ranges using the given equality predicate"""
     matches = []
     orphans_source = []
@@ -52,10 +55,7 @@ def find_matches_by_name(first: Iterable[_Named], second: Iterable[_Named]) -> M
 
 def find_matching_file_names(folder: str, reference_folder: str) -> MatchResult:
     """Looks for matching supported files in a results & reference folder to be compared"""
-    return find_matches(
-        _find_sub_files_recursively(folder),
-        _find_sub_files_recursively(reference_folder)
-    )
+    return find_matches(_find_sub_files_recursively(folder), _find_sub_files_recursively(reference_folder))
 
 
 def _find_sub_files_recursively(folder) -> List[str]:

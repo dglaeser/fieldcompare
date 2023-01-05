@@ -6,11 +6,7 @@ from .. import protocols
 
 from . import vtk
 from ._csv_reader import CSVFieldReader
-from ._mesh_io import (
-    _read as _meshio_read,
-    _is_supported as _supported_by_meshio,
-    _HAVE_MESHIO
-)
+from ._mesh_io import _read as _meshio_read, _is_supported as _supported_by_meshio, _HAVE_MESHIO
 
 
 def read_field_data(filename: str) -> protocols.FieldData:
@@ -41,11 +37,9 @@ def read(filename: str) -> Union[protocols.FieldData, protocols.FieldDataSequenc
             return _meshio_read(filename)
         except Exception as e:
             raise IOError(f"Error reading with meshio: '{e}'")
-    raise IOError(
-        f"Unsupported file '{filename}'" + (
-            "" if _HAVE_MESHIO else " (consider installing 'meshio' to have access to more file formats)"
-        )
-    )
+
+    meshio_info = "" if _HAVE_MESHIO else " (consider installing 'meshio' to have access to more file formats)"
+    raise IOError(f"Unsupported file '{filename}'{meshio_info}")
 
 
 def is_supported(filename: str) -> bool:
@@ -55,13 +49,7 @@ def is_supported(filename: str) -> bool:
     Args:
         filename: Path to the file for which to check if it is supported.
     """
-    return vtk.is_supported(filename) \
-        or splitext(filename)[1] == ".csv" \
-        or _supported_by_meshio(filename)
+    return vtk.is_supported(filename) or splitext(filename)[1] == ".csv" or _supported_by_meshio(filename)
 
 
-__all__ = [
-    "read_field_data",
-    "read",
-    "is_supported"
-]
+__all__ = ["read_field_data", "read", "is_supported"]
