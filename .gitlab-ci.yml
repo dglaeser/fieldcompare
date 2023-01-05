@@ -133,15 +133,19 @@ pypi:
   extends: .deploy_job_rules
   script:
     - echo "Check if fieldcompare version increased since the last release tag..."
-    - python -m pip install -e .
-    - python -c "import fieldcompare; print(fieldcompare.__version__)" > current_fieldcompare_version.txt
-    - cat current_fieldcompare_version.txt
+    - |
+      python -m pip install .
+      python -c "import fieldcompare; print(fieldcompare.__version__)" > current_fieldcompare_version.txt
+      echo "Current version: $(cat current_fieldcompare_version.txt)"
+      python -m pip uninstall --yes fieldcompare
     - git fetch --tags
     - git checkout $(git describe --tags $(git rev-list --tags --max-count=1))
     - git status
-    - python -c "import fieldcompare; print(fieldcompare.__version__)" > old_fieldcompare_version.txt
-    - cat old_fieldcompare_version.txt
-    - python -m pip uninstall --yes fieldcompare
+    - |
+      python -m pip install .
+      python -c "import fieldcompare; print(fieldcompare.__version__)" > old_fieldcompare_version.txt
+      echo "Last tag: $(cat old_fieldcompare_version.txt)"
+      python -m pip uninstall --yes fieldcompare
     - git checkout $CI_COMMIT_SHA
     - |
       if ! cmp -s current_fieldcompare_version.txt old_fieldcompare_version.txt; then
