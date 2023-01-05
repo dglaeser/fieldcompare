@@ -17,15 +17,11 @@ class TabularFields(FieldData):
         domain: The table on which the data is defined.
         fields: The fields defined on the given table.
     """
-    def __init__(self,
-                 domain: Table,
-                 fields: Dict[str, Array]) -> None:
+
+    def __init__(self, domain: Table, fields: Dict[str, Array]) -> None:
         self._domain = domain
         self._fields = fields
-        assert all(
-            len(values) == domain.number_of_rows
-            for values in fields.values()
-        )
+        assert all(len(values) == domain.number_of_rows for values in fields.values())
 
     @property
     def domain(self) -> Table:
@@ -34,14 +30,13 @@ class TabularFields(FieldData):
 
     def __iter__(self) -> Iterator[Field]:
         """Return the fields contained in this table."""
+
         def _mapped_values(values: Array) -> Array:
             if self._domain.indices is not None:
                 return values[self._domain.indices]
             return values
-        return (
-            Field(name, _mapped_values(values))
-            for name, values in self._fields.items()
-        )
+
+        return (Field(name, _mapped_values(values)) for name, values in self._fields.items())
 
 
 def transform(self, transformation: Callable[[Table], Table]) -> TabularFields:
@@ -51,7 +46,4 @@ def transform(self, transformation: Callable[[Table], Table]) -> TabularFields:
     Args:
         transformation: The transformation to be applied.
     """
-    return TabularFields(
-        domain=transformation(self.domain),
-        fields=self._fields
-    )
+    return TabularFields(domain=transformation(self.domain), fields=self._fields)

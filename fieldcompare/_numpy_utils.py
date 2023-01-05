@@ -22,6 +22,7 @@ def make_initialized_array(size: int, init_value, dtype=None) -> Array:
     result.fill(init_value)
     return result
 
+
 def make_zeros(shape: Tuple[int, ...], dtype=None) -> Array:
     return np.zeros(shape, dtype)
 
@@ -53,6 +54,7 @@ def concatenate(arrays: Sequence[Array]) -> Array:
 
 def has_floats(input_array: Array) -> bool:
     """Return true if the array contains at least one floating-point value"""
+
     def _has_floats(value) -> bool:
         if isinstance(value, Array) and value.dtype.name != "object":
             return "float" in input_array.dtype.name
@@ -61,6 +63,7 @@ def has_floats(input_array: Array) -> bool:
         elif isinstance(value, Iterable):
             return any(_has_floats(v) for v in value)
         raise ValueError("Could not determine if array has floats")
+
     return _has_floats(input_array)
 
 
@@ -116,9 +119,7 @@ def elements_less(first: Array, second: Array) -> Array:
 def get_lex_sorting_index_map(input_array: Array) -> Array:
     """Get the list of indices for sorting the array lexicographically. Expects multi-dimensional arrays."""
     dimension = len(input_array[0])
-    return np.lexsort(
-        tuple(input_array[:, i] for i in reversed(range(dimension)))
-    )
+    return np.lexsort(tuple(input_array[:, i] for i in reversed(range(dimension))))
 
 
 def get_sorting_index_map(input_array: Array) -> Array:
@@ -147,10 +148,7 @@ def max_column_elements(input_array: Array):
         return None
     if np.isscalar(input_array[0]):
         return max_element(input_array)
-    return make_array([
-        max_element(input_array[:, i])
-        for i in range(len(input_array[0]))
-    ])
+    return make_array([max_element(input_array[:, i]) for i in range(len(input_array[0]))])
 
 
 def rel_diff(first: Array, second: Array) -> Array:
@@ -159,7 +157,7 @@ def rel_diff(first: Array, second: Array) -> Array:
     non_computables = np.logical_or(zeros, np.logical_not(np.isfinite(first)))
     computables = np.logical_not(non_computables)
     rdiff = make_array(first)
-    rdiff[computables] = np.abs(second[computables] - first[computables])/first[computables]
+    rdiff[computables] = np.abs(second[computables] - first[computables]) / first[computables]
     rdiff[non_computables] = np.nan
     rdiff[zeros] = np.inf
     return rdiff
@@ -190,10 +188,9 @@ def find_first_unequal(first: Array, second: Array) -> Optional[Tuple]:
     return None
 
 
-def find_first_fuzzy_unequal(first: Array,
-                             second: Array,
-                             rel_tol: float = _default_base_tolerance(),
-                             abs_tol: float = _default_base_tolerance()) -> Optional[Tuple]:
+def find_first_fuzzy_unequal(
+    first: Array, second: Array, rel_tol: float = _default_base_tolerance(), abs_tol: float = _default_base_tolerance()
+) -> Optional[Tuple]:
     """Search for the first fuzzy-unequal pair of values in the given array."""
     try:
         # this works if all entries have the same shape store fuzzy-comparable types

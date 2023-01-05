@@ -26,13 +26,15 @@ class TestResult:
 
 
 class TestSuite:
-    def __init__(self,
-                 tests: List[TestResult],
-                 name: Optional[str] = None,
-                 status: Optional[TestStatus] = None,
-                 shortlog: str = "",
-                 stdout: str = "",
-                 cpu_time: Optional[float] = None) -> None:
+    def __init__(
+        self,
+        tests: List[TestResult],
+        name: Optional[str] = None,
+        status: Optional[TestStatus] = None,
+        shortlog: str = "",
+        stdout: str = "",
+        cpu_time: Optional[float] = None,
+    ) -> None:
         self._tests = tests
         self._name = name
         self._status = status
@@ -79,16 +81,18 @@ class TestSuite:
     def cpu_time(self) -> Optional[float]:
         return self._cpu_time
 
-    def with_overridden(self,
-                        cpu_time: Optional[float] = None,
-                        name: Optional[str] = None,
-                        status: Optional[TestStatus] = None,
-                        shortlog: Optional[str] = None) -> TestSuite:
+    def with_overridden(
+        self,
+        cpu_time: Optional[float] = None,
+        name: Optional[str] = None,
+        status: Optional[TestStatus] = None,
+        shortlog: Optional[str] = None,
+    ) -> TestSuite:
         return TestSuite(
             tests=self._tests,
             name=(name if name is not None else self._name),
             status=(status if status is not None else self._status),
             shortlog=(shortlog if shortlog is not None else self._shortlog),
             stdout=self._stdout,
-            cpu_time=(cpu_time if cpu_time is not None else self._cpu_time)
+            cpu_time=(cpu_time if cpu_time is not None else self._cpu_time),
         )

@@ -4,12 +4,7 @@ from typing import List, Dict, Tuple, Optional
 from fnmatch import fnmatch
 
 from .._common import _default_base_tolerance
-from .._format import (
-    as_success,
-    as_error,
-    as_warning,
-    highlighted
-)
+from .._format import as_success, as_error, as_warning, highlighted
 
 from ._logger import CLILogger
 from ._test_suite import TestStatus
@@ -17,6 +12,7 @@ from ._test_suite import TestStatus
 
 class PatternFilter:
     """Predicate that returns true if a string matches any of the given patterns."""
+
     def __init__(self, patterns: List[str]) -> None:
         self._patterns = patterns
 
@@ -33,9 +29,7 @@ def _exclude_all() -> PatternFilter:
 
 
 class FieldToleranceMap:
-    def __init__(self,
-                 default_tolerance: float = _default_base_tolerance(),
-                 tolerances: Dict[str, float] = {}) -> None:
+    def __init__(self, default_tolerance: float = _default_base_tolerance(), tolerances: Dict[str, float] = {}) -> None:
         self._default_tolerance = default_tolerance
         self._field_tolerances = tolerances
 
@@ -68,9 +62,7 @@ def _bool_to_exit_code(value: bool) -> int:
     return int(not value)
 
 
-def _log_suite_summary(suite,
-                       comparison_type: str,
-                       logger: CLILogger) -> None:
+def _log_suite_summary(suite, comparison_type: str, logger: CLILogger) -> None:
     def _counted(count: int) -> str:
         return f"{count} {comparison_type} {_plural('comparison', count)}"
 
@@ -85,7 +77,7 @@ def _log_suite_summary(suite,
     failed = [t for t in suite if t.status in [TestStatus.failed, TestStatus.error]]
 
     num_comparisons = len(passed) + len(failed)
-    _log_line(highlighted(_padded("="*7)), f"{_counted(num_comparisons)} performed")
+    _log_line(highlighted(_padded("=" * 7)), f"{_counted(num_comparisons)} performed")
 
     if passed:
         _log_line(as_success(_padded("PASSED")), _counted(len(passed)))
@@ -93,19 +85,12 @@ def _log_suite_summary(suite,
     if skipped:
         _log_line(as_warning(_padded("SKIPPED")), _counted(len(skipped)))
         for test in skipped:
-            _log_line(
-                as_warning(_padded("SKIPPED")),
-                f"{highlighted(test.name)}: ({test.shortlog})",
-                verbosity_level=3
-            )
+            _log_line(as_warning(_padded("SKIPPED")), f"{highlighted(test.name)}: ({test.shortlog})", verbosity_level=3)
 
     if failed:
         _log_line(as_error(_padded("FAILED")), f"{_counted(len(failed))}, listed below:")
         for test in failed:
-            _log_line(
-                as_error(_padded("FAILED")),
-                f"{highlighted(test.name)}: ({test.shortlog})"
-            )
+            _log_line(as_error(_padded("FAILED")), f"{highlighted(test.name)}: ({test.shortlog})")
 
 
 def _plural(word: str, count: int) -> str:

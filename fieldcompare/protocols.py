@@ -8,6 +8,7 @@ from ._numpy_utils import Array
 @runtime_checkable
 class PredicateResult(Protocol):
     """Return value from predicate functions."""
+
     def __bool__(self) -> bool:
         """Return true if the predicate evaluated to true."""
         ...
@@ -24,6 +25,7 @@ Predicate = Callable[[Any, Any], PredicateResult]
 @runtime_checkable
 class Domain(Protocol):
     """Represents a domain on which fields are defined."""
+
     def equals(self, other: Domain) -> PredicateResult:
         """
         Check if this domain is equal to the given one.

@@ -21,14 +21,10 @@ class Mesh:
         points: The points of the mesh.
         connectivity: The connectivity of the grid cells, specified separately for each cell type.
     """
-    def __init__(self,
-                 points: ArrayLike,
-                 connectivity: Iterable[Tuple[CellType, ArrayLike]]) -> None:
+
+    def __init__(self, points: ArrayLike, connectivity: Iterable[Tuple[CellType, ArrayLike]]) -> None:
         self._points = as_array(points)
-        self._corners = {
-            _get_assert_cell_type(cell_type): as_array(corners)
-            for cell_type, corners in connectivity
-        }
+        self._corners = {_get_assert_cell_type(cell_type): as_array(corners) for cell_type, corners in connectivity}
         self._abs_tol = _default_base_tolerance()
         self._rel_tol = _default_base_tolerance()
 
@@ -70,9 +66,7 @@ class Mesh:
         """
         return mesh_equal(self, other, abs_tol=self._abs_tol, rel_tol=self._rel_tol)
 
-    def set_tolerances(self,
-                       abs_tol: Optional[float] = None,
-                       rel_tol: Optional[float] = None) -> None:
+    def set_tolerances(self, abs_tol: Optional[float] = None, rel_tol: Optional[float] = None) -> None:
         """
         Set the tolerances to be used for equality checks against other meshes.
 

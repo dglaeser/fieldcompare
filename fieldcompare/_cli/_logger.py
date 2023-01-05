@@ -7,10 +7,7 @@ import sys
 
 
 class CLILogger:
-    def __init__(self,
-                 verbosity_level: int = 1,
-                 output_stream: TextIO = sys.stdout,
-                 line_prefix: str = "") -> None:
+    def __init__(self, verbosity_level: int = 1, output_stream: TextIO = sys.stdout, line_prefix: str = "") -> None:
         self._verbosity = verbosity_level
         self._output_stream = output_stream
         self._line_prefix = line_prefix
@@ -25,21 +22,15 @@ class CLILogger:
 
     def with_verbosity(self, verbosity_level: int) -> CLILogger:
         return CLILogger(
-            verbosity_level=verbosity_level,
-            output_stream=self._output_stream,
-            line_prefix=self._line_prefix
+            verbosity_level=verbosity_level, output_stream=self._output_stream, line_prefix=self._line_prefix
         )
 
     def with_modified_verbosity(self, verbosity_change: int) -> CLILogger:
         return CLILogger(
             verbosity_level=self._verbosity + verbosity_change,
             output_stream=self._output_stream,
-            line_prefix=self._line_prefix
+            line_prefix=self._line_prefix,
         )
 
     def with_prefix(self, prefix: str) -> CLILogger:
-        return CLILogger(
-            verbosity_level=self._verbosity,
-            output_stream=self._output_stream,
-            line_prefix=prefix
-        )
+        return CLILogger(verbosity_level=self._verbosity, output_stream=self._output_stream, line_prefix=prefix)

@@ -14,12 +14,14 @@ from .._numpy_utils import rel_diff, abs_diff, max_column_elements
 
 class PredicateError(Exception):
     """Exception raised for errors during predicate evaluation"""
+
     pass
 
 
 @dataclass
 class PredicateResult:
     """Contains the result of a predicate evaluation."""
+
     value: bool
     report: str = ""
 
@@ -71,9 +73,8 @@ class FuzzyEquality:
         rel_tol: The relative tolerance to be used.
         abs_tol: The absolute tolerance to be used.
     """
-    def __init__(self,
-                 rel_tol: float = _default_base_tolerance(),
-                 abs_tol: float = _default_base_tolerance()) -> None:
+
+    def __init__(self, rel_tol: float = _default_base_tolerance(), abs_tol: float = _default_base_tolerance()) -> None:
         self._rel_tol = rel_tol
         self._abs_tol = abs_tol
 
@@ -121,10 +122,7 @@ class FuzzyEquality:
             raise PredicateError(f"Fuzzy comparison failed with exception: {e}")
 
     def __str__(self) -> str:
-        return "FuzzyEquality (abs_tol: {}, rel_tol: {})".format(
-            self.absolute_tolerance,
-            self.relative_tolerance
-        )
+        return "FuzzyEquality (abs_tol: {}, rel_tol: {})".format(self.absolute_tolerance, self.relative_tolerance)
 
     def _check(self, first: ArrayLike, second: ArrayLike) -> PredicateResult:
         first, second = _reshape(first, second)
@@ -136,23 +134,18 @@ class FuzzyEquality:
         if unequals is not None:
             val1, val2 = unequals
             deviation_in_percent = _compute_deviation_in_percent(val1, val2)
-            return PredicateResult(
-                value=False,
-                report=_get_equality_fail_report(val1, val2, deviation_in_percent)
-            )
+            return PredicateResult(value=False, report=_get_equality_fail_report(val1, val2, deviation_in_percent))
         max_abs_diffs = _compute_max_abs_diffs(first, second)
         if max_abs_diffs is not None:
             max_abs_diff_str = as_string(max_abs_diffs)
             max_abs_diff_str = max_abs_diff_str.replace("\n", " ")
-            return PredicateResult(
-                value=True,
-                report="Maximum absolute difference: {}".format(max_abs_diff_str)
-            )
+            return PredicateResult(value=True, report="Maximum absolute difference: {}".format(max_abs_diff_str))
         return _success_result()
 
 
 class DefaultEquality(FuzzyEquality):
     """Default choice for equality predicates. Checks fuzzy or exact depending on the data type."""
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
@@ -171,10 +164,7 @@ class DefaultEquality(FuzzyEquality):
         return ExactEquality()(first, second)
 
     def __str__(self) -> str:
-        return "DefaultEquality (abs_tol: {}, rel_tol: {})".format(
-            self.absolute_tolerance,
-            self.relative_tolerance
-        )
+        return "DefaultEquality (abs_tol: {}, rel_tol: {})".format(self.absolute_tolerance, self.relative_tolerance)
 
 
 def _get_equality_fail_report(val1, val2, deviation_in_percent=None) -> str:
@@ -186,7 +176,7 @@ def _get_equality_fail_report(val1, val2, deviation_in_percent=None) -> str:
 
 def _compute_deviation_in_percent(val1, val2):
     try:
-        return rel_diff(val1, val2)*100.0
+        return rel_diff(val1, val2) * 100.0
     except Exception:
         return None
 
@@ -199,10 +189,8 @@ def _compute_max_abs_diffs(first, second):
 
 
 def _success_result() -> PredicateResult:
-    return PredicateResult(
-        True,
-        report="All field values have compared equal"
-    )
+    return PredicateResult(True, report="All field values have compared equal")
+
 
 def _reshape(arr1: ArrayLike, arr2: ArrayLike) -> Tuple[Array, Array]:
     arr1 = as_array(arr1)
@@ -218,10 +206,8 @@ def _reshape(arr1: ArrayLike, arr2: ArrayLike) -> Tuple[Array, Array]:
 
     return arr1, arr2
 
+
 def _check_shapes(arr1: Array, arr2: Array) -> PredicateResult:
     if arr1.shape != arr2.shape:
-        return PredicateResult(
-            value=False,
-            report=f"Array shapes not equal: {arr1.shape} / {arr2.shape}"
-        )
+        return PredicateResult(value=False, report=f"Array shapes not equal: {arr1.shape} / {arr2.shape}")
     return PredicateResult(True)

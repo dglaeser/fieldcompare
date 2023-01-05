@@ -17,9 +17,16 @@ def cell_type_to_vtk_cell_type_index(cell_type: CellType) -> int:
 
 
 _VTK_TYPE_TO_DTYPE = {
-    "Int8": np.int8, "Int16": np.int16, "Int32": np.int32, "Int64": np.int64,
-    "UInt8": np.uint8, "UInt16": np.uint16, "UInt32": np.uint32, "UInt64": np.uint64,
-    "Float32": np.float32, "Float64": np.float64
+    "Int8": np.int8,
+    "Int16": np.int16,
+    "Int32": np.int32,
+    "Int64": np.int64,
+    "UInt8": np.uint8,
+    "UInt16": np.uint16,
+    "UInt32": np.uint32,
+    "UInt64": np.uint64,
+    "Float32": np.float32,
+    "Float64": np.float64,
 }
 
 

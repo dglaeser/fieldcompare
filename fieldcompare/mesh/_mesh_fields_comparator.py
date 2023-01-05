@@ -4,18 +4,13 @@ from typing import Callable
 
 from ..predicates import DefaultEquality
 from . import protocols as mesh_protocols
-from ._transformations import (
-    strip_orphan_points,
-    sort_points,
-    sort_cells,
-    extend_space_dimension_to
-)
+from ._transformations import strip_orphan_points, sort_points, sort_cells, extend_space_dimension_to
 from .._field_data_comparison import (
     FieldDataComparator,
     PredicateSelector,
     FieldComparisonCallback,
     FieldComparisonSuite,
-    DefaultFieldComparisonCallback
+    DefaultFieldComparisonCallback,
 )
 
 
@@ -34,14 +29,17 @@ class MeshFieldsComparator:
         field_inclusion_filter: Filter to select the fields to be compared (optional).
         field_exclusion_filter: Filter to exclude fields from being compared (optional).
     """
-    def __init__(self,
-                 source: mesh_protocols.MeshFields,
-                 reference: mesh_protocols.MeshFields,
-                 disable_mesh_reordering: bool = False,
-                 disable_orphan_point_removal: bool = False,
-                 disable_space_dimension_matching: bool = False,
-                 field_inclusion_filter: Callable[[str], bool] = lambda _: True,
-                 field_exclusion_filter: Callable[[str], bool] = lambda _: False) -> None:
+
+    def __init__(
+        self,
+        source: mesh_protocols.MeshFields,
+        reference: mesh_protocols.MeshFields,
+        disable_mesh_reordering: bool = False,
+        disable_orphan_point_removal: bool = False,
+        disable_space_dimension_matching: bool = False,
+        field_inclusion_filter: Callable[[str], bool] = lambda _: True,
+        field_exclusion_filter: Callable[[str], bool] = lambda _: False,
+    ) -> None:
         self._disable_mesh_reordering = disable_mesh_reordering
         self._disable_orphan_point_removal = disable_orphan_point_removal
         self._disable_space_dimension_matching = disable_space_dimension_matching
@@ -50,10 +48,12 @@ class MeshFieldsComparator:
         self._field_inclusion_filter = field_inclusion_filter
         self._field_exclusion_filter = field_exclusion_filter
 
-    def __call__(self,
-                 predicate_selector: PredicateSelector = lambda _, __: DefaultEquality(),
-                 fieldcomp_callback: FieldComparisonCallback = DefaultFieldComparisonCallback(),
-                 reordering_callback: Callable[[str], None] = lambda _: None) -> FieldComparisonSuite:
+    def __call__(
+        self,
+        predicate_selector: PredicateSelector = lambda _, __: DefaultEquality(),
+        fieldcomp_callback: FieldComparisonCallback = DefaultFieldComparisonCallback(),
+        reordering_callback: Callable[[str], None] = lambda _: None,
+    ) -> FieldComparisonSuite:
         """
         Compare all fields in the mesh field data objects using the given predicates.
 
@@ -87,10 +87,12 @@ class MeshFieldsComparator:
         if not self._disable_mesh_reordering:
             # sorted points
             reordering_callback(self._mesh_fail_msg(suite.domain_equality_check.report, "sorted points"))
+
             def _permute(mesh_fields):
                 if not self._disable_orphan_point_removal:
                     mesh_fields = strip_orphan_points(mesh_fields)
                 return sort_points(mesh_fields)
+
             self._source = _permute(self._source)
             self._reference = _permute(self._reference)
             suite = self._run_comparison(predicate_selector, fieldcomp_callback)
@@ -111,9 +113,9 @@ class MeshFieldsComparator:
             f". Retrying with {retry_measure}..." if retry_measure else ""
         )
 
-    def _run_comparison(self,
-                        predicate_selector: PredicateSelector,
-                        fieldcomp_callback: FieldComparisonCallback) -> FieldComparisonSuite:
+    def _run_comparison(
+        self, predicate_selector: PredicateSelector, fieldcomp_callback: FieldComparisonCallback
+    ) -> FieldComparisonSuite:
         return self._make_comparator()(predicate_selector, fieldcomp_callback)
 
     def _make_comparator(self) -> FieldDataComparator:
@@ -121,5 +123,5 @@ class MeshFieldsComparator:
             self._source,
             self._reference,
             field_inclusion_filter=self._field_inclusion_filter,
-            field_exclusion_filter=self._field_exclusion_filter
+            field_exclusion_filter=self._field_exclusion_filter,
         )

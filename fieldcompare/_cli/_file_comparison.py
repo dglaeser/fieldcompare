@@ -7,19 +7,14 @@ from dataclasses import dataclass
 from .._numpy_utils import as_array, has_floats
 from ..predicates import FuzzyEquality, ExactEquality
 from .._common import _default_base_tolerance
-from .._format import (
-    as_success,
-    as_error,
-    as_warning,
-    highlighted
-)
+from .._format import as_success, as_error, as_warning, highlighted
 
 from .._field_data_comparison import (
     FieldDataComparator,
     FieldComparisonSuite,
     FieldComparison,
     FieldComparisonStatus,
-    field_comparison_report
+    field_comparison_report,
 )
 from ..mesh import MeshFieldsComparator
 
@@ -48,9 +43,7 @@ class FileComparisonOptions:
 
 
 class FileComparison:
-    def __init__(self,
-                 opts: FileComparisonOptions,
-                 logger: CLILogger) -> None:
+    def __init__(self, opts: FileComparisonOptions, logger: CLILogger) -> None:
         self._opts = opts
         self._logger = logger
 
@@ -60,10 +53,7 @@ class FileComparison:
             ref_fields = self._read(ref_file)
         except IOError:
             return _make_test_suite(
-                tests=[],
-                status=TestStatus.error,
-                name=_suite_name(res_file),
-                shortlog="Error during field reading"
+                tests=[], status=TestStatus.error, name=_suite_name(res_file), shortlog="Error during field reading"
             )
         return self._compare_fields(res_fields, ref_fields).with_overridden(name=_suite_name(res_file))
 
@@ -75,26 +65,28 @@ class FileComparison:
             self._logger.log(f"Error: '{e}'", verbosity_level=1)
             raise IOError(e)
 
-    def _compare_fields(self,
-                        res_fields: Union[protocols.FieldData, protocols.FieldDataSequence],
-                        ref_fields: Union[protocols.FieldData, protocols.FieldDataSequence]) -> TestSuite:
-        if isinstance(res_fields, protocols.FieldData) \
-                and isinstance(ref_fields, protocols.FieldData):
+    def _compare_fields(
+        self,
+        res_fields: Union[protocols.FieldData, protocols.FieldDataSequence],
+        ref_fields: Union[protocols.FieldData, protocols.FieldDataSequence],
+    ) -> TestSuite:
+        if isinstance(res_fields, protocols.FieldData) and isinstance(ref_fields, protocols.FieldData):
             return self._compare_field_data(res_fields, ref_fields)
-        elif isinstance(res_fields, protocols.FieldDataSequence) \
-                and isinstance(ref_fields, protocols.FieldDataSequence):
+        elif isinstance(res_fields, protocols.FieldDataSequence) and isinstance(
+            ref_fields, protocols.FieldDataSequence
+        ):
             return self._compare_field_sequences(res_fields, ref_fields)
 
         def _is_unknown(fields) -> bool:
-            return not isinstance(fields, protocols.FieldData) \
-                and not isinstance(fields, protocols.FieldDataSequence)
+            return not isinstance(fields, protocols.FieldData) and not isinstance(fields, protocols.FieldDataSequence)
+
         if any(_is_unknown(f) for f in [res_fields, ref_fields]):
             raise ValueError("Unknown data type (supported are 'FieldData' / 'FieldDataSequence')")
         raise ValueError("Cannot compare sequences against field data")
 
-    def _compare_field_sequences(self,
-                                 res_sequence: protocols.FieldDataSequence,
-                                 ref_sequence: protocols.FieldDataSequence) -> TestSuite:
+    def _compare_field_sequences(
+        self, res_sequence: protocols.FieldDataSequence, ref_sequence: protocols.FieldDataSequence
+    ) -> TestSuite:
         num_steps_check: Optional[TestStatus] = None
         num_steps_check_fail_msg = "Sequences have differing lengths"
         if res_sequence.number_of_steps != ref_sequence.number_of_steps:
@@ -104,9 +96,7 @@ class FileComparison:
                 if not self._opts.force_sequence_comparison:
                     return _make_test_suite([], TestStatus.failed, num_steps_check_fail_msg)
             else:
-                self._logger.log(
-                    f"{as_warning('Warning')}: {num_steps_check_fail_msg}, comparing only common steps\n"
-                )
+                self._logger.log(f"{as_warning('Warning')}: {num_steps_check_fail_msg}, comparing only common steps\n")
 
         def _merge_test_suites(s1: TestSuite, s2: TestSuite, i: int) -> TestSuite:
             def _merged_result(r1: Optional[TestStatus], r2: Optional[TestStatus]) -> Optional[TestStatus]:
@@ -117,12 +107,11 @@ class FileComparison:
                 if any(r == TestStatus.skipped for r in [r1, r2]):
                     return TestStatus.skipped
                 return None
+
             return _make_test_suite(
                 tests=list(s1) + list(s2),
                 status=_merged_result(s1.status, s2.status),
-                shortlog=s1.shortlog + (
-                    f"; {s2.shortlog}" if s1.shortlog else f"{s2.shortlog}"
-                )
+                shortlog=s1.shortlog + (f"; {s2.shortlog}" if s1.shortlog else f"{s2.shortlog}"),
             )
 
         suite = _make_test_suite([], num_steps_check, "")
@@ -133,19 +122,14 @@ class FileComparison:
             suite = _merge_test_suites(suite, sub_suite, idx)
         return suite
 
-    def _compare_field_data(self,
-                            res_fields: protocols.FieldData,
-                            ref_fields: protocols.FieldData) -> TestSuite:
-        if isinstance(res_fields, mesh_protocols.MeshFields) \
-                and isinstance(ref_fields, mesh_protocols.MeshFields):
+    def _compare_field_data(self, res_fields: protocols.FieldData, ref_fields: protocols.FieldData) -> TestSuite:
+        if isinstance(res_fields, mesh_protocols.MeshFields) and isinstance(ref_fields, mesh_protocols.MeshFields):
             return self._compare_mesh_field_data(res_fields, ref_fields)
-        return self._to_test_suite(
-            self._run_field_data_comparison(res_fields, ref_fields)
-        )
+        return self._to_test_suite(self._run_field_data_comparison(res_fields, ref_fields))
 
-    def _compare_mesh_field_data(self,
-                                 res_fields: mesh_protocols.MeshFields,
-                                 ref_fields: mesh_protocols.MeshFields) -> TestSuite:
+    def _compare_mesh_field_data(
+        self, res_fields: mesh_protocols.MeshFields, ref_fields: mesh_protocols.MeshFields
+    ) -> TestSuite:
         self._set_mesh_tolerances(res_fields)
         self._set_mesh_tolerances(ref_fields)
         if self._opts.disable_mesh_reordering:
@@ -164,29 +148,27 @@ class FileComparison:
         self._logger.log(f"{self._status_string(TestStatus.failed)}: {msg}")
         return _make_test_suite([], TestStatus.failed, shortlog="Fields defined on different meshes")
 
-    def _run_mesh_fields_comparison(self,
-                                    result: mesh_protocols.MeshFields,
-                                    reference: mesh_protocols.MeshFields) -> FieldComparisonSuite:
+    def _run_mesh_fields_comparison(
+        self, result: mesh_protocols.MeshFields, reference: mesh_protocols.MeshFields
+    ) -> FieldComparisonSuite:
         return self._invoke_comparator(
             MeshFieldsComparator(
-                result, reference,
+                result,
+                reference,
                 disable_mesh_reordering=self._opts.disable_mesh_reordering,
                 disable_orphan_point_removal=self._opts.disable_unconnected_points_removal,
                 disable_space_dimension_matching=self._opts.disable_mesh_space_dimension_matching,
                 field_inclusion_filter=self._opts.field_inclusion_filter,
-                field_exclusion_filter=self._opts.field_exclusion_filter
+                field_exclusion_filter=self._opts.field_exclusion_filter,
             ),
-            reordering_callback=lambda msg: self._logger.log(f"{msg}\n")
+            reordering_callback=lambda msg: self._logger.log(f"{msg}\n"),
         )
 
-    def _run_field_data_comparison(self,
-                                   result: protocols.FieldData,
-                                   reference: protocols.FieldData) -> FieldComparisonSuite:
+    def _run_field_data_comparison(
+        self, result: protocols.FieldData, reference: protocols.FieldData
+    ) -> FieldComparisonSuite:
         return self._invoke_comparator(
-            FieldDataComparator(
-                result, reference,
-                self._opts.field_inclusion_filter, self._opts.field_exclusion_filter
-            )
+            FieldDataComparator(result, reference, self._opts.field_inclusion_filter, self._opts.field_exclusion_filter)
         )
 
     def _invoke_comparator(self, comparator, **kwargs) -> FieldComparisonSuite:
@@ -199,31 +181,25 @@ class FileComparison:
                     return
                 if result and self._logger.verbosity_level == 1:
                     return
-                msg = field_comparison_report(
-                    result,
-                    verbosity=max(1, self._logger.verbosity_level-1)
-                )
+                msg = field_comparison_report(result, verbosity=max(1, self._logger.verbosity_level - 1))
                 self._logger.log(f"{msg}\n")
 
         return comparator(
             predicate_selector=lambda res, ref: self._select_predicate(res, ref),
             fieldcomp_callback=Callback(logger=self._logger),
-            **kwargs
+            **kwargs,
         )
 
     def _set_mesh_tolerances(self, fields: protocols.FieldData) -> None:
         fields.domain.set_tolerances(
-            abs_tol=self._opts.absolute_tolerances("domain"),
-            rel_tol=self._opts.relative_tolerances("domain")
+            abs_tol=self._opts.absolute_tolerances("domain"), rel_tol=self._opts.relative_tolerances("domain")
         )
 
-    def _select_predicate(self,
-                          res_field: protocols.Field,
-                          ref_field: protocols.Field) -> protocols.Predicate:
+    def _select_predicate(self, res_field: protocols.Field, ref_field: protocols.Field) -> protocols.Predicate:
         if has_floats(as_array(res_field.values)) or has_floats(as_array(ref_field.values)):
             return FuzzyEquality(
                 abs_tol=self._opts.absolute_tolerances(res_field.name),
-                rel_tol=self._opts.relative_tolerances(res_field.name)
+                rel_tol=self._opts.relative_tolerances(res_field.name),
             )
         else:
             return ExactEquality()
@@ -253,7 +229,7 @@ class FileComparison:
             status=self._parse_status(comp_result.status),
             shortlog=shortlog,
             stdout=stdout,
-            cpu_time=comp_result.cpu_time
+            cpu_time=comp_result.cpu_time,
         )
 
     def _parse_status(self, status: FieldComparisonStatus) -> TestStatus:
@@ -263,11 +239,9 @@ class FileComparison:
             return TestStatus.failed
         if status == FieldComparisonStatus.error:
             return TestStatus.error
-        if status == FieldComparisonStatus.missing_reference \
-                and not self._opts.ignore_missing_reference_fields:
+        if status == FieldComparisonStatus.missing_reference and not self._opts.ignore_missing_reference_fields:
             return TestStatus.failed
-        if status == FieldComparisonStatus.missing_source \
-                and not self._opts.ignore_missing_source_fields:
+        if status == FieldComparisonStatus.missing_source and not self._opts.ignore_missing_source_fields:
             return TestStatus.failed
         return TestStatus.skipped
 
@@ -279,11 +253,11 @@ class FileComparison:
         return as_warning("SKIPPED")
 
 
-def _make_test_suite(tests: List[TestResult],
-                     status: Optional[TestStatus],
-                     name: Optional[str] = None,
-                     shortlog: str = "") -> TestSuite:
+def _make_test_suite(
+    tests: List[TestResult], status: Optional[TestStatus], name: Optional[str] = None, shortlog: str = ""
+) -> TestSuite:
     return TestSuite(name=name, tests=tests, status=status, shortlog=shortlog)
+
 
 def _suite_name(filename: str) -> str:
     path = Path(filename)

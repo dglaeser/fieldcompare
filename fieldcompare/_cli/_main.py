@@ -17,7 +17,8 @@ from ._dir_mode import _run as _run_dir_mode
 def main(argv=None, logger: CLILogger = CLILogger()):
     parser = ArgumentParser(description="Compare fields in files of various formats")
     parser.add_argument(
-        "--version", "-v",
+        "--version",
+        "-v",
         action="version",
         version=_get_version_info(),
         help="show version information",
@@ -46,10 +47,12 @@ def _add_directory_mode_parser(sub_parsers) -> None:
 def _get_version_info() -> str:
     python_version = f"{version_info.major}.{version_info.minor}.{version_info.micro}"
     version = __version__ if __version__ != "unknown" else "(unknown version)"
-    return "\n".join([
-        f"fieldcompare {version} [Python {python_version}]",
-        f"Copyright (c) {_get_development_years_string()} Dennis Gläser et al.",
-    ])
+    return "\n".join(
+        [
+            f"fieldcompare {version} [Python {python_version}]",
+            f"Copyright (c) {_get_development_years_string()} Dennis Gläser et al.",
+        ]
+    )
 
 
 def _get_development_years_string() -> str:
