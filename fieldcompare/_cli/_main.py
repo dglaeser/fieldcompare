@@ -32,15 +32,13 @@ def main(argv=None, logger: CLILogger = CLILogger()):
 
 
 def _add_file_mode_parser(sub_parsers) -> None:
-    file_mode_parser = sub_parsers.add_parser("file", help="Compare a pair of files", aliases=["f"])
+    file_mode_parser = sub_parsers.add_parser("file", help="Compare a pair of files")
     _file_mode_add_arguments(file_mode_parser)
     file_mode_parser.set_defaults(func=_run_file_mode)
 
 
 def _add_directory_mode_parser(sub_parsers) -> None:
-    dir_mode_parser = sub_parsers.add_parser(
-        "dir", help="Compare the files in two directories", aliases=["d"]
-    )
+    dir_mode_parser = sub_parsers.add_parser("dir", help="Compare the files in two directories")
     _dir_mode_add_arguments(dir_mode_parser)
     dir_mode_parser.set_defaults(func=_run_dir_mode)
 
