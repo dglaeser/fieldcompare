@@ -171,7 +171,11 @@ release_check:
     - echo $FIELDCOMPARE_RELEASE_VERSION > release_version.txt
     - python -m pip install -e .
     - python -c "import fieldcompare; print(fieldcompare.__version__)" > fieldcompare_version.txt
-    - cmp -s fieldcompare_version.txt release_version.txt
+    - |
+      if ! cmp -s fieldcompare_version.txt release_version.txt; then
+          echo "Release version does not match fieldcompare version. Aborting release."
+          exit 1
+      fi
 
 release:
   stage: release
