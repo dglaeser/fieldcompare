@@ -45,6 +45,55 @@ perform regression tests within your GitHub workflows.
 
 # Getting started
 
+# Getting started
+
+## Quick start
+
+You can easily install fieldcompare through pip:
+
+```sh
+pip install fieldcompare[all]
+```
+
+You can compare data fields of tabular data (e.g. CSV)
+against reference data:
+
+```sh
+echo "0, 0 \n 1, 1 \n 2, 2 \n" > file1.csv
+echo "0, 0 \n 1, 1 \n 2, 2.001 \n" > file2.csv
+fieldcompare file file1.csv --reference file1.csv
+fieldcompare file file2.csv --reference file1.csv
+fieldcompare file file2.csv --reference file1.csv --relative-tolerance 1e-2
+```
+
+or in the same ways, data fields in mesh files (e.g.
+data mapped on an unstructured grid VTK file format):
+
+```sh
+wget https://gitlab.com/dglaeser/fieldcompare/-/raw/main/test/data/test_mesh.vtu mesh1.vtu
+wget https://gitlab.com/dglaeser/fieldcompare/-/raw/main/test/data/test_mesh_permutated.vtu mesh2.vtu
+fieldcompare file mesh1.vtu --reference mesh1.vtu
+fieldcompare file mesh2.vtu --reference mesh2.vtu
+```
+
+The default comparison scheme allows for small differences in the fields. Specifically,
+if the shape of the fields match, given a relative tolerance of $`\rho`$ and an absolute tolerance of $`\epsilon`$ each number $`a`$
+of a field will be found equal if
+```math
+\vert a - b \vert \leq (\epsilon + \rho  \vert b \vert),
+```
+ where $`b`$ is the corresponding number in the reference field.
+If the field consists of strings instead of numbers, fieldcompare compares to true if the strings match exactly.
+
+Many more options are available through the command-line interface
+
+```sh
+fieldcompare file --help
+fieldcompare dir --help
+```
+
+There is also a Python API to customize your comparisons with fieldcompare, see the examples below.
+
 ## Installation
 
 Via `pip`, you can install `fieldcompare` directly from the git repository with
