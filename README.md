@@ -31,72 +31,72 @@ CLI is currently hardwired to (fuzzy) equality checks, which is the most common 
 A common issue with regression testing of grid files is that the grid may be written with a different
 ordering of points or cells, while the actual field data on the grid may be the same. To this end,
 `fieldcompare` provides the option to make the fields read from a grid unique by sorting the grid
-by its point coordinates and cell connectivity. Moreover, one can choose to strip the grid from
-ghost points, that may occur, for instance, upon merging the data from multiple grid partitions
+by its point coordinates and cell connectivity. Moreover, one can choose to strip ghost points from
+the grid from that may occur, for instance, when merging the data from multiple grid partitions
 distributed over different processors.
 
 
 # GitHub Action
 
-If you want to use `fieldcompare` in your GitHub actions, you may want to check out our
-[fieldcompare action](https://github.com/dglaeser/action-field-compare), which allows you to easily
-perform regression tests within your GitHub workflows.
+If you want to perform regression tests within your GitHub workflow, check out our
+[fieldcompare action](https://github.com/dglaeser/action-field-compare), which allows you to do so with minimal effort.
 
-
-# Getting started
 
 # Getting started
 
 ## Quick start
 
-You can easily install fieldcompare through pip:
+You can easily install `fieldcompare` through pip:
 
 ```sh
 pip install fieldcompare[all]
 ```
 
-You can compare data fields of tabular data (e.g. CSV)
-against reference data:
+Using the CLI, you can now compare data fields of
+tabular data (e.g. CSV) against reference data:
 
 ```sh
-echo "0, 0 \n 1, 1 \n 2, 2 \n" > file1.csv
-echo "0, 0 \n 1, 1 \n 2, 2.001 \n" > file2.csv
-fieldcompare file file1.csv --reference file1.csv
-fieldcompare file file2.csv --reference file1.csv
-fieldcompare file file2.csv --reference file1.csv --relative-tolerance 1e-2
+echo -e "0.0,0.0\n1.0,1.0\n2.0,2.0\n" > file1.csv
+echo -e "0.0,0.0\n1.0,1.0\n2.0,2.001\n" > file2.csv
+fieldcompare file file1.csv file1.csv
+fieldcompare file file2.csv file1.csv
+fieldcompare file file2.csv file1.csv --relative-tolerance 1e-2
 ```
 
-or in the same ways, data fields in mesh files (e.g.
+In the same way, you can compare data fields in mesh files (e.g.
 data mapped on an unstructured grid VTK file format):
 
 ```sh
-wget https://gitlab.com/dglaeser/fieldcompare/-/raw/main/test/data/test_mesh.vtu mesh1.vtu
-wget https://gitlab.com/dglaeser/fieldcompare/-/raw/main/test/data/test_mesh_permutated.vtu mesh2.vtu
-fieldcompare file mesh1.vtu --reference mesh1.vtu
-fieldcompare file mesh2.vtu --reference mesh2.vtu
+wget https://gitlab.com/dglaeser/fieldcompare/-/raw/main/test/data/test_mesh.vtu -O mesh1.vtu
+wget https://gitlab.com/dglaeser/fieldcompare/-/raw/main/test/data/test_mesh_permutated.vtu -O mesh2.vtu
+fieldcompare file mesh1.vtu mesh1.vtu
+fieldcompare file mesh2.vtu mesh2.vtu
 ```
 
-The default comparison scheme allows for small differences in the fields. Specifically,
-if the shape of the fields match, given a relative tolerance of $`\rho`$ and an absolute tolerance of $`\epsilon`$ each number $`a`$
-of a field will be found equal if
+The default comparison scheme allows for small differences in the fields. Specifically, if the shape
+of the fields match, given a relative tolerance of $`\rho`$ and an absolute tolerance of $`\epsilon`$,
+two fields of floating-point values will be found equal if for each pair of scalar values $`a`$ and $`b`$
+the following condition holds:
+
 ```math
-\vert a - b \vert \leq (\epsilon + \rho  \vert b \vert),
+\vert a - b \vert \leq max(\rho \cdot max(\vert a \vert, \vert b \vert), \epsilon)
 ```
- where $`b`$ is the corresponding number in the reference field.
-If the field consists of strings instead of numbers, fieldcompare compares to true if the strings match exactly.
 
-Many more options are available through the command-line interface
+If the field consist of strings or integers, all entries of the fields are compared for exact equality.
+Note that per default, $`\epsilon = 0`$, but it can be defined via the command line interface. Many more
+options are available and can be listed via:
 
 ```sh
 fieldcompare file --help
 fieldcompare dir --help
 ```
 
-There is also a Python API to customize your comparisons with fieldcompare, see the examples below.
+There is also a Python API to customize your comparisons with fieldcompare, see the examples below and/or
+the [API Documentation](https://dglaeser.gitlab.io/fieldcompare/).
 
 ## Installation
 
-Via `pip`, you can install `fieldcompare` directly from the git repository with
+As mentioned before, you can install `fieldcompare` simply via `pip`
 
 ```sh
 pip install "git+https://gitlab.com/dglaeser/fieldcompare#egg=fieldcompare[all]
@@ -106,7 +106,12 @@ The suffix `[all]` instructs `pip` to also install all optional dependencies (fo
 Omit this suffix if you want to install only the required dependencies.
 
 For an installation from a local copy, navigate to the top folder of this repository and type
-`pip install .`, or , `pip install .[all]` for an installation with all optional dependencies.
+
+```sh
+pip install .       # minimum installation
+pip install .[all]  # full installation with all dependencies
+```
+
 
 ## First steps & examples
 
@@ -121,15 +126,17 @@ fields1 = read_field_data("FILENAME1")
 fields2 = read_field_data("FILENAME2")
 comparator = FieldDataComparator(fields1, fields2)
 
-if comparator():
+result = comparator()
+if result:
     print("Comparison PASSED")
 else:
-    print("Comparison failed")
+    print(f"Comparison failed, report: '{result.report}'")
 ```
 
 There are many more options you may use, and infos you can collect on performed comparisons. In the
-folder [examples/api](https://gitlab.com/dglaeser/fieldcompare/-/tree/main/examples/api) you can find examples with instructions on how to use the API of
-`fieldcompare`.
+folder [examples/api](https://gitlab.com/dglaeser/fieldcompare/-/tree/main/examples/api) you can find
+examples with instructions on how to use the API of `fieldcompare`. For more details, have a look at
+the [API Documentation](https://dglaeser.gitlab.io/fieldcompare/).
 
 
 ## Command-line interface
@@ -139,14 +146,14 @@ for equality, and the latter can be used to compare all files with matching name
 That is, type
 
 ```sh
-fieldcompare file PATH_TO_FILE --reference PATH_TO_REFERENCE_FILE
+fieldcompare file PATH_TO_FILE PATH_TO_REFERENCE_FILE
 ```
 
 to compare two files, and
 
 
 ```sh
-fieldcompare dir PATH_TO_DIR --reference PATH_TO_REFERENCE_DIR
+fieldcompare dir PATH_TO_DIR PATH_TO_REFERENCE_DIR
 ```
 
 for comparing two directories. The latter command will scan both folders for files with matching names,
