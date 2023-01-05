@@ -151,7 +151,7 @@ pypi:
               echo "Trigger release tag $FIELDCOMPARE_RELEASE_VERSION"
               curl --request POST --form token=$CI_JOB_TOKEN \
                                   --form ref=$CI_COMMIT_BRANCH \
-                                  --form 'variables[FIELDCOMPARE_RELEASE_VERSION]="$FIELDCOMPARE_RELEASE_VERSION"' \
+                                  --form "variables[FIELDCOMPARE_RELEASE_VERSION]=$FIELDCOMPARE_RELEASE_VERSION" \
                                   "https://gitlab.com/api/v4/projects/32838547/trigger/pipeline"
           else
               echo "Version string $FIELDCOMPARE_RELEASE_VERSION is not a valid version. Refusing to deploy."
