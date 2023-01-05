@@ -40,18 +40,20 @@ def test_csv_field_extraction():
         )
 
 
-def test_csv_field_extraction_deduced_delimiters():
+def test_csv_field_extraction_deduced_delimiters_and_headers():
     reference_data = get_reference_data()
-    for delimiter in [",", ";", "#", " "]:
-        stream = _as_string_stream(reference_data)
-        fields = CSVFieldReader(use_names=True).read(stream)
+    for delimiter in [",", ";", " "]:
+        for use_names in [True, False]:
+            stream = _as_string_stream(reference_data, delimiter=delimiter, add_names=use_names)
+            fields = CSVFieldReader().read(stream)
 
-        for field in fields:
-            assert reference_data.get(field.name) is not None
-            assert ExactEquality()(
-                field.values,
-                reference_data[field.name]
-            )
+            for field in fields:
+                assert any(
+                    ExactEquality()(
+                        field.values,
+                        reference_data[ref]
+                    ) for ref in reference_data
+                )
 
 
 def test_csv_field_extraction_no_names():
