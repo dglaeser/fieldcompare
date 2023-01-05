@@ -14,5 +14,5 @@ def _get_file_name_with_extension(ext: str) -> str:
     raise FileNotFoundError(f"No file found with extension {ext}")
 
 
-def test_csv_field_reading_vtk():
+def test_csv_field_reading():
     _ = read(_get_file_name_with_extension(".csv"))
