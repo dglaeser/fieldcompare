@@ -53,12 +53,9 @@ PVTP_FILES = _find("pvtp_", ".pvtp", [""])
 
 
 def test_parallel_against_sequential_vtk_file():
-    cwd = getcwd()
-    chdir(VTK_TEST_DATA_PATH)
-    par_fields = _read_mesh_fields("pvtu_parallel.pvtu")
-    seq_fields = _read_mesh_fields("pvtu_sequential_reference.vtu")
+    par_fields = _read_mesh_fields(str(VTK_TEST_DATA_PATH / "pvtu_parallel.pvtu"))
+    seq_fields = _read_mesh_fields(str(VTK_TEST_DATA_PATH / "pvtu_sequential_reference.vtu"))
     assert FieldDataComparator(par_fields, seq_fields)()
-    chdir(cwd)
 
 
 def test_parallel_against_sequential_vtk_file_fails_without_duplicates_removal():

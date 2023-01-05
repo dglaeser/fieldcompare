@@ -14,7 +14,7 @@ def mesh_equal(source: MeshInterface,
     if not points_equal:
         return PredicateResult(
             False,
-            report=f"Differing points: {points_equal.report}"
+            report=f"Differing points - '{points_equal.report}'"
         )
     if not set(source.cell_types) == set(target.cell_types):
         return PredicateResult(

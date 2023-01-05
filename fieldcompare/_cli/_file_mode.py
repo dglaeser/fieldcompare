@@ -58,6 +58,7 @@ def _run(args: dict, in_logger: CLILogger) -> int:
         field_inclusion_filter=PatternFilter(args["include_fields"]) if args["include_fields"] else _include_all(),
         field_exclusion_filter=PatternFilter(args["exclude_fields"]) if args["exclude_fields"] else _exclude_all(),
         disable_mesh_reordering=True if args["disable_mesh_reordering"] else False,
+        disable_mesh_space_dimension_matching=True if args["disable_mesh_space_dimension_matching"] else False,
         disable_unconnected_points_removal=True if args["disable_mesh_orphan_point_removal"] else False
     )
 
@@ -101,6 +102,13 @@ def _add_mesh_reorder_options_args(parser: ArgumentParser) -> None:
              "position there is no way to sort them uniquely. Use this flag to deactivate this behaviour "
              "in case you want to test the orphan points also on reordered meshes. Keep in mind that this "
              "may not work on meshes where orphan points coincide with any other points."
+    )
+    parser.add_argument(
+        "--disable-mesh-space-dimension-matching",
+        required=False,
+        action="store_true",
+        help="Per default, the space dimension of meshes and associated vector/tensor fields is matched by "
+             "filling up the fields with zeros. Use this flag to deactivate this behaviour."
     )
 
 

@@ -176,6 +176,7 @@ def _do_file_comparisons(args,
             field_inclusion_filter=PatternFilter(args["include_fields"]) if args["include_fields"] else _include_all(),
             field_exclusion_filter=PatternFilter(args["exclude_fields"]) if args["exclude_fields"] else _exclude_all(),
             disable_mesh_reordering=True if args["disable_mesh_reordering"] else False,
+            disable_mesh_space_dimension_matching=True if args["disable_mesh_space_dimension_matching"] else False,
             disable_unconnected_points_removal=True if args["disable_mesh_orphan_point_removal"] else False
         )
         try:

@@ -1,7 +1,7 @@
 """Mesh permutation functions"""
 
 from copy import deepcopy
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 
 from .._numpy_utils import (
     Array,
@@ -31,6 +31,69 @@ from ._permuted_mesh import PermutedMesh
 from ._mesh_fields import MeshFields, TransformedMeshFields, remove_cell_type_suffix
 
 from . import protocols
+
+
+def extend_space_dimension_to(space_dimension: int, mesh_fields: protocols.MeshFields) -> protocols.MeshFields:
+    mesh_space_dim = mesh_fields.domain.points.shape[1]
+    if space_dimension == mesh_space_dim:
+        return mesh_fields
+    if space_dimension < mesh_space_dim:
+        raise ValueError("Given space dimension smaller than that of the mesh")
+
+    def _resized_vector(vector: Array) -> List:
+        assert len(vector.shape) == 1
+        assert vector.shape[0] <= mesh_space_dim
+        result = [vector.dtype.type(0) for _ in range(space_dimension)]
+        result[:len(vector)] = vector
+        return result
+
+    def _resize_vector_field_values(values: Array) -> Array:
+        return make_array([_resized_vector(v) for v in values])
+
+    def _resize_tensor_field_values(values: Array) -> Array:
+        assert len(values.shape) == 2
+        return make_array([
+            [_resized_vector(row) for row in tensor]
+            for tensor in values
+        ])
+
+    def _resized_field_values(values: Array) -> Array:
+        dim = len(values.shape)
+        if dim == 1 or (dim == 2 and values.shape[1] == 1):  # scalars
+            return values
+        if dim == 2:  # vectors
+            return _resize_vector_field_values(values)
+        if dim == 3:  # tensors
+            return _resize_tensor_field_values(values)
+        raise ValueError(f"Unsupported field shape: {values.shape}")
+
+    def _resized_cell_fields():
+        cell_fields = {}
+        cell_types = [ct for ct in mesh_fields.domain.cell_types]
+        for field, cell_type in mesh_fields.cell_fields_types:
+            name = remove_cell_type_suffix(cell_type, field.name)
+            if name not in cell_fields:
+                cell_fields[name] = [[] for _ in range(len(cell_types))]
+            cell_fields[name][cell_types.index(cell_type)] = _resized_field_values(field.values)
+        return cell_fields
+
+    extended_mesh = Mesh(
+        points=_resize_vector_field_values(mesh_fields.domain.points),
+        connectivity=[
+            (cell_type, mesh_fields.domain.connectivity(cell_type))
+            for cell_type in mesh_fields.domain.cell_types
+        ],
+    )
+    extended_mesh.set_tolerances(
+        abs_tol=mesh_fields.domain.absolute_tolerance,
+        rel_tol=mesh_fields.domain.relative_tolerance
+    )
+
+    return MeshFields(
+        mesh=extended_mesh,
+        point_data={f.name: _resized_field_values(f.values) for f in mesh_fields.point_fields},
+        cell_data=_resized_cell_fields()
+    )
 
 
 def sort(mesh_fields: protocols.MeshFields) -> protocols.MeshFields:

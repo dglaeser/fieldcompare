@@ -9,7 +9,8 @@ from ._transformations import (
     sort_points,
     sort_cells,
     sort,
-    merge
+    merge,
+    extend_space_dimension_to
 )
 
 __all__ = [
