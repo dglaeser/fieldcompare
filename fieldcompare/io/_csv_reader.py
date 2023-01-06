@@ -29,21 +29,17 @@ class CSVFieldReader:
             ndmin=2,
         )
 
-        if not use_names:
-            data = self._make_structured(data)
-            data.dtype.names = tuple(f"field_{i}" for i in range(len(data.dtype.names)))  # type: ignore
-
-        # access arrays by their name
+        if self._is_structured(data):
+            if not use_names:
+                data.dtype.names = tuple(f"field_{i}" for i in range(len(data.dtype.names)))  # type: ignore
+            return TabularFields(
+                domain=Table(num_rows=data.shape[0]),
+                fields={name: data[name] for name in data.dtype.names},  # type: ignore
+            )
         return TabularFields(
             domain=Table(num_rows=data.shape[0]),
-            fields={name: data[name] for name in data.dtype.names},  # type: ignore
+            fields={f"field_{i}": data[:, i] for i in range(data.shape[1])},
         )
-
-    def _make_structured(self, array: np.ndarray) -> np.ndarray:
-        if self._is_structured(array):
-            return array
-        num_fields = 0 if len(array) == 0 else len(array[0])
-        return np.array([tuple(v) for v in array], dtype=[(f"field_{i}", array.dtype) for i in range(num_fields)])
 
     def _is_structured(self, array: np.ndarray) -> bool:
         return array.dtype.names is not None
