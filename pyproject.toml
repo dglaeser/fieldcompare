@@ -1,7 +1,7 @@
 [project]
 name = "fieldcompare"
 description = "Comparison of data fields in files"
-version = "0.0.7"
+version = "0.0.8"
 readme = "README.md"
 license = {file = "LICENSE.txt"}
 requires-python = ">=3.8"
