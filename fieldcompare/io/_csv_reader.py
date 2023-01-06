@@ -29,21 +29,28 @@ class CSVFieldReader:
             ndmin=2,
         )
 
-        # (maybe) overwrite with our default field names
-        if not use_names:
-            num_fields = (
-                len(data.dtype.names) if data.dtype.names is not None else (len(data[0]) if len(data) > 0 else 0)
+        if self._is_structured(data):
+            if not use_names:
+                data.dtype.names = tuple(f"field_{i}" for i in range(len(data.dtype.names)))  # type: ignore
+            return TabularFields(
+                domain=Table(num_rows=data.shape[0]),
+                fields={name: data[name] for name in data.dtype.names},  # type: ignore
             )
-            data.dtype.names = tuple(f"field_{i}" for i in range(num_fields))
-
-        # access arrays by their name
         return TabularFields(
             domain=Table(num_rows=data.shape[0]),
-            fields={name: data[name] for name in data.dtype.names},  # type: ignore
+            fields={f"field_{i}": data[:, i] for i in range(data.shape[1])},
         )
 
+    def _is_structured(self, array: np.ndarray) -> bool:
+        return array.dtype.names is not None
+
     def _sniff_delimiter(self, input: Union[str, TextIO]) -> str:
-        return self._sniff(input, action=lambda f: csv.Sniffer().sniff(f.read(1024)).delimiter)
+        # if none of the default delimiters are found, the sniffer raises an exception
+        default_delimiters = ",;:. \t/|#@$&%+!?"
+        return self._sniff(
+            input,
+            action=lambda f: csv.Sniffer().sniff(f.read(1024), delimiters=default_delimiters).delimiter,
+        )
 
     def _sniff_header(self, input: Union[str, TextIO]) -> bool:
         return self._sniff(input, action=lambda f: csv.Sniffer().has_header(f.read(1024)))
