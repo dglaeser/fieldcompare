@@ -11,8 +11,6 @@ from .._numpy_utils import (
     sub_array,
     abs_array,
     accumulate,
-    min_element,
-    max_element,
     adjacent_difference,
     append_to_array,
     elements_less,
@@ -24,7 +22,6 @@ from .._numpy_utils import (
     make_zeros,
 )
 
-from .._common import _default_base_tolerance
 from ._cell_type import CellType
 from ._mesh import Mesh
 from ._permuted_mesh import PermutedMesh
@@ -135,7 +132,11 @@ def sort_points(fields: protocols.MeshFields) -> protocols.MeshFields:
     try:
 
         def _get_permuted(mesh: protocols.Mesh) -> PermutedMesh:
-            point_map = _sorting_points_indices(mesh.points, {ct: mesh.connectivity(ct) for ct in mesh.cell_types})
+            point_map = _sorting_points_indices(
+                points=mesh.points,
+                cells={ct: mesh.connectivity(ct) for ct in mesh.cell_types},
+                abs_tol=mesh.absolute_tolerance
+            )
             return PermutedMesh(mesh=mesh, point_permutation=point_map)
 
         return TransformedMeshFields(field_data=fields, transformation=lambda mesh: _get_permuted(mesh))
@@ -183,20 +184,12 @@ def _get_cell_corners_sorting_index_map(corners_array: Array) -> Array:
     return make_array(sorted_by_hash)
 
 
-def _sorting_points_indices(points, cells) -> Array:
-    tolerance = _get_point_cloud_tolerance(points)
-
-    def _fuzzy_lt(val1, val2) -> bool:
-        return val1 < val2 - tolerance
-
-    def _fuzzy_gt(val1, val2) -> bool:
-        return val1 > val2 + tolerance
-
+def _sorting_points_indices(points, cells, abs_tol: float) -> Array:
     def _fuzzy_lt_point(p1, p2) -> bool:
         for v1, v2 in zip(p1, p2):
-            if _fuzzy_lt(v1, v2):
+            if v1 < v2 - abs_tol:
                 return True
-            elif _fuzzy_gt(v1, v2):
+            elif v1 > v2 + abs_tol:
                 return False
         return False
 
@@ -214,7 +207,7 @@ def _sorting_points_indices(points, cells) -> Array:
 
     # find fuzzy equal neighboring points (may happen for non-conforming meshes)
     adj_diffs = _get_absolute_adjacent_diffs(points[idx_map])
-    zero_diffs = _get_indices_with_zero_adjacent_diffs(adj_diffs, tolerance)
+    zero_diffs = _get_indices_with_zero_adjacent_diffs(adj_diffs, abs_tol)
 
     if any_true(zero_diffs):
         # sort the chunks of equal points by sorting them according
@@ -265,14 +258,6 @@ def _get_points_to_cell_indices_map(cells, num_points) -> Dict[CellType, list]:
         return result
 
     return {cell_type: _get_cells_around_points(corners) for cell_type, corners in cells.items()}
-
-
-def _get_point_cloud_tolerance(points):
-    dim = len(points[0])
-    _min = [min_element(points[:, i]) for i in range(dim)]
-    _max = [max_element(points[:, i]) for i in range(dim)]
-    max_delta = max([_max[i] - _min[i] for i in range(dim)])
-    return max_delta * _default_base_tolerance()
 
 
 def _get_absolute_adjacent_diffs(points: Array) -> Array:
