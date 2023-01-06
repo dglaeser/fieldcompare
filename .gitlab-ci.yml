@@ -157,7 +157,7 @@ pypi:
               python -m twine upload dist/*
               echo "Trigger release tag $FIELDCOMPARE_RELEASE_VERSION"
               curl --request POST --retry 2 -o trigger.json \
-                                  --form "token=$CI_JOB_TOKEN" \
+                                  --form "token=$FIELDCOMPARE_RELEASE_TRIGGER_TOKEN" \
                                   --form "ref=$CI_COMMIT_BRANCH" \
                                   --form "variables[FIELDCOMPARE_RELEASE_VERSION]=$FIELDCOMPARE_RELEASE_VERSION" \
                                   "https://gitlab.com/api/v4/projects/32838547/trigger/pipeline"
