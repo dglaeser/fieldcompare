@@ -8,13 +8,9 @@ from .._numpy_utils import (
     Array,
     flatten,
     any_true,
-    all_true,
     sub_array,
-    abs_array,
     accumulate,
-    adjacent_difference,
     append_to_array,
-    elements_less,
     get_sorting_index_map,
     get_lex_sorting_index_map,
     make_initialized_array,
@@ -137,7 +133,7 @@ def sort_points(fields: protocols.MeshFields) -> protocols.MeshFields:
                 points=mesh.points,
                 cells={ct: mesh.connectivity(ct) for ct in mesh.cell_types},
                 abs_tol=mesh.absolute_tolerance,
-                rel_tol=mesh.relative_tolerance
+                rel_tol=mesh.relative_tolerance,
             )
             return PermutedMesh(mesh=mesh, point_permutation=point_map)
 
@@ -186,7 +182,7 @@ def _get_cell_corners_sorting_index_map(corners_array: Array) -> Array:
     return make_array(sorted_by_hash)
 
 
-def _sorting_points_indices(points, cells, rel_tol:float, abs_tol: float) -> Array:
+def _sorting_points_indices(points, cells, rel_tol: float, abs_tol: float) -> Array:
     def _fuzzy_lt_point(p1, p2) -> bool:
         for v1, v2 in zip(p1, p2):
             if isclose(v1, v2, rtol=rel_tol, atol=abs_tol):
@@ -210,8 +206,8 @@ def _sorting_points_indices(points, cells, rel_tol:float, abs_tol: float) -> Arr
     idx_map.sort(key=lambda idx: _IndexedFuzzySortHelper(idx))
 
     # find fuzzy equal neighboring points (may happen for non-conforming meshes)
-    adj_diffs = _get_absolute_adjacent_diffs(points[idx_map])
-    zero_diffs = _get_indices_with_zero_adjacent_diffs(adj_diffs, abs_tol)
+    zero_diffs = isclose(points[idx_map][:-1], points[idx_map][1:], atol=abs_tol, rtol=rel_tol).all(axis=1)
+    zero_diffs = append_to_array(zero_diffs, False)
 
     if any_true(zero_diffs):
         # sort the chunks of equal points by sorting them according
@@ -262,20 +258,6 @@ def _get_points_to_cell_indices_map(cells, num_points) -> Dict[CellType, list]:
         return result
 
     return {cell_type: _get_cells_around_points(corners) for cell_type, corners in cells.items()}
-
-
-def _get_absolute_adjacent_diffs(points: Array) -> Array:
-    diffs = adjacent_difference(points, axis=0)
-    return abs_array(diffs)
-
-
-def _get_indices_with_zero_adjacent_diffs(adjacent_diffs: Array, tolerance: float) -> Array:
-    is_zero_diff = make_array(adjacent_diffs)
-    is_zero_diff.fill(tolerance)
-    is_zero_diff = elements_less(adjacent_diffs, is_zero_diff)
-    is_zero_diff = all_true(is_zero_diff, axis=1)
-    is_zero_diff = append_to_array(is_zero_diff, False)
-    return is_zero_diff
 
 
 def _merge(
