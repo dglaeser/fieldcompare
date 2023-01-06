@@ -40,6 +40,22 @@ def test_csv_field_extraction():
         )
 
 
+def test_csv_field_extraction_single_dtype():
+    reference_data = {
+        f"float_field_{i}": get_reference_data()["float_field"]
+        for i in range(3)
+    }
+    stream = _as_string_stream(reference_data, add_names=False)
+    fields = CSVFieldReader(delimiter=",", use_names=False, skip_rows=0).read(stream)
+
+    assert all(
+        ExactEquality()(
+            field.values,
+            get_reference_data()["float_field"]
+        ) for field in fields
+    )
+
+
 def test_csv_field_extraction_deduced_delimiters_and_headers():
     reference_data = get_reference_data()
     for delimiter in [",", ";", " "]:
