@@ -63,7 +63,7 @@ def test_csv_field_extraction_invalid_delimiter_raises_exception():
         f"float_field_{i}": get_reference_data()["float_field"]
         for i in range(3)
     }
-    stream = _as_string_stream(reference_data, add_names=True, delimiter="$")
+    stream = _as_string_stream(reference_data, add_names=True, delimiter="=")
     with raises(Error) as e:
         CSVFieldReader().read(stream)
         assert "delimiter" in str(e)

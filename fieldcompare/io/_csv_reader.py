@@ -45,10 +45,11 @@ class CSVFieldReader:
         return array.dtype.names is not None
 
     def _sniff_delimiter(self, input: Union[str, TextIO]) -> str:
-        supported_delims = ",;:./|#@ \t"
+        # if none of the default delimiters are found, the sniffer raises an exception
+        default_delimiters = ",;:. \t/|#@$&%+!?"
         return self._sniff(
             input,
-            action=lambda f: csv.Sniffer().sniff(f.read(1024), delimiters=supported_delims).delimiter,
+            action=lambda f: csv.Sniffer().sniff(f.read(1024), delimiters=default_delimiters).delimiter,
         )
 
     def _sniff_header(self, input: Union[str, TextIO]) -> bool:
