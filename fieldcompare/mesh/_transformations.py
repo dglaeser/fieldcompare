@@ -3,6 +3,7 @@
 from copy import deepcopy
 from typing import Dict, Optional, List
 
+from numpy import isclose
 from .._numpy_utils import (
     Array,
     flatten,
@@ -135,7 +136,8 @@ def sort_points(fields: protocols.MeshFields) -> protocols.MeshFields:
             point_map = _sorting_points_indices(
                 points=mesh.points,
                 cells={ct: mesh.connectivity(ct) for ct in mesh.cell_types},
-                abs_tol=mesh.absolute_tolerance
+                abs_tol=mesh.absolute_tolerance,
+                rel_tol=mesh.relative_tolerance
             )
             return PermutedMesh(mesh=mesh, point_permutation=point_map)
 
@@ -184,12 +186,14 @@ def _get_cell_corners_sorting_index_map(corners_array: Array) -> Array:
     return make_array(sorted_by_hash)
 
 
-def _sorting_points_indices(points, cells, abs_tol: float) -> Array:
+def _sorting_points_indices(points, cells, rel_tol:float, abs_tol: float) -> Array:
     def _fuzzy_lt_point(p1, p2) -> bool:
         for v1, v2 in zip(p1, p2):
-            if v1 < v2 - abs_tol:
+            if isclose(v1, v2, rtol=rel_tol, atol=abs_tol):
+                continue
+            elif v1 < v2:
                 return True
-            elif v1 > v2 + abs_tol:
+            else:
                 return False
         return False
 
