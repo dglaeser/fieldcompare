@@ -92,18 +92,9 @@ def accumulate(input_array: Array, axis: SupportsIndex = 0) -> Array:
     return np.sum(input_array, axis=axis)
 
 
-def adjacent_difference(input_array: Array, axis: int = -1) -> Array:
-    return np.diff(input_array, axis=axis)
-
-
 def get_adjacent_fuzzy_equal_indices(values: Array, abs_tol: float, rel_tol: float) -> Array:
     result = np.isclose(values[:-1], values[1:], atol=abs_tol, rtol=rel_tol)
     return append_to_array(result, False)
-
-
-def all_true(input_array: Array, axis: Optional[SupportsIndex] = None):
-    """Check whether all entries of a boolean array are true along the given axis."""
-    return np.all(input_array, axis=axis)
 
 
 def any_true(input_array: Array, axis: Optional[SupportsIndex] = None):
@@ -114,11 +105,6 @@ def any_true(input_array: Array, axis: Optional[SupportsIndex] = None):
 def append_to_array(input_array: Array, values) -> Array:
     """Append the given value(s) to the given array and return the result."""
     return np.append(input_array, values)
-
-
-def elements_less(first: Array, second: Array) -> Array:
-    """Return a boolean array indicating entries of first that smaller than those of second."""
-    return np.less(first, second)
 
 
 def get_lex_sorting_index_map(input_array: Array) -> Array:
@@ -156,16 +142,6 @@ def walk_adjacent_true_index_ranges(bool_array: Array, include_upper_edge: bool 
 def get_sorting_index_map(input_array: Array) -> Array:
     """Get the list of indices that would sort the array."""
     return np.argsort(input_array)
-
-
-def abs_array(input_array: Array) -> Array:
-    """Return a copy of the array with the absolute values of the given array."""
-    return np.fabs(input_array)
-
-
-def min_element(input_array: Array):
-    """Return the minimum value within the array. Expects arrays of scalars."""
-    return input_array[np.argmin(input_array)]
 
 
 def max_element(input_array: Array):
