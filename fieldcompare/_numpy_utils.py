@@ -1,6 +1,6 @@
 """Array representing field values and associated helper functions"""
 
-from typing import Iterable, List, Sequence, Tuple, Optional, Union, SupportsIndex
+from typing import Iterable, Sequence, Tuple, Optional, Union, SupportsIndex
 
 import numpy as np
 from numpy import ndarray
@@ -131,16 +131,18 @@ def get_fuzzy_lex_sorting_index_map(input_array: Array, abs_tol: float, rel_tol:
     """Get the list of indices for fuzzy-sorting the array lexicographically. Expects 2d arrays."""
     if len(input_array.shape) != 2:
         raise ValueError("Implementation only works for 2d arrays")
-
     idx_map = np.argsort(input_array[:, 0])
+    sorted = input_array[idx_map]
     for dim in range(1, input_array.shape[1]):
-        equals = get_adjacent_fuzzy_equal_indices(input_array[idx_map][:, dim - 1], abs_tol=abs_tol, rel_tol=rel_tol)
-        for equal_patch in walk_adjacent_true_indices(equals):
-            idx_map[equal_patch] = idx_map[equal_patch][np.argsort(input_array[idx_map][equal_patch][:, dim])]
+        equals = get_adjacent_fuzzy_equal_indices(sorted[:, dim - 1], abs_tol=abs_tol, rel_tol=rel_tol)
+        for start, end in walk_adjacent_true_index_ranges(equals):
+            indices = np.argsort(sorted[start:end][:, dim])
+            idx_map[start:end] = idx_map[start:end][indices]
+            sorted[start:end] = input_array[idx_map[start:end]]
     return idx_map
 
 
-def walk_adjacent_true_indices(bool_array: Array, include_upper_edge: bool = True) -> Iterable[List]:
+def walk_adjacent_true_index_ranges(bool_array: Array, include_upper_edge: bool = True) -> Iterable[Tuple[int, int]]:
     """Get an iterable over index chunks for which the given boolean array is true"""
     begin, end, in_true_block = 0, 0, False
     for i in range(len(bool_array)):
@@ -148,7 +150,7 @@ def walk_adjacent_true_indices(bool_array: Array, include_upper_edge: bool = Tru
             begin, in_true_block = i, True
         elif not bool_array[i] and in_true_block:
             end, in_true_block = i, False
-            yield list(range(begin, end + 1 if include_upper_edge else end))
+            yield (begin, end + 1 if include_upper_edge else end)
 
 
 def get_sorting_index_map(input_array: Array) -> Array:
