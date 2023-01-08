@@ -168,9 +168,8 @@ def _unconnected_points_filter_map(mesh: protocols.Mesh) -> Array:
 
 
 def _get_cell_corners_sorting_index_map(corners_array: Array) -> Array:
-    sorted_by_hash = list(range(len(corners_array)))
-    sorted_by_hash.sort(key=lambda i: hash(tuple(sorted(corners_array[i]))))
-    return make_array(sorted_by_hash)
+    hashes = make_array([hash(tuple(sorted(corners))) for corners in corners_array])
+    return get_sorting_index_map(hashes)
 
 
 def _sorting_points_indices(points, cells, rel_tol: float, abs_tol: float) -> Array:
