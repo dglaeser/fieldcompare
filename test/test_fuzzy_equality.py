@@ -2,8 +2,9 @@
 
 from pytest import raises
 
-from fieldcompare.predicates import FuzzyEquality, DefaultEquality, PredicateError
+from fieldcompare.predicates import FuzzyEquality, DefaultEquality, PredicateError, AbsoluteToleranceEstimate
 from fieldcompare._numpy_utils import make_array
+
 
 def test_fuzzy_equality_with_scalars():
     for check in [FuzzyEquality(), DefaultEquality()]:
@@ -13,6 +14,15 @@ def test_fuzzy_equality_with_scalars():
 
         check.relative_tolerance = 0.1
         assert check(1.0, 1.0 + 1e-2)
+
+
+def test_fuzzy_equality_with_estimated_abs_tol():
+    array1 = make_array([0.0, 1e9])
+    array2 = make_array([a1 + 10 for a1 in array1])
+    array3 = make_array([a1 + 1 for a1 in array1])
+    assert not FuzzyEquality(rel_tol=1e-9)(array1, array2)
+    assert not FuzzyEquality(rel_tol=1e-9, abs_tol=AbsoluteToleranceEstimate(rel_tol=1e-9))(array1, array2)
+    assert FuzzyEquality(rel_tol=1e-9, abs_tol=AbsoluteToleranceEstimate(rel_tol=1e-9))(array1, array3)
 
 
 def test_fuzzy_equality_with_lists():
