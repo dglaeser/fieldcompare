@@ -147,6 +147,16 @@ def max_element(input_array: Array):
     return input_array[np.argmax(input_array)]
 
 
+def max_value(input_array: Array) -> float:
+    """Return the maximum ocurring scalar value in the array."""
+    return float(np.max(input_array))
+
+
+def max_abs_value(input_array: Array) -> float:
+    """Return the maximum absolute scalar value occurring in the given array."""
+    return max_value(abs_array(input_array))
+
+
 def max_column_elements(input_array: Array):
     """Return the maximum values of the array columns. For scalar arrays, returns max_element()."""
     if len(input_array) == 0:
@@ -168,9 +178,14 @@ def rel_diff(first: Array, second: Array) -> Array:
     return rdiff
 
 
+def abs_array(input_array: Array) -> Array:
+    """Return an array containing the absolute values of the given array"""
+    return np.abs(input_array)
+
+
 def abs_diff(first: Array, second: Array) -> Array:
     """Return the absolute difference between the two given arrays."""
-    return np.abs(second - first)
+    return abs_array(second - first)
 
 
 def find_first_unequal(first: Array, second: Array) -> Optional[Tuple]:
