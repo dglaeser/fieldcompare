@@ -196,8 +196,16 @@ def find_first_unequal(first: Array, second: Array) -> Optional[Tuple]:
 
 
 def fuzzy_equal(first: Array, second: Array, rel_tol: float, abs_tol: float) -> Array:
-    """Return the indices at which the two arrays are fuzzy_equal"""
-    return np.isclose(first, second, atol=abs_tol, rtol=rel_tol)
+    """
+    Return the indices at which the two arrays are fuzzy_equal.
+    The arrays are considered fuzzy equal if for each scalar value the following relation holds:
+    `abs(a - b) <= max(rel_tol*max(a, b), abs_tol)`
+    """
+    abs_diff = np.abs(second - first)
+    thresholds = np.maximum(np.abs(first), np.abs(second))
+    thresholds *= rel_tol
+    thresholds = np.maximum(thresholds, abs_tol)
+    return np.less_equal(abs_diff, thresholds)
 
 
 def find_first_fuzzy_unequal(
@@ -206,19 +214,20 @@ def find_first_fuzzy_unequal(
     """Search for the first fuzzy-unequal pair of values in the given array."""
     try:
         # this works if all entries have the same shape store fuzzy-comparable types
-        bitset = np.isclose(first, second, rtol=rel_tol, atol=abs_tol)
+        bitset = fuzzy_equal(first, second, rel_tol=rel_tol, abs_tol=abs_tol)
         if not np.all(bitset):
             return _get_first_false_pair(bitset, first, second)
     except Exception:
         try:
             # handle case of scalars
             if not first.shape and not second.shape:
-                if not np.allclose(first, second, rtol=rel_tol, atol=abs_tol):
-                    return (first, second)
+                return (
+                    (first, second) if not fuzzy_equal(first, second, rel_tol=rel_tol, abs_tol=abs_tol).all() else None
+                )
 
             # this works also for entries with different shapes but fuzzy-comparable types
             for val1, val2 in zip(first, second):
-                if not np.allclose(val1, val2, rtol=rel_tol, atol=abs_tol):
+                if not fuzzy_equal(as_array(val1), as_array(val2), rel_tol=rel_tol, abs_tol=abs_tol).all():
                     return (val1, val2)
         except Exception:
             raise ValueError("Could not fuzzy-compare the given arrays.")

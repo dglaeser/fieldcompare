@@ -68,6 +68,8 @@ class ExactEquality:
 class FuzzyEquality:
     """
     Compares arrays for fuzzy equality.
+    Arrays are considered fuzzy equal if for each pair of scalars the following relation holds:
+    `abs(a - b) <= max(rel_tol*max(a, b), abs_tol)`
 
     Args:
         rel_tol: The relative tolerance to be used.
