@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Iterable, Tuple, Optional
 
 from .._common import _default_base_tolerance
-from .._numpy_utils import Array, ArrayLike, as_array
+from .._numpy_utils import Array, ArrayLike, as_array, max_abs_value
 from ..predicates import PredicateResult
 
 from ._mesh_equal import mesh_equal
@@ -25,8 +25,8 @@ class Mesh:
     def __init__(self, points: ArrayLike, connectivity: Iterable[Tuple[CellType, ArrayLike]]) -> None:
         self._points = as_array(points)
         self._corners = {_get_assert_cell_type(cell_type): as_array(corners) for cell_type, corners in connectivity}
-        self._abs_tol = _default_base_tolerance()
         self._rel_tol = _default_base_tolerance()
+        self._abs_tol = max_abs_value(self._points) * _default_base_tolerance()
 
     @property
     def absolute_tolerance(self) -> float:
@@ -64,7 +64,7 @@ class Mesh:
         Args:
             other: mesh against with to check equality.
         """
-        return mesh_equal(self, other, abs_tol=self._abs_tol, rel_tol=self._rel_tol)
+        return mesh_equal(self, other)
 
     def set_tolerances(self, abs_tol: Optional[float] = None, rel_tol: Optional[float] = None) -> None:
         """
@@ -74,8 +74,8 @@ class Mesh:
             abs_tol: Absolute tolerance to use.
             rel_tol: Relative tolerance to use.
         """
-        self._abs_tol = abs_tol if abs_tol is not None else self._abs_tol
         self._rel_tol = rel_tol if rel_tol is not None else self._rel_tol
+        self._abs_tol = abs_tol if abs_tol is not None else self._abs_tol
 
 
 def _get_assert_cell_type(cell_type: CellType) -> CellType:
