@@ -33,8 +33,8 @@ class FileComparisonOptions:
     ignore_missing_reference_fields: bool = False
     ignore_missing_sequence_steps: bool = False
     force_sequence_comparison: bool = False
-    relative_tolerances: Callable[[str], float] = lambda _: _default_base_tolerance()
-    absolute_tolerances: Callable[[str], float] = lambda _: _default_base_tolerance()
+    relative_tolerances: Callable[[str], Optional[float]] = lambda _: _default_base_tolerance()
+    absolute_tolerances: Callable[[str], Optional[float]] = lambda _: _default_base_tolerance()
     field_inclusion_filter: Callable[[str], bool] = lambda _: True
     field_exclusion_filter: Callable[[str], bool] = lambda _: False
     disable_unconnected_points_removal: bool = False
@@ -191,15 +191,19 @@ class FileComparison:
         )
 
     def _set_mesh_tolerances(self, fields: protocols.FieldData) -> None:
-        fields.domain.set_tolerances(
-            abs_tol=self._opts.absolute_tolerances("domain"), rel_tol=self._opts.relative_tolerances("domain")
-        )
+        abs_tol = self._opts.absolute_tolerances("domain")
+        rel_tol = self._opts.relative_tolerances("domain")
+        abs_tol = fields.domain.absolute_tolerance if abs_tol is None else abs_tol
+        rel_tol = fields.domain.relative_tolerance if rel_tol is None else rel_tol
+        fields.domain.set_tolerances(abs_tol=abs_tol, rel_tol=rel_tol)
 
     def _select_predicate(self, res_field: protocols.Field, ref_field: protocols.Field) -> protocols.Predicate:
         if has_floats(as_array(res_field.values)) or has_floats(as_array(ref_field.values)):
+            abs_tol = self._opts.absolute_tolerances(res_field.name)
+            rel_tol = self._opts.relative_tolerances(res_field.name)
             return FuzzyEquality(
-                abs_tol=self._opts.absolute_tolerances(res_field.name),
-                rel_tol=self._opts.relative_tolerances(res_field.name),
+                abs_tol=abs_tol if abs_tol is not None else 0.0,
+                rel_tol=rel_tol if rel_tol is not None else _default_base_tolerance(),
             )
         else:
             return ExactEquality()

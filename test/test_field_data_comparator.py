@@ -183,7 +183,9 @@ def test_vtk_files_perturbed():
     predicate = FuzzyEquality()
     default_predicate = DefaultEquality()
     predicate.relative_tolerance = 1e-5
+    predicate.absolute_tolerance = 1e-9
     default_predicate.relative_tolerance = 1e-5
+    default_predicate.absolute_tolerance = 1e-9
 
     assert _compare_vtk_files(
         TEST_DATA_PATH / Path("test_mesh.vtu"),
@@ -237,6 +239,8 @@ def test_vtk_files_perturbed():
 def test_non_conforming_vtk_files():
     predicate = FuzzyEquality()
     default_predicate = DefaultEquality()
+    predicate.absolute_tolerance = 1e-9
+    default_predicate.absolute_tolerance = 1e-9
 
     assert _compare_vtk_files(
         TEST_DATA_PATH / Path("test_non_conforming_mesh.vtu"),

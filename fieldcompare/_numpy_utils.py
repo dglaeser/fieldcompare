@@ -6,8 +6,6 @@ import numpy as np
 from numpy import ndarray
 from numpy.typing import ArrayLike as np_arraylike
 
-from fieldcompare._common import _default_base_tolerance
-
 
 Array = ndarray
 ArrayLike = np_arraylike
@@ -208,9 +206,7 @@ def fuzzy_equal(first: Array, second: Array, rel_tol: float, abs_tol: float) -> 
     return np.less_equal(abs_diff, thresholds)
 
 
-def find_first_fuzzy_unequal(
-    first: Array, second: Array, rel_tol: float = _default_base_tolerance(), abs_tol: float = _default_base_tolerance()
-) -> Optional[Tuple]:
+def find_first_fuzzy_unequal(first: Array, second: Array, rel_tol: float, abs_tol: float) -> Optional[Tuple]:
     """Search for the first fuzzy-unequal pair of values in the given array."""
     try:
         # this works if all entries have the same shape store fuzzy-comparable types

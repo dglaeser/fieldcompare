@@ -76,7 +76,7 @@ class FuzzyEquality:
         abs_tol: The absolute tolerance to be used.
     """
 
-    def __init__(self, rel_tol: float = _default_base_tolerance(), abs_tol: float = _default_base_tolerance()) -> None:
+    def __init__(self, rel_tol: float = _default_base_tolerance(), abs_tol: float = 0.0) -> None:
         self._rel_tol = rel_tol
         self._abs_tol = abs_tol
 

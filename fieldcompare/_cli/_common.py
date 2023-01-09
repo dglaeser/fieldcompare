@@ -3,9 +3,7 @@
 from typing import List, Dict, Tuple, Optional
 from fnmatch import fnmatch
 
-from .._common import _default_base_tolerance
 from .._format import as_success, as_error, as_warning, highlighted
-
 from ._logger import CLILogger
 from ._test_suite import TestStatus
 
@@ -29,12 +27,13 @@ def _exclude_all() -> PatternFilter:
 
 
 class FieldToleranceMap:
-    def __init__(self, default_tolerance: float = _default_base_tolerance(), tolerances: Dict[str, float] = {}) -> None:
-        self._default_tolerance = default_tolerance
+    def __init__(self, tolerances: Dict[str, float] = {}, default_tol: Optional[float] = None) -> None:
         self._field_tolerances = tolerances
+        self._default = default_tol
 
-    def __call__(self, field_name: str) -> float:
-        return self._field_tolerances.get(field_name, self._default_tolerance)
+    def __call__(self, field_name: str) -> Optional[float]:
+        tol = self._field_tolerances.get(field_name)
+        return tol if tol is not None else self._default
 
 
 def _parse_field_tolerances(tolerance_strings: Optional[List[str]] = None) -> FieldToleranceMap:
@@ -46,15 +45,15 @@ def _parse_field_tolerances(tolerance_strings: Optional[List[str]] = None) -> Fi
         return name, float(tol_string)
 
     if tolerance_strings is not None:
-        default_tol = _default_base_tolerance()
         field_tols = {}
+        default_tol: Optional[float] = None
         for tol_string in tolerance_strings:
             if _is_field_tolerance_string(tol_string):
                 name, value = _get_field_name_tolerance_value_pair(tol_string)
                 field_tols[name] = value
             else:
                 default_tol = float(tol_string)
-        return FieldToleranceMap(default_tol, field_tols)
+        return FieldToleranceMap(field_tols, default_tol=default_tol)
     return FieldToleranceMap()
 
 
