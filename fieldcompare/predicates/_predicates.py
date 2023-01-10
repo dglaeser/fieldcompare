@@ -10,6 +10,7 @@ from .._numpy_utils import ArrayLike, Array, as_array, as_string, has_floats
 from .._numpy_utils import find_first_unequal
 from .._numpy_utils import find_first_fuzzy_unequal
 from .._numpy_utils import rel_diff, abs_diff, max_column_elements, max_abs_value
+from .._numpy_utils import ArrayTolerance
 
 
 class PredicateError(Exception):
@@ -75,10 +76,10 @@ class AbsoluteToleranceEstimate:
         rel_tol: The relative tolerance with which to scale the magnitude (default: {_default_base_tolerance()})
     """
 
-    def __init__(self, rel_tol: float = _default_base_tolerance()) -> None:
+    def __init__(self, rel_tol: ArrayTolerance = _default_base_tolerance()) -> None:
         self._rel_tol = rel_tol
 
-    def __call__(self, first: Array, second: Array) -> float:
+    def __call__(self, first: Array, second: Array) -> ArrayTolerance:
         """Return an estimate for the absolute tolerance for comparing the given fields."""
         return max(max_abs_value(first), max_abs_value(second)) * self._rel_tol
 
@@ -107,20 +108,20 @@ class FuzzyEquality:
 
     def __init__(
         self,
-        rel_tol: float = _default_base_tolerance(),
-        abs_tol: Union[ToleranceEstimate, float] = 0.0,
+        rel_tol: ArrayTolerance = _default_base_tolerance(),
+        abs_tol: Union[ToleranceEstimate, ArrayTolerance] = 0.0,
     ) -> None:
         self._rel_tol = rel_tol
         self._abs_tol = abs_tol
-        self._last_used_abs_tol: Optional[float] = None
+        self._last_used_abs_tol: Optional[ArrayTolerance] = None
 
     @property
-    def relative_tolerance(self) -> float:
+    def relative_tolerance(self) -> ArrayTolerance:
         """Return the relative tolerance used for fuzzy comparisons."""
         return self._rel_tol
 
     @relative_tolerance.setter
-    def relative_tolerance(self, value: float) -> None:
+    def relative_tolerance(self, value: ArrayTolerance) -> None:
         """
         Set the relative tolerance to be used for fuzzy comparisons.
 
@@ -130,12 +131,12 @@ class FuzzyEquality:
         self._rel_tol = value
 
     @property
-    def absolute_tolerance(self) -> Optional[float]:
+    def absolute_tolerance(self) -> Optional[ArrayTolerance]:
         """Return the absolute tolerance used for fuzzy comparisons."""
-        return self._abs_tol if isinstance(self._abs_tol, float) else None
+        return None if isinstance(self._abs_tol, ToleranceEstimate) else self._abs_tol
 
     @absolute_tolerance.setter
-    def absolute_tolerance(self, value: float) -> None:
+    def absolute_tolerance(self, value: ArrayTolerance) -> None:
         """
         Set the absolute tolerance to be used for fuzzy comparisons.
 
@@ -168,7 +169,7 @@ class FuzzyEquality:
             else f"abs_tol: estimate (last used: {last_abs_tol_str})"
         ) + f", rel_tol: {as_string(self.relative_tolerance)}"
 
-    def _estimate_abs_tol(self, first: Array, second: Array) -> float:
+    def _estimate_abs_tol(self, first: Array, second: Array) -> ArrayTolerance:
         if isinstance(self._abs_tol, ToleranceEstimate):
             return self._abs_tol(first, second)
         return self._abs_tol

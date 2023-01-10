@@ -9,6 +9,7 @@ from numpy.typing import ArrayLike as np_arraylike
 
 Array = ndarray
 ArrayLike = np_arraylike
+ArrayTolerance = Union[float, Array]
 
 
 def make_uninitialized_array(size: int, dtype=None) -> Array:
@@ -208,12 +209,21 @@ def find_first_unequal(first: Array, second: Array) -> Optional[Tuple]:
     return None
 
 
-def fuzzy_equal(first: Array, second: Array, rel_tol: float, abs_tol: float) -> Array:
+def fuzzy_equal(first: Array, second: Array, rel_tol: ArrayTolerance, abs_tol: ArrayTolerance) -> Array:
     """
     Return the indices at which the two arrays are fuzzy_equal.
     The arrays are considered fuzzy equal if for each scalar value the following relation holds:
     `abs(a - b) <= max(rel_tol*max(a, b), abs_tol)`
     """
+
+    def _check_valid_tolerance(tol: ArrayLike) -> None:
+        if isinstance(tol, Array):
+            if any(_op.shape[1:] != tol.shape for _op in [first, second]):
+                raise ValueError("Given tolerance shape does not match array value shapes")
+
+    _check_valid_tolerance(rel_tol)
+    _check_valid_tolerance(abs_tol)
+
     abs_diff = np.abs(second - first)
     thresholds = np.maximum(np.abs(first), np.abs(second))
     thresholds *= rel_tol
@@ -221,7 +231,9 @@ def fuzzy_equal(first: Array, second: Array, rel_tol: float, abs_tol: float) -> 
     return np.less_equal(abs_diff, thresholds)
 
 
-def find_first_fuzzy_unequal(first: Array, second: Array, rel_tol: float, abs_tol: float) -> Optional[Tuple]:
+def find_first_fuzzy_unequal(
+    first: Array, second: Array, rel_tol: ArrayTolerance, abs_tol: ArrayTolerance
+) -> Optional[Tuple]:
     """Search for the first fuzzy-unequal pair of values in the given array."""
     try:
         # this works if all entries have the same shape store fuzzy-comparable types
