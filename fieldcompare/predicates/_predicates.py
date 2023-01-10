@@ -11,7 +11,7 @@ from .._numpy_utils import ArrayTolerance, ArrayLike, Array, as_array, as_string
 from .._numpy_utils import find_first_unequal
 from .._numpy_utils import find_first_fuzzy_unequal
 from .._numpy_utils import rel_diff, abs_diff
-from .._numpy_utils import max_column_elements, max_abs_element, select_max_values
+from .._numpy_utils import max_column_elements, max_abs_element, max_abs_value, select_max_values
 
 
 class PredicateError(Exception):
@@ -28,14 +28,21 @@ class AbsoluteToleranceEstimator:
 
     Args:
         rel_tol: The relative tolerance with which to scale the magnitude (default: {_default_base_tolerance()})
+        use_component_magnitudes: If true, the magnitudes are determined separately for each component,
+                                  and if per-component tolerances are given, they are scaled individually
     """
 
-    def __init__(self, rel_tol: ArrayTolerance = _default_base_tolerance()) -> None:
-        self._rel_tol = rel_tol
+    def __init__(
+        self, rel_tol: ArrayTolerance = _default_base_tolerance(), use_component_magnitudes: Optional[bool] = False
+    ) -> None:
+        self._rel_tol = as_array(rel_tol)
+        self._use_component_magnitudes = use_component_magnitudes
 
     def __call__(self, first: Array, second: Array) -> ArrayTolerance:
         """Return an estimate for the absolute tolerance for comparing the given fields."""
-        return select_max_values(max_abs_element(first), max_abs_element(second)) * self._rel_tol
+        if self._use_component_magnitudes:
+            return select_max_values(max_abs_element(first), max_abs_element(second)) * self._rel_tol
+        return self._rel_tol * max(max_abs_value(first), max_abs_value(second))
 
     def __str__(self) -> str:
         return f"AbsoluteToleranceEstimator (rel_tol={self._rel_tol})"
