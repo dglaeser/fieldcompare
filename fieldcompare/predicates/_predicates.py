@@ -6,11 +6,11 @@ from typing import Tuple, Optional, Union, Protocol, runtime_checkable
 
 from .._common import _default_base_tolerance
 
-from .._numpy_utils import ArrayLike, Array, as_array, as_string, has_floats
+from .._numpy_utils import ArrayTolerance, ArrayLike, Array, as_array, as_string, has_floats
 from .._numpy_utils import find_first_unequal
 from .._numpy_utils import find_first_fuzzy_unequal
-from .._numpy_utils import rel_diff, abs_diff, max_column_elements, max_abs_value
-from .._numpy_utils import ArrayTolerance
+from .._numpy_utils import rel_diff, abs_diff
+from .._numpy_utils import max_column_elements, max_abs_element, select_max_values
 
 
 class PredicateError(Exception):
@@ -81,7 +81,7 @@ class AbsoluteToleranceEstimate:
 
     def __call__(self, first: Array, second: Array) -> ArrayTolerance:
         """Return an estimate for the absolute tolerance for comparing the given fields."""
-        return max(max_abs_value(first), max_abs_value(second)) * self._rel_tol
+        return select_max_values(max_abs_element(first), max_abs_element(second)) * self._rel_tol
 
     def __str__(self) -> str:
         return f"AbsoluteToleranceEstimate (rel_tol={self._rel_tol})"

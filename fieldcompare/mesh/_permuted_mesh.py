@@ -1,6 +1,7 @@
 """Class to represent permuted computational meshes"""
 
 from typing import Iterable, Optional, Dict
+from numbers import Integral
 
 from .._numpy_utils import Array, max_element, make_array, make_uninitialized_array
 from ..predicates import PredicateResult
@@ -121,6 +122,7 @@ class PermutedMesh:
             return None
         index_map = self._point_permutation
         max_index = max_element(index_map)
+        assert isinstance(max_index, Integral)
         inverse = make_uninitialized_array(max_index + 1, dtype=int)
         inverse[index_map] = make_array(list(range(len(index_map))))
         return inverse

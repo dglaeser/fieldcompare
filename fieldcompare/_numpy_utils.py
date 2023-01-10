@@ -5,6 +5,7 @@ from typing import Iterable, Sequence, Tuple, Optional, Union, SupportsIndex
 import numpy as np
 from numpy import ndarray
 from numpy.typing import ArrayLike as np_arraylike
+from numpy.lib.index_tricks import ndindex
 
 
 Array = ndarray
@@ -143,9 +144,21 @@ def get_sorting_index_map(input_array: Array) -> Array:
     return np.argsort(input_array)
 
 
-def max_element(input_array: Array):
-    """Return the maximum value within the array. Expects arrays of scalars."""
-    return input_array[np.argmax(input_array)]
+def max_element(input_array: Array) -> Union[np.number, Array]:
+    """Return an array of shape `input_array.shape[1:]` with the maximum entries of the given array."""
+    if len(input_array.shape) < 2:
+        return input_array[np.argmax(input_array)]
+    result = np.zeros(shape=input_array.shape[1:], dtype=input_array.dtype)
+    max_indices = np.argmax(input_array, axis=0)
+    assert max_indices.shape == result.shape
+    for md_index in ndindex(result.shape):
+        result[md_index] = input_array[max_indices[md_index]][md_index]
+    return result
+
+
+def max_abs_element(input_array: Array) -> Union[np.number, Array]:
+    """Return an array of shape `input_array.shape[1:]` with the maximum absolute entries of the given array."""
+    return max_element(np.abs(input_array))
 
 
 def max_value(input_array: Array) -> float:
@@ -209,6 +222,11 @@ def find_first_unequal(first: Array, second: Array) -> Optional[Tuple]:
     return None
 
 
+def select_max_values(first: ArrayLike, second: ArrayLike) -> Array:
+    """Return an array of the same shape as the given ones, choosing the maximum values between them."""
+    return np.maximum(first, second)
+
+
 def fuzzy_equal(first: Array, second: Array, rel_tol: ArrayTolerance, abs_tol: ArrayTolerance) -> Array:
     """
     Return the indices at which the two arrays are fuzzy_equal.
@@ -216,7 +234,7 @@ def fuzzy_equal(first: Array, second: Array, rel_tol: ArrayTolerance, abs_tol: A
     `abs(a - b) <= max(rel_tol*max(a, b), abs_tol)`
     """
 
-    def _check_valid_tolerance(tol: ArrayLike) -> None:
+    def _check_valid_tolerance(tol: ArrayTolerance) -> None:
         if isinstance(tol, Array):
             if any(_op.shape[1:] != tol.shape for _op in [first, second]):
                 raise ValueError("Given tolerance shape does not match array value shapes")
@@ -225,9 +243,9 @@ def fuzzy_equal(first: Array, second: Array, rel_tol: ArrayTolerance, abs_tol: A
     _check_valid_tolerance(abs_tol)
 
     abs_diff = np.abs(second - first)
-    thresholds = np.maximum(np.abs(first), np.abs(second))
+    thresholds = select_max_values(np.abs(first), np.abs(second))
     thresholds *= rel_tol
-    thresholds = np.maximum(thresholds, abs_tol)
+    thresholds = select_max_values(thresholds, abs_tol)
     return np.less_equal(abs_diff, thresholds)
 
 
