@@ -1,9 +1,9 @@
 """Defines the interfaces used by the fieldcompare.mesh module"""
 
 from __future__ import annotations
-from typing import Protocol, Iterable, Tuple, Optional, runtime_checkable
+from typing import Protocol, Iterable, Tuple, Optional, Union, runtime_checkable
 
-from ..protocols import FieldData, Field, PredicateResult
+from ..protocols import FieldData, Field, PredicateResult, ToleranceEstimator
 from .._numpy_utils import Array
 
 from ._cell_type import CellType
@@ -51,7 +51,11 @@ class Mesh(Protocol):
         """Return the relative tolerance used in equality checks against other meshes"""
         ...
 
-    def set_tolerances(self, abs_tol: Optional[float] = None, rel_tol: Optional[float] = None) -> None:
+    def set_tolerances(
+        self,
+        abs_tol: Optional[Union[float, ToleranceEstimator]] = None,
+        rel_tol: Optional[Union[float, ToleranceEstimator]] = None,
+    ) -> None:
         """
         Set the tolerances to be used for equality checks against other meshes.
 

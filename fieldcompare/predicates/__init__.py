@@ -6,7 +6,7 @@ from ._predicates import (
     DefaultEquality,
     PredicateResult,
     PredicateError,
-    AbsoluteToleranceEstimate,
+    AbsoluteToleranceEstimator,
 )
 
 __all__ = [
@@ -15,5 +15,5 @@ __all__ = [
     "DefaultEquality",
     "PredicateResult",
     "PredicateError",
-    "AbsoluteToleranceEstimate",
+    "AbsoluteToleranceEstimator",
 ]

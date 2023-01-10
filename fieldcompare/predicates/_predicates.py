@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Tuple, Optional, Union, Protocol, runtime_checkable
+from typing import Tuple, Optional, Union
 
 from .._common import _default_base_tolerance
+from ..protocols import ToleranceEstimator
 
 from .._numpy_utils import ArrayTolerance, ArrayLike, Array, as_array, as_string, has_floats
 from .._numpy_utils import find_first_unequal
@@ -17,6 +18,27 @@ class PredicateError(Exception):
     """Exception raised for errors during predicate evaluation"""
 
     pass
+
+
+class AbsoluteToleranceEstimator:
+    f"""
+    Estimates a suitable absolute tolerance for comparing two fields by scaling the
+    maximum ocurring value in the two fields (as an estimate for their magnitude)
+    with a given relative tolerance.
+
+    Args:
+        rel_tol: The relative tolerance with which to scale the magnitude (default: {_default_base_tolerance()})
+    """
+
+    def __init__(self, rel_tol: ArrayTolerance = _default_base_tolerance()) -> None:
+        self._rel_tol = rel_tol
+
+    def __call__(self, first: Array, second: Array) -> ArrayTolerance:
+        """Return an estimate for the absolute tolerance for comparing the given fields."""
+        return select_max_values(max_abs_element(first), max_abs_element(second)) * self._rel_tol
+
+    def __str__(self) -> str:
+        return f"AbsoluteToleranceEstimator (rel_tol={self._rel_tol})"
 
 
 @dataclass
@@ -66,33 +88,6 @@ class ExactEquality:
         return _success_result()
 
 
-class AbsoluteToleranceEstimate:
-    f"""
-    Estimates a suitable absolute tolerance for comparing two fields by scaling the
-    maximum ocurring value in the two fields (as an estimate for their magnitude)
-    with a given relative tolerance.
-
-    Args:
-        rel_tol: The relative tolerance with which to scale the magnitude (default: {_default_base_tolerance()})
-    """
-
-    def __init__(self, rel_tol: ArrayTolerance = _default_base_tolerance()) -> None:
-        self._rel_tol = rel_tol
-
-    def __call__(self, first: Array, second: Array) -> ArrayTolerance:
-        """Return an estimate for the absolute tolerance for comparing the given fields."""
-        return select_max_values(max_abs_element(first), max_abs_element(second)) * self._rel_tol
-
-    def __str__(self) -> str:
-        return f"AbsoluteToleranceEstimate (rel_tol={self._rel_tol})"
-
-
-@runtime_checkable
-class ToleranceEstimate(Protocol):
-    def __call__(self, first: Array, second: Array) -> float:
-        ...
-
-
 class FuzzyEquality:
     """
     Compares arrays for fuzzy equality.
@@ -109,7 +104,7 @@ class FuzzyEquality:
     def __init__(
         self,
         rel_tol: ArrayTolerance = _default_base_tolerance(),
-        abs_tol: Union[ToleranceEstimate, ArrayTolerance] = 0.0,
+        abs_tol: Union[ToleranceEstimator, ArrayTolerance] = 0.0,
     ) -> None:
         self._rel_tol = rel_tol
         self._abs_tol = abs_tol
@@ -133,7 +128,7 @@ class FuzzyEquality:
     @property
     def absolute_tolerance(self) -> Optional[ArrayTolerance]:
         """Return the absolute tolerance used for fuzzy comparisons."""
-        return None if isinstance(self._abs_tol, ToleranceEstimate) else self._abs_tol
+        return None if isinstance(self._abs_tol, ToleranceEstimator) else self._abs_tol
 
     @absolute_tolerance.setter
     def absolute_tolerance(self, value: ArrayTolerance) -> None:
@@ -165,12 +160,12 @@ class FuzzyEquality:
         last_abs_tol_str = f"{as_string(self._last_used_abs_tol) if not self._last_used_abs_tol is None else None}"
         return (
             f"abs_tol: {as_string(self._abs_tol)}"
-            if not isinstance(self._abs_tol, ToleranceEstimate)
+            if not isinstance(self._abs_tol, ToleranceEstimator)
             else f"abs_tol: estimate (last used: {last_abs_tol_str})"
         ) + f", rel_tol: {as_string(self.relative_tolerance)}"
 
     def _estimate_abs_tol(self, first: Array, second: Array) -> ArrayTolerance:
-        if isinstance(self._abs_tol, ToleranceEstimate):
+        if isinstance(self._abs_tol, ToleranceEstimator):
             return self._abs_tol(first, second)
         return self._abs_tol
 

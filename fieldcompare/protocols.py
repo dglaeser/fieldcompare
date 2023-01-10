@@ -6,6 +6,14 @@ from ._numpy_utils import Array
 
 
 @runtime_checkable
+class ToleranceEstimator(Protocol):
+    """Interface for estimators of tolerances from array values."""
+
+    def __call__(self, first: Array, second: Array) -> float:
+        ...
+
+
+@runtime_checkable
 class PredicateResult(Protocol):
     """Return value from predicate functions."""
 
