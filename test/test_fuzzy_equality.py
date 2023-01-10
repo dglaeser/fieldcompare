@@ -17,14 +17,17 @@ def test_fuzzy_equality_with_scalars():
 
 
 def test_vector_fuzzy_equality():
-    for check in [FuzzyEquality(), DefaultEquality()]:
-        v1 = [[1.0, 1.0], [2.0, 2.0]]
-        v2 = [[1.0, 1.0], [2.0 + 1e-6, 2.0 + 1e-5]]
-        assert not check(v1, v2)
-        check.relative_tolerance = [1e-7, 1e-4]
-        assert not check(v1, v2)
-        check.relative_tolerance = [1e-5, 1e-4]
-        assert check(v1, v2)
+    v1 = [[1.0, 1.0], [2.0, 2.0]]
+    v2 = [[1.0, 1.0], [2.0 + 1e-6, 2.0 + 1e-5]]
+    assert not FuzzyEquality()(v1, v2)
+    assert not FuzzyEquality(rel_tol=[1e-7, 1e-4])(v1, v2)
+    assert FuzzyEquality(rel_tol=[1e-5, 1e-4])(v1, v2)
+
+    assert not FuzzyEquality(abs_tol=AbsoluteToleranceEstimate(rel_tol=1e-7))(v1, v2)
+    assert FuzzyEquality(abs_tol=AbsoluteToleranceEstimate(rel_tol=1e-4))(v1, v2)
+
+    assert not FuzzyEquality(abs_tol=AbsoluteToleranceEstimate(rel_tol=[1e-7, 1e-4]))(v1, v2)
+    assert FuzzyEquality(abs_tol=AbsoluteToleranceEstimate(rel_tol=[1e-5, 1e-4]))(v1, v2)
 
 
 def test_fuzzy_equality_with_estimated_abs_tol():
