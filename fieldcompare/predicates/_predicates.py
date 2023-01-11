@@ -99,31 +99,32 @@ class FuzzyEquality:
     """
     Compares arrays for fuzzy equality.
     Arrays are considered fuzzy equal if for each pair of scalars the following relation holds:
-    `abs(a - b) <= max(rel_tol*max(a, b), _atol)`. If `abs_tol = None` is given, then `_atol`
-    is computed from the arrays to be compared via `_atol = max(max(abs(first), abs(second)))*rel_tol`,
-    otherwise `_atol = abs_tol`, while the default is `0.0`.
+    `abs(a - b) <= max(_rtol*max(a, b), _atol)`. Note that tolerances can either be given as `float`
+    values, in which case `_rtol = rel_tol` and `_atol = abs_tol`, or, as instances of :class:`.ToleranceEstimator`,
+    in which case the actually used values are determined from the fields to be compared.
 
     Args:
         rel_tol: The relative tolerance to be used.
-        abs_tol: The absolute tolerance to be used (default: 0.0).
+        abs_tol: The absolute tolerance to be used.
     """
 
     def __init__(
         self,
-        rel_tol: ArrayTolerance = _default_base_tolerance(),
+        rel_tol: Union[ToleranceEstimator, ArrayTolerance] = _default_base_tolerance(),
         abs_tol: Union[ToleranceEstimator, ArrayTolerance] = 0.0,
     ) -> None:
         self._rel_tol = rel_tol
         self._abs_tol = abs_tol
+        self._last_used_rel_tol: Optional[ArrayTolerance] = None
         self._last_used_abs_tol: Optional[ArrayTolerance] = None
 
     @property
-    def relative_tolerance(self) -> ArrayTolerance:
+    def relative_tolerance(self) -> Optional[ArrayTolerance]:
         """Return the relative tolerance used for fuzzy comparisons."""
-        return self._rel_tol
+        return None if isinstance(self._rel_tol, ToleranceEstimator) else self._rel_tol
 
     @relative_tolerance.setter
-    def relative_tolerance(self, value: ArrayTolerance) -> None:
+    def relative_tolerance(self, value: Union[ToleranceEstimator, ArrayTolerance]) -> None:
         """
         Set the relative tolerance to be used for fuzzy comparisons.
 
@@ -138,7 +139,7 @@ class FuzzyEquality:
         return None if isinstance(self._abs_tol, ToleranceEstimator) else self._abs_tol
 
     @absolute_tolerance.setter
-    def absolute_tolerance(self, value: ArrayTolerance) -> None:
+    def absolute_tolerance(self, value: Union[ToleranceEstimator, ArrayTolerance]) -> None:
         """
         Set the absolute tolerance to be used for fuzzy comparisons.
 
@@ -164,17 +165,20 @@ class FuzzyEquality:
         return f"FuzzyEquality ({self._tolerance_info()})"
 
     def _tolerance_info(self) -> str:
-        last_abs_tol_str = f"{as_string(self._last_used_abs_tol) if not self._last_used_abs_tol is None else None}"
-        return (
-            f"abs_tol: {as_string(self._abs_tol)}"
-            if not isinstance(self._abs_tol, ToleranceEstimator)
-            else f"abs_tol: estimate (last used: {last_abs_tol_str})"
-        ) + f", rel_tol: {as_string(self.relative_tolerance)}"
+        def _tolinfo(tol, last_used) -> str:
+            if isinstance(tol, ToleranceEstimator):
+                return f"estimate (last used: {as_string(last_used) if last_used is not None else None})"
+            return f"{as_string(tol)}"
 
-    def _estimate_abs_tol(self, first: Array, second: Array) -> ArrayTolerance:
-        if isinstance(self._abs_tol, ToleranceEstimator):
-            return self._abs_tol(first, second)
-        return self._abs_tol
+        return (
+            f"abs_tol: {_tolinfo(self._abs_tol, self._last_used_abs_tol)}, "
+            f"rel_tol: {_tolinfo(self._rel_tol, self._last_used_rel_tol)}"
+        )
+
+    def _estimate_tol(self, tol, first: Array, second: Array) -> ArrayTolerance:
+        if isinstance(tol, ToleranceEstimator):
+            return tol(first, second)
+        return tol
 
     def _check(self, first: ArrayLike, second: ArrayLike) -> PredicateResult:
         first, second = _reshape(first, second)
@@ -182,8 +186,9 @@ class FuzzyEquality:
         if not shape_check:
             return shape_check
 
-        self._last_used_abs_tol = self._estimate_abs_tol(first, second)
-        unequals = find_first_fuzzy_unequal(first, second, self._rel_tol, self._last_used_abs_tol)
+        self._last_used_rel_tol = self._estimate_tol(self._rel_tol, first, second)
+        self._last_used_abs_tol = self._estimate_tol(self._abs_tol, first, second)
+        unequals = find_first_fuzzy_unequal(first, second, self._last_used_rel_tol, self._last_used_abs_tol)
         if unequals is not None:
             val1, val2 = unequals
             deviation_in_percent = _compute_deviation_in_percent(val1, val2)
