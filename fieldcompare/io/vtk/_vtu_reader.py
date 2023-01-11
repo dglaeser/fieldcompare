@@ -6,7 +6,7 @@ import numpy as np
 from ...mesh import Mesh
 from ._helpers import vtk_cell_type_index_to_cell_type
 from ._xml_reader import VTKXMLReader, CellTypeToCellIndices
-from ._reader_map import _VTK_EXTENSION_TO_READER
+from ._reader_map import _VTK_EXTENSION_TO_READER, _VTK_TYPE_TO_EXTENSION
 
 
 class VTUReader(VTKXMLReader):
@@ -78,3 +78,4 @@ class VTUReader(VTKXMLReader):
 
 
 _VTK_EXTENSION_TO_READER[".vtu"] = VTUReader
+_VTK_TYPE_TO_EXTENSION["UnstructuredGrid"] = ".vtu"

@@ -30,3 +30,4 @@ class _Map:
 
 
 _VTK_EXTENSION_TO_READER = _Map()
+_VTK_TYPE_TO_EXTENSION: Dict[str, str] = {}

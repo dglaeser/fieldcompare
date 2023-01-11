@@ -7,7 +7,7 @@ from ...mesh import merge, protocols as mesh_protocols
 
 from ._vtu_reader import VTUReader
 from ._vtp_reader import VTPReader
-from ._reader_map import _VTKReader, _VTK_EXTENSION_TO_READER
+from ._reader_map import _VTKReader, _VTK_EXTENSION_TO_READER, _VTK_TYPE_TO_EXTENSION
 
 
 class _PVTKReader:
@@ -63,3 +63,6 @@ class PVTPReader(_PVTKReader):
 
 _VTK_EXTENSION_TO_READER[".pvtu"] = PVTUReader
 _VTK_EXTENSION_TO_READER[".pvtp"] = PVTPReader
+
+_VTK_TYPE_TO_EXTENSION["PUnstructuredGrid"] = ".pvtu"
+_VTK_TYPE_TO_EXTENSION["PPolyData"] = ".pvtp"
