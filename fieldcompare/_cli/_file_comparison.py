@@ -4,8 +4,10 @@ from pathlib import Path
 from typing import Union, List, Callable, Optional
 from dataclasses import dataclass
 
-from .._numpy_utils import as_array, has_floats
 from ..predicates import FuzzyEquality, ExactEquality
+from ..protocols import ToleranceEstimator
+
+from .._numpy_utils import as_array, has_floats
 from .._common import _default_base_tolerance
 from .._format import as_success, as_error, as_warning, highlighted
 
@@ -27,14 +29,17 @@ from ..mesh import protocols as mesh_protocols
 from ..io import read as read_fields
 
 
+Tolerance = Union[float, ToleranceEstimator]
+
+
 @dataclass
 class FileComparisonOptions:
     ignore_missing_source_fields: bool = False
     ignore_missing_reference_fields: bool = False
     ignore_missing_sequence_steps: bool = False
     force_sequence_comparison: bool = False
-    relative_tolerances: Callable[[str], Optional[float]] = lambda _: _default_base_tolerance()
-    absolute_tolerances: Callable[[str], Optional[float]] = lambda _: 0.0
+    relative_tolerances: Callable[[str], Optional[Tolerance]] = lambda _: _default_base_tolerance()
+    absolute_tolerances: Callable[[str], Optional[Tolerance]] = lambda _: 0.0
     field_inclusion_filter: Callable[[str], bool] = lambda _: True
     field_exclusion_filter: Callable[[str], bool] = lambda _: False
     disable_unconnected_points_removal: bool = False
