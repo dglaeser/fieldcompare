@@ -5,6 +5,7 @@ from os import walk, remove
 from os.path import splitext, exists
 from pathlib import Path
 from typing import List
+from shutil import copyfile
 
 import pytest
 from meshio import read as meshio_read
@@ -134,6 +135,41 @@ def test_vtu_appended_raw_files_lz4_compressed(filename: str):
         pytest.skip("LZ4 not found. Skipping tests...")
     else:
         _test(filename)
+
+
+def test_vtu_reading_from_different_extension():
+    assert _test_with_different_extension(VTU_APPENDED_RAW[0])
+
+
+def test_vtp_reading_from_different_extension():
+    assert _test_with_different_extension(VTP_FILES[0])
+
+
+def test_pvtp_reading_from_different_extension():
+    assert _test_with_different_extension(PVTP_FILES[0])
+
+
+def test_pvtu_reading_from_different_extension():
+    assert _test_with_different_extension(PVTU_FILES[0])
+
+
+def test_pvd_reading_from_different_extension():
+    filename = PVD_FILES[0]
+    new_filename = f"{splitext(filename)[0]}.wrongext"
+    copyfile(filename, new_filename)
+    sequence = read(new_filename)
+    for step in sequence:
+        assert isinstance(step, mesh_protocols.MeshFields)
+        _test_from_mesh(step)
+    remove(new_filename)
+
+
+def _test_with_different_extension(filename: str) -> bool:
+    new_filename = f"{splitext(filename)[0]}.wrongext"
+    copyfile(filename, new_filename)
+    check = _test(new_filename)
+    remove(new_filename)
+    return check
 
 
 def _test(filename: str) -> bool:
