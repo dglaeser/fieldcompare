@@ -378,6 +378,7 @@ def test_cli_directory_mode_pass():
 
 def test_cli_directory_mode_junit_report():
     tmp_results_path = TEST_DATA_PATH.resolve().parent / Path("cli_dir_junit_report_results_data")
+    rmtree(tmp_results_path, ignore_errors=True)
     copytree(TEST_DATA_PATH, tmp_results_path, dirs_exist_ok=True)
     copy(
         tmp_results_path / Path("test_mesh_permutated.vtu"),
@@ -432,6 +433,7 @@ def test_cli_directory_mode_field_exclusion_filter():
 
 def test_cli_directory_mode_missing_result_file():
     tmp_results_path = TEST_DATA_PATH.resolve().parent / Path("cli_dir_test_results_data")
+    rmtree(tmp_results_path, ignore_errors=True)
     copytree(TEST_DATA_PATH, tmp_results_path, dirs_exist_ok=True)
     assert main(["dir", str(tmp_results_path), str(TEST_DATA_PATH)]) == 0
 
@@ -466,6 +468,7 @@ def test_cli_directory_mode_missing_result_file():
 
 def test_cli_directory_mode_missing_reference_file():
     tmp_reference_path = TEST_DATA_PATH.resolve().parent / Path("cli_dir_test_ref_data")
+    rmtree(tmp_reference_path, ignore_errors=True)
     copytree(TEST_DATA_PATH, tmp_reference_path, dirs_exist_ok=True)
     assert main(["dir", str(TEST_DATA_PATH), str(tmp_reference_path)]) == 0
 
