@@ -2,17 +2,19 @@
 
 from os import chdir, getcwd
 from os import walk, remove
-from os.path import splitext, exists
+from os.path import splitext
 from pathlib import Path
 from typing import List
 from shutil import copyfile
 
 import pytest
-from meshio import read as meshio_read
+from meshio import read as meshio_read, Mesh as MeshioMesh
 
 from fieldcompare import FieldDataComparator, protocols
 from fieldcompare.mesh import meshio_utils, protocols as mesh_protocols
 from fieldcompare.io.vtk import read, PVTUReader
+from fieldcompare.io import read_as
+
 
 try:
     import lz4
@@ -139,18 +141,22 @@ def test_vtu_appended_raw_files_lz4_compressed(filename: str):
 
 def test_vtu_reading_from_different_extension():
     assert _test_with_different_extension(VTU_APPENDED_RAW[0])
+    assert _test_read_as_mesh(VTU_APPENDED_RAW[0])
 
 
 def test_vtp_reading_from_different_extension():
     assert _test_with_different_extension(VTP_FILES[0])
+    assert _test_read_as_mesh(VTP_FILES[0])
 
 
 def test_pvtp_reading_from_different_extension():
     assert _test_with_different_extension(PVTP_FILES[0])
+    assert _test_read_as_mesh(PVTP_FILES[0])
 
 
 def test_pvtu_reading_from_different_extension():
     assert _test_with_different_extension(PVTU_FILES[0])
+    assert _test_read_as_mesh(PVTU_FILES[0])
 
 
 def test_pvd_reading_from_different_extension():
@@ -172,39 +178,46 @@ def _test_with_different_extension(filename: str) -> bool:
     return check
 
 
+def _test_read_as_mesh(filename: str) -> bool:
+    new_filename = f"{splitext(filename)[0]}.unknown"
+    copyfile(filename, new_filename)
+    try:
+        fields = read_as("mesh", new_filename)
+        assert isinstance(fields, mesh_protocols.MeshFields)
+        check = _test_from_mesh(fields)
+    except Exception as e:
+        check = False
+        print(f"Exception raised: {e}")
+    remove(new_filename)
+    return check
+
+
 def _test(filename: str) -> bool:
     mesh_fields = _read_mesh_fields(filename)
-    tmp_filename = f"{splitext(filename)[0]}_from_meshio.vtk"
-    if splitext(filename) == ".vtu":
-        meshio_read_mesh = meshio_read(filename)
-    else:
-        meshio_mesh = meshio_utils.to_meshio(mesh_fields)
-
-        # meshio seems to fail when meshes consist of e.g. polygons
-        # with differing numbers of corners and the shape of the array
-        # is not fully determined
-        if any(block.data.dtype == "object" for block in meshio_mesh.cells):
-            meshio_read_mesh = meshio_mesh
-        else:
-            meshio_mesh.write(tmp_filename)
-            meshio_read_mesh = meshio_read(tmp_filename)
-
-    meshio_mesh_fields = meshio_utils.from_meshio(meshio_read_mesh)
-    comparator = FieldDataComparator(mesh_fields, meshio_mesh_fields)
-    if exists(tmp_filename):
-        remove(tmp_filename)
-    return bool(comparator())
+    meshio_mesh = _get_alternative_with_meshio(mesh_fields, f"{splitext(filename)[0]}_from_meshio.vtk")
+    meshio_mesh_fields = meshio_utils.from_meshio(meshio_mesh)
+    return bool(FieldDataComparator(mesh_fields, meshio_mesh_fields)())
 
 
 def _test_from_mesh(mesh_fields: mesh_protocols.MeshFields) -> bool:
-    meshio_mesh = meshio_utils.to_meshio(mesh_fields)
-    tmp_filename = "_temporary_test_to_meshio.vtu"
-    meshio_mesh.write(tmp_filename)
-    meshio_mesh = meshio_read(tmp_filename)
+    meshio_mesh = _get_alternative_with_meshio(mesh_fields, "_test_from_meshio.vtk")
     meshio_mesh_fields = meshio_utils.from_meshio(meshio_mesh)
-    comparator = FieldDataComparator(mesh_fields, meshio_mesh_fields)
-    remove(tmp_filename)
-    return bool(comparator())
+    return bool(FieldDataComparator(mesh_fields, meshio_mesh_fields)())
+
+
+def _get_alternative_with_meshio(mesh_fields: mesh_protocols.MeshFields, tmp_filename: str) -> MeshioMesh:
+    meshio_mesh = meshio_utils.to_meshio(mesh_fields)
+
+    # meshio seems to fail writing vtk files when meshes consist of e.g. polygons
+    # with differing numbers of corners and the shape of the array
+    # is not fully determined. In this case, just return the converted mesh
+    if any(block.data.dtype == "object" for block in meshio_mesh.cells):
+        return meshio_mesh
+    else:
+        meshio_mesh.write(tmp_filename)
+        meshio_read_mesh = meshio_read(tmp_filename)
+        remove(tmp_filename)
+        return meshio_read_mesh
 
 
 def _read_mesh_fields(filename: str) -> mesh_protocols.MeshFields:
