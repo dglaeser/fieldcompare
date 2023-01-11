@@ -34,7 +34,7 @@ class FileComparisonOptions:
     ignore_missing_sequence_steps: bool = False
     force_sequence_comparison: bool = False
     relative_tolerances: Callable[[str], Optional[float]] = lambda _: _default_base_tolerance()
-    absolute_tolerances: Callable[[str], Optional[float]] = lambda _: _default_base_tolerance()
+    absolute_tolerances: Callable[[str], Optional[float]] = lambda _: 0.0
     field_inclusion_filter: Callable[[str], bool] = lambda _: True
     field_exclusion_filter: Callable[[str], bool] = lambda _: False
     disable_unconnected_points_removal: bool = False
@@ -191,11 +191,9 @@ class FileComparison:
         )
 
     def _set_mesh_tolerances(self, fields: protocols.FieldData) -> None:
-        abs_tol = self._opts.absolute_tolerances("domain")
-        rel_tol = self._opts.relative_tolerances("domain")
-        abs_tol = fields.domain.absolute_tolerance if abs_tol is None else abs_tol
-        rel_tol = fields.domain.relative_tolerance if rel_tol is None else rel_tol
-        fields.domain.set_tolerances(abs_tol=abs_tol, rel_tol=rel_tol)
+        fields.domain.set_tolerances(
+            abs_tol=self._opts.absolute_tolerances("domain"), rel_tol=self._opts.relative_tolerances("domain")
+        )
 
     def _select_predicate(self, res_field: protocols.Field, ref_field: protocols.Field) -> protocols.Predicate:
         if has_floats(as_array(res_field.values)) or has_floats(as_array(ref_field.values)):
