@@ -30,7 +30,7 @@ def read(filename: str) -> Union[protocols.FieldData, protocols.FieldDataSequenc
     """
     if vtk.is_supported(filename):
         return vtk.read(filename)
-    if splitext(filename)[1] == ".csv":
+    if splitext(filename)[1] in [".csv", ".dsv"]:
         return CSVFieldReader().read(filename)
     if _HAVE_MESHIO and _supported_by_meshio(filename):
         try:
