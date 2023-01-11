@@ -1,9 +1,19 @@
 """Test fuzzy equality checks for values/arrays"""
 
 from pytest import raises
+import numpy as np
 
 from fieldcompare.predicates import FuzzyEquality, DefaultEquality, PredicateError, AbsoluteToleranceEstimator
-from fieldcompare._numpy_utils import make_array
+from fieldcompare._numpy_utils import Array, make_array
+
+
+class MockRelTolEstimator:
+    def __init__(self, scaling: float) -> None:
+        self._scaling = scaling
+
+    def __call__(self, first: Array, second: Array) -> float:
+        magnitude = max(np.max(first), np.max(second))
+        return self._scaling*magnitude
 
 
 def test_fuzzy_equality_with_scalars():
@@ -46,6 +56,13 @@ def test_fuzzy_equality_with_estimated_abs_tol():
     assert not FuzzyEquality(rel_tol=1e-9)(array1, array2)
     assert not FuzzyEquality(rel_tol=1e-9, abs_tol=AbsoluteToleranceEstimator(rel_tol=1e-9))(array1, array2)
     assert FuzzyEquality(rel_tol=1e-9, abs_tol=AbsoluteToleranceEstimator(rel_tol=1e-9))(array1, array3)
+
+
+def test_fuzzy_equality_with_estimated_rel_tol():
+    array1 = make_array([1.0, 1e9])
+    array2 = make_array([a1 + 1e-6*max(array1) for a1 in array1])
+    assert not FuzzyEquality(rel_tol=1e-6)(array1, array2)
+    assert FuzzyEquality(rel_tol=MockRelTolEstimator(scaling=1e-6))(array1, array2)
 
 
 def test_fuzzy_equality_with_lists():
