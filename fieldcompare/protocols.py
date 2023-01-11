@@ -10,6 +10,7 @@ class ToleranceEstimator(Protocol):
     """Interface for estimators of tolerances from array values."""
 
     def __call__(self, first: Array, second: Array) -> ArrayTolerance:
+        """Return a tolerance to be used for comparing the two given arrays."""
         ...
 
 

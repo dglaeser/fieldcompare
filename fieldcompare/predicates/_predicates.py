@@ -21,13 +21,13 @@ class PredicateError(Exception):
 
 
 class AbsoluteToleranceEstimator:
-    f"""
+    """
     Estimates a suitable absolute tolerance for comparing two fields by scaling the
     maximum ocurring value in the two fields (as an estimate for their magnitude)
     with a given relative tolerance.
 
     Args:
-        rel_tol: The relative tolerance with which to scale the magnitude (default: {_default_base_tolerance()})
+        rel_tol: The relative tolerance with which to scale the magnitude (default: 1-9)
         use_component_magnitudes: If true, the magnitudes are determined separately for each component,
                                   and if per-component tolerances are given, they are scaled individually
     """
@@ -99,9 +99,10 @@ class FuzzyEquality:
     """
     Compares arrays for fuzzy equality.
     Arrays are considered fuzzy equal if for each pair of scalars the following relation holds:
-    `abs(a - b) <= max(_rtol*max(a, b), _atol)`. Note that tolerances can either be given as `float`
-    values, in which case `_rtol = rel_tol` and `_atol = abs_tol`, or, as instances of :class:`.ToleranceEstimator`,
-    in which case the actually used values are determined from the fields to be compared.
+    `abs(a - b) <= max(_rtol*max(a, b), _atol)`. Note that tolerances can either be given directly as
+    `float` or `ndarray`, in which case `_rtol = rel_tol` and `_atol = abs_tol`, or,
+    as instances of :class:`.ToleranceEstimator`, in which case the values actually used are determined
+    from the fields to be compared.
 
     Args:
         rel_tol: The relative tolerance to be used.
