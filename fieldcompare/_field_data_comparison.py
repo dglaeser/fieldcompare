@@ -275,8 +275,10 @@ class FieldDataComparator:
     def _filter_matches(self, query: MatchResult) -> Tuple[MatchResult, List[Field]]:
         filtered = []
         matching_pairs = []
-        for i, (source, target) in enumerate(query.matches):
-            if not self._field_inclusion_filter(source.name) or self._field_exclusion_filter(source.name):
+        for _, (source, target) in enumerate(query.matches):
+            is_included = self._field_inclusion_filter(self._without_annotation(source).name)
+            is_excluded = self._field_exclusion_filter(self._without_annotation(source).name)
+            if not is_included or is_excluded:
                 filtered.append(source)
             else:
                 matching_pairs.append((source, target))
