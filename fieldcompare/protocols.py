@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 from typing import Protocol, Callable, Iterator, Any, runtime_checkable
-from ._numpy_utils import Array
+from ._numpy_utils import Array, ArrayTolerance
 
 
 @runtime_checkable
 class ToleranceEstimator(Protocol):
     """Interface for estimators of tolerances from array values."""
 
-    def __call__(self, first: Array, second: Array) -> float:
+    def __call__(self, first: Array, second: Array) -> ArrayTolerance:
         ...
 
 

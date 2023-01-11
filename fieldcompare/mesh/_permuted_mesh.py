@@ -123,7 +123,9 @@ class PermutedMesh:
         self._abs_tol = self._abs_tol if abs_tol is None else self._get_tolerance(abs_tol)
 
     def _get_tolerance(self, tol: Union[float, ToleranceEstimator]) -> float:
-        return tol(self._mesh.points, self._mesh.points) if isinstance(tol, ToleranceEstimator) else tol
+        result = tol(self._mesh.points, self._mesh.points) if isinstance(tol, ToleranceEstimator) else tol
+        assert isinstance(result, float)
+        return result
 
     def _make_inverse_point_permutation(self) -> Optional[Array]:
         if self._point_permutation is None:
