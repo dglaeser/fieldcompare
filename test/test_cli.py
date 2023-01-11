@@ -26,6 +26,21 @@ def test_cli_file_mode_pass():
     ]) == 0
 
 
+def test_cli_file_mode_reader_selection():
+    csv_file = "test_tabular_data.csv"
+    csv_file_path = str(TEST_DATA_PATH / Path(csv_file))
+    modified_ext_filename = f"{splitext(csv_file)[0]}.dat"
+    copy(csv_file_path, modified_ext_filename)
+    check = main([
+        "file",
+        csv_file_path,
+        modified_ext_filename,
+        "--read-as", "dsv:*.dat"
+    ])
+    remove(modified_ext_filename)
+    assert check == 0
+
+
 def test_cli_file_mode_junit_report():
     report_filename = "file_mode_junit.xml"
     if isfile(report_filename):
