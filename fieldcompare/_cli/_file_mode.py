@@ -17,6 +17,7 @@ from ._common import (
     _include_all,
     _exclude_all,
     _log_suite_summary,
+    _make_file_type_map,
 )
 
 
@@ -29,6 +30,7 @@ def _add_arguments(parser: ArgumentParser):
     _add_field_filter_options_args(parser)
     _add_mesh_reorder_options_args(parser)
     _add_junit_export_arg(parser)
+    _add_reader_selection_options_args(parser)
 
 
 def _run(args: dict, in_logger: CLILogger) -> int:
@@ -46,6 +48,7 @@ def _run(args: dict, in_logger: CLILogger) -> int:
         disable_mesh_reordering=True if args["disable_mesh_reordering"] else False,
         disable_mesh_space_dimension_matching=True if args["disable_mesh_space_dimension_matching"] else False,
         disable_unconnected_points_removal=True if args["disable_mesh_orphan_point_removal"] else False,
+        file_type_map=_make_file_type_map(args.get("read_as", [])),
     )
 
     try:
@@ -166,6 +169,22 @@ def _add_tolerance_options_args(parser: ArgumentParser) -> None:
         "in the fields by using the syntax: `-atol pressure:1e-3*max`. This is useful for fields with "
         "a large range where all values are expected to exhibit similar absolute errors. This option "
         "then avoids false negatives from values close to zero.",
+    )
+
+
+def _add_reader_selection_options_args(parser: ArgumentParser) -> None:
+    parser.add_argument(
+        "--read-as",
+        nargs="*",
+        required=False,
+        help="Specify the reader to be used for parsing the fields from files (per default, the reader is deduced "
+        "from the file extension). To specify that a file should be read by the mesh reading facilities, for instance, "
+        "use the following syntax: `--read-as mesh:MY_FILE`. In general, the syntax is `READER:REGEX`, where `READER` "
+        "specifies the reading facilities to be used, and `REGEX` is a regular expression that is evaluated with "
+        "filenames to check if `READER` should be used for them. For instance, to read `.dat` with delimiter-separated "
+        "content with the `dsv` facilities, use `--read-as dsv:*.dat`. This option can be used multiple times, and "
+        "in case a filename matches multiple of the given regular expressions, the first match is taken. For example, "
+        "`--read-as dsv:*.dat --read-as mesh:*.dat` leads to `.dat` files being read as `dsv`.",
     )
 
 

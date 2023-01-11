@@ -22,6 +22,7 @@ from ._common import (
     _log_suite_summary,
     _include_all,
     _exclude_all,
+    _make_file_type_map,
 )
 
 from ._file_mode import (
@@ -30,6 +31,7 @@ from ._file_mode import (
     _add_field_filter_options_args,
     _add_mesh_reorder_options_args,
     _add_junit_export_arg,
+    _add_reader_selection_options_args,
 )
 
 from ._test_suite import TestSuite, TestResult, TestStatus
@@ -67,6 +69,7 @@ def _add_arguments(parser: ArgumentParser):
     _add_tolerance_options_args(parser)
     _add_mesh_reorder_options_args(parser)
     _add_junit_export_arg(parser)
+    _add_reader_selection_options_args(parser)
 
 
 def _run(args: dict, in_logger: CLILogger) -> int:
@@ -155,6 +158,7 @@ def _do_file_comparisons(args, filenames: Iterable[str], logger: CLILogger) -> F
             disable_mesh_reordering=True if args["disable_mesh_reordering"] else False,
             disable_mesh_space_dimension_matching=True if args["disable_mesh_space_dimension_matching"] else False,
             disable_unconnected_points_removal=True if args["disable_mesh_orphan_point_removal"] else False,
+            file_type_map=_make_file_type_map(args.get("read_as", [])),
         )
         try:
             sub_logger = logger.with_prefix("  ")

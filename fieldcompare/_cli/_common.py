@@ -72,6 +72,35 @@ def _parse_field_tolerances(
     return FieldToleranceMap()
 
 
+class FileTypeMap:
+    def __init__(self, mapping: List[Tuple[str, PatternFilter]] = []) -> None:
+        self._mapping = mapping
+
+    def __call__(self, filename: str):
+        for file_type, regex in self._mapping:
+            if regex(filename):
+                return file_type
+        return None
+
+
+def _make_file_type_map(map_args: Optional[List[str]]) -> FileTypeMap:
+    if map_args is None:
+        return FileTypeMap()
+
+    file_types: List[str] = []
+    regexes: List[List[str]] = []
+    for mapping in map_args:
+        if ":" not in mapping:
+            raise IOError(f"Missing colon in mapping {mapping}. Reader mappings take the form 'READER:REGEX'.")
+        file_type, regex = mapping.split(":", maxsplit=1)
+        if not any(_t == file_type for _t in file_types):
+            file_types.append(file_type)
+            regexes.append([regex])
+        else:
+            regexes[file_types.index(file_type)].append(regex)
+    return FileTypeMap(mapping=[(file_type, PatternFilter(rx)) for file_type, rx in zip(file_types, regexes)])
+
+
 def _bool_to_exit_code(value: bool) -> int:
     return int(not value)
 
