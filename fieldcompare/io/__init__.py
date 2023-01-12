@@ -1,7 +1,7 @@
 """I/O facilities to read field data from files."""
 
 from os.path import splitext
-from typing import Union
+from typing import Union, Dict
 from warnings import warn
 
 from .. import protocols
@@ -13,29 +13,37 @@ from ._mesh_io import _read as _meshio_read, _is_supported as _supported_by_mesh
 __all__ = ["read_field_data", "read", "read_as", "is_supported"]
 
 
-def read_field_data(filename: str) -> protocols.FieldData:
+_AVAILABLE_FILE_TYPES = ["mesh", "dsv"]
+
+
+def read_field_data(filename: str, options: Dict[str, dict] = {}) -> protocols.FieldData:
     """
     Read the field data from the given file
 
     Args:
         filename: Path to the file from which to read.
+        options: further options (see :meth:`.read`)
     """
-    result = read(filename)
+    result = read(filename, options)
     assert isinstance(result, protocols.FieldData)
     return result
 
 
-def read(filename: str) -> Union[protocols.FieldData, protocols.FieldDataSequence]:
+def read(filename: str, options: Dict[str, dict] = {}) -> Union[protocols.FieldData, protocols.FieldDataSequence]:
     """
     Read the field data or field data sequence from the given file
 
     Args:
         filename: Path to the file from which to read.
+        options: Dictionary containing further options to be passed to the field readers.
+                 Depending on the file type deduced from filename, the options passed to the
+                 associated reader are extracted from `options` by accessing it via the file type
+                 key ("mesh", "dsv", ...).
     """
     if _is_supported_mesh_file(filename):
-        return _read_mesh_file(filename)
+        return _read_mesh_file(filename, **options["mesh"]) if "mesh" in options else _read_mesh_file(filename)
     if splitext(filename)[1] in [".csv", ".dsv"]:
-        return _read_dsv_file(filename)
+        return _read_dsv_file(filename, **options["dsv"]) if "dsv" in options else _read_dsv_file(filename)
     raise IOError(_unsupported_file_error_message(filename))
 
 
@@ -46,12 +54,13 @@ def read_as(file_type: str, filename: str, **kwargs) -> Union[protocols.FieldDat
     Args:
         file_type: The type of the file (currently available: 'mesh', 'dsv')
         filename: Path to the file from which to read.
+        kwargs: Further arguments to be forwarded to the field readers.
     """
     if file_type == "mesh":
         return _read_mesh_file(filename, **kwargs)
     if file_type == "dsv":
         return _read_dsv_file(filename, **kwargs)
-    raise ValueError(f"Unknown file type '{file_type}'")
+    raise ValueError(f"Unknown file type '{file_type}' (available options: {', '.join(_AVAILABLE_FILE_TYPES)})")
 
 
 def is_supported(filename: str) -> bool:
