@@ -2,6 +2,7 @@
 
 from typing import List, Dict, Tuple, Optional, Union
 from fnmatch import fnmatch
+from json import loads
 
 from ..protocols import DynamicTolerance
 from ..predicates import ScaledTolerance
@@ -76,29 +77,40 @@ class FileTypeMap:
     def __init__(self, mapping: List[Tuple[str, PatternFilter]] = []) -> None:
         self._mapping = mapping
 
-    def __call__(self, filename: str):
-        for file_type, regex in self._mapping:
+    def __call__(self, filename: str) -> Optional[Tuple[str, dict]]:
+        for file_type_with_opts, regex in self._mapping:
             if regex(filename):
-                return file_type
+                return self._split_file_type_and_opts(file_type_with_opts)
         return None
+
+    def _split_file_type_and_opts(self, file_type_with_opts: str) -> Tuple[str, dict]:
+        if file_type_with_opts.endswith("}") and "{" in file_type_with_opts:
+            file_type, opts_string = file_type_with_opts.split("{", maxsplit=1)
+            return file_type, self._parse_options("{" + opts_string)
+        return file_type_with_opts, {}
+
+    def _parse_options(self, opts_string: str) -> dict:
+        try:
+            return loads(opts_string)
+        except Exception as e:
+            raise IOError(f"Could not parse reader options '{opts_string}'. Exception: '{e}'")
 
 
 def _make_file_type_map(map_args: Optional[List[str]]) -> FileTypeMap:
     if map_args is None:
         return FileTypeMap()
-
-    file_types: List[str] = []
+    file_types_with_opts: List[str] = []
     regexes: List[List[str]] = []
     for mapping in map_args:
         if ":" not in mapping:
             raise IOError(f"Missing colon in mapping {mapping}. Reader mappings take the form 'READER:REGEX'.")
-        file_type, regex = mapping.split(":", maxsplit=1)
-        if not any(_t == file_type for _t in file_types):
-            file_types.append(file_type)
+        ft_with_opts, regex = mapping.rsplit(":", maxsplit=1)
+        if not any(_t == ft_with_opts for _t in file_types_with_opts):
+            file_types_with_opts.append(ft_with_opts)
             regexes.append([regex])
         else:
-            regexes[file_types.index(file_type)].append(regex)
-    return FileTypeMap(mapping=[(file_type, PatternFilter(rx)) for file_type, rx in zip(file_types, regexes)])
+            regexes[file_types_with_opts.index(ft_with_opts)].append(regex)
+    return FileTypeMap(mapping=[(ft_opts, PatternFilter(rx)) for ft_opts, rx in zip(file_types_with_opts, regexes)])
 
 
 def _bool_to_exit_code(value: bool) -> int:

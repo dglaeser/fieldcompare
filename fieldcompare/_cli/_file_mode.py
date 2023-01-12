@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 from datetime import datetime
 from xml.etree.ElementTree import ElementTree
 
+from ..io import _AVAILABLE_FILE_TYPES
 from .._common import _measure_time
 
 from ._junit import as_junit_xml_element
@@ -184,7 +185,11 @@ def _add_reader_selection_options_args(parser: ArgumentParser) -> None:
         "filenames to check if `READER` should be used for them. For instance, to read `.dat` with delimiter-separated "
         "content with the `dsv` facilities, use `--read-as dsv:*.dat`. This option can be used multiple times, and "
         "in case a filename matches multiple of the given regular expressions, the first match is taken. For example, "
-        "`--read-as dsv:*.dat --read-as mesh:*.dat` leads to `.dat` files being read as `dsv`.",
+        "`--read-as dsv:*.dat --read-as mesh:*.dat` leads to `.dat` files being read as `dsv`. Additionally, you can "
+        "specify options to be passed to the reader in json notation after the reader name. For example, use "
+        '`--read-as \'dsv{"delimiter":","}:*.dat\'` to read all `.dat` files as comma-separated data dsv files. '
+        "Note that this syntax requires you to wrap the entire argument in quotes (''). "
+        f"Available readers: {', '.join(_AVAILABLE_FILE_TYPES)}",
     )
 
 
