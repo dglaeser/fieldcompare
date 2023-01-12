@@ -122,9 +122,9 @@ class FuzzyEquality:
         self._last_used_abs_tol: Optional[ArrayTolerance] = None
 
     @property
-    def relative_tolerance(self) -> Optional[ArrayTolerance]:
+    def relative_tolerance(self) -> Union[DynamicTolerance, ArrayTolerance]:
         """Return the relative tolerance used for fuzzy comparisons."""
-        return None if isinstance(self._rel_tol, DynamicTolerance) else self._rel_tol
+        return self._rel_tol
 
     @relative_tolerance.setter
     def relative_tolerance(self, value: Union[DynamicTolerance, ArrayTolerance]) -> None:
@@ -137,9 +137,9 @@ class FuzzyEquality:
         self._rel_tol = value
 
     @property
-    def absolute_tolerance(self) -> Optional[ArrayTolerance]:
+    def absolute_tolerance(self) -> Union[DynamicTolerance, ArrayTolerance]:
         """Return the absolute tolerance used for fuzzy comparisons."""
-        return None if isinstance(self._abs_tol, DynamicTolerance) else self._abs_tol
+        return self._abs_tol
 
     @absolute_tolerance.setter
     def absolute_tolerance(self, value: Union[DynamicTolerance, ArrayTolerance]) -> None:
