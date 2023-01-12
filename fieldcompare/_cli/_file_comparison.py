@@ -64,10 +64,10 @@ class FileComparison:
         return self._compare_fields(res_fields, ref_fields).with_overridden(name=_suite_name(res_file))
 
     def _read(self, filename: str) -> Union[protocols.FieldData, protocols.FieldDataSequence]:
-        file_type_with_opts = self._opts.file_type_map(filename)
-        log_suffix = f" as '{file_type_with_opts[0]}'" if file_type_with_opts is not None else ""
-        self._logger.log(f"Reading '{highlighted(filename)}'{log_suffix}\n", verbosity_level=1)
         try:
+            file_type_with_opts = self._opts.file_type_map(filename)
+            log_suffix = f" as '{file_type_with_opts[0]}'" if file_type_with_opts is not None else ""
+            self._logger.log(f"Reading '{highlighted(filename)}'{log_suffix}\n", verbosity_level=1)
             return (
                 read(filename)
                 if file_type_with_opts is None
