@@ -5,7 +5,7 @@ from typing import Union, List, Callable, Optional
 from dataclasses import dataclass
 
 from ..predicates import FuzzyEquality, ExactEquality
-from ..protocols import ToleranceEstimator
+from ..protocols import DynamicTolerance
 
 from .._numpy_utils import as_array, has_floats
 from .._common import _default_base_tolerance
@@ -29,7 +29,7 @@ from ..mesh import protocols as mesh_protocols
 from ..io import read as read_fields
 
 
-Tolerance = Union[float, ToleranceEstimator]
+Tolerance = Union[float, DynamicTolerance]
 
 
 @dataclass

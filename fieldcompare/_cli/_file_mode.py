@@ -40,7 +40,7 @@ def _run(args: dict, in_logger: CLILogger) -> int:
         ignore_missing_sequence_steps=args["ignore_missing_sequence_steps"],
         force_sequence_comparison=args["force_sequence_comparison"],
         relative_tolerances=_parse_field_tolerances(args.get("relative_tolerance")),
-        absolute_tolerances=_parse_field_tolerances(args.get("absolute_tolerance"), allow_tolerance_estimators=True),
+        absolute_tolerances=_parse_field_tolerances(args.get("absolute_tolerance"), allow_dynamic_tolerances=True),
         field_inclusion_filter=PatternFilter(args["include_fields"]) if args["include_fields"] else _include_all(),
         field_exclusion_filter=PatternFilter(args["exclude_fields"]) if args["exclude_fields"] else _exclude_all(),
         disable_mesh_reordering=True if args["disable_mesh_reordering"] else False,

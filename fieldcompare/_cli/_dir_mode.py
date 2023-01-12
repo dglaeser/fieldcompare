@@ -133,7 +133,7 @@ FileComparisons = List[Tuple[str, str, TestSuite]]
 
 def _do_file_comparisons(args, filenames: Iterable[str], logger: CLILogger) -> FileComparisons:
     _rel_tol_map = _parse_field_tolerances(args.get("relative_tolerance"))
-    _abs_tol_map = _parse_field_tolerances(args.get("absolute_tolerance"), allow_tolerance_estimators=True)
+    _abs_tol_map = _parse_field_tolerances(args.get("absolute_tolerance"), allow_dynamic_tolerances=True)
 
     file_comparisons = []
     for i, filename in enumerate(filenames):

@@ -3,7 +3,7 @@
 from pytest import raises
 import numpy as np
 
-from fieldcompare.predicates import FuzzyEquality, DefaultEquality, PredicateError, AbsoluteToleranceEstimator
+from fieldcompare.predicates import FuzzyEquality, DefaultEquality, PredicateError, ScaledTolerance
 from fieldcompare._numpy_utils import Array, make_array
 
 
@@ -33,20 +33,20 @@ def test_vector_fuzzy_equality():
     assert not FuzzyEquality(rel_tol=[1e-7, 1e-4])(v1, v2)
     assert FuzzyEquality(rel_tol=[1e-5, 1e-4])(v1, v2)
 
-    assert not FuzzyEquality(abs_tol=AbsoluteToleranceEstimator(rel_tol=1e-7))(v1, v2)
-    assert FuzzyEquality(abs_tol=AbsoluteToleranceEstimator(rel_tol=1e-4))(v1, v2)
+    assert not FuzzyEquality(abs_tol=ScaledTolerance(base_tolerance=1e-7))(v1, v2)
+    assert FuzzyEquality(abs_tol=ScaledTolerance(base_tolerance=1e-4))(v1, v2)
 
-    assert not FuzzyEquality(abs_tol=AbsoluteToleranceEstimator(rel_tol=[1e-7, 1e-4]))(v1, v2)
-    assert FuzzyEquality(abs_tol=AbsoluteToleranceEstimator(rel_tol=[1e-5, 1e-4]))(v1, v2)
+    assert not FuzzyEquality(abs_tol=ScaledTolerance(base_tolerance=[1e-7, 1e-4]))(v1, v2)
+    assert FuzzyEquality(abs_tol=ScaledTolerance(base_tolerance=[1e-5, 1e-4]))(v1, v2)
 
 
 def test_vector_fuzzy_equality_scale_per_component():
     v1 = [[1.0, 1.0e6], [2.0, 2.0e6]]
     v2 = [[1.0, 1.0e6], [2.0 + 1., 2.0e6 + 1.]]
     assert not FuzzyEquality()(v1, v2)
-    assert FuzzyEquality(abs_tol=AbsoluteToleranceEstimator(rel_tol=1e-5))(v1, v2)
-    assert not FuzzyEquality(abs_tol=AbsoluteToleranceEstimator(rel_tol=1e-5, use_component_magnitudes=True))(v1, v2)
-    assert FuzzyEquality(abs_tol=AbsoluteToleranceEstimator(rel_tol=[2, 1e-5], use_component_magnitudes=True))(v1, v2)
+    assert FuzzyEquality(abs_tol=ScaledTolerance(base_tolerance=1e-5))(v1, v2)
+    assert not FuzzyEquality(abs_tol=ScaledTolerance(base_tolerance=1e-5, use_component_magnitudes=True))(v1, v2)
+    assert FuzzyEquality(abs_tol=ScaledTolerance(base_tolerance=[2, 1e-5], use_component_magnitudes=True))(v1, v2)
 
 
 def test_fuzzy_equality_with_estimated_abs_tol():
@@ -54,8 +54,8 @@ def test_fuzzy_equality_with_estimated_abs_tol():
     array2 = make_array([a1 + 10 for a1 in array1])
     array3 = make_array([a1 + 1 for a1 in array1])
     assert not FuzzyEquality(rel_tol=1e-9)(array1, array2)
-    assert not FuzzyEquality(rel_tol=1e-9, abs_tol=AbsoluteToleranceEstimator(rel_tol=1e-9))(array1, array2)
-    assert FuzzyEquality(rel_tol=1e-9, abs_tol=AbsoluteToleranceEstimator(rel_tol=1e-9))(array1, array3)
+    assert not FuzzyEquality(rel_tol=1e-9, abs_tol=ScaledTolerance(base_tolerance=1e-9))(array1, array2)
+    assert FuzzyEquality(rel_tol=1e-9, abs_tol=ScaledTolerance(base_tolerance=1e-9))(array1, array3)
 
 
 def test_fuzzy_equality_with_estimated_rel_tol():

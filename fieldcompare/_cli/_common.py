@@ -3,8 +3,8 @@
 from typing import List, Dict, Tuple, Optional, Union
 from fnmatch import fnmatch
 
-from ..protocols import ToleranceEstimator
-from ..predicates import AbsoluteToleranceEstimator
+from ..protocols import DynamicTolerance
+from ..predicates import ScaledTolerance
 
 from .._format import as_success, as_error, as_warning, highlighted
 from ._logger import CLILogger
@@ -32,20 +32,20 @@ def _exclude_all() -> PatternFilter:
 class FieldToleranceMap:
     def __init__(
         self,
-        tolerances: Dict[str, Union[float, ToleranceEstimator]] = {},
-        default_tol: Optional[Union[float, ToleranceEstimator]] = None,
+        tolerances: Dict[str, Union[float, DynamicTolerance]] = {},
+        default_tol: Optional[Union[float, DynamicTolerance]] = None,
     ) -> None:
         self._field_tolerances = tolerances
         self._default = default_tol
 
-    def __call__(self, field_name: str) -> Optional[Union[float, ToleranceEstimator]]:
+    def __call__(self, field_name: str) -> Optional[Union[float, DynamicTolerance]]:
         tol = self._field_tolerances.get(field_name)
         return tol if tol is not None else self._default
 
 
 def _parse_field_tolerances(
     tolerance_strings: Optional[List[str]] = None,
-    allow_tolerance_estimators: bool = False,
+    allow_dynamic_tolerances: bool = False,
 ) -> FieldToleranceMap:
     def _is_field_tolerance_string(tol_string: str) -> bool:
         return ":" in tol_string
@@ -54,14 +54,14 @@ def _parse_field_tolerances(
         name, tol_string = tol_string.split(":")
         return name, tol_string
 
-    def _make_tolerance(tol_string: str) -> Union[float, ToleranceEstimator]:
-        if allow_tolerance_estimators and tol_string.endswith("*max"):
-            return AbsoluteToleranceEstimator(rel_tol=float(tol_string.rsplit("*max")[0]))
+    def _make_tolerance(tol_string: str) -> Union[float, DynamicTolerance]:
+        if allow_dynamic_tolerances and tol_string.endswith("*max"):
+            return ScaledTolerance(base_tolerance=float(tol_string.rsplit("*max")[0]))
         return float(tol_string)
 
     if tolerance_strings is not None:
         field_tols = {}
-        default_tol: Optional[Union[float, ToleranceEstimator]] = None
+        default_tol: Optional[Union[float, DynamicTolerance]] = None
         for tol_string in tolerance_strings:
             if _is_field_tolerance_string(tol_string):
                 name, value_str = _get_field_name_tolerance_str_pair(tol_string)

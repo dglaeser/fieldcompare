@@ -7,7 +7,7 @@ from .._common import _default_base_tolerance
 from .._numpy_utils import Array, ArrayLike, as_array, max_abs_value
 
 from ..predicates import PredicateResult
-from ..protocols import ToleranceEstimator
+from ..protocols import DynamicTolerance
 
 from ._mesh_equal import mesh_equal
 from ._cell_type import CellType
@@ -70,8 +70,8 @@ class Mesh:
 
     def set_tolerances(
         self,
-        abs_tol: Optional[Union[float, ToleranceEstimator]] = None,
-        rel_tol: Optional[Union[float, ToleranceEstimator]] = None,
+        abs_tol: Optional[Union[float, DynamicTolerance]] = None,
+        rel_tol: Optional[Union[float, DynamicTolerance]] = None,
     ) -> None:
         """
         Set the tolerances to be used for equality checks against other meshes.
@@ -83,8 +83,8 @@ class Mesh:
         self._rel_tol = self._rel_tol if rel_tol is None else self._get_tolerance(rel_tol)
         self._abs_tol = self._abs_tol if abs_tol is None else self._get_tolerance(abs_tol)
 
-    def _get_tolerance(self, tol: Union[float, ToleranceEstimator]) -> float:
-        result = tol(self._points, self._points) if isinstance(tol, ToleranceEstimator) else tol
+    def _get_tolerance(self, tol: Union[float, DynamicTolerance]) -> float:
+        result = tol(self._points, self._points) if isinstance(tol, DynamicTolerance) else tol
         assert isinstance(result, float)
         return result
 

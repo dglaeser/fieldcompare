@@ -6,8 +6,8 @@ from ._numpy_utils import Array, ArrayTolerance
 
 
 @runtime_checkable
-class ToleranceEstimator(Protocol):
-    """Interface for estimators of tolerances from array values."""
+class DynamicTolerance(Protocol):
+    """Interface for tolerances that depend on the array values to be compared."""
 
     def __call__(self, first: Array, second: Array) -> ArrayTolerance:
         """Return a tolerance to be used for comparing the two given arrays."""

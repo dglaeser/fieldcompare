@@ -3,7 +3,7 @@
 from __future__ import annotations
 from typing import Protocol, Iterable, Tuple, Optional, Union, runtime_checkable
 
-from ..protocols import FieldData, Field, PredicateResult, ToleranceEstimator
+from ..protocols import FieldData, Field, PredicateResult, DynamicTolerance
 from .._numpy_utils import Array
 
 from ._cell_type import CellType
@@ -53,8 +53,8 @@ class Mesh(Protocol):
 
     def set_tolerances(
         self,
-        abs_tol: Optional[Union[float, ToleranceEstimator]] = None,
-        rel_tol: Optional[Union[float, ToleranceEstimator]] = None,
+        abs_tol: Optional[Union[float, DynamicTolerance]] = None,
+        rel_tol: Optional[Union[float, DynamicTolerance]] = None,
     ) -> None:
         """
         Set the tolerances to be used for equality checks against other meshes.
