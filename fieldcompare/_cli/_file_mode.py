@@ -162,9 +162,10 @@ def _add_tolerance_options_args(parser: ArgumentParser) -> None:
         help="Specify the absolute tolerance to be used. "
         "Use e.g. '-atol pressure:1e-3' to set the tolerance for a field named 'pressure' "
         "or '-atol domain:1e-3' to define the tolerance used when checking the domains for equality. "
-        "You may also use absolute tolerances as a function of the maximum value ocurring in the fields "
-        "to be compared with `-atol pressure:1e-3*max`. This is useful for fields whose values span several "
-        "orders of magnitude and avoids false negatives from very small values.",
+        "You may also use absolute tolerances as a function of the maximum absolute value occurring "
+        "in the fields by using the syntax: `-atol pressure:1e-3*max`. This is useful for fields with "
+        "a large range where all values are expected to exhibit similar absolute errors. This option "
+        "then avoids false negatives from values close to zero.",
     )
 
 
