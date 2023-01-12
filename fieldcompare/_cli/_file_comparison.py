@@ -133,7 +133,12 @@ class FileComparison:
     def _compare_field_data(self, res_fields: protocols.FieldData, ref_fields: protocols.FieldData) -> TestSuite:
         if isinstance(res_fields, mesh_protocols.MeshFields) and isinstance(ref_fields, mesh_protocols.MeshFields):
             return self._compare_mesh_field_data(res_fields, ref_fields)
-        return self._to_test_suite(self._run_field_data_comparison(res_fields, ref_fields))
+        suite = self._run_field_data_comparison(res_fields, ref_fields)
+        if suite.domain_equality_check:
+            return self._to_test_suite(suite)
+        msg = "Domains have compared unequal"
+        self._logger.log(f"{self._status_string(TestStatus.failed)}: {msg}")
+        return _make_test_suite([], TestStatus.failed, shortlog=msg)
 
     def _compare_mesh_field_data(
         self, res_fields: mesh_protocols.MeshFields, ref_fields: mesh_protocols.MeshFields
