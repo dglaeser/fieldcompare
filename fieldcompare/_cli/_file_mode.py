@@ -188,7 +188,7 @@ def _add_reader_selection_options_args(parser: ArgumentParser) -> None:
         "`--read-as dsv:*.dat --read-as mesh:*.dat` leads to `.dat` files being read as `dsv`. Additionally, you can "
         "specify options to be passed to the reader in json notation after the reader name. For example, use "
         '`--read-as \'dsv{"delimiter":","}:*.dat\'` to read all `.dat` files as comma-separated data dsv files. '
-        "Note that this syntax requires you to wrap the entire argument in quotes (''). "
+        "Note that this syntax requires you to wrap the entire argument in single quotes (''). "
         f"Available readers: {', '.join(_AVAILABLE_FILE_TYPES)}",
     )
 
