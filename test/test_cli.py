@@ -31,14 +31,38 @@ def test_cli_file_mode_reader_selection():
     csv_file_path = str(TEST_DATA_PATH / Path(csv_file))
     modified_ext_filename = f"{splitext(csv_file)[0]}.dat"
     copy(csv_file_path, modified_ext_filename)
-    check = main([
+    assert main([
         "file",
         csv_file_path,
         modified_ext_filename,
         "--read-as", "dsv:*.dat"
-    ])
+    ]) == 0
     remove(modified_ext_filename)
-    assert check == 0
+
+
+def test_cli_file_mode_reader_selection_with_options():
+    csv_file = str(TEST_DATA_PATH / Path("test_tabular_data.csv"))
+    csv_file_copy = f"{splitext(csv_file)[0]}.dat"
+    copy(csv_file, csv_file_copy)
+    assert main([
+        "file",
+        csv_file,
+        csv_file_copy,
+        "--read-as", 'dsv:*.dat'
+    ]) == 0
+    assert main([
+        "file",
+        csv_file,
+        csv_file_copy,
+        "--read-as", 'dsv{"use_names": true, "skip_rows": 0}:*.dat'
+    ]) == 0
+    assert main([
+        "file",
+        csv_file,
+        csv_file_copy,
+        "--read-as", 'dsv{"use_names": false, "skip_rows": 1}:*.dat'
+    ]) == 1  # should fail because of non-matching field names
+    remove(csv_file_copy)
 
 
 def test_cli_file_mode_junit_report():
