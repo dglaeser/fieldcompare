@@ -53,7 +53,10 @@ class CSVFieldReader:
         )
 
     def _sniff_header(self, input: Union[str, TextIO]) -> bool:
-        return self._sniff(input, action=lambda f: csv.Sniffer().has_header(f.read(1024)))
+        try:
+            return self._sniff(input, action=lambda f: csv.Sniffer().has_header(f.read(1024)))
+        except csv.Error as e:
+            raise IOError(f"Could not determine if csv file has header: '{e}'")
 
     T = TypeVar("T")
 
