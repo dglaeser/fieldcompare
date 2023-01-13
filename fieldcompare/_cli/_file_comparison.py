@@ -4,11 +4,10 @@ from pathlib import Path
 from typing import Union, List, Callable, Optional
 from dataclasses import dataclass
 
-from ..predicates import FuzzyEquality, ExactEquality
+from ..predicates import DefaultEquality
 from ..protocols import DynamicTolerance
 from ..io import read, read_as
 
-from .._numpy_utils import as_array, has_floats
 from .._common import _default_base_tolerance
 from .._format import as_success, as_error, as_warning, highlighted
 
@@ -213,15 +212,12 @@ class FileComparison:
         )
 
     def _select_predicate(self, res_field: protocols.Field, ref_field: protocols.Field) -> protocols.Predicate:
-        if has_floats(as_array(res_field.values)) or has_floats(as_array(ref_field.values)):
-            abs_tol = self._opts.absolute_tolerances(res_field.name)
-            rel_tol = self._opts.relative_tolerances(res_field.name)
-            return FuzzyEquality(
-                abs_tol=abs_tol if abs_tol is not None else 0.0,
-                rel_tol=rel_tol if rel_tol is not None else _default_base_tolerance(),
-            )
-        else:
-            return ExactEquality()
+        abs_tol = self._opts.absolute_tolerances(res_field.name)
+        rel_tol = self._opts.relative_tolerances(res_field.name)
+        return DefaultEquality(
+            abs_tol=abs_tol if abs_tol is not None else 0.0,
+            rel_tol=rel_tol if rel_tol is not None else _default_base_tolerance(),
+        )
 
     def _to_test_suite(self, suite: FieldComparisonSuite) -> TestSuite:
         return TestSuite([self._to_test_result(c) for c in suite])
