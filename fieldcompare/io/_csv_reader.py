@@ -26,7 +26,7 @@ class CSVFieldReader:
             skip_header=self._skip_rows,
             dtype=None,
             encoding="UTF-8",
-            ndmin=2,
+            ndmin=1,
         )
 
         if self._is_structured(data):
@@ -36,9 +36,12 @@ class CSVFieldReader:
                 domain=Table(num_rows=data.shape[0]),
                 fields={name: data[name] for name in data.dtype.names},  # type: ignore
             )
+
         return TabularFields(
             domain=Table(num_rows=data.shape[0]),
-            fields={f"field_{i}": data[:, i] for i in range(data.shape[1])},
+            fields={"field_0": data[:]}
+            if len(data.shape) == 1
+            else {f"field_{i}": data[:, i] for i in range(data.shape[1])},
         )
 
     def _is_structured(self, array: np.ndarray) -> bool:
