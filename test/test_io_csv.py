@@ -26,7 +26,7 @@ def _as_string_stream(data: dict, add_names: bool = True, delimiter=",") -> Stri
 def get_reference_data():
     return {
         "int_field": [0, 3, 8, 10],
-        "float_field": [1.0, 4.0, 10.0, 12],
+        "float_field": [1.0, 4.0, 10.0, 12.0],
         "str_field": ["value0", "value1", "value2", "value3"]
     }
 
@@ -58,6 +58,26 @@ def test_csv_field_extraction_single_dtype():
             get_reference_data()["float_field"]
         ) for field in fields
     )
+
+
+def test_csv_field_extraction_single_dtype_single_column_with_name():
+    reference_data = {"float_field": get_reference_data()["float_field"]}
+    stream = _as_string_stream(reference_data, add_names=True)
+    fields = CSVFieldReader(delimiter=",", use_names=True, skip_rows=0).read(stream)
+
+    for i, field in enumerate(fields):
+        assert i == 0
+        assert ExactEquality()(field.values, get_reference_data()["float_field"])
+
+
+def test_csv_field_extraction_single_dtype_single_column_no_name():
+    reference_data = {"float_field": get_reference_data()["float_field"]}
+    stream = _as_string_stream(reference_data, add_names=False)
+    fields = CSVFieldReader(delimiter=",", use_names=False, skip_rows=0).read(stream)
+
+    for i, field in enumerate(fields):
+        assert i == 0
+        assert ExactEquality()(field.values, get_reference_data()["float_field"])
 
 
 def test_csv_field_extraction_invalid_delimiter_raises_exception():
