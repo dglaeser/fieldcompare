@@ -6,7 +6,7 @@ from functools import wraps
 
 
 def _default_base_tolerance() -> float:
-    return 1e-9
+    return 1e-16
 
 
 T = TypeVar("T")
