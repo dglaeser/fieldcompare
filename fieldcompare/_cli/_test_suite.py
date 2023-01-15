@@ -15,6 +15,15 @@ class TestStatus(Enum):
     def __bool__(self) -> bool:
         return self not in [TestStatus.failed, TestStatus.error]
 
+    def __str__(self) -> str:
+        names = {
+            TestStatus.passed: "PASSED",
+            TestStatus.failed: "FAILED",
+            TestStatus.error: "FAILED",
+            TestStatus.skipped: "SKIPPED",
+        }
+        return names[self]
+
 
 @dataclass
 class TestResult:

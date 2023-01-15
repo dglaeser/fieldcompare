@@ -182,11 +182,11 @@ def _do_file_comparisons(args, filenames: Iterable[str], logger: CLILogger) -> F
                 "File comparison {} with {} {} / {} {} / {} {}\n".format(
                     get_status_string(bool(test_suite)),
                     sum(1 for t in test_suite if t.status == TestStatus.passed),
-                    "PASSED",
+                    f"{TestStatus.passed}",
                     sum(1 for t in test_suite if not t.status),
-                    "FAILED",
+                    f"{TestStatus.failed}",
                     sum(1 for t in test_suite if t.status and t.status != TestStatus.passed),
-                    "SKIPPED",
+                    f"{TestStatus.skipped}",
                 ),
                 verbosity_level=1,
             )
