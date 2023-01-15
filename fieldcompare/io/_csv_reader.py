@@ -39,7 +39,7 @@ class CSVFieldReader:
 
         return TabularFields(
             domain=Table(num_rows=data.shape[0]),
-            fields={"field_0": data[:]}
+            fields={"field_0": data}
             if len(data.shape) == 1
             else {f"field_{i}": data[:, i] for i in range(data.shape[1])},
         )
