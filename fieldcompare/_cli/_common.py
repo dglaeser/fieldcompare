@@ -103,12 +103,28 @@ class FileTypeMap:
 def _make_file_type_map(map_args: Optional[List[str]]) -> FileTypeMap:
     if map_args is None:
         return FileTypeMap()
+
+    def _has_opts(mapping: str) -> bool:
+        brace_pos = mapping.find("{") if "{" in mapping else len(mapping)
+        colon_pos = mapping.find(":") if ":" in mapping else len(mapping)
+        return brace_pos < colon_pos
+
+    def _split_regex(mapping: str) -> Tuple[str, str]:
+        if _has_opts(mapping):
+            if mapping.endswith("}"):
+                return mapping, "*"
+            else:
+                result = mapping.split("}:")
+                if len(result) != 2:
+                    raise IOError(f"Could not parse reader mapping '{mapping}'.")
+                return result[0] + "}", result[1]
+        result = mapping.split(":", maxsplit=1)
+        return (result[0], "*") if len(result) == 1 else (result[0], result[1])
+
     file_types_with_opts: List[str] = []
     regexes: List[List[str]] = []
     for mapping in map_args:
-        if ":" not in mapping:
-            raise IOError(f"Missing colon in mapping {mapping}. Reader mappings take the form 'READER:REGEX'.")
-        ft_with_opts, regex = mapping.rsplit(":", maxsplit=1)
+        ft_with_opts, regex = _split_regex(mapping)
         if not any(_t == ft_with_opts for _t in file_types_with_opts):
             file_types_with_opts.append(ft_with_opts)
             regexes.append([regex])
