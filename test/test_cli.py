@@ -40,6 +40,21 @@ def test_cli_file_mode_reader_selection():
     remove(modified_ext_filename)
 
 
+def test_cli_file_mode_reader_selection_multiple_occurrences():
+    csv_file = "test_tabular_data.csv"
+    csv_file_path = str(TEST_DATA_PATH / Path(csv_file))
+    modified_ext_filename = f"{splitext(csv_file)[0]}.dat"
+    copy(csv_file_path, modified_ext_filename)
+    assert main([
+        "file",
+        csv_file_path,
+        modified_ext_filename,
+        "--read-as", "dsv:*.dat",
+        "--read-as", "mesh:*dat"
+    ]) == 0
+    remove(modified_ext_filename)
+
+
 def test_cli_file_mode_reader_selection_with_options():
     csv_file = str(TEST_DATA_PATH / Path("test_tabular_data.csv"))
     csv_file_copy = f"{splitext(csv_file)[0]}.dat"
