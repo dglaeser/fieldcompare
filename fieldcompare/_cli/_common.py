@@ -93,7 +93,11 @@ class FileTypeMap:
         try:
             return loads(opts_string)
         except Exception as e:
-            raise IOError(f"Could not parse reader options '{opts_string}'. Exception: '{e}'")
+            raise IOError(
+                f"Could not parse reader options '{opts_string}'. '{opts_string}' has to be valid JSON. "
+                "Note that JSON only interprets lower-case false and true as boolean values, and all keys "
+                f"have to be wrapped in double quotes. Exception: '{e}'"
+            )
 
 
 def _make_file_type_map(map_args: Optional[List[str]]) -> FileTypeMap:
