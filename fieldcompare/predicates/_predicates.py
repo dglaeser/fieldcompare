@@ -2,20 +2,52 @@
 
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Tuple, Optional, Union
 
 from .._common import _default_base_tolerance
+from ..protocols import DynamicTolerance
 
-from .._numpy_utils import ArrayLike, Array, as_array, as_string, has_floats
+from .._numpy_utils import ArrayTolerance, ArrayLike, Array, as_array, as_string, has_floats
 from .._numpy_utils import find_first_unequal
 from .._numpy_utils import find_first_fuzzy_unequal
-from .._numpy_utils import rel_diff, abs_diff, max_column_elements
+from .._numpy_utils import rel_diff, abs_diff
+from .._numpy_utils import max_column_elements, max_abs_element, max_abs_value, select_max_values
 
 
 class PredicateError(Exception):
     """Exception raised for errors during predicate evaluation"""
 
     pass
+
+
+class ScaledTolerance(DynamicTolerance):
+    """
+    Implementation of a :class:`.DynamicTolerance` that takes the maximum ocurring value in the
+    two fields to be compared (as an estimate for their magnitude), and scales it with the given
+    `base_tolerance`.
+
+    Args:
+        base_tolerance: The value with which to scale the magnitude.
+        use_component_magnitudes: If true, the magnitudes are determined separately for each component,
+                                  and if per-component tolerances are given, they are scaled individually
+    """
+
+    def __init__(
+        self,
+        base_tolerance: ArrayTolerance = _default_base_tolerance(),
+        use_component_magnitudes: Optional[bool] = False,
+    ) -> None:
+        self._base_tol = as_array(base_tolerance)
+        self._use_component_magnitudes = use_component_magnitudes
+
+    def __call__(self, first: Array, second: Array) -> ArrayTolerance:
+        """Return an estimate for the absolute tolerance for comparing the given fields."""
+        if self._use_component_magnitudes:
+            return select_max_values(max_abs_element(first), max_abs_element(second)) * self._base_tol
+        return self._base_tol * max(max_abs_value(first), max_abs_value(second))
+
+    def __str__(self) -> str:
+        return f"ScaledTolerance (base_tolerance={self._base_tol})"
 
 
 @dataclass
@@ -68,23 +100,34 @@ class ExactEquality:
 class FuzzyEquality:
     """
     Compares arrays for fuzzy equality.
+    Arrays are considered fuzzy equal if for each pair of scalars the following relation holds:
+    `abs(a - b) <= max(_rtol*max(a, b), _atol)`. Note that tolerances can either be given directly as
+    `float` or `ndarray`, in which case `_rtol = rel_tol` and `_atol = abs_tol`, or,
+    as instances of :class:`.DynamicTolerance`, in which case the values actually used are determined
+    from the fields to be compared.
 
     Args:
         rel_tol: The relative tolerance to be used.
         abs_tol: The absolute tolerance to be used.
     """
 
-    def __init__(self, rel_tol: float = _default_base_tolerance(), abs_tol: float = _default_base_tolerance()) -> None:
+    def __init__(
+        self,
+        rel_tol: Union[DynamicTolerance, ArrayTolerance] = _default_base_tolerance(),
+        abs_tol: Union[DynamicTolerance, ArrayTolerance] = 0.0,
+    ) -> None:
         self._rel_tol = rel_tol
         self._abs_tol = abs_tol
+        self._last_used_rel_tol: Optional[ArrayTolerance] = None
+        self._last_used_abs_tol: Optional[ArrayTolerance] = None
 
     @property
-    def relative_tolerance(self) -> float:
+    def relative_tolerance(self) -> Union[DynamicTolerance, ArrayTolerance]:
         """Return the relative tolerance used for fuzzy comparisons."""
         return self._rel_tol
 
     @relative_tolerance.setter
-    def relative_tolerance(self, value: float) -> None:
+    def relative_tolerance(self, value: Union[DynamicTolerance, ArrayTolerance]) -> None:
         """
         Set the relative tolerance to be used for fuzzy comparisons.
 
@@ -94,12 +137,12 @@ class FuzzyEquality:
         self._rel_tol = value
 
     @property
-    def absolute_tolerance(self) -> float:
+    def absolute_tolerance(self) -> Union[DynamicTolerance, ArrayTolerance]:
         """Return the absolute tolerance used for fuzzy comparisons."""
         return self._abs_tol
 
     @absolute_tolerance.setter
-    def absolute_tolerance(self, value: float) -> None:
+    def absolute_tolerance(self, value: Union[DynamicTolerance, ArrayTolerance]) -> None:
         """
         Set the absolute tolerance to be used for fuzzy comparisons.
 
@@ -122,7 +165,23 @@ class FuzzyEquality:
             raise PredicateError(f"Fuzzy comparison failed with exception: {e}")
 
     def __str__(self) -> str:
-        return "FuzzyEquality (abs_tol: {}, rel_tol: {})".format(self.absolute_tolerance, self.relative_tolerance)
+        return f"FuzzyEquality ({self._tolerance_info()})"
+
+    def _tolerance_info(self) -> str:
+        def _tolinfo(tol, last_used) -> str:
+            if isinstance(tol, DynamicTolerance):
+                return f"dynamic (last used: {as_string(last_used) if last_used is not None else None})"
+            return f"{as_string(tol)}"
+
+        return (
+            f"abs_tol: {_tolinfo(self._abs_tol, self._last_used_abs_tol)}, "
+            f"rel_tol: {_tolinfo(self._rel_tol, self._last_used_rel_tol)}"
+        )
+
+    def _get_tol(self, tol: Union[ArrayTolerance, DynamicTolerance], first: Array, second: Array) -> ArrayTolerance:
+        if isinstance(tol, DynamicTolerance):
+            return tol(first, second)
+        return tol
 
     def _check(self, first: ArrayLike, second: ArrayLike) -> PredicateResult:
         first, second = _reshape(first, second)
@@ -130,7 +189,9 @@ class FuzzyEquality:
         if not shape_check:
             return shape_check
 
-        unequals = find_first_fuzzy_unequal(first, second, self._rel_tol, self._abs_tol)
+        self._last_used_rel_tol = self._get_tol(self._rel_tol, first, second)
+        self._last_used_abs_tol = self._get_tol(self._abs_tol, first, second)
+        unequals = find_first_fuzzy_unequal(first, second, self._last_used_rel_tol, self._last_used_abs_tol)
         if unequals is not None:
             val1, val2 = unequals
             deviation_in_percent = _compute_deviation_in_percent(val1, val2)
@@ -164,7 +225,7 @@ class DefaultEquality(FuzzyEquality):
         return ExactEquality()(first, second)
 
     def __str__(self) -> str:
-        return "DefaultEquality (abs_tol: {}, rel_tol: {})".format(self.absolute_tolerance, self.relative_tolerance)
+        return f"DefaultEquality ({self._tolerance_info()})"
 
 
 def _get_equality_fail_report(val1, val2, deviation_in_percent=None) -> str:

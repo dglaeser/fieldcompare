@@ -1,11 +1,12 @@
 """Common functionality used in the command-line interface"""
 
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple, Optional, Union
 from fnmatch import fnmatch
 
-from .._common import _default_base_tolerance
-from .._format import as_success, as_error, as_warning, highlighted
+from ..protocols import DynamicTolerance
+from ..predicates import ScaledTolerance
 
+from .._format import as_success, as_error, as_warning, highlighted
 from ._logger import CLILogger
 from ._test_suite import TestStatus
 
@@ -29,32 +30,45 @@ def _exclude_all() -> PatternFilter:
 
 
 class FieldToleranceMap:
-    def __init__(self, default_tolerance: float = _default_base_tolerance(), tolerances: Dict[str, float] = {}) -> None:
-        self._default_tolerance = default_tolerance
+    def __init__(
+        self,
+        tolerances: Dict[str, Union[float, DynamicTolerance]] = {},
+        default_tol: Optional[Union[float, DynamicTolerance]] = None,
+    ) -> None:
         self._field_tolerances = tolerances
+        self._default = default_tol
 
-    def __call__(self, field_name: str) -> float:
-        return self._field_tolerances.get(field_name, self._default_tolerance)
+    def __call__(self, field_name: str) -> Optional[Union[float, DynamicTolerance]]:
+        tol = self._field_tolerances.get(field_name)
+        return tol if tol is not None else self._default
 
 
-def _parse_field_tolerances(tolerance_strings: Optional[List[str]] = None) -> FieldToleranceMap:
+def _parse_field_tolerances(
+    tolerance_strings: Optional[List[str]] = None,
+    allow_dynamic_tolerances: bool = False,
+) -> FieldToleranceMap:
     def _is_field_tolerance_string(tol_string: str) -> bool:
         return ":" in tol_string
 
-    def _get_field_name_tolerance_value_pair(tol_string: str) -> Tuple[str, float]:
+    def _get_field_name_tolerance_str_pair(tol_string: str) -> Tuple[str, str]:
         name, tol_string = tol_string.split(":")
-        return name, float(tol_string)
+        return name, tol_string
+
+    def _make_tolerance(tol_string: str) -> Union[float, DynamicTolerance]:
+        if allow_dynamic_tolerances and tol_string.endswith("*max"):
+            return ScaledTolerance(base_tolerance=float(tol_string.rsplit("*max")[0]))
+        return float(tol_string)
 
     if tolerance_strings is not None:
-        default_tol = _default_base_tolerance()
         field_tols = {}
+        default_tol: Optional[Union[float, DynamicTolerance]] = None
         for tol_string in tolerance_strings:
             if _is_field_tolerance_string(tol_string):
-                name, value = _get_field_name_tolerance_value_pair(tol_string)
-                field_tols[name] = value
+                name, value_str = _get_field_name_tolerance_str_pair(tol_string)
+                field_tols[name] = _make_tolerance(value_str)
             else:
-                default_tol = float(tol_string)
-        return FieldToleranceMap(default_tol, field_tols)
+                default_tol = _make_tolerance(tol_string)
+        return FieldToleranceMap(field_tols, default_tol=default_tol)
     return FieldToleranceMap()
 
 

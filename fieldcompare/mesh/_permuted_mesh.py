@@ -1,9 +1,11 @@
 """Class to represent permuted computational meshes"""
 
-from typing import Iterable, Optional, Dict
+from typing import Iterable, Optional, Dict, Union
+from numbers import Integral
 
 from .._numpy_utils import Array, max_element, make_array, make_uninitialized_array
 from ..predicates import PredicateResult
+from ..protocols import DynamicTolerance
 
 from ._cell_type import CellType
 from ._mesh_equal import mesh_equal
@@ -105,7 +107,11 @@ class PermutedMesh:
             rel_tol=self.relative_tolerance,
         )
 
-    def set_tolerances(self, abs_tol: Optional[float] = None, rel_tol: Optional[float] = None) -> None:
+    def set_tolerances(
+        self,
+        abs_tol: Optional[Union[float, DynamicTolerance]] = None,
+        rel_tol: Optional[Union[float, DynamicTolerance]] = None,
+    ) -> None:
         """
         Set the tolerances to be used for equality checks against other meshes.
 
@@ -113,14 +119,20 @@ class PermutedMesh:
             abs_tol: Absolute tolerance to use.
             rel_tol: Relative tolerance to use.
         """
-        self._abs_tol = abs_tol if abs_tol is not None else self._abs_tol
-        self._rel_tol = rel_tol if rel_tol is not None else self._rel_tol
+        self._rel_tol = self._rel_tol if rel_tol is None else self._get_tolerance(rel_tol)
+        self._abs_tol = self._abs_tol if abs_tol is None else self._get_tolerance(abs_tol)
+
+    def _get_tolerance(self, tol: Union[float, DynamicTolerance]) -> float:
+        result = tol(self._mesh.points, self._mesh.points) if isinstance(tol, DynamicTolerance) else tol
+        assert isinstance(result, float)
+        return result
 
     def _make_inverse_point_permutation(self) -> Optional[Array]:
         if self._point_permutation is None:
             return None
         index_map = self._point_permutation
         max_index = max_element(index_map)
+        assert isinstance(max_index, Integral)
         inverse = make_uninitialized_array(max_index + 1, dtype=int)
         inverse[index_map] = make_array(list(range(len(index_map))))
         return inverse

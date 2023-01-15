@@ -1,7 +1,7 @@
 """Equality check for computational meshes"""
+from typing import Optional
 
 from .._numpy_utils import Array, make_array, get_sorting_index_map
-from .._common import _default_base_tolerance
 from ..predicates import FuzzyEquality, ExactEquality, PredicateResult
 from .protocols import Mesh as MeshInterface
 
@@ -9,10 +9,12 @@ from .protocols import Mesh as MeshInterface
 def mesh_equal(
     source: MeshInterface,
     target: MeshInterface,
-    rel_tol: float = _default_base_tolerance(),
-    abs_tol: float = _default_base_tolerance(),
+    rel_tol: Optional[float] = None,
+    abs_tol: Optional[float] = None,
 ) -> PredicateResult:
     """Check whether two meshes are equal"""
+    rel_tol = min(source.relative_tolerance, target.relative_tolerance) if rel_tol is None else rel_tol
+    abs_tol = min(source.absolute_tolerance, target.absolute_tolerance) if abs_tol is None else abs_tol
     points_equal = FuzzyEquality(rel_tol=rel_tol, abs_tol=abs_tol)(source.points, target.points)
     if not points_equal:
         return PredicateResult(False, report=f"Differing points - '{points_equal.report}'")

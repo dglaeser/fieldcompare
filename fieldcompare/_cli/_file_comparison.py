@@ -4,8 +4,10 @@ from pathlib import Path
 from typing import Union, List, Callable, Optional
 from dataclasses import dataclass
 
-from .._numpy_utils import as_array, has_floats
 from ..predicates import FuzzyEquality, ExactEquality
+from ..protocols import DynamicTolerance
+
+from .._numpy_utils import as_array, has_floats
 from .._common import _default_base_tolerance
 from .._format import as_success, as_error, as_warning, highlighted
 
@@ -27,14 +29,17 @@ from ..mesh import protocols as mesh_protocols
 from ..io import read as read_fields
 
 
+Tolerance = Union[float, DynamicTolerance]
+
+
 @dataclass
 class FileComparisonOptions:
     ignore_missing_source_fields: bool = False
     ignore_missing_reference_fields: bool = False
     ignore_missing_sequence_steps: bool = False
     force_sequence_comparison: bool = False
-    relative_tolerances: Callable[[str], float] = lambda _: _default_base_tolerance()
-    absolute_tolerances: Callable[[str], float] = lambda _: _default_base_tolerance()
+    relative_tolerances: Callable[[str], Optional[Tolerance]] = lambda _: _default_base_tolerance()
+    absolute_tolerances: Callable[[str], Optional[Tolerance]] = lambda _: 0.0
     field_inclusion_filter: Callable[[str], bool] = lambda _: True
     field_exclusion_filter: Callable[[str], bool] = lambda _: False
     disable_unconnected_points_removal: bool = False
@@ -197,9 +202,11 @@ class FileComparison:
 
     def _select_predicate(self, res_field: protocols.Field, ref_field: protocols.Field) -> protocols.Predicate:
         if has_floats(as_array(res_field.values)) or has_floats(as_array(ref_field.values)):
+            abs_tol = self._opts.absolute_tolerances(res_field.name)
+            rel_tol = self._opts.relative_tolerances(res_field.name)
             return FuzzyEquality(
-                abs_tol=self._opts.absolute_tolerances(res_field.name),
-                rel_tol=self._opts.relative_tolerances(res_field.name),
+                abs_tol=abs_tol if abs_tol is not None else 0.0,
+                rel_tol=rel_tol if rel_tol is not None else _default_base_tolerance(),
             )
         else:
             return ExactEquality()

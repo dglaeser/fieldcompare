@@ -2,7 +2,16 @@
 
 from __future__ import annotations
 from typing import Protocol, Callable, Iterator, Any, runtime_checkable
-from ._numpy_utils import Array
+from ._numpy_utils import Array, ArrayTolerance
+
+
+@runtime_checkable
+class DynamicTolerance(Protocol):
+    """Interface for tolerances that depend on the array values to be compared."""
+
+    def __call__(self, first: Array, second: Array) -> ArrayTolerance:
+        """Return a tolerance to be used for comparing the two given arrays."""
+        ...
 
 
 @runtime_checkable
