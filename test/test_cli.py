@@ -80,6 +80,37 @@ def test_cli_file_mode_reader_selection_with_options():
     remove(csv_file_copy)
 
 
+def test_cli_file_mode_default_reader_selection_with_options():
+    csv_file = str(TEST_DATA_PATH / Path("test_tabular_data.csv"))
+    csv_file_copy = f"{splitext(csv_file)[0]}.dat"
+    copy(csv_file, csv_file_copy)
+    assert main([
+        "file",
+        csv_file,
+        csv_file_copy,
+        "--read-as", 'dsv'
+    ]) == 0
+    assert main([
+        "file",
+        csv_file,
+        csv_file_copy,
+        "--read-as", 'dsv{"use_names": true, "skip_rows": 0}'
+    ]) == 0
+    assert main([
+        "file",
+        csv_file,
+        csv_file_copy,
+        "--read-as", 'dsv{"use_names": false, "skip_rows": 1}'
+    ]) == 0
+    assert main([
+        "file",
+        str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+        str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+        "--read-as", 'dsv{"use_names": false, "skip_rows": 1}'
+    ]) == 1  # should fail, trying to read a mesh as dsv
+    remove(csv_file_copy)
+
+
 def test_cli_file_mode_junit_report():
     report_filename = "file_mode_junit.xml"
     if isfile(report_filename):
@@ -513,6 +544,19 @@ def test_cli_directory_mode_reader_selection():
     assert main(["dir", str(tmp_results_path), str(tmp_results_path)]) == 1
     assert main(["dir", str(tmp_results_path), str(tmp_results_path), "--read-as", "dsv:*.dat"]) == 0
     rmtree(tmp_results_path)
+
+
+def test_cli_directory_mode_default_reader_selection():
+    tmp_results_path = TEST_DATA_PATH.resolve().parent / Path("test_cli_directory_mode_reader_selection")
+    rmtree(tmp_results_path, ignore_errors=True)
+    makedirs(tmp_results_path)
+    copy(TEST_DATA_PATH / Path("test_tabular_data.csv"), tmp_results_path / Path("table.dat"))
+    assert main(["dir", str(tmp_results_path), str(tmp_results_path)]) == 1
+    assert main(["dir", str(tmp_results_path), str(tmp_results_path), "--read-as", "dsv"]) == 0
+    rmtree(tmp_results_path)
+
+    # this should then try to read meshes as dsv files causing the run to fail
+    assert main(["dir", str(TEST_DATA_PATH), str(TEST_DATA_PATH), "--read-as", "dsv"]) == 1
 
 
 def test_cli_directory_mode_missing_reference_file():
