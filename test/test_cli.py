@@ -505,6 +505,16 @@ def test_cli_directory_mode_missing_result_file():
     rmtree(tmp_results_path)
 
 
+def test_cli_directory_mode_reader_selection():
+    tmp_results_path = TEST_DATA_PATH.resolve().parent / Path("test_cli_directory_mode_reader_selection")
+    rmtree(tmp_results_path, ignore_errors=True)
+    makedirs(tmp_results_path)
+    copy(TEST_DATA_PATH / Path("test_tabular_data.csv"), tmp_results_path / Path("table.dat"))
+    assert main(["dir", str(tmp_results_path), str(tmp_results_path)]) == 1
+    assert main(["dir", str(tmp_results_path), str(tmp_results_path), "--read-as", "dsv:*.dat"]) == 0
+    rmtree(tmp_results_path)
+
+
 def test_cli_directory_mode_missing_reference_file():
     tmp_reference_path = TEST_DATA_PATH.resolve().parent / Path("cli_dir_test_ref_data")
     rmtree(tmp_reference_path, ignore_errors=True)
