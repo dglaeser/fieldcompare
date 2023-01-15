@@ -153,7 +153,7 @@ def _add_tolerance_options_args(parser: ArgumentParser) -> None:
         "-rtol",
         "--relative-tolerance",
         required=False,
-        nargs="*",
+        action="append",
         help="Specify the relative tolerance to be used. "
         "Use e.g. '-rtol pressure:1e-3' to set the tolerance for a field named 'pressure', "
         "or '-rtol domain:1e-3' to define the tolerance used when checking the domains for equality.",
@@ -162,7 +162,7 @@ def _add_tolerance_options_args(parser: ArgumentParser) -> None:
         "-atol",
         "--absolute-tolerance",
         required=False,
-        nargs="*",
+        action="append",
         help="Specify the absolute tolerance to be used. "
         "Use e.g. '-atol pressure:1e-3' to set the tolerance for a field named 'pressure' "
         "or '-atol domain:1e-3' to define the tolerance used when checking the domains for equality. "
@@ -176,8 +176,8 @@ def _add_tolerance_options_args(parser: ArgumentParser) -> None:
 def _add_reader_selection_options_args(parser: ArgumentParser) -> None:
     parser.add_argument(
         "--read-as",
-        nargs="*",
         required=False,
+        action="append",
         help="Specify the reader to be used for parsing the fields from files (per default, the reader is deduced "
         "from the file extension). To specify that a file should be read by the mesh reading facilities, for instance, "
         "use the following syntax: `--read-as mesh:MY_FILE`. In general, the syntax is `READER:REGEX`, where `READER` "
