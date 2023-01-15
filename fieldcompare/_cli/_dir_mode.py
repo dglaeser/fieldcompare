@@ -111,6 +111,7 @@ class CategorizedFiles:
 
 def _categorize_files(args: dict, res_dir: str, ref_dir: str) -> CategorizedFiles:
     include_filter = PatternFilter(args["include_files"]) if args["include_files"] else _include_all()
+    file_type_map = _make_file_type_map(args.get("read_as", []))
 
     search_result = find_matching_file_names(res_dir, ref_dir)
     matches = list(n for n, _ in search_result.matches)
@@ -121,9 +122,11 @@ def _categorize_files(args: dict, res_dir: str, ref_dir: str) -> CategorizedFile
     dropped_matches = list(set(matches).difference(set(filtered_matches)))
     supported_files = list(filter(lambda f: is_supported(join(res_dir, f)), filtered_matches))
     unsupported_files = list(set(filtered_matches).difference(set(supported_files)))
+    mapped_unsupported_files = [filename for filename in unsupported_files if file_type_map(filename) is not None]
+    unsupported_files = list(set(unsupported_files).difference(set(mapped_unsupported_files)))
 
     return CategorizedFiles(
-        files_to_compare=supported_files,
+        files_to_compare=supported_files + mapped_unsupported_files,
         missing_sources=missing_sources,
         missing_references=missing_references,
         filtered_files=dropped_matches,
