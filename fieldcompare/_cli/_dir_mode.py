@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from xml.etree.ElementTree import ElementTree, Element
 
 from .._matching import find_matching_file_names
-from .._format import highlighted, as_warning, get_status_string
+from .._format import highlighted, get_status_string
 from .._common import _measure_time
 from ..io import is_supported
 
@@ -182,11 +182,11 @@ def _do_file_comparisons(args, filenames: Iterable[str], logger: CLILogger) -> F
                 "File comparison {} with {} {} / {} {} / {} {}\n".format(
                     get_status_string(bool(test_suite)),
                     sum(1 for t in test_suite if t.status == TestStatus.passed),
-                    get_status_string(True),
+                    "PASSED",
                     sum(1 for t in test_suite if not t.status),
-                    get_status_string(False),
+                    "FAILED",
                     sum(1 for t in test_suite if t.status and t.status != TestStatus.passed),
-                    as_warning("SKIPPED"),
+                    "SKIPPED",
                 ),
                 verbosity_level=1,
             )
