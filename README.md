@@ -99,7 +99,7 @@ the [API Documentation](https://dglaeser.gitlab.io/fieldcompare/).
 As mentioned before, you can install `fieldcompare` simply via `pip`
 
 ```sh
-pip install "git+https://gitlab.com/dglaeser/fieldcompare#egg=fieldcompare[all]
+pip install fieldcompare[all]
 ```
 
 The suffix `[all]` instructs `pip` to also install all optional dependencies (for instance `meshio`).
@@ -110,6 +110,13 @@ For an installation from a local copy, navigate to the top folder of this reposi
 ```sh
 pip install .       # minimum installation
 pip install .[all]  # full installation with all dependencies
+```
+
+To install the latest development version you can also install `fieldcompare` via pip
+directly from the git repository:
+
+```sh
+pip install "git+https://gitlab.com/dglaeser/fieldcompare#egg=fieldcompare[all]
 ```
 
 
