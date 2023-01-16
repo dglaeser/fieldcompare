@@ -3,16 +3,19 @@
 from __future__ import annotations
 from typing import Iterable, Tuple, Optional, Union
 
-from .._common import _default_base_tolerance
-from .._numpy_utils import Array, ArrayLike, as_array, max_abs_value
-
 from ..predicates import PredicateResult
 from ..protocols import DynamicTolerance
+from .._numpy_utils import Array, ArrayLike, as_array, max_abs_value
 
 from ._mesh_equal import mesh_equal
 from ._cell_type import CellType
 
 from . import protocols
+
+
+def default_mesh_relative_tolerance() -> float:
+    """Return the default relative tolerance used for mesh equality checks"""
+    return 1e-8
 
 
 class Mesh:
@@ -27,8 +30,8 @@ class Mesh:
     def __init__(self, points: ArrayLike, connectivity: Iterable[Tuple[CellType, ArrayLike]]) -> None:
         self._points = as_array(points)
         self._corners = {_get_assert_cell_type(cell_type): as_array(corners) for cell_type, corners in connectivity}
-        self._rel_tol = _default_base_tolerance()
-        self._abs_tol = max_abs_value(self._points) * _default_base_tolerance()
+        self._rel_tol = default_mesh_relative_tolerance()
+        self._abs_tol = max_abs_value(self._points) * default_mesh_relative_tolerance()
 
     @property
     def absolute_tolerance(self) -> float:
