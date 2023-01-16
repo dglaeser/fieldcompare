@@ -9,7 +9,7 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 
-`fieldcompare` is a python package with command-line interface (CLI) that can be used to compare
+`fieldcompare` is a Python package with command-line interface (CLI) that can be used to compare
 datasets for (fuzzy) equality. It was designed mainly to serve as a tool to realize regression tests
 for research software, and in particular research software that deals with numerical simulations.
 In regression tests, the output of a software is compared to reference data that was produced by
@@ -91,7 +91,7 @@ fieldcompare file --help
 fieldcompare dir --help
 ```
 
-There is also a Python API to customize your comparisons with fieldcompare, see the examples below and/or
+There is also a Python API to customize your comparisons with `fieldcompare`, see the examples below and/or
 the [API Documentation](https://dglaeser.gitlab.io/fieldcompare/).
 
 ## Installation
