@@ -26,6 +26,91 @@ def test_cli_file_mode_pass():
     ]) == 0
 
 
+def test_cli_file_mode_reader_selection():
+    csv_file = "test_tabular_data.csv"
+    csv_file_path = str(TEST_DATA_PATH / Path(csv_file))
+    modified_ext_filename = f"{splitext(csv_file)[0]}.dat"
+    copy(csv_file_path, modified_ext_filename)
+    assert main([
+        "file",
+        csv_file_path,
+        modified_ext_filename,
+        "--read-as", "dsv:*.dat"
+    ]) == 0
+    remove(modified_ext_filename)
+
+
+def test_cli_file_mode_reader_selection_multiple_occurrences():
+    csv_file = "test_tabular_data.csv"
+    csv_file_path = str(TEST_DATA_PATH / Path(csv_file))
+    modified_ext_filename = f"{splitext(csv_file)[0]}.dat"
+    copy(csv_file_path, modified_ext_filename)
+    assert main([
+        "file",
+        csv_file_path,
+        modified_ext_filename,
+        "--read-as", "dsv:*.dat",
+        "--read-as", "mesh:*dat"
+    ]) == 0
+    remove(modified_ext_filename)
+
+
+def test_cli_file_mode_reader_selection_with_options():
+    csv_file = str(TEST_DATA_PATH / Path("test_tabular_data.csv"))
+    csv_file_copy = f"{splitext(csv_file)[0]}.dat"
+    copy(csv_file, csv_file_copy)
+    assert main([
+        "file",
+        csv_file,
+        csv_file_copy,
+        "--read-as", 'dsv:*.dat'
+    ]) == 0
+    assert main([
+        "file",
+        csv_file,
+        csv_file_copy,
+        "--read-as", 'dsv{"use_names": true, "skip_rows": 0}:*.dat'
+    ]) == 0
+    assert main([
+        "file",
+        csv_file,
+        csv_file_copy,
+        "--read-as", 'dsv{"use_names": false, "skip_rows": 1}:*.dat'
+    ]) == 1  # should fail because of non-matching field names
+    remove(csv_file_copy)
+
+
+def test_cli_file_mode_default_reader_selection_with_options():
+    csv_file = str(TEST_DATA_PATH / Path("test_tabular_data.csv"))
+    csv_file_copy = f"{splitext(csv_file)[0]}.dat"
+    copy(csv_file, csv_file_copy)
+    assert main([
+        "file",
+        csv_file,
+        csv_file_copy,
+        "--read-as", 'dsv'
+    ]) == 0
+    assert main([
+        "file",
+        csv_file,
+        csv_file_copy,
+        "--read-as", 'dsv{"use_names": true, "skip_rows": 0}'
+    ]) == 0
+    assert main([
+        "file",
+        csv_file,
+        csv_file_copy,
+        "--read-as", 'dsv{"use_names": false, "skip_rows": 1}'
+    ]) == 0
+    assert main([
+        "file",
+        str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+        str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+        "--read-as", 'dsv{"use_names": false, "skip_rows": 1}'
+    ]) == 1  # should fail, trying to read a mesh as dsv
+    remove(csv_file_copy)
+
+
 def test_cli_file_mode_junit_report():
     report_filename = "file_mode_junit.xml"
     if isfile(report_filename):
@@ -363,6 +448,7 @@ def test_cli_directory_mode_pass():
 
 def test_cli_directory_mode_junit_report():
     tmp_results_path = TEST_DATA_PATH.resolve().parent / Path("cli_dir_junit_report_results_data")
+    rmtree(tmp_results_path, ignore_errors=True)
     copytree(TEST_DATA_PATH, tmp_results_path, dirs_exist_ok=True)
     copy(
         tmp_results_path / Path("test_mesh_permutated.vtu"),
@@ -417,6 +503,7 @@ def test_cli_directory_mode_field_exclusion_filter():
 
 def test_cli_directory_mode_missing_result_file():
     tmp_results_path = TEST_DATA_PATH.resolve().parent / Path("cli_dir_test_results_data")
+    rmtree(tmp_results_path, ignore_errors=True)
     copytree(TEST_DATA_PATH, tmp_results_path, dirs_exist_ok=True)
     assert main(["dir", str(tmp_results_path), str(TEST_DATA_PATH)]) == 0
 
@@ -449,8 +536,32 @@ def test_cli_directory_mode_missing_result_file():
     rmtree(tmp_results_path)
 
 
+def test_cli_directory_mode_reader_selection():
+    tmp_results_path = TEST_DATA_PATH.resolve().parent / Path("test_cli_directory_mode_reader_selection")
+    rmtree(tmp_results_path, ignore_errors=True)
+    makedirs(tmp_results_path)
+    copy(TEST_DATA_PATH / Path("test_tabular_data.csv"), tmp_results_path / Path("table.dat"))
+    assert main(["dir", str(tmp_results_path), str(tmp_results_path)]) == 1
+    assert main(["dir", str(tmp_results_path), str(tmp_results_path), "--read-as", "dsv:*.dat"]) == 0
+    rmtree(tmp_results_path)
+
+
+def test_cli_directory_mode_default_reader_selection():
+    tmp_results_path = TEST_DATA_PATH.resolve().parent / Path("test_cli_directory_mode_reader_selection")
+    rmtree(tmp_results_path, ignore_errors=True)
+    makedirs(tmp_results_path)
+    copy(TEST_DATA_PATH / Path("test_tabular_data.csv"), tmp_results_path / Path("table.dat"))
+    assert main(["dir", str(tmp_results_path), str(tmp_results_path)]) == 1
+    assert main(["dir", str(tmp_results_path), str(tmp_results_path), "--read-as", "dsv"]) == 0
+    rmtree(tmp_results_path)
+
+    # this should then try to read meshes as dsv files causing the run to fail
+    assert main(["dir", str(TEST_DATA_PATH), str(TEST_DATA_PATH), "--read-as", "dsv"]) == 1
+
+
 def test_cli_directory_mode_missing_reference_file():
     tmp_reference_path = TEST_DATA_PATH.resolve().parent / Path("cli_dir_test_ref_data")
+    rmtree(tmp_reference_path, ignore_errors=True)
     copytree(TEST_DATA_PATH, tmp_reference_path, dirs_exist_ok=True)
     assert main(["dir", str(TEST_DATA_PATH), str(tmp_reference_path)]) == 0
 

@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 from datetime import datetime
 from xml.etree.ElementTree import ElementTree
 
+from ..io import _AVAILABLE_FILE_TYPES
 from .._common import _measure_time
 
 from ._junit import as_junit_xml_element
@@ -17,6 +18,7 @@ from ._common import (
     _include_all,
     _exclude_all,
     _log_suite_summary,
+    _make_file_type_map,
 )
 
 
@@ -29,6 +31,7 @@ def _add_arguments(parser: ArgumentParser):
     _add_field_filter_options_args(parser)
     _add_mesh_reorder_options_args(parser)
     _add_junit_export_arg(parser)
+    _add_reader_selection_options_args(parser)
 
 
 def _run(args: dict, in_logger: CLILogger) -> int:
@@ -46,6 +49,7 @@ def _run(args: dict, in_logger: CLILogger) -> int:
         disable_mesh_reordering=True if args["disable_mesh_reordering"] else False,
         disable_mesh_space_dimension_matching=True if args["disable_mesh_space_dimension_matching"] else False,
         disable_unconnected_points_removal=True if args["disable_mesh_orphan_point_removal"] else False,
+        file_type_map=_make_file_type_map(args.get("read_as", [])),
     )
 
     try:
@@ -149,7 +153,7 @@ def _add_tolerance_options_args(parser: ArgumentParser) -> None:
         "-rtol",
         "--relative-tolerance",
         required=False,
-        nargs="*",
+        action="append",
         help="Specify the relative tolerance to be used. "
         "Use e.g. '-rtol pressure:1e-3' to set the tolerance for a field named 'pressure', "
         "or '-rtol domain:1e-3' to define the tolerance used when checking the domains for equality.",
@@ -158,7 +162,7 @@ def _add_tolerance_options_args(parser: ArgumentParser) -> None:
         "-atol",
         "--absolute-tolerance",
         required=False,
-        nargs="*",
+        action="append",
         help="Specify the absolute tolerance to be used. "
         "Use e.g. '-atol pressure:1e-3' to set the tolerance for a field named 'pressure' "
         "or '-atol domain:1e-3' to define the tolerance used when checking the domains for equality. "
@@ -166,6 +170,29 @@ def _add_tolerance_options_args(parser: ArgumentParser) -> None:
         "in the fields by using the syntax: `-atol pressure:1e-3*max`. This is useful for fields with "
         "a large range where all values are expected to exhibit similar absolute errors. This option "
         "then avoids false negatives from values close to zero.",
+    )
+
+
+def _add_reader_selection_options_args(parser: ArgumentParser) -> None:
+    parser.add_argument(
+        "--read-as",
+        required=False,
+        action="append",
+        help="Specify the reader to be used for parsing the fields from files (per default, the reader is deduced "
+        "from the file extension). To specify that a file should be read by the mesh reading facilities, for instance, "
+        "use the following syntax: `--read-as mesh:MY_FILE`. In general, the syntax is `READER:REGEX`, where `READER` "
+        "specifies the reading facilities to be used, and `REGEX` is a regular expression that is evaluated with "
+        "filenames to check if `READER` should be used for them. For instance, to read `.dat` with delimiter-separated "
+        "content with the `dsv` facilities, use `--read-as dsv:*.dat`. This option can be used multiple times, and "
+        "in case a filename matches multiple of the given regular expressions, the first match is taken. For example, "
+        "`--read-as dsv:*.dat --read-as mesh:*.dat` leads to `.dat` files being read as `dsv`. You can also omit the "
+        "regular expression, which translates to `READER:*`, effectively defining a default reader to be used. For "
+        "instance, using `--read-as dsv` will yield all files being processed as `dsv` files. When specifying "
+        "multiple `--read-as` options, we recommend putting default readers last. Additionally, you can specify "
+        "options to be passed to the reader in json notation after the reader name. For example, use "
+        '`--read-as \'dsv{"delimiter":","}:*.dat\'` to read all `.dat` files as comma-separated data dsv files. '
+        "Note that this syntax requires you to wrap the entire argument in single quotes (''). "
+        f"Available readers: {', '.join(_AVAILABLE_FILE_TYPES)}",
     )
 
 

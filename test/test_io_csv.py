@@ -1,12 +1,14 @@
 """Test field-IO from csv files"""
 
+from os import remove
 from io import StringIO
 from csv import Error
 from pytest import raises
+from itertools import product
 
 from fieldcompare.predicates import ExactEquality
 from fieldcompare.tabular import Table, transform
-from fieldcompare.io import CSVFieldReader
+from fieldcompare.io import CSVFieldReader, read_as, read
 
 
 def _as_string_stream(data: dict, add_names: bool = True, delimiter=",") -> StringIO:
@@ -118,3 +120,47 @@ def test_csv_field_permutation():
             field.values,
             list(reversed(reference_data[field.name]))
         )
+
+
+def test_read_csv_with_options():
+    reference_data = get_reference_data()
+
+    def _is_equal(fields) -> bool:
+        check = ExactEquality()
+        for field in fields:
+            if not any(check(field.values, reference_data[ref]) for ref in reference_data):
+                return False
+        return True
+
+    for names, delimiter in product([True, False], [",", " ", ";"]):
+        stream = _as_string_stream(reference_data, add_names=names, delimiter=delimiter)
+        filename = "test_read_csv_with_options.csv"
+        with open(filename, "w") as csv_file:
+            csv_file.write(stream.getvalue())
+        dsv_equal = _is_equal(read(filename, {"dsv": {"use_names": names, "delimiter": delimiter}}))
+        if names:
+            dsv_equal = dsv_equal and _is_equal(
+                read(filename, {"dsv": {"use_names": False, "delimiter": delimiter, "skip_rows": 1}})
+            )
+        remove(filename)
+        assert dsv_equal
+
+
+def test_read_file_as_csv():
+    reference_data = get_reference_data()
+
+    def _is_equal(fields) -> bool:
+        check = ExactEquality()
+        for field in fields:
+            if not any(check(field.values, reference_data[ref]) for ref in reference_data):
+                return False
+        return True
+
+    for names, delimiter in product([True, False], [",", " ", ";"]):
+        stream = _as_string_stream(reference_data, add_names=names, delimiter=delimiter)
+        filename = "test_read_file_as_csv"
+        with open(filename, "w") as csv_file:
+            csv_file.write(stream.getvalue())
+        dsv_equal = _is_equal(read_as("dsv", filename, use_names=names, delimiter=delimiter))
+        remove(filename)
+        assert dsv_equal

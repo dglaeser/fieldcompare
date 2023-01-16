@@ -2,6 +2,7 @@
 
 from typing import List, Dict, Tuple, Optional, Union
 from fnmatch import fnmatch
+from json import loads
 
 from ..protocols import DynamicTolerance
 from ..predicates import ScaledTolerance
@@ -70,6 +71,66 @@ def _parse_field_tolerances(
                 default_tol = _make_tolerance(tol_string)
         return FieldToleranceMap(field_tols, default_tol=default_tol)
     return FieldToleranceMap()
+
+
+class FileTypeMap:
+    def __init__(self, mapping: List[Tuple[str, PatternFilter]] = []) -> None:
+        self._mapping = mapping
+
+    def __call__(self, filename: str) -> Optional[Tuple[str, dict]]:
+        for file_type_with_opts, regex in self._mapping:
+            if regex(filename):
+                return self._split_file_type_and_opts(file_type_with_opts)
+        return None
+
+    def _split_file_type_and_opts(self, file_type_with_opts: str) -> Tuple[str, dict]:
+        if file_type_with_opts.endswith("}") and "{" in file_type_with_opts:
+            file_type, opts_string = file_type_with_opts.split("{", maxsplit=1)
+            return file_type, self._parse_options("{" + opts_string)
+        return file_type_with_opts, {}
+
+    def _parse_options(self, opts_string: str) -> dict:
+        try:
+            return loads(opts_string)
+        except Exception as e:
+            raise IOError(
+                f"Could not parse reader options '{opts_string}'. '{opts_string}' has to be valid JSON. "
+                "Note that JSON only interprets lower-case false and true as boolean values, and all keys "
+                f"have to be wrapped in double quotes. Exception: '{e}'"
+            )
+
+
+def _make_file_type_map(map_args: Optional[List[str]]) -> FileTypeMap:
+    if map_args is None:
+        return FileTypeMap()
+
+    def _has_opts(mapping: str) -> bool:
+        brace_pos = mapping.find("{") if "{" in mapping else len(mapping)
+        colon_pos = mapping.find(":") if ":" in mapping else len(mapping)
+        return brace_pos < colon_pos
+
+    def _split_regex(mapping: str) -> Tuple[str, str]:
+        if _has_opts(mapping):
+            if mapping.endswith("}"):
+                return mapping, "*"
+            else:
+                result = mapping.split("}:")
+                if len(result) != 2:
+                    raise IOError(f"Could not parse reader mapping '{mapping}'.")
+                return result[0] + "}", result[1]
+        result = mapping.split(":", maxsplit=1)
+        return (result[0], "*") if len(result) == 1 else (result[0], result[1])
+
+    file_types_with_opts: List[str] = []
+    regexes: List[List[str]] = []
+    for mapping in map_args:
+        ft_with_opts, regex = _split_regex(mapping)
+        if not any(_t == ft_with_opts for _t in file_types_with_opts):
+            file_types_with_opts.append(ft_with_opts)
+            regexes.append([regex])
+        else:
+            regexes[file_types_with_opts.index(ft_with_opts)].append(regex)
+    return FileTypeMap(mapping=[(ft_opts, PatternFilter(rx)) for ft_opts, rx in zip(file_types_with_opts, regexes)])
 
 
 def _bool_to_exit_code(value: bool) -> int:

@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from ..predicates import FuzzyEquality, ExactEquality
 from ..protocols import DynamicTolerance
+from ..io import read, read_as
 
 from .._numpy_utils import as_array, has_floats
 from .._common import _default_base_tolerance
@@ -21,12 +22,11 @@ from .._field_data_comparison import (
 from ..mesh import MeshFieldsComparator
 
 from ._logger import CLILogger
+from ._common import FileTypeMap
 from ._test_suite import TestSuite, TestResult, TestStatus
 
 from .. import protocols
 from ..mesh import protocols as mesh_protocols
-
-from ..io import read as read_fields
 
 
 Tolerance = Union[float, DynamicTolerance]
@@ -45,6 +45,7 @@ class FileComparisonOptions:
     disable_unconnected_points_removal: bool = False
     disable_mesh_space_dimension_matching: bool = False
     disable_mesh_reordering: bool = False
+    file_type_map: FileTypeMap = FileTypeMap()
 
 
 class FileComparison:
@@ -63,9 +64,15 @@ class FileComparison:
         return self._compare_fields(res_fields, ref_fields).with_overridden(name=_suite_name(res_file))
 
     def _read(self, filename: str) -> Union[protocols.FieldData, protocols.FieldDataSequence]:
-        self._logger.log(f"Reading '{highlighted(filename)}'\n", verbosity_level=1)
         try:
-            return read_fields(filename)
+            file_type_with_opts = self._opts.file_type_map(filename)
+            log_suffix = f" as '{file_type_with_opts[0]}'" if file_type_with_opts is not None else ""
+            self._logger.log(f"Reading '{highlighted(filename)}'{log_suffix}\n", verbosity_level=1)
+            return (
+                read(filename)
+                if file_type_with_opts is None
+                else read_as(file_type_with_opts[0], filename, **file_type_with_opts[1])
+            )
         except IOError as e:
             self._logger.log(f"Error: '{e}'", verbosity_level=1)
             raise IOError(e)
@@ -130,7 +137,12 @@ class FileComparison:
     def _compare_field_data(self, res_fields: protocols.FieldData, ref_fields: protocols.FieldData) -> TestSuite:
         if isinstance(res_fields, mesh_protocols.MeshFields) and isinstance(ref_fields, mesh_protocols.MeshFields):
             return self._compare_mesh_field_data(res_fields, ref_fields)
-        return self._to_test_suite(self._run_field_data_comparison(res_fields, ref_fields))
+        suite = self._run_field_data_comparison(res_fields, ref_fields)
+        if suite.domain_equality_check:
+            return self._to_test_suite(suite)
+        msg = "Domains have compared unequal"
+        self._logger.log(f"{self._status_string(TestStatus.failed)}: {msg}")
+        return _make_test_suite([], TestStatus.failed, shortlog=msg)
 
     def _compare_mesh_field_data(
         self, res_fields: mesh_protocols.MeshFields, ref_fields: mesh_protocols.MeshFields

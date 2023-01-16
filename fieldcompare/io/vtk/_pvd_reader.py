@@ -2,7 +2,7 @@ from os.path import splitext, exists, join, dirname, isabs
 from xml.etree import ElementTree
 
 from ... import protocols, FieldDataSequence
-from ._reader_map import _VTK_EXTENSION_TO_READER
+from ._reader_map import _VTK_EXTENSION_TO_READER, _VTK_TYPE_TO_EXTENSION
 
 
 class PVDReader:
@@ -48,3 +48,4 @@ class PVDReader:
 
 # register this reader in the map
 _VTK_EXTENSION_TO_READER[".pvd"] = PVDReader
+_VTK_TYPE_TO_EXTENSION["Collection"] = ".pvd"

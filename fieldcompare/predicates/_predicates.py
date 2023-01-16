@@ -7,6 +7,7 @@ from typing import Tuple, Optional, Union
 from .._common import _default_base_tolerance
 from ..protocols import DynamicTolerance
 
+from .._format import as_warning
 from .._numpy_utils import ArrayTolerance, ArrayLike, Array, as_array, as_string, has_floats
 from .._numpy_utils import find_first_unequal
 from .._numpy_utils import find_first_fuzzy_unequal
@@ -94,7 +95,7 @@ class ExactEquality:
                 value=False,
                 report=_get_equality_fail_report(val1, val2),
             )
-        return _success_result()
+        return _success_result(first, second)
 
 
 class FuzzyEquality:
@@ -201,7 +202,7 @@ class FuzzyEquality:
             max_abs_diff_str = as_string(max_abs_diffs)
             max_abs_diff_str = max_abs_diff_str.replace("\n", " ")
             return PredicateResult(value=True, report="Maximum absolute difference: {}".format(max_abs_diff_str))
-        return _success_result()
+        return _success_result(first, second)
 
 
 class DefaultEquality(FuzzyEquality):
@@ -249,8 +250,10 @@ def _compute_max_abs_diffs(first, second):
         return None
 
 
-def _success_result() -> PredicateResult:
-    return PredicateResult(True, report="All field values have compared equal")
+def _success_result(first: Array, second: Array) -> PredicateResult:
+    if first.size == 0 and second.size == 0:
+        return PredicateResult(True, report=as_warning("Arrays are empty"))
+    return PredicateResult(True, report="All values have compared equal")
 
 
 def _reshape(arr1: ArrayLike, arr2: ArrayLike) -> Tuple[Array, Array]:

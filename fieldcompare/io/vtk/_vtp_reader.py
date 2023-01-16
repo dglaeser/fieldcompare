@@ -4,7 +4,7 @@ import numpy as np
 
 from ...mesh import Mesh, CellType
 from ._xml_reader import VTKXMLReader, CellTypeToCellIndices
-from ._reader_map import _VTK_EXTENSION_TO_READER
+from ._reader_map import _VTK_EXTENSION_TO_READER, _VTK_TYPE_TO_EXTENSION
 
 
 class VTPReader(VTKXMLReader):
@@ -78,3 +78,4 @@ class VTPReader(VTKXMLReader):
 
 
 _VTK_EXTENSION_TO_READER[".vtp"] = VTPReader
+_VTK_TYPE_TO_EXTENSION["PolyData"] = ".vtp"

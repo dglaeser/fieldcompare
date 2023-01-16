@@ -22,6 +22,7 @@ from ._common import (
     _log_suite_summary,
     _include_all,
     _exclude_all,
+    _make_file_type_map,
 )
 
 from ._file_mode import (
@@ -30,6 +31,7 @@ from ._file_mode import (
     _add_field_filter_options_args,
     _add_mesh_reorder_options_args,
     _add_junit_export_arg,
+    _add_reader_selection_options_args,
 )
 
 from ._test_suite import TestSuite, TestResult, TestStatus
@@ -67,6 +69,7 @@ def _add_arguments(parser: ArgumentParser):
     _add_tolerance_options_args(parser)
     _add_mesh_reorder_options_args(parser)
     _add_junit_export_arg(parser)
+    _add_reader_selection_options_args(parser)
 
 
 def _run(args: dict, in_logger: CLILogger) -> int:
@@ -108,6 +111,7 @@ class CategorizedFiles:
 
 def _categorize_files(args: dict, res_dir: str, ref_dir: str) -> CategorizedFiles:
     include_filter = PatternFilter(args["include_files"]) if args["include_files"] else _include_all()
+    file_type_map = _make_file_type_map(args.get("read_as", []))
 
     search_result = find_matching_file_names(res_dir, ref_dir)
     matches = list(n for n, _ in search_result.matches)
@@ -118,9 +122,11 @@ def _categorize_files(args: dict, res_dir: str, ref_dir: str) -> CategorizedFile
     dropped_matches = list(set(matches).difference(set(filtered_matches)))
     supported_files = list(filter(lambda f: is_supported(join(res_dir, f)), filtered_matches))
     unsupported_files = list(set(filtered_matches).difference(set(supported_files)))
+    mapped_unsupported_files = [filename for filename in unsupported_files if file_type_map(filename) is not None]
+    unsupported_files = list(set(unsupported_files).difference(set(mapped_unsupported_files)))
 
     return CategorizedFiles(
-        files_to_compare=supported_files,
+        files_to_compare=supported_files + mapped_unsupported_files,
         missing_sources=missing_sources,
         missing_references=missing_references,
         filtered_files=dropped_matches,
@@ -155,6 +161,7 @@ def _do_file_comparisons(args, filenames: Iterable[str], logger: CLILogger) -> F
             disable_mesh_reordering=True if args["disable_mesh_reordering"] else False,
             disable_mesh_space_dimension_matching=True if args["disable_mesh_space_dimension_matching"] else False,
             disable_unconnected_points_removal=True if args["disable_mesh_orphan_point_removal"] else False,
+            file_type_map=_make_file_type_map(args.get("read_as", [])),
         )
         try:
             sub_logger = logger.with_prefix("  ")
