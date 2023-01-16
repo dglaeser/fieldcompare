@@ -120,32 +120,6 @@ pip install "git+https://gitlab.com/dglaeser/fieldcompare#egg=fieldcompare[all]
 ```
 
 
-## First steps & examples
-
-The following code snippet reads the fields from two files (assuming their format is supported)
-and prints a message depending on if the success of their comparison:
-
-```py
-from fieldcompare import FieldDataComparator
-from fieldcompare.io import read_field_data
-
-fields1 = read_field_data("FILENAME1")
-fields2 = read_field_data("FILENAME2")
-comparator = FieldDataComparator(fields1, fields2)
-
-result = comparator()
-if result:
-    print("Comparison PASSED")
-else:
-    print(f"Comparison failed, report: '{result.report}'")
-```
-
-There are many more options you may use, and infos you can collect on performed comparisons. In the
-folder [examples/api](https://gitlab.com/dglaeser/fieldcompare/-/tree/main/examples/api) you can find
-examples with instructions on how to use the API of `fieldcompare`. For more details, have a look at
-the [API Documentation](https://dglaeser.gitlab.io/fieldcompare/).
-
-
 ## Command-line interface
 
 The CLI exposes two subcommands, namely `file` and `dir`, where the former is used to compare two files
@@ -172,6 +146,32 @@ them all in a single command. For more info on the CLI options available, type i
 fieldcompare file --help
 fieldcompare dir --help
 ```
+
+
+## API and examples
+
+The following code snippet reads the fields from two files (assuming their format is supported)
+and prints a message depending on if the success of their comparison:
+
+```py
+from fieldcompare import FieldDataComparator
+from fieldcompare.io import read_field_data
+
+fields1 = read_field_data("FILENAME1")
+fields2 = read_field_data("FILENAME2")
+comparator = FieldDataComparator(fields1, fields2)
+
+result = comparator()
+if result:
+    print("Comparison PASSED")
+else:
+    print(f"Comparison failed, report: '{result.report}'")
+```
+
+There are many more options you may use, and infos you can collect on performed comparisons. In the
+folder [examples/api](https://gitlab.com/dglaeser/fieldcompare/-/tree/main/examples/api) you can find
+examples with instructions on how to use the API of `fieldcompare`. For more details, have a look at
+the [API Documentation](https://dglaeser.gitlab.io/fieldcompare/).
 
 
 # Contribution Guidelines
