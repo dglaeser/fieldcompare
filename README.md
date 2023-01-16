@@ -181,6 +181,37 @@ If you want to contribute with features, improvements or bug fixes please fork t
 a merge request into the main branch of this repository.
 
 
+## Development and test suite
+
+The test suite is automated through `tox`. To run all tests and linters run
+
+```sh
+tox
+```
+
+This runs tox with several different environments. To only test under a specfific environment
+use the `tox` option `-e`. For example, to test under Python 3.9
+
+```sh
+tox -e py39
+```
+
+All developer dependencies are listed in [requirements.txt](https://gitlab.com/dglaeser/fieldcompare/-/blob/main/requirements.txt)
+and can be installed by
+
+```sh
+pip install -r requirements.txt
+```
+
+`fieldcompare` uses the auto-formatting tool `black`, the linter `flake8`. We use
+type hints and check type hints with the static type checker `mypy`.
+All tools are also perform checks when running `tox`.
+
+The main developer branch is `main` and release versions are tagged and deployed to PyPI
+in an automated CI/CD pipeline. Deployment is triggered whenever the package version in
+`pyproject.toml` is increased and the change is merged to `main`.
+
+
 # License
 
 `fieldcompare` is licensed under the terms and conditions of the GNU General
