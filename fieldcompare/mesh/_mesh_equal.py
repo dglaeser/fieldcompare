@@ -22,12 +22,12 @@ def mesh_equal(
         return PredicateResult(False, report="Differing grid cell types detected")
     for cell_type in source.cell_types:
         if len(source.connectivity(cell_type)) != len(target.connectivity(cell_type)):
-            return PredicateResult(False, report=f"Differing number of cells of type '{cell_type}'")
+            return PredicateResult(False, report=f"Differing number of cells of type '{cell_type.name}'")
         if not ExactEquality()(
             _get_sorted_corner_indices(source.connectivity(cell_type)),
             _get_sorted_corner_indices(target.connectivity(cell_type)),
         ):
-            return PredicateResult(False, report=f"Differing connectivity detected for cell of type '{cell_type}'")
+            return PredicateResult(False, report=f"Differing connectivity detected for cell of type '{cell_type.name}'")
     return PredicateResult(True)
 
 

@@ -28,7 +28,7 @@ class MyPredicate:
 
 
 def _select_predicate(source_field: protocols.Field,
-                      target_field: protocols.Field) -> protocols.Predicate:
+                      reference_field: protocols.Field) -> protocols.Predicate:
     if source_field.name == "field1":
         return ExactEquality()
     return FuzzyEquality()
@@ -39,22 +39,22 @@ if __name__ == "__main__":
     fields: protocols.FieldData = read_field_data("example1.csv")
 
     # FieldData allows you to iterate over all fields and obtain their names and values
+    # Here, we know and verify that the .csv file contains the two fields "field1" and "field2"
     for field in fields:
         assert field.name in ["field1", "field2"]
         print(f"Name -> values: {field.name} -> {field.values}")
 
-    # The FieldDataComparison class provides an easy way to compare fields
-    # against reference data. Here, we simply compare the fields against
-    # themselves. The constructor takes the field data to be compared,
-    # while the actual comparison is carried out via the call-operator.
+    # The FieldDataComparison class provides an easy way to compare fields against reference data.
+    # It iterates over all fields, identifies those with matching names and compares them. Here,
+    # we simply compare the fields against themselves. The constructor takes the field data to be
+    # compared, while the actual comparison is carried out via the call operator.
     comparator = FieldDataComparator(source=fields, reference=fields)
 
     print("\nPerforming comparison...")
     result = comparator()
     print("done.")
 
-    # The result contains a report, and it allows us to extract
-    # information on all performed comparisons
+    # The result contains a report, and it allows us to extract information on all performed comparisons
     print(f"\nReport: {result.report}")
 
     def _print_field_comparison(field_comparison: FieldComparison) -> None:
@@ -108,7 +108,7 @@ if __name__ == "__main__":
     for comparison in result:
         _print_field_comparison(comparison)
 
-    # A predicate simply takes to arrays and returns something that fulfills the
+    # A predicate simply takes two arrays and returns something that fulfills the
     # `PredicateResult` protocol, i.e. something that is convertible to bool
     # and allows for gathering a report about the predicate evaluation:
     print("\nPerforming comparison with custom predicate class")

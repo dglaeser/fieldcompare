@@ -9,7 +9,7 @@ from fieldcompare import FieldDataComparator
 from fieldcompare.io import read_field_data
 
 # Sorting function to yield a unique permutation of mesh fields
-from fieldcompare.mesh import sort, sort_points, sort_cells, strip_orphan_points
+from fieldcompare.mesh import sort, sort_points, sort_cells, strip_orphan_points, MeshFieldsComparator
 
 # Protocols you can use for type hints
 from fieldcompare.mesh import protocols
@@ -49,10 +49,12 @@ print()
 fields_sorted = sort(fields)
 fields_permuted_sorted = sort(fields_permuted)
 comparator = FieldDataComparator(fields_sorted, fields_permuted_sorted)
-result = comparator(fieldcomp_callback=lambda _: None)
 
+print("Retrying with sorted meshes")
+result = comparator(fieldcomp_callback=lambda _: None)
 assert result
 print("Domain equality check passed!")
+print("Printing comparisons:")
 for comparison in result:
     print(f"Field '{comparison.name}': {comparison.status}")
 
@@ -63,20 +65,42 @@ def _manual_sort(_fields: protocols.MeshFields) -> protocols.MeshFields:
 
 fields_sorted = _manual_sort(fields)
 fields_permuted_sorted = _manual_sort(fields_permuted)
+
+print("\nRetrying with manually sorted meshes")
 assert FieldDataComparator(fields_sorted, fields_permuted_sorted)(
     fieldcomp_callback=lambda _: None
 )
+print("Passed!")
 
 # In our case here, sorting only the points does not yield equal meshes:
 fields_sorted = sort_points(fields)
 fields_permuted_sorted = sort_points(fields_permuted)
-assert not FieldDataComparator(fields_sorted, fields_permuted_sorted)(
+print("\nRerunning with sorting only the points of the meshes")
+result = FieldDataComparator(fields_sorted, fields_permuted_sorted)(
     fieldcomp_callback=lambda _: None
 )
+print(f"As expected, the domain equality check failed: {result.domain_equality_check.report}")
 
-# Note that there are conversion functions available for meshio meshes
-# such that you can integrate fieldcompare into an existing pipeline
-# that relies on meshio.
+# But we don't have to do all that manually, we can reuse the comparator
+# class specific to meshes, which (per default), sorts the meshes in
+# case they do not compare equal.
+print("\nUsing unsorted meshes with 'MeshFieldsComparator'")
+assert MeshFieldsComparator(fields, fields_permuted)(fieldcomp_callback=lambda _: None)
+print("Passed!")
+
+# The 'MeshFieldsComparator' automatically retries the comparisons with sorted
+# meshes in case they are not equal. In order to extract information about the
+# sorting attempts it does, you can pass a callback function that will be invoked
+# with info on detected deviations and the next attempt made...
+print("\nUsing 'MeshFieldsComparator' with full output")
+assert MeshFieldsComparator(fields, fields_permuted)(
+    reordering_callback=lambda msg: print(f"Reording info: '{msg}'")
+)
+print("Passed!")
+
+# Note that if you already have an analysis pipeline that uses meshio to read
+# in meshes, you can use the provided conversion functions from and to meshio
+# instead of using fieldcompare's I/O facilities:
 mesh = meshio_read(mesh_file)
 mesh_permuted = meshio_read(mesh_file_permuted)
 
