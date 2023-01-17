@@ -446,6 +446,12 @@ def test_cli_directory_mode_pass():
     assert main(["dir", str(TEST_DATA_PATH), str(TEST_DATA_PATH)]) == 0
 
 
+def test_cli_directory_mode_arg_is_not_a_directory():
+    assert main(["dir", str(TEST_DATA_PATH), str(TEST_DATA_PATH / Path("test_mesh.vtu"))]) == 1
+    assert main(["dir", str(TEST_DATA_PATH / Path("test_mesh.vtu")), str(TEST_DATA_PATH)]) == 1
+    assert main(["dir", str(TEST_DATA_PATH / Path("test_mesh.vtu")), str(TEST_DATA_PATH / Path("test_mesh.vtu"))]) == 1
+
+
 def test_cli_directory_mode_junit_report():
     tmp_results_path = TEST_DATA_PATH.resolve().parent / Path("cli_dir_junit_report_results_data")
     rmtree(tmp_results_path, ignore_errors=True)
