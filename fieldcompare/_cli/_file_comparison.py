@@ -73,7 +73,7 @@ class FileComparison:
                 else read_as(file_type_with_opts[0], filename, **file_type_with_opts[1])
             )
         except IOError as e:
-            self._logger.log(f"Error: '{e}'", verbosity_level=1)
+            self._logger.log(f"Error: '{e}'\n", verbosity_level=1)
             raise IOError(e)
 
     def _compare_fields(
@@ -103,9 +103,9 @@ class FileComparison:
         if res_sequence.number_of_steps != ref_sequence.number_of_steps:
             if not self._opts.ignore_missing_sequence_steps:
                 num_steps_check = TestStatus.failed
-                self._logger.log(f"{self._status_string(TestStatus.error)}: {num_steps_check_fail_msg}")
+                self._logger.log(f"{num_steps_check_fail_msg}\n")
                 if not self._opts.force_sequence_comparison:
-                    return _make_test_suite([], TestStatus.failed, num_steps_check_fail_msg)
+                    return _make_test_suite([], TestStatus.failed, shortlog=num_steps_check_fail_msg)
             else:
                 self._logger.log(f"{as_warning('Warning')}: {num_steps_check_fail_msg}, comparing only common steps\n")
 
@@ -140,7 +140,7 @@ class FileComparison:
         if suite.domain_equality_check:
             return self._to_test_suite(suite)
         msg = "Domains have compared unequal"
-        self._logger.log(f"{self._status_string(TestStatus.failed)}: {msg}")
+        self._logger.log(f"{msg}\n")
         return _make_test_suite([], TestStatus.failed, shortlog=msg)
 
     def _compare_mesh_field_data(
@@ -153,7 +153,7 @@ class FileComparison:
             if suite.domain_equality_check:
                 return self._to_test_suite(suite)
             msg = "Non-reordered meshes have compared unequal"
-            self._logger.log(f"{self._status_string(TestStatus.failed)}: {msg}")
+            self._logger.log(f"{msg}\n")
             return _make_test_suite([], TestStatus.failed, shortlog=msg)
 
         suite = self._run_mesh_fields_comparison(res_fields, ref_fields)
@@ -161,8 +161,8 @@ class FileComparison:
             return self._to_test_suite(suite)
 
         msg = "Fields defined on different meshes"
-        self._logger.log(f"{self._status_string(TestStatus.failed)}: {msg}")
-        return _make_test_suite([], TestStatus.failed, shortlog="Fields defined on different meshes")
+        self._logger.log(f"{msg}\n")
+        return _make_test_suite([], TestStatus.failed, shortlog=msg)
 
     def _run_mesh_fields_comparison(
         self, result: mesh_protocols.MeshFields, reference: mesh_protocols.MeshFields

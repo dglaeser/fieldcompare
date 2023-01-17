@@ -105,8 +105,22 @@ def _run(args: dict, in_logger: CLILogger) -> int:
             suites.append(as_junit_xml_element(suite, timestamp))
         ElementTree(suites).write(args["junit_xml"], xml_declaration=True)
 
+    # create a test suite of test suites for printing a summary
+    test_suite = TestSuite(
+        [
+            TestResult(
+                name=suite.name,
+                status=suite.status,
+                shortlog=suite.shortlog,
+                stdout=suite.stdout,
+                cpu_time=suite.cpu_time,
+            )
+            for _, _, suite in comparisons
+        ]
+    )
+
     logger.log("\n")
-    _log_suite_summary(list(suite for _, _, suite in comparisons), "file", logger)
+    _log_suite_summary(test_suite, "file", logger)
 
     passed = all(comp for _, _, comp in comparisons)
     return _bool_to_exit_code(passed)
@@ -190,18 +204,22 @@ def _do_file_comparisons(args, filenames: Iterable[str], logger: CLILogger) -> F
                     ),
                 )
             )
-            sub_logger.log(
-                "File comparison {} with {} {} / {} {} / {} {}\n".format(
-                    get_status_string(bool(test_suite)),
-                    sum(1 for t in test_suite if t.status == TestStatus.passed),
-                    f"{TestStatus.passed}",
-                    sum(1 for t in test_suite if not t.status),
-                    f"{TestStatus.failed}",
-                    sum(1 for t in test_suite if t.status and t.status != TestStatus.passed),
-                    f"{TestStatus.skipped}",
-                ),
-                verbosity_level=1,
-            )
+
+            if test_suite.num_tests == 0:
+                sub_logger.log(f"File comparison {get_status_string(bool(test_suite))}\n")
+            else:
+                sub_logger.log(
+                    "File comparison {} with {} {} / {} {} / {} {}\n".format(
+                        get_status_string(bool(test_suite)),
+                        sum(1 for t in test_suite if t.status == TestStatus.passed),
+                        f"{TestStatus.passed}",
+                        sum(1 for t in test_suite if not t.status),
+                        f"{TestStatus.failed}",
+                        sum(1 for t in test_suite if t.status and t.status != TestStatus.passed),
+                        f"{TestStatus.skipped}",
+                    ),
+                    verbosity_level=1,
+                )
         except Exception as e:
             output = f"Error upon file comparison: {str(e)}"
             logger.log(output, verbosity_level=1)
