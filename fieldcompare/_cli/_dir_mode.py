@@ -105,8 +105,22 @@ def _run(args: dict, in_logger: CLILogger) -> int:
             suites.append(as_junit_xml_element(suite, timestamp))
         ElementTree(suites).write(args["junit_xml"], xml_declaration=True)
 
+    # create a test suite of test suites for printing a summary
+    test_suite = TestSuite(
+        [
+            TestResult(
+                name=suite.name,
+                status=suite.status,
+                shortlog=suite.shortlog,
+                stdout=suite.stdout,
+                cpu_time=suite.cpu_time,
+            )
+            for _, _, suite in comparisons
+        ]
+    )
+
     logger.log("\n")
-    _log_suite_summary(list(suite for _, _, suite in comparisons), "file", logger)
+    _log_suite_summary(test_suite, "file", logger)
 
     passed = all(comp for _, _, comp in comparisons)
     return _bool_to_exit_code(passed)

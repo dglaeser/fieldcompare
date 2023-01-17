@@ -154,6 +154,9 @@ def _log_suite_summary(suite, comparison_type: str, logger: CLILogger) -> None:
     num_comparisons = len(passed) + len(failed)
     _log_line(highlighted(_padded("=" * 7)), f"{_counted(num_comparisons)} performed")
 
+    if not suite.status and not failed:
+        _log_line(as_error(_padded("FAILED")), (f"{suite.shortlog}" if suite.shortlog else ""))
+
     if passed:
         _log_line(as_success(_padded("PASSED")), _counted(len(passed)))
 
