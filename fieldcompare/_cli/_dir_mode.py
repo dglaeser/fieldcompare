@@ -3,7 +3,7 @@
 from typing import Iterable, Optional
 from argparse import ArgumentParser
 from typing import List, Tuple
-from os.path import join
+from os.path import join, isdir
 from datetime import datetime
 from dataclasses import dataclass
 from xml.etree.ElementTree import ElementTree, Element
@@ -77,6 +77,18 @@ def _run(args: dict, in_logger: CLILogger) -> int:
 
     res_dir = args["source-dir"]
     ref_dir = args["reference-dir"]
+
+    def _check_if_is_dir(_dir: str) -> bool:
+        _isdir = isdir(_dir)
+        if not _isdir:
+            logger.log(f"Error: '{_dir}' is not a valid directory\n", verbosity_level=1)
+        return _isdir
+
+    if not _check_if_is_dir(res_dir):
+        return _bool_to_exit_code(False)
+    if not _check_if_is_dir(ref_dir):
+        return _bool_to_exit_code(False)
+
     logger.log(
         "Comparing files in the directories '{}' and '{}'\n\n".format(highlighted(res_dir), highlighted(ref_dir)),
         verbosity_level=1,
