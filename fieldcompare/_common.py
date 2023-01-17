@@ -12,7 +12,7 @@ from .protocols import DynamicTolerance
 def _default_base_tolerance() -> DynamicTolerance:
     def _get(first: Array, second: Array) -> float:
         common_type = find_common_type(array_types=[first.dtype, second.dtype], scalar_types=[])
-        # Integers should be exactly equal
+        # For integers, we use exact comparison as a default
         if issubdtype(common_type, integer):
             return 0.0
         # For complicated structured types, we raise an exception and ask for a manual threshold
