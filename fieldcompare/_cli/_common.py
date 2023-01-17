@@ -144,8 +144,11 @@ def _log_suite_summary(suite, comparison_type: str, logger: CLILogger) -> None:
     def _padded(label: str) -> str:
         return f"{label: ^9}"
 
+    def _get_line(label: str, report: str) -> str:
+        return f"[{label}] {report}"
+
     def _log_line(label: str, report: str, verbosity_level: int = 1) -> None:
-        logger.log(f"[{label}] {report}\n", verbosity_level=verbosity_level)
+        logger.log(f"{_get_line(label, report)}\n", verbosity_level=verbosity_level)
 
     passed = [t for t in suite if t.status == TestStatus.passed]
     skipped = [t for t in suite if t.status == TestStatus.skipped]
@@ -161,7 +164,9 @@ def _log_suite_summary(suite, comparison_type: str, logger: CLILogger) -> None:
         _log_line(as_success(_padded("PASSED")), _counted(len(passed)))
 
     if skipped:
-        _log_line(as_warning(_padded("SKIPPED")), _counted(len(skipped)))
+        logger.log(_get_line(as_warning(_padded("SKIPPED")), _counted(len(skipped))), verbosity_level=1)
+        logger.log(", listed below:", verbosity_level=3)
+        logger.log("\n", verbosity_level=1)
         for test in skipped:
             _log_line(as_warning(_padded("SKIPPED")), f"{highlighted(test.name)}: ({test.shortlog})", verbosity_level=3)
 
