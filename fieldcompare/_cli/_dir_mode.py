@@ -204,18 +204,22 @@ def _do_file_comparisons(args, filenames: Iterable[str], logger: CLILogger) -> F
                     ),
                 )
             )
-            sub_logger.log(
-                "File comparison {} with {} {} / {} {} / {} {}\n".format(
-                    get_status_string(bool(test_suite)),
-                    sum(1 for t in test_suite if t.status == TestStatus.passed),
-                    f"{TestStatus.passed}",
-                    sum(1 for t in test_suite if not t.status),
-                    f"{TestStatus.failed}",
-                    sum(1 for t in test_suite if t.status and t.status != TestStatus.passed),
-                    f"{TestStatus.skipped}",
-                ),
-                verbosity_level=1,
-            )
+
+            if test_suite.num_tests == 0:
+                sub_logger.log(f"File comparison {get_status_string(bool(test_suite))}\n")
+            else:
+                sub_logger.log(
+                    "File comparison {} with {} {} / {} {} / {} {}\n".format(
+                        get_status_string(bool(test_suite)),
+                        sum(1 for t in test_suite if t.status == TestStatus.passed),
+                        f"{TestStatus.passed}",
+                        sum(1 for t in test_suite if not t.status),
+                        f"{TestStatus.failed}",
+                        sum(1 for t in test_suite if t.status and t.status != TestStatus.passed),
+                        f"{TestStatus.skipped}",
+                    ),
+                    verbosity_level=1,
+                )
         except Exception as e:
             output = f"Error upon file comparison: {str(e)}"
             logger.log(output, verbosity_level=1)
