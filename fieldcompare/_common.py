@@ -15,7 +15,13 @@ def _default_base_tolerance() -> DynamicTolerance:
         # Integers should be exactly equal
         if issubdtype(common_type, integer):
             return 0.0
-        assert issubdtype(common_type, floating)
+        # For complicated structured types, we raise an exception and ask for a manual threshold
+        if not issubdtype(common_type, floating):
+            raise ValueError(
+                "Could not deduce a default tolerance"
+                f" for array types {first.dtype} and {second.dtype}."
+                " Please manually provide a tolerance."
+            )
         return float(finfo(common_type).eps)
 
     return _get
