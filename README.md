@@ -203,9 +203,9 @@ and can be installed by
 pip install -r requirements.txt
 ```
 
-`fieldcompare` uses the auto-formatting tool `black`, the linter `flake8`. We use
-type hints and check type hints with the static type checker `mypy`.
-All tools are also perform checks when running `tox`.
+`fieldcompare` uses the auto-formatting tool `black`, the linter `flake8`, and we check
+type hints with the static type checker `mypy`. When running `tox`, all these checks are
+performed.
 
 The main developer branch is `main` and release versions are tagged and deployed to PyPI
 in an automated CI/CD pipeline. Deployment is triggered whenever the package version in
