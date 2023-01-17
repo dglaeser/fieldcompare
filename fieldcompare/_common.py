@@ -3,21 +3,20 @@
 from typing import Callable, TypeVar, Tuple
 from time import time
 from functools import wraps
-from numpy import finfo
+from numpy import finfo, find_common_type, issubdtype, floating, integer
 
 from ._numpy_utils import Array
 from .protocols import DynamicTolerance
 
 
 def _default_base_tolerance() -> DynamicTolerance:
-    def _get_eps(arr: Array) -> float:
-        try:
-            return float(finfo(arr.dtype).eps)
-        except ValueError:
-            return float(finfo(float).eps)
-
     def _get(first: Array, second: Array) -> float:
-        return min(_get_eps(first), _get_eps(second))
+        common_type = find_common_type(array_types=[first.dtype, second.dtype], scalar_types=[])
+        # Integers should be exactly equal
+        if issubdtype(common_type, integer):
+            return 0.0
+        assert issubdtype(common_type, floating)
+        return float(finfo(common_type).eps)
 
     return _get
 
