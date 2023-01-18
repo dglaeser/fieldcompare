@@ -238,13 +238,13 @@ at hand.
 A common issue, in particular in numerical simulations, is that the values in a field may span over several
 orders of magnitude, which possibly has a negative impact on the precision one can expect from the smaller values.
 For such scenarios, a suitable choice for the absolute tolerance $`\epsilon`$ comes into play, which can help to avoid
-false negatives from comparing the small values as $`\epsilon`$ defines a lower bound for the
+false negatives from comparing the small values in a field, as $`\epsilon`$ defines a lower bound for the
 allowed difference between field values. This is illustrated in the plots below, which visualize the pairs of values
 $`(a, b)`$ that evaluate fuzzy-equal for different tolerances.
 
-Custom $`\epsilon`$             |  Default $`\epsilon`$
+Custom $`\epsilon`$        |  Default $`\epsilon`$
 :-------------------------:|:-------------------------:
-![](https://gitlab.com/dglaeser/fieldcompare/-/raw/feature/readme-add-section-on-fuzziness/docs/img/fuzzy_eq.png)  |  ![](https://gitlab.com/dglaeser/fieldcompare/-/raw/feature/readme-add-section-on-fuzziness/docs/img/fuzzy_eq_zero_abs_tol.png)
+![](https://gitlab.com/dglaeser/fieldcompare/-/raw/main/docs/img/fuzzy_eq.png)  |  ![](https://gitlab.com/dglaeser/fieldcompare/-/raw/main/docs/img/fuzzy_eq_zero_abs_tol.png)
 
 In the figures, $`b_{min}`$ and $`b_{max}`$ show the minimum and maximum values that are fuzzy-equal to a given
 value $`a`$. As can be seen, while for $`\epsilon = 0`$ the allowed difference between values goes down to zero as
