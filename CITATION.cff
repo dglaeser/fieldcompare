@@ -1,0 +1,40 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: FieldCompare
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Dennis
+    family-names: Gläser
+    email: dennis.glaeser@iws.uni-stuttgart.de
+    affiliation: University of Stuttgart
+    orcid: 'https://orcid.org/0000-0001-9646-881X'
+  - given-names: Timo
+    family-names: Koch
+    orcid: 'https://orcid.org/0000-0003-4776-5222'
+    affiliation: University of Oslo
+    email: timokoch@math.uio.no
+  - given-names: Sören
+    family-names: Peters
+    email: peters@irmb.tu-bs.de
+    affiliation: Technische Universität Braunschweig
+    orcid: 'https://orcid.org/0000-0001-5236-3776'
+  - given-names: Sven
+    family-names: Marcus
+    email: sven.marcus@tu-braunschweig.de
+    orcid: 'https://orcid.org/0000-0003-3689-2162'
+    affiliation: Technische Universität Braunschweig
+repository-code: 'https://gitlab.com/dglaeser/fieldcompare'
+url: 'https://dglaeser.gitlab.io/fieldcompare/'
+keywords:
+  - fuzzy comparison
+  - numerical data comparison
+  - regression test
+  - numerical simulation
+license: GPL-3.0
+version: 0.1.0
+date-released: '2023-01-18'
