@@ -35,20 +35,25 @@ class ScaledTolerance(DynamicTolerance):
 
     def __init__(
         self,
-        base_tolerance: ArrayTolerance = _default_base_tolerance(),
+        base_tolerance: Optional[ArrayTolerance] = None,
         use_component_magnitudes: Optional[bool] = False,
     ) -> None:
-        self._base_tol = as_array(base_tolerance)
+        self._base_tol = as_array(base_tolerance) if base_tolerance is not None else base_tolerance
         self._use_component_magnitudes = use_component_magnitudes
 
     def __call__(self, first: Array, second: Array) -> ArrayTolerance:
         """Return an estimate for the absolute tolerance for comparing the given fields."""
         if self._use_component_magnitudes:
             return select_max_values(max_abs_element(first), max_abs_element(second)) * self._base_tol
-        return self._base_tol * max(max_abs_value(first), max_abs_value(second))
+        return self._get_base_tol(first, second) * max(max_abs_value(first), max_abs_value(second))
 
     def __str__(self) -> str:
         return f"ScaledTolerance (base_tolerance={self._base_tol})"
+
+    def _get_base_tol(self, first: Array, second: Array) -> ArrayTolerance:
+        if self._base_tol is not None:
+            return self._base_tol
+        return as_array(_default_base_tolerance()(first, second))
 
 
 @dataclass

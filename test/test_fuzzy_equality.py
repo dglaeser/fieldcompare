@@ -108,6 +108,10 @@ def test_vector_array_fuzzy_equality_mixed_shapes():
     field2 = make_array([[0.1 + 1e-6, 0.2], [0.3]], dtype="object")
 
     for check in [FuzzyEquality(), DefaultEquality()]:
+        # the default tolerance can not be deduced from arrays
+        # with dtype="object", therefore, we explicitly set it
+        check.relative_tolerance = 1e-9
+        check.absolute_tolerance = 1e-9
         assert not check(field1, field2)
         check.relative_tolerance = 1e-3
         assert check(field1, field2)
