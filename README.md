@@ -39,7 +39,7 @@ distributed over different processors.
 # GitHub Action
 
 If you want to perform regression tests within your GitHub workflow, check out our
-[fieldcompare action](https://github.com/dglaeser/action-field-compare), which allows you to do so with minimal effort.
+[fieldcompare action](https://github.com/dglaeser/fieldcompare-action), which allows you to do so with minimal effort.
 
 
 # Getting started
