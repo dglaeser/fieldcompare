@@ -20,7 +20,7 @@ keywords = [
   "finite volumes"
 ]
 classifiers = [
-  "Development Status :: 3 - Beta",
+  "Development Status :: 4 - Beta",
   "Programming Language :: Python"
 ]
 
