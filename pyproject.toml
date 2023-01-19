@@ -1,7 +1,7 @@
 [project]
 name = "fieldcompare"
-description = "Comparison of data fields in files"
-version = "0.0.10"
+description = "Read and compare numerical data against reference data using exact, fuzzy or custom comparison operations. Simplify your regression testing pipeline."
+version = "0.1.0"
 readme = "README.md"
 license = {file = "LICENSE.txt"}
 requires-python = ">=3.8"
@@ -13,14 +13,14 @@ maintainers = [
   {name = "Dennis Gläser", email = "dennis.glaeser@iws.uni-stuttgart.de"}
 ]
 keywords = [
-  "field data comparison",
+  "numerical data comparison",
   "regression test",
   "numerical simulation",
   "finite elements",
   "finite volumes"
 ]
 classifiers = [
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 3 - Beta",
   "Programming Language :: Python"
 ]
 
