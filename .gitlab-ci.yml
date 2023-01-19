@@ -1,4 +1,5 @@
 stages:
+  - checks
   - test
   - reporting
   - coverage
@@ -43,6 +44,18 @@ cache:
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   PY_VERSION: "3.10"
+
+checks:
+  stage: checks
+  image: python:$PY_VERSION
+  script:
+    - py_fieldcompare_version=$(grep -m 1 "version" pyproject.toml | tr -s ' ' | tr -d '"' | tr -d "'" | cut -d' ' -f3)
+    - cff_fieldcompare_version=$(grep -m 1 "^version" CITATION.cff | tr -s ' ' | tr -d '"' | tr -d "'" | cut -d' ' -f2)
+    - |
+      if [[ "$py_fieldcompare_version" != "$cff_fieldcompare_version" ]]; then
+          echo "Version string in pyproject.toml and CITATION.cff is not matching. Did you forget updating?"
+          exit 1
+      fi
 
 test:
   stage: test
