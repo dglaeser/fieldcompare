@@ -17,11 +17,13 @@ the same software at an earlier time, in order to detect if changes to the code 
 changes to the behavior of the software.
 
 Simulations typically produce discrete field data defined on computational grids, and there exists
-a variety of standard and widely-used file formats. `fieldcompare` supports a number of
-[VTK file formats](https://kitware.github.io/vtk-examples/site/VTKFileFormats/) out-of-the box,
-a variety of further formats can be used with the help of [meshio](https://github.com/nschloe/meshio).
-Besides mesh files, `csv` files are also supported, a format that is widely used in simulation
-frameworks to write out secondary data such as e.g. error norms and convergence rates.
+a variety of standard and widely-used file formats. `fieldcompare` natively supports a number of
+[VTK file formats](https://kitware.github.io/vtk-examples/site/VTKFileFormats/):
+`.vtp`, `.pvtu`, `.pvtu`, `.pvtp` as well as [Paraview's](https://www.paraview.org/) `.pvd`.
+If `meshio` is installed, it is used under the hood to provide support for a large number of further
+mesh file formats (see [here](https://github.com/nschloe/meshio)). Besides mesh files, `csv` files are also
+supported, a format that is widely used in simulation frameworks to write out secondary data such
+as e.g. error norms and convergence rates.
 
 Independent of the file type and format, `fieldcompare` reads all _fields_ from those files and allows
 you to then check all entries of the fields for equality with custom absolute and relative tolerances.
