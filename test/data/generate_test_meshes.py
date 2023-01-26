@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2023 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Generate the mesh files used in the tests"""
 
 import random

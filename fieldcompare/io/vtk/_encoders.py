@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2023 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 from base64 import b64decode, b64encode
 from typing import Protocol
 

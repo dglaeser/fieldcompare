@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2023 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """FieldData implementation for tabular data."""
 
 from __future__ import annotations

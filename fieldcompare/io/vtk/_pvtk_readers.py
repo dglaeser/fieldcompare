@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2023 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 from xml.etree import ElementTree
 from typing import List
 from os.path import isabs, join, exists, dirname

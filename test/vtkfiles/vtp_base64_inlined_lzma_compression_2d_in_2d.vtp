@@ -1,4 +1,7 @@
 <?xml version="1.0"?>
+<!--SPDX-FileCopyrightText: 2023 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>-->
+<!--SPDX-License-Identifier: GPL-3.0-or-later-->
+
 <VTKFile type="PolyData" version="2.0" header_type="UInt32" byte_order="LittleEndian" compressor="vtkLZMADataCompressor">
   <PolyData>
     <Piece NumberOfPoints="9" NumberOfVerts="0" NumberOfLines="0" NumberOfStrips="0" NumberOfPolys="3">
