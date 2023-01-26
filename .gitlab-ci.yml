@@ -60,6 +60,13 @@ checks:
           exit 1
       fi
 
+check-reuse-compliance:
+  stage: checks
+  image: python:$PY_VERSION
+  script:
+    - pip install reuse
+    - reuse lint
+
 test:
   stage: test
   extends: .install_dependencies
