@@ -1,3 +1,6 @@
+REM SPDX-FileCopyrightText: 2023 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>
+REM SPDX-License-Identifier: GPL-3.0-or-later
+
 @ECHO OFF
 
 pushd %~dp0

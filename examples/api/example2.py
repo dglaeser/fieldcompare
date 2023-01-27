@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2023 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """In this example, we use fieldcompare to compare fields on computational meshes"""
 
 # we use meshio here to show how to achieve interoperability

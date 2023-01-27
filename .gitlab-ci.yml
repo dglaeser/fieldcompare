@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2023 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 stages:
   - checks
   - test
@@ -56,6 +59,13 @@ checks:
           echo "Version string in pyproject.toml and CITATION.cff is not matching. Did you forget updating?"
           exit 1
       fi
+
+check-reuse-compliance:
+  stage: checks
+  image: python:$PY_VERSION
+  script:
+    - pip install reuse
+    - reuse lint
 
 test:
   stage: test

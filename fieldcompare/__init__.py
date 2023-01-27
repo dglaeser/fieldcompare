@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2023 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """
 fieldcompare provides functionality to compare field data, where field data are collections of
 fields (each consisting of a name and an associated array of values) defined on domains. An example

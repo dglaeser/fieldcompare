@@ -1,3 +1,6 @@
+<!--SPDX-FileCopyrightText: 2023 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>-->
+<!--SPDX-License-Identifier: GPL-3.0-or-later-->
+
 [![fieldcompare Logo](https://gitlab.com/dglaeser/fieldcompare/-/raw/9018885c0c8675c63c051ae5119a5ecba465a517/logo/logo.svg)](https://dglaeser.gitlab.io/fieldcompare/)
 
 # FieldCompare
