@@ -130,7 +130,7 @@ build_docs:
   stage: documentation
   extends: .install_dependencies
   script:
-    - pip install sphinx sphinx-mdinclude pydata-sphinx-theme -r requirements.txt
+    - pip install sphinx myst_parser pydata-sphinx-theme -r requirements.txt
     - cd docs
     - sphinx-apidoc -f -o build ../
     - make html
