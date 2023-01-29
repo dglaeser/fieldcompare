@@ -54,9 +54,14 @@ checks:
   script:
     - py_fieldcompare_version=$(grep -m 1 "version" pyproject.toml | tr -s ' ' | tr -d '"' | tr -d "'" | cut -d' ' -f3)
     - cff_fieldcompare_version=$(grep -m 1 "^version" CITATION.cff | tr -s ' ' | tr -d '"' | tr -d "'" | cut -d' ' -f2)
+    - docs_fieldcompare_version=$(python3 -c "import sys, os; sys.path.insert(0, os.path.abspath('docs/source')); import conf; print(conf.release)")
     - |
       if [[ "$py_fieldcompare_version" != "$cff_fieldcompare_version" ]]; then
           echo "Version string in pyproject.toml and CITATION.cff is not matching. Did you forget updating?"
+          exit 1
+      fi
+      if [[ "$py_fieldcompare_version" != "$docs_fieldcompare_version" ]]; then
+          echo "Version string in pyproject.toml and docs/source/conf.py is not matching. Did you forget updating?"
           exit 1
       fi
 
