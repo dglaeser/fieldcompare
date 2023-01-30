@@ -254,7 +254,7 @@ Custom $\epsilon$        |  Default $\epsilon$
 
 In the figures, $b_{min}$ and $b_{max}$ show the minimum and maximum values that are fuzzy-equal to a given
 value $a$. As can be seen, while for $\epsilon = 0$ the allowed difference between values goes down to zero as
-$a \rightarrow 0$, a constant residual difference is allowed for small values of $a$ in the case of $\epsilon > 0$.
+$a \rightarrow 0$, a constant residual difference is allowed for small values of $a$ in the case of $\epsilon \gt 0$.
 A suitable choice for $\epsilon$ depends on the fields to be compared, and when comparing a large number of fields, it
 can be cumbersome to define $\epsilon$ for all of them. We found that a useful heuristic is to define $\epsilon$ as
 a fraction of the maximum absolute value of both fields as an estimate for the precision that can be expected from the
