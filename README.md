@@ -10,6 +10,7 @@
 [![Coverage Report.](https://gitlab.com/dglaeser/fieldcompare/badges/main/coverage.svg)](https://dglaeser.gitlab.io/fieldcompare/coverage)
 [![API Documentation.](https://img.shields.io/badge/doc-API-ff69b4)](https://dglaeser.gitlab.io/fieldcompare/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![REUSE status](https://api.reuse.software/badge/git.fsfe.org/reuse/api)](https://api.reuse.software/info/git.fsfe.org/reuse/api)
 
 
 `fieldcompare` is a Python package with command-line interface (CLI) that can be used to compare
@@ -222,8 +223,8 @@ in an automated CI/CD pipeline. Deployment is triggered whenever the package ver
 `fieldcompare` is licensed under the terms and conditions of the GNU General
 Public License (GPL) version 3 or - at your option - any later version. The GPL
 can be [read online](https://www.gnu.org/licenses/gpl-3.0.en.html) or in the
-[LICENSE.txt](LICENSE.txt) file in this repository. See [LICENSE.txt](LICENSE.txt)
-for full copying permissions.
+[LICENSES/GPL-3.0-or-later.txt](LICENSES/GPL-3.0-or-later.txt) file.
+See [LICENSES/GPL-3.0-or-later.txt](LICENSES/GPL-3.0-or-later.txt) for full copying permissions.
 
 
 # The fuzzy details
