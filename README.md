@@ -223,8 +223,8 @@ in an automated CI/CD pipeline. Deployment is triggered whenever the package ver
 `fieldcompare` is licensed under the terms and conditions of the GNU General
 Public License (GPL) version 3 or - at your option - any later version. The GPL
 can be [read online](https://www.gnu.org/licenses/gpl-3.0.en.html) or in the
-[LICENSES/GPL-3.0-or-later.txt](LICENSES/GPL-3.0-or-later.txt) file.
-See [LICENSES/GPL-3.0-or-later.txt](LICENSES/GPL-3.0-or-later.txt) for full copying permissions.
+[LICENSES/GPL-3.0-or-later.txt](https://gitlab.com/dglaeser/fieldcompare/-/blob/main/LICENSES/GPL-3.0-or-later.txt) file.
+See [LICENSES/GPL-3.0-or-later.txt](https://gitlab.com/dglaeser/fieldcompare/-/blob/main/LICENSES/GPL-3.0-or-later.txt) for full copying permissions.
 
 
 # The fuzzy details
