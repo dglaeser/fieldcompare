@@ -13,7 +13,7 @@ Welcome to fieldcompare's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   readme_link
+   README
    modules
 
 Indices and tables

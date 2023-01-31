@@ -25,9 +25,12 @@ release = '0.1.2'
 
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx_mdinclude',
-    'sphinx.ext.napoleon'
+    'myst_parser',
+    'sphinx.ext.napoleon',
+    'sphinx.ext.mathjax'
 ]
+
+source_suffix = ['.rst', '.md']
 
 templates_path = ['_templates']
 exclude_patterns = []
@@ -58,3 +61,8 @@ autodoc_default_options = {
     'show-inheritance': False,
     'special-members': '__call__, __bool__, __iter__'
 }
+
+myst_enable_extensions = [
+    "amsmath",
+    "dollarmath"
+]

@@ -80,16 +80,16 @@ fieldcompare file mesh2.vtu mesh2.vtu
 ```
 
 The default comparison scheme allows for small differences in the fields. Specifically, if the shape
-of the fields match, given a relative tolerance of $`\rho`$ and an absolute tolerance of $`\epsilon`$,
-two fields of floating-point values will be found equal if for each pair of scalar values $`a`$ and $`b`$
+of the fields match, given a relative tolerance of $\rho$ and an absolute tolerance of $\epsilon$,
+two fields of floating-point values will be found equal if for each pair of scalar values $a$ and $b$
 the following condition holds (for more details on fuzzy comparisons, see below):
 
-```math
+$$
 \vert a - b \vert \leq max(\rho \cdot max(\vert a \vert, \vert b \vert), \epsilon)
-```
+$$
 
 If the field consist of strings or integers, all entries of the fields are compared for exact equality.
-Note that per default, $`\epsilon = 0`$, but it can be defined via the command line interface. Many more
+Note that per default, $\epsilon = 0$, but it can be defined via the command line interface. Many more
 options are available and can be listed via:
 
 ```sh
@@ -223,8 +223,8 @@ in an automated CI/CD pipeline. Deployment is triggered whenever the package ver
 `fieldcompare` is licensed under the terms and conditions of the GNU General
 Public License (GPL) version 3 or - at your option - any later version. The GPL
 can be [read online](https://www.gnu.org/licenses/gpl-3.0.en.html) or in the
-[LICENSES/GPL-3.0-or-later.txt](LICENSES/GPL-3.0-or-later.txt) file.
-See [LICENSES/GPL-3.0-or-later.txt](LICENSES/GPL-3.0-or-later.txt) for full copying permissions.
+[LICENSES/GPL-3.0-or-later.txt](https://gitlab.com/dglaeser/fieldcompare/-/blob/main/LICENSES/GPL-3.0-or-later.txt) file.
+See [LICENSES/GPL-3.0-or-later.txt](https://gitlab.com/dglaeser/fieldcompare/-/blob/main/LICENSES/GPL-3.0-or-later.txt) for full copying permissions.
 
 
 # The fuzzy details
@@ -234,7 +234,7 @@ to a reference solution when computed on different machines and/or after slight 
 equation for fuzzy equality as was shown above is implemented in the `FuzzyEquality` predicate of `fieldcompare`,
 which is the default predicate for fields that contain floating-point values.
 
-Per default, the `FuzzyEquality` predicate uses an absolute tolerance of $`\epsilon = 0`$, which means that each pair
+Per default, the `FuzzyEquality` predicate uses an absolute tolerance of $\epsilon = 0$, which means that each pair
 of scalars is tested by a relative criterion. The default relative tolerance depends on the data type and is chosen
 as `ulp(1.0)`, where `ulp` refers to the [unit of least precision](https://en.wikipedia.org/wiki/Unit_in_the_last_place).
 These are rather strict default values that were selected to minimize the chances of false positives when using
@@ -243,20 +243,20 @@ at hand.
 
 A common issue, in particular in numerical simulations, is that the values in a field may span over several
 orders of magnitude, which possibly has a negative impact on the precision one can expect from the smaller values.
-For such scenarios, a suitable choice for the absolute tolerance $`\epsilon`$ comes into play, which can help to avoid
-false negatives from comparing the small values in a field, as $`\epsilon`$ defines a lower bound for the
+For such scenarios, a suitable choice for the absolute tolerance $\epsilon$ comes into play, which can help to avoid
+false negatives from comparing the small values in a field, as $\epsilon$ defines a lower bound for the
 allowed difference between field values. This is illustrated in the plots below, which visualize the pairs of values
-$`(a, b)`$ that evaluate fuzzy-equal for different tolerances.
+$(a, b)$ that evaluate fuzzy-equal for different tolerances.
 
-Custom $`\epsilon`$        |  Default $`\epsilon`$
+Custom $\epsilon$        |  Default $\epsilon$
 :-------------------------:|:-------------------------:
 ![](https://gitlab.com/dglaeser/fieldcompare/-/raw/main/docs/img/fuzzy_eq.png)  |  ![](https://gitlab.com/dglaeser/fieldcompare/-/raw/main/docs/img/fuzzy_eq_zero_abs_tol.png)
 
-In the figures, $`b_{min}`$ and $`b_{max}`$ show the minimum and maximum values that are fuzzy-equal to a given
-value $`a`$. As can be seen, while for $`\epsilon = 0`$ the allowed difference between values goes down to zero as
-$`a \rightarrow 0`$, a constant residual difference is allowed for small values of $`a`$ in the case of $`\epsilon > 0`$.
-A suitable choice for $`\epsilon`$ depends on the fields to be compared, and when comparing a large number of fields, it
-can be cumbersome to define $`\epsilon`$ for all of them. We found that a useful heuristic is to define $`\epsilon`$ as
+In the figures, $b_{min}$ and $b_{max}$ show the minimum and maximum values that are fuzzy-equal to a given
+value $a$. As can be seen, while for $\epsilon = 0$ the allowed difference between values goes down to zero as
+$a \rightarrow 0$, a constant residual difference is allowed for small values of $a$ in the case of $\epsilon \gt 0$.
+A suitable choice for $\epsilon$ depends on the fields to be compared, and when comparing a large number of fields, it
+can be cumbersome to define $\epsilon$ for all of them. We found that a useful heuristic is to define $\epsilon$ as
 a fraction of the maximum absolute value of both fields as an estimate for the precision that can be expected from the
 smaller values. Using the `fieldcompare` API, this can be achieved with the `ScaledTolerance` class, which is accepted
 by all interfaces receiving tolerances. An example of this is shown below, where we use the `predicate_selector` argument
@@ -279,7 +279,7 @@ assert FieldDataComparator(
 ```
 
 With the above code, the absolute tolerance is computed for a pair of fields $f_1$ and $f_2$ via
-$`\epsilon = max(mag(f_1), mag(f_2)) \cdot 10^{-12}`$, where `mag` estimates the magnitude as the
+$\epsilon = max(mag(f_1), mag(f_2)) \cdot 10^{-12}$, where `mag` estimates the magnitude as the
 maximum absolute scalar value in a field. In the CLI, this functionality is exposed via the
 following syntax:
 
