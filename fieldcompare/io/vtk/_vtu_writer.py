@@ -1,8 +1,17 @@
 # SPDX-FileCopyrightText: 2023 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from xml.etree.ElementTree import indent, ElementTree, SubElement, Element as XMLElement
 from typing import Union, Sequence, Iterable, Tuple, Optional
+from xml.etree.ElementTree import ElementTree, SubElement, Element as XMLElement
+
+try:  # indent came in 3.9
+    from xml.etree.ElementTree import indent  # type: ignore
+except ImportError:
+
+    def indent(tree: Union[XMLElement, ElementTree], space: str = ..., level: int = ...) -> None:
+        pass
+
+
 from itertools import accumulate
 from base64 import b64encode
 from sys import byteorder
