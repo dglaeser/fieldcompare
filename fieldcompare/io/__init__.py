@@ -12,6 +12,9 @@ from . import vtk
 from ._csv_reader import CSVFieldReader
 from ._mesh_io import _read as _meshio_read, _is_supported as _supported_by_meshio, _HAVE_MESHIO
 
+from ..tabular import TabularFields
+from ..mesh.protocols import MeshFields
+
 
 __all__ = ["read_field_data", "read", "read_as", "is_supported"]
 
@@ -30,6 +33,22 @@ def read_field_data(filename: str, options: Dict[str, dict] = {}) -> protocols.F
     result = read(filename, options)
     assert isinstance(result, protocols.FieldData)
     return result
+
+
+def write(fields: protocols.FieldData, filename: str) -> None:
+    """
+    Write the given field data into a file with the given name
+
+    Args:
+        fields: The fields to be written out
+        filename: The name of the file in which to write the fields (without file extension).
+    """
+    if isinstance(fields, MeshFields):
+        _write_mesh(fields, filename)
+    elif isinstance(fields, TabularFields):
+        _write_table(fields, filename)
+    else:
+        raise NotImplementedError("no write function implemented for given field data type")
 
 
 def read(filename: str, options: Dict[str, dict] = {}) -> Union[protocols.FieldData, protocols.FieldDataSequence]:
@@ -104,3 +123,11 @@ def _read_mesh_file(filename: str, **kwargs) -> Union[protocols.FieldData, proto
 
 def _read_dsv_file(filename: str, **kwargs) -> protocols.FieldData:
     return CSVFieldReader(**kwargs).read(filename)
+
+
+def _write_mesh(fields: MeshFields, filename: str) -> None:
+    vtk.VTUWriter(fields).write(filename)
+
+
+def _write_table(fields: TabularFields, filename: str) -> None:
+    raise NotImplementedError("Tabular Output")
