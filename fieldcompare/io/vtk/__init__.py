@@ -15,6 +15,8 @@ from ._pvd_reader import PVDReader
 
 from ._reader_map import _VTK_EXTENSION_TO_READER, _VTK_TYPE_TO_EXTENSION
 
+from ._vtu_writer import VTUWriter
+
 
 def read(filename: str) -> Union[protocols.FieldData, protocols.FieldDataSequence]:
     """Read field data from the given VTK file"""
