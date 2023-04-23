@@ -15,7 +15,7 @@ from meshio import read as meshio_read, Mesh as MeshioMesh
 
 from fieldcompare import FieldDataComparator, protocols
 from fieldcompare.mesh import meshio_utils, protocols as mesh_protocols
-from fieldcompare.io.vtk import read, PVTUReader
+from fieldcompare.io.vtk import read, PVTUReader, VTUWriter
 from fieldcompare.io import read_as
 
 
@@ -171,6 +171,18 @@ def test_pvd_reading_from_different_extension():
         assert isinstance(step, mesh_protocols.MeshFields)
         _test_from_mesh(step)
     remove(new_filename)
+
+
+@pytest.mark.parametrize("filename", VTU_INLINE_BASE64)
+def test_vtu_writer(filename: str):
+    print(f"Reading, writing and testing {filename}")
+    fields = _read_mesh_fields(filename)
+    writer = VTUWriter(fields)
+    writer.write("_temp")
+    written_fields = _read_mesh_fields("_temp.vtu")
+    result = bool(FieldDataComparator(fields, written_fields)())
+    remove("_temp.vtu")
+    assert result
 
 
 def _test_with_different_extension(filename: str) -> bool:
