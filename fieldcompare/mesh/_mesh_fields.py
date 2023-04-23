@@ -5,15 +5,17 @@
 
 from __future__ import annotations
 from itertools import chain
+from numpy import nan
 from typing import Iterator, Iterable, Dict, List, Tuple, Callable, Protocol, runtime_checkable
 
-from .._numpy_utils import Array, as_array
+from .._numpy_utils import Array, as_array, make_array
 from .._field import Field
 from ._cell_type import CellType
 
 from . import protocols
 from .. import protocols as fc_protocols
 from .._format import add_annotation, split_annotation
+from .._matching import find_matches_by_name
 
 
 def make_cell_type_field_name(cell_type: CellType, field_name: str) -> str:
@@ -81,6 +83,10 @@ class MeshFields(fc_protocols.FieldData):
             for cell_type in self._mesh.cell_types
             for name in self._cell_data
         )
+
+    def diff(self, other: protocols.MeshFields) -> protocols.MeshFields:
+        """Return mesh fields that contain the difference to the given mesh fields"""
+        return _subtract(self, other)
 
     def _make_point_values(self, values: Array) -> Array:
         values = as_array(values)
@@ -161,8 +167,58 @@ class TransformedMeshFields(fc_protocols.FieldData):
             for field, cell_type in self._field_data.cell_fields_types
         )
 
+    def diff(self, other: protocols.MeshFields) -> protocols.MeshFields:
+        """Return mesh fields that contain the difference to the given mesh fields"""
+        return _subtract(self, other)
+
     def _get_permuted_point_field(self, field: fc_protocols.Field) -> fc_protocols.Field:
         return Field(field.name, self._mesh.transform_point_data(field.values))
 
     def _get_permuted_cell_field(self, cell_type: CellType, field: fc_protocols.Field) -> Field:
         return Field(field.name, self._mesh.transform_cell_data(cell_type, field.values))
+
+
+def _subtract(fields1: protocols.MeshFields, fields2: protocols.MeshFields) -> MeshFields:
+    if not fields1.domain.equals(fields2.domain):
+        raise RuntimeError("Can only subtract mesh fields defined on the same mesh")
+
+    point_field_matches = find_matches_by_name(list(fields1.point_fields), list(fields2.point_fields))
+    point_data: Dict[str, Array] = {}
+    for field1, field2 in point_field_matches.matches:
+        if field1.values.shape != field2.values.shape:
+            raise RuntimeError("Cannot subtract arrays with differing shape")
+        point_data[field1.name] = field2.values - field1.values
+    for field1 in point_field_matches.orphans_in_source:
+        point_data[field1.name] = make_array(field1.values, dtype=type(nan))
+        point_data[field1.name].fill(nan)
+    for field2 in point_field_matches.orphans_in_reference:
+        point_data[field2.name] = make_array(field2.values, dtype=type(nan))
+        point_data[field2.name].fill(nan)
+
+    cell_field_matches = find_matches_by_name(list(fields1.cell_fields), list(fields2.cell_fields))
+    cell_data: Dict[str, Dict[CellType, Array]] = {}
+    for field1, field2 in cell_field_matches.matches:
+        if field1.values.shape != field2.values.shape:
+            raise RuntimeError("Cannot subtract arrays with differing shape")
+        name, cell_type = split_annotation(field1.name)
+        if name not in cell_data:
+            cell_data[name] = {}
+        cell_data[name][CellType.from_name(cell_type)] = field2.values - field1.values
+    for field1 in cell_field_matches.orphans_in_source:
+        name, cell_type = split_annotation(field1.name)
+        if name not in cell_data:
+            cell_data[name] = {}
+        cell_data[name][CellType.from_name(cell_type)] = make_array(field1.values, dtype=type(nan))
+        cell_data[name][CellType.from_name(cell_type)].fill(nan)
+    for field2 in cell_field_matches.orphans_in_reference:
+        name, cell_type = split_annotation(field2.name)
+        if name not in cell_data:
+            cell_data[name] = {}
+        cell_data[name][CellType.from_name(cell_type)] = make_array(field2.values, dtype=type(nan))
+        cell_data[name][CellType.from_name(cell_type)].fill(nan)
+
+    return MeshFields(
+        mesh=fields1.domain,
+        point_data=point_data,
+        cell_data={name: [arrays[ct] for ct in fields1.domain.cell_types] for name, arrays in cell_data.items()},
+    )
