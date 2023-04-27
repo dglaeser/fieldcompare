@@ -10,6 +10,7 @@ from pathlib import Path
 from io import StringIO
 from xml.etree import ElementTree
 
+from fieldcompare.io import read
 from fieldcompare._cli import main
 from fieldcompare._cli._logger import CLILogger
 from data.generate_test_meshes import _make_test_mesh, _perturb_mesh
@@ -27,6 +28,17 @@ def test_cli_file_mode_pass():
         str(TEST_DATA_PATH / Path("test_mesh.vtu")),
         str(TEST_DATA_PATH / Path("test_mesh.vtu"))
     ]) == 0
+
+
+def test_cli_file_mode_with_diff_output():
+    assert main([
+        "file",
+        str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+        str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+        "--write-diff-to", "test_cli_diff"
+    ]) == 0
+    _ = read("test_cli_diff.vtu")
+    remove("test_cli_diff.vtu")
 
 
 def test_cli_file_mode_reader_selection():
