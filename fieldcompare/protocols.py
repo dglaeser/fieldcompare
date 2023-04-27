@@ -76,6 +76,10 @@ class FieldData(Protocol):
         """Return an iterator over the contained fields."""
         ...
 
+    def diff(self, other) -> FieldData:
+        """Return the field data that contains the difference to the given field data"""
+        ...
+
 
 @runtime_checkable
 class FieldDataSequence(Protocol):

@@ -41,6 +41,9 @@ class TabularFields(FieldData):
 
         return (Field(name, _mapped_values(values)) for name, values in self._fields.items())
 
+    def diff(self, other: TabularFields) -> TabularFields:
+        """Return the tabular data that contains the difference to the given tabular data"""
+        ...
 
 def transform(self, transformation: Callable[[Table], Table]) -> TabularFields:
     """
