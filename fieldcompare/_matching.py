@@ -51,9 +51,9 @@ def find_matches(
     return MatchResult(matches, orphans_source, orphans_target)
 
 
-def find_matches_by_name(first: Iterable[_Named], second: Iterable[_Named]) -> MatchResult:
+def find_matches_by_name(source: Iterable[_Named], reference: Iterable[_Named]) -> MatchResult:
     """Looks for matching names in the provided objects exposing a name"""
-    return find_matches(first, second, lambda a, b: a.name == b.name)
+    return find_matches(source, reference, lambda a, b: a.name == b.name)
 
 
 def find_matching_file_names(folder: str, reference_folder: str) -> MatchResult:
