@@ -1,11 +1,13 @@
 # SPDX-FileCopyrightText: 2023 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from os import walk
+from os import walk, remove
 from os.path import splitext
 from pathlib import Path
 
-from fieldcompare.io import read
+from fieldcompare.io import read, read_field_data, write
+from fieldcompare.protocols import FieldData
+from fieldcompare import FieldDataComparator
 
 
 def _get_file_name_with_extension(ext: str) -> str:
@@ -19,3 +21,11 @@ def _get_file_name_with_extension(ext: str) -> str:
 
 def test_csv_field_reading():
     _ = read(_get_file_name_with_extension(".csv"))
+
+
+def test_tabular_fields_output():
+    fields = read_field_data(_get_file_name_with_extension(".csv"))
+    write(fields, "tmp_tables")
+    written_fields = read_field_data("tmp_tables.csv")
+    assert FieldDataComparator(fields, written_fields)()
+    remove("tmp_tables.csv")
