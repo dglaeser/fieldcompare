@@ -35,18 +35,18 @@ def read_field_data(filename: str, options: Dict[str, dict] = {}) -> protocols.F
     return result
 
 
-def write(fields: protocols.FieldData, filename: str) -> None:
+def write(fields: protocols.FieldData, filename: str) -> str:
     """
-    Write the given field data into a file with the given name
+    Write the given field data into a file with the given base name and return the name of the written file.
 
     Args:
         fields: The fields to be written out
         filename: The name of the file in which to write the fields (without file extension).
     """
     if isinstance(fields, MeshFields):
-        _write_mesh(fields, filename)
+        return _write_mesh(fields, filename)
     elif isinstance(fields, TabularFields):
-        _write_table(fields, filename)
+        return _write_table(fields, filename)
     else:
         raise NotImplementedError("no write function implemented for given field data type")
 
@@ -125,13 +125,15 @@ def _read_dsv_file(filename: str, **kwargs) -> protocols.FieldData:
     return CSVFieldReader(**kwargs).read(filename)
 
 
-def _write_mesh(fields: MeshFields, filename: str) -> None:
-    vtk.VTUWriter(fields).write(filename)
+def _write_mesh(fields: MeshFields, filename: str) -> str:
+    return vtk.VTUWriter(fields).write(filename)
 
 
-def _write_table(fields: TabularFields, filename: str) -> None:
-    with open(f"{filename}.csv", "w") as csv_file:
+def _write_table(fields: TabularFields, filename: str) -> str:
+    filename_with_ext = f"{filename}.csv"
+    with open(filename_with_ext, "w") as csv_file:
         field_map = {f.name: f.values for f in fields}
         csv_file.write(",".join(field_map.keys()) + "\n")
         for row in range(fields.domain.number_of_rows):
             csv_file.write(",".join(str(field_map[key][row]) for key in field_map) + "\n")
+    return filename_with_ext

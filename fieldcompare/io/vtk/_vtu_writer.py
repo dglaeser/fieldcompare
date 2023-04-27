@@ -29,7 +29,7 @@ class VTUWriter:
     def __init__(self, fields: protocols.MeshFields) -> None:
         self._fields = fields
 
-    def write(self, filename: str) -> None:
+    def write(self, filename: str) -> str:
         vtkfile = XMLElement(
             "VTKFile",
             attrib={
@@ -65,9 +65,11 @@ class VTUWriter:
             cells, "types", values=[cell_type_to_vtk_cell_type_index(ct) for (ct, _) in self._cells()]
         )
 
+        filename_with_ext = f"{filename}.vtu"
         tree = ElementTree(vtkfile)
         indent(tree, space="  ", level=0)
-        tree.write(f"{filename}.vtu", xml_declaration=False, encoding="ascii")
+        tree.write(filename_with_ext, xml_declaration=False, encoding="ascii")
+        return filename_with_ext
 
     def _make_data_array_element(self, parent: XMLElement, name: str, values: Union[Sequence, Array]) -> XMLElement:
         values = make_array(values)
