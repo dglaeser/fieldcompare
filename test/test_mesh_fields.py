@@ -116,6 +116,5 @@ def test_merge_mesh_fields():
         as_meshio = meshio.read(tmp_file_name)
         as_fields = meshio_utils.from_meshio(as_meshio)
         comparator = FieldDataComparator(as_fields, result)
-        print(comparator().domain_equality_check)
         assert comparator()
         remove(tmp_file_name)
