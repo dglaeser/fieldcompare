@@ -45,11 +45,12 @@ class TabularFields(FieldData):
         """Return the tabular data that contains the difference to the given tabular data"""
         ...
 
-def transform(self, transformation: Callable[[Table], Table]) -> TabularFields:
+
+def transform(fields: TabularFields, transformation: Callable[[Table], Table]) -> TabularFields:
     """
-    Return these fields transformed by the given transformation.
+    Return the given fields transformed by the given transformation.
 
     Args:
         transformation: The transformation to be applied.
     """
-    return TabularFields(domain=transformation(self.domain), fields=self._fields)
+    return TabularFields(domain=transformation(fields.domain), fields={field.name: field.values for field in fields})
