@@ -134,7 +134,6 @@ class VTUWriter:
     def _array_num_components(self, values: Array) -> int:
         assert len(values) > 0
         result = self._num_components(values[0])
-        assert all(self._num_components(v) == result for v in values)
         return result
 
     def _num_components(self, array_entry) -> int:
