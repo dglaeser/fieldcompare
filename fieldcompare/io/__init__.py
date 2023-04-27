@@ -130,4 +130,8 @@ def _write_mesh(fields: MeshFields, filename: str) -> None:
 
 
 def _write_table(fields: TabularFields, filename: str) -> None:
-    raise NotImplementedError("Tabular Output")
+    with open(f"{filename}.csv", "w") as csv_file:
+        field_map = {f.name: f.values for f in fields}
+        csv_file.write(",".join(field_map.keys()) + "\n")
+        for row in range(fields.domain.number_of_rows):
+            csv_file.write(",".join(str(field_map[key][row]) for key in field_map) + "\n")
