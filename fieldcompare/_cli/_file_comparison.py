@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 from ..predicates import DefaultEquality
 from ..protocols import DynamicTolerance
-from ..io import read, read_as
+from ..io import read, read_as, write
 
 from .._common import _default_base_tolerance
 from .._format import as_success, as_error, as_warning, highlighted
@@ -21,7 +21,7 @@ from .._field_data_comparison import (
     FieldComparisonStatus,
     field_comparison_report,
 )
-from ..mesh import MeshFieldsComparator
+from ..mesh import MeshFieldsComparator, sort
 
 from ._logger import CLILogger
 from ._common import FileTypeMap
@@ -51,9 +51,10 @@ class FileComparisonOptions:
 
 
 class FileComparison:
-    def __init__(self, opts: FileComparisonOptions, logger: CLILogger) -> None:
+    def __init__(self, opts: FileComparisonOptions, logger: CLILogger, diff_filename: Optional[str] = None) -> None:
         self._opts = opts
         self._logger = logger
+        self._diff_filename = diff_filename
 
     def __call__(self, res_file: str, ref_file: str) -> TestSuite:
         try:
@@ -63,7 +64,22 @@ class FileComparison:
             return _make_test_suite(
                 tests=[], status=TestStatus.error, name=_suite_name(res_file), shortlog="Error during field reading"
             )
-        return self._compare_fields(res_fields, ref_fields).with_overridden(name=_suite_name(res_file))
+        result = self._compare_fields(res_fields, ref_fields).with_overridden(name=_suite_name(res_file))
+        self._write_diff_file(res_fields, ref_fields)
+        return result
+
+    def _write_diff_file(self, res_fields, ref_fields):
+        if self._diff_filename is not None:
+            if not isinstance(res_fields, protocols.FieldData) or not isinstance(ref_fields, protocols.FieldData):
+                raise IOError("Diff output only supported for field data (and e.g. not for sequences)")
+            if isinstance(res_fields, mesh_protocols.MeshFields) and isinstance(ref_fields, mesh_protocols.MeshFields):
+                if not res_fields.domain.equals(ref_fields.domain):
+                    self._logger.log("Sorting mesh fields for diff output\n", verbosity_level=2)
+                    res_fields = sort(res_fields)
+                    ref_fields = sort(ref_fields)
+            diff = res_fields.diff(ref_fields)
+            diff_filename = write(diff, self._diff_filename)
+            self._logger.log(f"Wrote field data difference into '{diff_filename}'\n", verbosity_level=1)
 
     def _read(self, filename: str) -> Union[protocols.FieldData, protocols.FieldDataSequence]:
         try:

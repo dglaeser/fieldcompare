@@ -35,6 +35,12 @@ def _add_arguments(parser: ArgumentParser):
     _add_mesh_reorder_options_args(parser)
     _add_junit_export_arg(parser)
     _add_reader_selection_options_args(parser)
+    parser.add_argument(
+        "-d",
+        "--write-diff-to",
+        required=False,
+        help="Pass a filename into which to write the detected differences in the field",
+    )
 
 
 def _run(args: dict, in_logger: CLILogger) -> int:
@@ -56,7 +62,7 @@ def _run(args: dict, in_logger: CLILogger) -> int:
     )
 
     try:
-        comparator = FileComparison(opts, logger)
+        comparator = FileComparison(opts, logger, args["write_diff_to"])
         cpu_time, test_suite = _measure_time(comparator)(args["source"], args["reference"])
         passed = bool(test_suite)
         logger.log("\n")
