@@ -6,7 +6,7 @@
 from typing import Callable, TypeVar, Tuple
 from time import time
 from functools import wraps
-from numpy import finfo, find_common_type, issubdtype, floating, integer
+from numpy import finfo, promote_types, issubdtype, floating, integer
 
 from ._numpy_utils import Array
 from .protocols import DynamicTolerance
@@ -14,7 +14,7 @@ from .protocols import DynamicTolerance
 
 def _default_base_tolerance() -> DynamicTolerance:
     def _get(first: Array, second: Array) -> float:
-        common_type = find_common_type(array_types=[first.dtype, second.dtype], scalar_types=[])
+        common_type = promote_types(first.dtype, second.dtype)
         # For integers, we use exact comparison as a default
         if issubdtype(common_type, integer):
             return 0.0
