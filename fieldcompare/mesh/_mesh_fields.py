@@ -86,7 +86,7 @@ class MeshFields(fc_protocols.FieldData):
 
     def diff(self, other: protocols.MeshFields) -> protocols.MeshFields:
         """Return mesh fields that contain the difference to the given mesh fields"""
-        return _subtract(self, other)
+        return _subtract(other, self)
 
     def _make_point_values(self, values: Array) -> Array:
         values = as_array(values)
@@ -169,7 +169,7 @@ class TransformedMeshFields(fc_protocols.FieldData):
 
     def diff(self, other: protocols.MeshFields) -> protocols.MeshFields:
         """Return mesh fields that contain the difference to the given mesh fields"""
-        return _subtract(self, other)
+        return _subtract(other, self)
 
     def _get_permuted_point_field(self, field: fc_protocols.Field) -> fc_protocols.Field:
         return Field(field.name, self._mesh.transform_point_data(field.values))
@@ -187,7 +187,7 @@ def _subtract(fields1: protocols.MeshFields, fields2: protocols.MeshFields) -> M
     for field1, field2 in point_field_matches.matches:
         if field1.values.shape != field2.values.shape:
             raise RuntimeError("Cannot subtract arrays with differing shape")
-        point_data[field1.name] = field2.values - field1.values
+        point_data[field1.name] = field1.values - field2.values
     for field1 in point_field_matches.orphans_in_source:
         point_data[field1.name] = make_array(field1.values, dtype=type(nan))
         point_data[field1.name].fill(nan)
@@ -203,7 +203,7 @@ def _subtract(fields1: protocols.MeshFields, fields2: protocols.MeshFields) -> M
         name, cell_type = split_annotation(field1.name)
         if name not in cell_data:
             cell_data[name] = {}
-        cell_data[name][CellType.from_name(cell_type)] = field2.values - field1.values
+        cell_data[name][CellType.from_name(cell_type)] = field1.values - field2.values
     for field1 in cell_field_matches.orphans_in_source:
         name, cell_type = split_annotation(field1.name)
         if name not in cell_data:

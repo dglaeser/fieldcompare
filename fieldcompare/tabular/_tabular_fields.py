@@ -46,7 +46,7 @@ class TabularFields(FieldData):
 
     def diff(self, other: TabularFields) -> TabularFields:
         """Return the tabular data that contains the difference to the given tabular data"""
-        return _subtract(self, other)
+        return _subtract(other, self)
 
 
 def transform(fields: TabularFields, transformation: Callable[[Table], Table]) -> TabularFields:

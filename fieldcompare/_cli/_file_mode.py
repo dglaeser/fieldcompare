@@ -214,8 +214,9 @@ def _add_diff_output_options_args(parser: ArgumentParser) -> None:
         "--diff",
         required=False,
         action="store_true",
-        help="If set to true, the difference between fields are written to disk. "
-        "The filenames for the diffs are made unique by incorporating the current timestamp.",
+        help="If set to true, the differences between fields are written to disk. "
+        "The filenames for the diffs are made unique by incorporating the current timestamp. "
+        "The differences are computed as `reference - source`",
     )
     parser.add_argument(
         "-dx",
