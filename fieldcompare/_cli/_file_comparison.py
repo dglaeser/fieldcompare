@@ -79,14 +79,17 @@ class FileComparison:
 
     def _write_diff_file(self, diff_basefilename: str, res_fields, ref_fields):
         if isinstance(res_fields, mesh_protocols.MeshFields) and isinstance(ref_fields, mesh_protocols.MeshFields):
-            if not res_fields.domain.equals(ref_fields.domain):
+            if not res_fields.domain.equals(ref_fields.domain) and not self._opts.disable_mesh_reordering:
                 self._logger.log("Sorting mesh fields for diff output\n", verbosity_level=2)
                 res_fields = sort(res_fields)
                 ref_fields = sort(ref_fields)
 
-        diff = res_fields.diff(ref_fields)
-        diff_filename = write(diff, diff_basefilename)
-        self._logger.log(f"Wrote diff into '{highlighted(diff_filename)}'\n", verbosity_level=1)
+        try:
+            diff = res_fields.diff(ref_fields)
+            diff_filename = write(diff, diff_basefilename)
+            self._logger.log(f"Wrote diff into '{highlighted(diff_filename)}'\n", verbosity_level=1)
+        except RuntimeError as e:
+            self._logger.log(f"Error when computing diff: '{e}'")
 
     def _get_diff_filename(self, res_file: str) -> Optional[str]:
         if not self._diff_opts.enable:
