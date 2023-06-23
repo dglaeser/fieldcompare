@@ -44,7 +44,7 @@ def test_tabular_fields_diff():
     field_map.pop(popped_field)
     fields2 = TabularFields(domain=fields.domain, fields=field_map)
 
-    diff = fields.diff(fields2)
+    diff = fields.diff_to(fields2)
     diff_field_map = {f.name: f.values for f in diff}
     assert all(isnan(value) for value in diff_field_map[popped_field])
     for fname in filter(lambda n: n != popped_field, diff_field_map.keys()):

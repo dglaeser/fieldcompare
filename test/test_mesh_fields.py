@@ -135,7 +135,7 @@ def test_mesh_fields_diff():
         mesh=mesh,
         point_data={"pd": [41.0, 43.0, 44.0]}
     )
-    diff_fields = mesh_fields1.diff(mesh_fields2)
+    diff_fields = mesh_fields1.diff_to(mesh_fields2)
     point_fields = {f.name: f.values for f in diff_fields.point_fields}
     cell_fields = {f.name: f.values for f in diff_fields.cell_fields}
     assert len(point_fields) == 1

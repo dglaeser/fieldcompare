@@ -84,7 +84,7 @@ class MeshFields(fc_protocols.FieldData):
             for name in self._cell_data
         )
 
-    def diff(self, other: protocols.MeshFields) -> protocols.MeshFields:
+    def diff_to(self, other: protocols.MeshFields) -> protocols.MeshFields:
         """Return mesh fields that contain the difference to the given mesh fields"""
         return _subtract(other, self)
 
@@ -167,7 +167,7 @@ class TransformedMeshFields(fc_protocols.FieldData):
             for field, cell_type in self._field_data.cell_fields_types
         )
 
-    def diff(self, other: protocols.MeshFields) -> protocols.MeshFields:
+    def diff_to(self, other: protocols.MeshFields) -> protocols.MeshFields:
         """Return mesh fields that contain the difference to the given mesh fields"""
         return _subtract(other, self)
 
