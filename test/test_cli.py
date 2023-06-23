@@ -35,10 +35,13 @@ def test_cli_file_mode_with_diff_output():
         "file",
         str(TEST_DATA_PATH / Path("test_mesh.vtu")),
         str(TEST_DATA_PATH / Path("test_mesh.vtu")),
-        "--write-diff-to", "test_cli_diff"
+        "--diff",
     ]) == 0
-    _ = read("test_cli_diff.vtu")
-    remove("test_cli_diff.vtu")
+    diff_files = list(f for f in listdir(TEST_DATA_PATH) if "test_mesh_vtu_diff_" in f)
+    assert len(diff_files) == 1
+    diff_file_path = str(Path(TEST_DATA_PATH) / diff_files[0])
+    _ = read(diff_file_path)
+    remove(diff_file_path)
 
 
 def test_cli_file_mode_reader_selection():

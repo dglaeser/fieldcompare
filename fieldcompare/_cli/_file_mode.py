@@ -37,9 +37,10 @@ def _add_arguments(parser: ArgumentParser):
     _add_reader_selection_options_args(parser)
     parser.add_argument(
         "-d",
-        "--write-diff-to",
+        "--diff",
         required=False,
-        help="Pass a filename into which to write the detected differences in the field",
+        action="store_true",
+        help="If set to true, the difference between fields are written to disk",
     )
 
 
@@ -62,7 +63,7 @@ def _run(args: dict, in_logger: CLILogger) -> int:
     )
 
     try:
-        comparator = FileComparison(opts, logger, args["write_diff_to"])
+        comparator = FileComparison(opts, logger, args["diff"])
         cpu_time, test_suite = _measure_time(comparator)(args["source"], args["reference"])
         passed = bool(test_suite)
         logger.log("\n")

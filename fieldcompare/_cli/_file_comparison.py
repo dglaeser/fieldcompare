@@ -6,6 +6,7 @@
 from pathlib import Path
 from typing import Union, List, Callable, Optional
 from dataclasses import dataclass
+from datetime import datetime
 
 from ..predicates import DefaultEquality
 from ..protocols import DynamicTolerance
@@ -51,10 +52,10 @@ class FileComparisonOptions:
 
 
 class FileComparison:
-    def __init__(self, opts: FileComparisonOptions, logger: CLILogger, diff_filename: Optional[str] = None) -> None:
+    def __init__(self, opts: FileComparisonOptions, logger: CLILogger, write_diff: bool = False) -> None:
         self._opts = opts
         self._logger = logger
-        self._diff_filename = diff_filename
+        self._write_diff = write_diff
 
     def __call__(self, res_file: str, ref_file: str) -> TestSuite:
         try:
@@ -64,22 +65,27 @@ class FileComparison:
             return _make_test_suite(
                 tests=[], status=TestStatus.error, name=_suite_name(res_file), shortlog="Error during field reading"
             )
-        result = self._compare_fields(res_fields, ref_fields).with_overridden(name=_suite_name(res_file))
-        self._write_diff_file(res_fields, ref_fields)
-        return result
+        return self._compare_fields(
+            res_fields, ref_fields, self._get_diff_filename(res_file) if self._write_diff else None
+        ).with_overridden(name=_suite_name(res_file))
 
-    def _write_diff_file(self, res_fields, ref_fields):
-        if self._diff_filename is not None:
-            if not isinstance(res_fields, protocols.FieldData) or not isinstance(ref_fields, protocols.FieldData):
-                raise IOError("Diff output only supported for field data (and e.g. not for sequences)")
-            if isinstance(res_fields, mesh_protocols.MeshFields) and isinstance(ref_fields, mesh_protocols.MeshFields):
-                if not res_fields.domain.equals(ref_fields.domain):
-                    self._logger.log("Sorting mesh fields for diff output\n", verbosity_level=2)
-                    res_fields = sort(res_fields)
-                    ref_fields = sort(ref_fields)
-            diff = res_fields.diff(ref_fields)
-            diff_filename = write(diff, self._diff_filename)
-            self._logger.log(f"Wrote field data difference into '{diff_filename}'\n", verbosity_level=1)
+    def _write_diff_file(self, diff_basefilename: str, res_fields, ref_fields):
+        if isinstance(res_fields, mesh_protocols.MeshFields) and isinstance(ref_fields, mesh_protocols.MeshFields):
+            if not res_fields.domain.equals(ref_fields.domain):
+                self._logger.log("Sorting mesh fields for diff output\n", verbosity_level=2)
+                res_fields = sort(res_fields)
+                ref_fields = sort(ref_fields)
+
+        diff = res_fields.diff(ref_fields)
+        diff_filename = write(diff, diff_basefilename)
+        self._logger.log(f"Wrote diff into '{highlighted(diff_filename)}'\n", verbosity_level=1)
+
+    def _get_diff_filename(self, res_file: str) -> str:
+        folder = Path(res_file).parent
+        ext = str(Path(res_file).suffix).strip(".")
+        ext_suffix = f"_{ext}" if ext else ""
+        diff_filename = f"{Path(res_file).stem}{ext_suffix}_diff_{datetime.now().strftime('%d_%b_%Y_%H_%M_%S')}"
+        return str(folder / diff_filename)
 
     def _read(self, filename: str) -> Union[protocols.FieldData, protocols.FieldDataSequence]:
         try:
@@ -99,13 +105,17 @@ class FileComparison:
         self,
         res_fields: Union[protocols.FieldData, protocols.FieldDataSequence],
         ref_fields: Union[protocols.FieldData, protocols.FieldDataSequence],
+        diff_filename: Optional[str] = None
     ) -> TestSuite:
         if isinstance(res_fields, protocols.FieldData) and isinstance(ref_fields, protocols.FieldData):
-            return self._compare_field_data(res_fields, ref_fields)
+            result = self._compare_field_data(res_fields, ref_fields)
+            if diff_filename is not None:
+                self._write_diff_file(diff_filename, res_fields, ref_fields)
+            return result
         elif isinstance(res_fields, protocols.FieldDataSequence) and isinstance(
             ref_fields, protocols.FieldDataSequence
         ):
-            return self._compare_field_sequences(res_fields, ref_fields)
+            return self._compare_field_sequences(res_fields, ref_fields, diff_filename)
 
         def _is_unknown(fields) -> bool:
             return not isinstance(fields, protocols.FieldData) and not isinstance(fields, protocols.FieldDataSequence)
@@ -115,7 +125,10 @@ class FileComparison:
         raise ValueError("Cannot compare sequences against field data")
 
     def _compare_field_sequences(
-        self, res_sequence: protocols.FieldDataSequence, ref_sequence: protocols.FieldDataSequence
+        self,
+        res_sequence: protocols.FieldDataSequence,
+        ref_sequence: protocols.FieldDataSequence,
+        diff_basefilename: Optional[str] = None
     ) -> TestSuite:
         num_steps_check: Optional[TestStatus] = None
         num_steps_check_fail_msg = "Sequences have differing lengths"
@@ -149,6 +162,8 @@ class FileComparison:
         for idx, (res_step, ref_step) in enumerate(zip(res_sequence, ref_sequence)):
             self._logger.log(f"Comparing step {idx} of {num_steps}\n", verbosity_level=1)
             sub_suite = self._compare_field_data(res_step, ref_step)
+            if diff_basefilename is not None:
+                self._write_diff_file(f"{diff_basefilename}_step_{idx}", res_step, ref_step)
             suite = _merge_test_suites(suite, sub_suite, idx)
         return suite
 
