@@ -493,6 +493,26 @@ def test_cli_directory_mode_pass():
     assert main(["dir", str(TEST_DATA_PATH), str(TEST_DATA_PATH)]) == 0
 
 
+def test_cli_directory_with_diff_output():
+    tmp_results_path = TEST_DATA_PATH.resolve().parent / Path("test_cli_directory_with_diff_output_results_data")
+    rmtree(tmp_results_path, ignore_errors=True)
+    makedirs(tmp_results_path)
+    for file in filter(lambda f: splitext(f) in [".vtu", ".csv"], listdir(TEST_DATA_PATH)):
+        copy(TEST_DATA_PATH / file, tmp_results_path / file)
+
+    num_files = sum(1 for _ in listdir(tmp_results_path))
+    assert main([
+        "dir",
+        str(tmp_results_path),
+        str(tmp_results_path),
+        "--diff"
+    ]) == 0
+
+    diff_files = list(f for f in listdir(tmp_results_path) if "_diff_" in f)
+    rmtree(tmp_results_path)
+    assert len(diff_files) == num_files
+
+
 def test_cli_directory_mode_arg_is_not_a_directory():
     assert main(["dir", str(TEST_DATA_PATH), str(TEST_DATA_PATH / Path("test_mesh.vtu"))]) == 1
     assert main(["dir", str(TEST_DATA_PATH / Path("test_mesh.vtu")), str(TEST_DATA_PATH)]) == 1
