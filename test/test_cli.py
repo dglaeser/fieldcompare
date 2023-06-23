@@ -9,6 +9,7 @@ from shutil import rmtree, copytree, copy
 from pathlib import Path
 from io import StringIO
 from xml.etree import ElementTree
+from time import sleep
 
 from fieldcompare.io import read
 from fieldcompare._cli import main
@@ -37,7 +38,35 @@ def test_cli_file_mode_with_diff_output():
         str(TEST_DATA_PATH / Path("test_mesh.vtu")),
         "--diff",
     ]) == 0
+    sleep(2)
+    assert main([
+        "file",
+        str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+        str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+        "--diff",
+    ]) == 0
     diff_files = list(f for f in listdir(TEST_DATA_PATH) if "test_mesh_vtu_diff_" in f)
+    assert len(diff_files) == 2
+    for diff_file in diff_files:
+        diff_file_path = str(Path(TEST_DATA_PATH) / diff_file)
+        _ = read(diff_file_path)
+        remove(diff_file_path)
+
+
+def test_cli_file_mode_with_overwritten_diff_output():
+    assert main([
+        "file",
+        str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+        str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+        "--diff-overwrite",
+    ]) == 0
+    assert main([
+        "file",
+        str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+        str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+        "--diff-overwrite",
+    ]) == 0
+    diff_files = list(f for f in listdir(TEST_DATA_PATH) if "test_mesh_vtu_diff" in f)
     assert len(diff_files) == 1
     diff_file_path = str(Path(TEST_DATA_PATH) / diff_files[0])
     _ = read(diff_file_path)

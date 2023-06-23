@@ -12,7 +12,7 @@ from .._common import _measure_time
 
 from ._junit import as_junit_xml_element
 from ._logger import CLILogger
-from ._file_comparison import FileComparison, FileComparisonOptions
+from ._file_comparison import FileComparison, FileComparisonOptions, DiffOutputOptions
 
 from ._common import (
     PatternFilter,
@@ -35,13 +35,7 @@ def _add_arguments(parser: ArgumentParser):
     _add_mesh_reorder_options_args(parser)
     _add_junit_export_arg(parser)
     _add_reader_selection_options_args(parser)
-    parser.add_argument(
-        "-d",
-        "--diff",
-        required=False,
-        action="store_true",
-        help="If set to true, the difference between fields are written to disk",
-    )
+    _add_diff_output_options_args(parser)
 
 
 def _run(args: dict, in_logger: CLILogger) -> int:
@@ -63,7 +57,9 @@ def _run(args: dict, in_logger: CLILogger) -> int:
     )
 
     try:
-        comparator = FileComparison(opts, logger, args["diff"])
+        comparator = FileComparison(
+            opts, logger, DiffOutputOptions((args["diff"] or args["diff_overwrite"]), args["diff_overwrite"])
+        )
         cpu_time, test_suite = _measure_time(comparator)(args["source"], args["reference"])
         passed = bool(test_suite)
         logger.log("\n")
@@ -209,4 +205,22 @@ def _add_reader_selection_options_args(parser: ArgumentParser) -> None:
 def _add_junit_export_arg(parser: ArgumentParser) -> None:
     parser.add_argument(
         "--junit-xml", required=False, help="Pass the filename into which a junit report should be written"
+    )
+
+
+def _add_diff_output_options_args(parser: ArgumentParser) -> None:
+    parser.add_argument(
+        "-d",
+        "--diff",
+        required=False,
+        action="store_true",
+        help="If set to true, the difference between fields are written to disk. "
+        "The filenames for the diffs are made unique by incorporating the current timestamp.",
+    )
+    parser.add_argument(
+        "-dx",
+        "--diff-overwrite",
+        required=False,
+        action="store_true",
+        help="Same as '--diff', but uses non-unique filenames and thus may overwrite diff files from previous runs.",
     )

@@ -51,11 +51,19 @@ class FileComparisonOptions:
     file_type_map: FileTypeMap = FileTypeMap()
 
 
+@dataclass
+class DiffOutputOptions:
+    enable: bool = False
+    overwrite: bool = False
+
+
 class FileComparison:
-    def __init__(self, opts: FileComparisonOptions, logger: CLILogger, write_diff: bool = False) -> None:
+    def __init__(
+        self, opts: FileComparisonOptions, logger: CLILogger, diff_opts: DiffOutputOptions = DiffOutputOptions()
+    ) -> None:
         self._opts = opts
         self._logger = logger
-        self._write_diff = write_diff
+        self._diff_opts = diff_opts
 
     def __call__(self, res_file: str, ref_file: str) -> TestSuite:
         try:
@@ -65,9 +73,9 @@ class FileComparison:
             return _make_test_suite(
                 tests=[], status=TestStatus.error, name=_suite_name(res_file), shortlog="Error during field reading"
             )
-        return self._compare_fields(
-            res_fields, ref_fields, self._get_diff_filename(res_file) if self._write_diff else None
-        ).with_overridden(name=_suite_name(res_file))
+        return self._compare_fields(res_fields, ref_fields, self._get_diff_filename(res_file)).with_overridden(
+            name=_suite_name(res_file)
+        )
 
     def _write_diff_file(self, diff_basefilename: str, res_fields, ref_fields):
         if isinstance(res_fields, mesh_protocols.MeshFields) and isinstance(ref_fields, mesh_protocols.MeshFields):
@@ -80,11 +88,15 @@ class FileComparison:
         diff_filename = write(diff, diff_basefilename)
         self._logger.log(f"Wrote diff into '{highlighted(diff_filename)}'\n", verbosity_level=1)
 
-    def _get_diff_filename(self, res_file: str) -> str:
+    def _get_diff_filename(self, res_file: str) -> Optional[str]:
+        if not self._diff_opts.enable:
+            return None
         folder = Path(res_file).parent
         ext = str(Path(res_file).suffix).strip(".")
         ext_suffix = f"_{ext}" if ext else ""
-        diff_filename = f"{Path(res_file).stem}{ext_suffix}_diff_{datetime.now().strftime('%d_%b_%Y_%H_%M_%S')}"
+        diff_filename = f"{Path(res_file).stem}{ext_suffix}_diff"
+        if not self._diff_opts.overwrite:
+            diff_filename += f"_{datetime.now().strftime('%d_%b_%Y_%H_%M_%S')}"
         return str(folder / diff_filename)
 
     def _read(self, filename: str) -> Union[protocols.FieldData, protocols.FieldDataSequence]:
@@ -105,7 +117,7 @@ class FileComparison:
         self,
         res_fields: Union[protocols.FieldData, protocols.FieldDataSequence],
         ref_fields: Union[protocols.FieldData, protocols.FieldDataSequence],
-        diff_filename: Optional[str] = None
+        diff_filename: Optional[str] = None,
     ) -> TestSuite:
         if isinstance(res_fields, protocols.FieldData) and isinstance(ref_fields, protocols.FieldData):
             result = self._compare_field_data(res_fields, ref_fields)
@@ -128,7 +140,7 @@ class FileComparison:
         self,
         res_sequence: protocols.FieldDataSequence,
         ref_sequence: protocols.FieldDataSequence,
-        diff_basefilename: Optional[str] = None
+        diff_basefilename: Optional[str] = None,
     ) -> TestSuite:
         num_steps_check: Optional[TestStatus] = None
         num_steps_check_fail_msg = "Sequences have differing lengths"
