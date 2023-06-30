@@ -147,7 +147,8 @@ class VTUWriter:
             for field, fct in self._fields.cell_fields_types:
                 if fct == ct and remove_cell_type_suffix(fct, field.name) == name:
                     values = concatenate([values, field.values] if values is not None else [field.values])
-        assert isinstance(values, Array)
+        if not isinstance(values, Array):
+            raise RuntimeError(f"Could not make cell field {name}")
         return values
 
     def _points(self) -> Iterable:
@@ -163,7 +164,8 @@ class VTUWriter:
         return result
 
     def _array_num_components(self, values: Array) -> int:
-        assert len(values) > 0
+        if len(values) == 0:
+            raise RuntimeError("Cannot deduce number of components from empty array")
         result = self._num_components(values[0])
         return result
 
