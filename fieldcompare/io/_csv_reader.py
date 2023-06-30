@@ -3,10 +3,12 @@
 
 """Reader for extracting fields from csv files"""
 
+from __future__ import annotations
+
 import csv
 import numpy as np
 
-from typing import TextIO, Union, Optional, Callable, TypeVar
+from typing import TextIO, Callable, TypeVar
 
 from ..tabular import Table, TabularFields
 
@@ -14,12 +16,12 @@ from ..tabular import Table, TabularFields
 class CSVFieldReader:
     """Read fields from csv files"""
 
-    def __init__(self, delimiter: Optional[str] = None, use_names: Optional[bool] = None, skip_rows: int = 0) -> None:
+    def __init__(self, delimiter: str | None = None, use_names: bool | None = None, skip_rows: int = 0) -> None:
         self._delimiter = delimiter
         self._use_names = use_names
         self._skip_rows = skip_rows
 
-    def read(self, input: Union[str, TextIO]) -> TabularFields:
+    def read(self, input: str | TextIO) -> TabularFields:
         delimiter = self._delimiter if self._delimiter is not None else self._sniff_delimiter(input)
         use_names = self._use_names if self._use_names is not None else self._sniff_header(input)
         data = np.genfromtxt(
@@ -50,7 +52,7 @@ class CSVFieldReader:
     def _is_structured(self, array: np.ndarray) -> bool:
         return array.dtype.names is not None
 
-    def _sniff_delimiter(self, input: Union[str, TextIO]) -> str:
+    def _sniff_delimiter(self, input: str | TextIO) -> str:
         # if none of the default delimiters are found, the sniffer raises an exception
         default_delimiters = ",;:. \t/|#@$&%+!?"
         return self._sniff(
@@ -58,7 +60,7 @@ class CSVFieldReader:
             action=lambda f: csv.Sniffer().sniff(f.read(1024), delimiters=default_delimiters).delimiter,
         )
 
-    def _sniff_header(self, input: Union[str, TextIO]) -> bool:
+    def _sniff_header(self, input: str | TextIO) -> bool:
         try:
             return self._sniff(input, action=lambda f: csv.Sniffer().has_header(f.read(1024)))
         except csv.Error as e:
@@ -66,7 +68,7 @@ class CSVFieldReader:
 
     T = TypeVar("T")
 
-    def _sniff(self, input: Union[str, TextIO], action: Callable[[TextIO], T]) -> T:
+    def _sniff(self, input: str | TextIO, action: Callable[[TextIO], T]) -> T:
         def _call_action(file: TextIO):
             current_pos = file.tell()
             result = action(file)

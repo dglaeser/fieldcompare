@@ -3,7 +3,7 @@
 
 """Utility functions for interoperability with meshio"""
 
-from typing import Dict, List
+from __future__ import annotations
 from numpy.typing import ArrayLike
 
 from meshio import Mesh as MeshIOMesh
@@ -31,7 +31,7 @@ def from_meshio(mesh: MeshIOMesh) -> MeshFields:
 def to_meshio(mesh_fields: protocols.MeshFields) -> MeshIOMesh:
     """Convert MeshFields into a mesh of the meshio library"""
     types = [ct for ct in mesh_fields.domain.cell_types]
-    cell_data: Dict[str, List[ArrayLike]] = {}
+    cell_data: dict[str, list[ArrayLike]] = {}
     for field, cell_type in mesh_fields.cell_fields_types:
         name = remove_cell_type_suffix(cell_type, field.name)
         if name not in cell_data:

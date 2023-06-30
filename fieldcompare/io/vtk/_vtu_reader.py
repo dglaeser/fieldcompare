@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2023 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Tuple, Dict
+from __future__ import annotations
 from xml.etree import ElementTree
 
 import numpy as np
@@ -27,7 +27,7 @@ class VTUReader(VTKXMLReader):
     def _get_field_data_path(self) -> str:
         return "UnstructuredGrid/Piece"
 
-    def _make_mesh(self) -> Tuple[Mesh, CellTypeToCellIndices]:
+    def _make_mesh(self) -> tuple[Mesh, CellTypeToCellIndices]:
         points = self._get_data_array_values(self._mesh_data_arrays["points"])
         corners = self._get_data_array_values(self._mesh_data_arrays["connectivity"])
         offsets = self._get_data_array_values(self._mesh_data_arrays["offsets"])
@@ -70,7 +70,7 @@ class VTUReader(VTKXMLReader):
             connectivity=((vtk_cell_type_index_to_cell_type(t), _cell_type_corners_array(t)) for t in ocurring_types),
         ), {vtk_cell_type_index_to_cell_type(t): _cell_type_indices(t) for t in ocurring_types}
 
-    def _get_mesh_data_arrays(self) -> Dict[str, ElementTree.Element]:
+    def _get_mesh_data_arrays(self) -> dict[str, ElementTree.Element]:
         return {
             **{"points": self._get_element("UnstructuredGrid/Piece/Points/DataArray")},
             **{

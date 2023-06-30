@@ -1,8 +1,8 @@
 # SPDX-FileCopyrightText: 2023 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from __future__ import annotations
 from xml.etree import ElementTree
-from typing import List
 from os.path import isabs, join, exists, dirname
 
 from ... import protocols
@@ -34,7 +34,7 @@ class _PVTKReader:
             )
         return mesh_fields
 
-    def _get_pieces(self, filename: str) -> List[str]:
+    def _get_pieces(self, filename: str) -> list[str]:
         xml_tree = ElementTree.parse(filename).getroot()
         grid = xml_tree.find(f"P{self._grid_type}")
         assert grid is not None

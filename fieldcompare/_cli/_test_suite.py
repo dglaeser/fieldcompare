@@ -4,7 +4,7 @@
 """Data classes to hold the results of a CLI run"""
 
 from __future__ import annotations
-from typing import Optional, List, Iterator
+from typing import Iterator
 from dataclasses import dataclass
 from enum import Enum, auto
 
@@ -34,18 +34,18 @@ class TestResult:
     status: TestStatus
     shortlog: str
     stdout: str
-    cpu_time: Optional[float]
+    cpu_time: float | None
 
 
 class TestSuite:
     def __init__(
         self,
-        tests: List[TestResult],
-        name: Optional[str] = None,
-        status: Optional[TestStatus] = None,
+        tests: list[TestResult],
+        name: str | None = None,
+        status: TestStatus | None = None,
         shortlog: str = "",
         stdout: str = "",
-        cpu_time: Optional[float] = None,
+        cpu_time: float | None = None,
     ) -> None:
         self._tests = tests
         self._name = name
@@ -90,15 +90,15 @@ class TestSuite:
         return self._stdout
 
     @property
-    def cpu_time(self) -> Optional[float]:
+    def cpu_time(self) -> float | None:
         return self._cpu_time
 
     def with_overridden(
         self,
-        cpu_time: Optional[float] = None,
-        name: Optional[str] = None,
-        status: Optional[TestStatus] = None,
-        shortlog: Optional[str] = None,
+        cpu_time: float | None = None,
+        name: str | None = None,
+        status: TestStatus | None = None,
+        shortlog: str | None = None,
     ) -> TestSuite:
         return TestSuite(
             tests=self._tests,

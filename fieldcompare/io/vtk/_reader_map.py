@@ -1,13 +1,14 @@
 # SPDX-FileCopyrightText: 2023 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Dict, Protocol, Union, runtime_checkable
+from __future__ import annotations
+from typing import Protocol, runtime_checkable
 from ... import protocols
 
 
 @runtime_checkable
 class _FieldDataReader(Protocol):
-    def read(self) -> Union[protocols.FieldData, protocols.FieldDataSequence]:
+    def read(self) -> protocols.FieldData | protocols.FieldDataSequence:
         ...
 
 
@@ -19,7 +20,7 @@ class _VTKReader(Protocol):
 
 class _Map:
     def __init__(self) -> None:
-        self._map: Dict[str, _VTKReader] = {}
+        self._map: dict[str, _VTKReader] = {}
 
     def __getitem__(self, key: str) -> _VTKReader:
         return self._map[key]
@@ -33,4 +34,4 @@ class _Map:
 
 
 _VTK_EXTENSION_TO_READER = _Map()
-_VTK_TYPE_TO_EXTENSION: Dict[str, str] = {}
+_VTK_TYPE_TO_EXTENSION: dict[str, str] = {}

@@ -3,7 +3,8 @@
 
 """Functions for detecting matching strings in two given iterables"""
 
-from typing import List, Tuple, Iterable, Protocol, TypeVar, Callable, Any
+from __future__ import annotations
+from typing import Iterable, Protocol, TypeVar, Callable, Any
 from dataclasses import dataclass
 from os.path import join, relpath
 from os import walk
@@ -19,9 +20,9 @@ class _Named(Protocol):
 class MatchResult:
     """Data class to store the result of finding matches in two ranges"""
 
-    matches: List[Tuple[Any, Any]]
-    orphans_in_source: List[Any]
-    orphans_in_reference: List[Any]
+    matches: list[tuple[Any, Any]]
+    orphans_in_source: list[Any]
+    orphans_in_reference: list[Any]
 
 
 T1 = TypeVar("T1")
@@ -61,7 +62,7 @@ def find_matching_file_names(folder: str, reference_folder: str) -> MatchResult:
     return find_matches(_find_sub_files_recursively(folder), _find_sub_files_recursively(reference_folder))
 
 
-def _find_sub_files_recursively(folder) -> List[str]:
+def _find_sub_files_recursively(folder) -> list[str]:
     result: list = []
     for root, _, files in walk(folder):
         result.extend(relpath(join(root, filename), folder) for filename in files)

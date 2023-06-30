@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2023 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Tuple
+from __future__ import annotations
 
 import numpy as np
 
@@ -27,7 +27,7 @@ class VTPReader(VTKXMLReader):
     def _get_field_data_path(self) -> str:
         return "PolyData/Piece"
 
-    def _make_mesh(self) -> Tuple[Mesh, CellTypeToCellIndices]:
+    def _make_mesh(self) -> tuple[Mesh, CellTypeToCellIndices]:
         points = self._get_point_coordinates()
         cells = []
         sizes = []

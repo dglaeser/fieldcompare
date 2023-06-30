@@ -3,7 +3,7 @@
 
 """Read fields from mesh files with meshio"""
 
-from typing import Union
+from __future__ import annotations
 from os.path import splitext
 from xml.etree import ElementTree
 
@@ -21,7 +21,7 @@ from .. import protocols, FieldDataSequence
 from ..mesh import MeshFields
 
 
-def _read(filename: str) -> Union[protocols.FieldData, protocols.FieldDataSequence]:
+def _read(filename: str) -> protocols.FieldData | protocols.FieldDataSequence:
     if _is_xdmf_sequence(filename):
         return FieldDataSequence(source=_XDMFSequenceSource(filename))
     return meshio_utils.from_meshio(_meshio_read(filename))

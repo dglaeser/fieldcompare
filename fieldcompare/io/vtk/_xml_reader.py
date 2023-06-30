@@ -1,7 +1,8 @@
 # SPDX-FileCopyrightText: 2023 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Dict, Tuple, List, Literal, Optional
+from __future__ import annotations
+from typing import Literal, Dict
 from abc import ABC, abstractmethod
 from xml.etree import ElementTree
 
@@ -14,6 +15,7 @@ from ._encoders import Base64Encoder
 from ._compressors import Compressor, NoCompressor, ZLIBCompressor, LZ4Compressor, LZMACompressor
 
 
+# We need to use Dict over dict here to be compatible with py3.8
 CellTypeToCellIndices = Dict[CellType, np.ndarray]
 
 
@@ -21,7 +23,7 @@ class VTKXMLReader(ABC):
     """Abstract base class for VTK file readers in XML format"""
 
     def __init__(self, filename: str) -> None:
-        self._appendix: Optional[VTKXMLAppendix] = None
+        self._appendix: VTKXMLAppendix | None = None
         try:
             self._xml_element = ElementTree.parse(filename).getroot()
             elem = self._xml_element.find("AppendedData")
@@ -57,7 +59,7 @@ class VTKXMLReader(ABC):
 
         num_cells = sum(len(mesh.connectivity(ct)) for ct in mesh.cell_types)
 
-        def _make_cell_data(elem: ElementTree.Element) -> List[np.ndarray]:
+        def _make_cell_data(elem: ElementTree.Element) -> list[np.ndarray]:
             data = self._make_cell_data_array(elem, mesh, cell_indices)
             assert sum(len(sub_array) for sub_array in data) == num_cells
             return data
@@ -69,7 +71,7 @@ class VTKXMLReader(ABC):
         )
 
     @abstractmethod
-    def _make_mesh(self) -> Tuple[Mesh, CellTypeToCellIndices]:
+    def _make_mesh(self) -> tuple[Mesh, CellTypeToCellIndices]:
         ...
 
     @abstractmethod
@@ -78,8 +80,8 @@ class VTKXMLReader(ABC):
 
     def _make_cell_data_array(
         self, element: ElementTree.Element, mesh: Mesh, index_map: CellTypeToCellIndices
-    ) -> List[np.ndarray]:
-        result: List[np.ndarray] = []
+    ) -> list[np.ndarray]:
+        result: list[np.ndarray] = []
         entire_data_array = self._make_data_array(element)
         for cell_type in mesh.cell_types:
             result.append(entire_data_array[index_map[cell_type]])
@@ -112,7 +114,7 @@ class VTKXMLReader(ABC):
             return elem
         raise ValueError("Path not found in vtk file")
 
-    def _get_field_data_arrays(self, section: str) -> Dict[str, ElementTree.Element]:
+    def _get_field_data_arrays(self, section: str) -> dict[str, ElementTree.Element]:
         path = f"{self._get_field_data_path()}/{section}"
         try:
             xml_element = self._get_element(path)
@@ -181,7 +183,7 @@ class VTKXMLReader(ABC):
         )
 
 
-def _find_appendix_positions(content: bytes) -> Tuple[int, int]:
+def _find_appendix_positions(content: bytes) -> tuple[int, int]:
     start_pos = content.find(b"<AppendedData")
     assert not _is_end(start_pos)
     positions = _find_enclosed_content_range(content, start_pos, b"<", b">")
@@ -203,7 +205,7 @@ def _determine_encoding(content: bytes) -> str:
 
 def _find_enclosed_content_range(
     content: bytes, start_pos: int, open_char: bytes, close_char: bytes
-) -> Optional[Tuple[int, int]]:
+) -> tuple[int, int] | None:
     cur_pos = content.find(open_char, start_pos)
     start_pos = cur_pos + 1
     if _is_end(cur_pos):

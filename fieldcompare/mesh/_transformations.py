@@ -3,8 +3,8 @@
 
 """Mesh permutation functions"""
 
+from __future__ import annotations
 from copy import deepcopy
-from typing import Dict, Optional, List
 
 from .._numpy_utils import (
     Array,
@@ -39,7 +39,7 @@ def extend_space_dimension_to(space_dimension: int, mesh_fields: protocols.MeshF
     if space_dimension < mesh_space_dim:
         raise ValueError("Given space dimension smaller than that of the mesh")
 
-    def _resized_vector(vector: Array) -> List:
+    def _resized_vector(vector: Array) -> list:
         assert len(vector.shape) == 1
         assert vector.shape[0] <= mesh_space_dim
         result = [vector.dtype.type(0) for _ in range(space_dimension)]
@@ -110,7 +110,7 @@ def merge(*mesh_fields: protocols.MeshFields, remove_duplicate_points: bool = Tr
                                  Points and associated field values are taken from those meshes
                                  that come first in the provided list of arguments.
     """
-    result: Optional[protocols.MeshFields] = None
+    result: protocols.MeshFields | None = None
     for i, fields in enumerate(mesh_fields):
         if i == 0:
             result = fields
@@ -212,7 +212,7 @@ def _sorting_points_indices(points, cells, rel_tol: float, abs_tol: float) -> Ar
     return make_array(idx_map)
 
 
-def _get_points_to_cell_indices_map(cells, num_points) -> Dict[CellType, list]:
+def _get_points_to_cell_indices_map(cells, num_points) -> dict[CellType, list]:
     def _get_cells_around_points(_cells) -> list:
         result: list = [[] for _ in range(num_points)]
         for cell_idx, _corners in enumerate(_cells):
@@ -245,7 +245,7 @@ def _merge(
     points = concatenate((fields1.domain.points, fields2.domain.points[points2_filter]))
 
     # merged cell connectivities
-    cells_dict: Dict[CellType, Array] = {
+    cells_dict: dict[CellType, Array] = {
         ct: make_array(fields1.domain.connectivity(ct)) for ct in fields1.domain.cell_types
     }
     for ct in fields2.domain.cell_types:
@@ -259,7 +259,7 @@ def _merge(
 
     # merged cell fields
     raw_cell_field_names = set()
-    cell_fields: Dict[CellType, Dict[str, Array]] = {ct: {} for ct in cells_dict}
+    cell_fields: dict[CellType, dict[str, Array]] = {ct: {} for ct in cells_dict}
     for field, ct in fields1.cell_fields_types:
         raw_field_name = remove_cell_type_suffix(ct, field.name)
         cell_fields[ct][raw_field_name] = field.values
@@ -273,9 +273,9 @@ def _merge(
             cell_fields[ct][raw_field_name] = field.values
 
     # merged point fields
-    point_fields1: Dict[str, Array] = {f.name: f.values for f in fields1.point_fields}
-    point_fields2: Dict[str, Array] = {f.name: f.values[points2_filter] for f in fields2.point_fields}
-    point_fields: Dict[str, Array] = {}
+    point_fields1: dict[str, Array] = {f.name: f.values for f in fields1.point_fields}
+    point_fields2: dict[str, Array] = {f.name: f.values[points2_filter] for f in fields2.point_fields}
+    point_fields: dict[str, Array] = {}
     for name in point_fields1:
         if name in point_fields2:
             point_fields[name] = concatenate((point_fields1[name], point_fields2[name]))
@@ -307,7 +307,7 @@ def _merge(
     )
 
 
-def _map_duplicate_points(source: protocols.Mesh, target: protocols.Mesh) -> Dict[int, int]:
+def _map_duplicate_points(source: protocols.Mesh, target: protocols.Mesh) -> dict[int, int]:
     sort_idx_map_source = get_lex_sorting_index_map(source.points)
 
     def _is_lex_smaller(p1: Array, p2: Array) -> bool:
@@ -318,7 +318,7 @@ def _map_duplicate_points(source: protocols.Mesh, target: protocols.Mesh) -> Dic
                 return False
         return False
 
-    def _find_candidate(target_point: Array) -> Optional[int]:
+    def _find_candidate(target_point: Array) -> int | None:
         lower = 0
         upper = len(source.points)
         while lower < upper:
@@ -344,7 +344,7 @@ def _filter_external_indices(num_values: int, external_indices) -> Array:
     return make_array([i for i in range(num_values) if i not in external_indices])
 
 
-def _map_external_indices(num_values: int, external_indices_map: Dict[int, int], external_indices_offset: int) -> Array:
+def _map_external_indices(num_values: int, external_indices_map: dict[int, int], external_indices_offset: int) -> Array:
     result = make_array([i for i in range(num_values)])
     mapped_index_offset = 0
     for i in range(num_values):

@@ -3,7 +3,8 @@
 
 """Class to represent permuted computational meshes"""
 
-from typing import Iterable, Optional, Dict, Union
+from __future__ import annotations
+from typing import Iterable
 from numbers import Integral
 
 from .._numpy_utils import Array, max_element, make_array, make_uninitialized_array
@@ -29,15 +30,15 @@ class PermutedMesh:
     def __init__(
         self,
         mesh: protocols.Mesh,
-        point_permutation: Optional[Array] = None,
-        cell_permutations: Optional[Dict[CellType, Array]] = None,
+        point_permutation: Array | None = None,
+        cell_permutations: dict[CellType, Array] | None = None,
     ) -> None:
         self._mesh = mesh
         self._point_permutation = point_permutation
         self._cell_permutations = cell_permutations
         self._inverse_point_permutation = self._make_inverse_point_permutation()
-        self._abs_tol: Optional[float] = None
-        self._rel_tol: Optional[float] = None
+        self._abs_tol: float | None = None
+        self._rel_tol: float | None = None
 
     @property
     def absolute_tolerance(self) -> float:
@@ -112,8 +113,8 @@ class PermutedMesh:
 
     def set_tolerances(
         self,
-        abs_tol: Optional[Union[float, DynamicTolerance]] = None,
-        rel_tol: Optional[Union[float, DynamicTolerance]] = None,
+        abs_tol: float | DynamicTolerance | None = None,
+        rel_tol: float | DynamicTolerance | None = None,
     ) -> None:
         """
         Set the tolerances to be used for equality checks against other meshes.
@@ -125,12 +126,12 @@ class PermutedMesh:
         self._rel_tol = self._rel_tol if rel_tol is None else self._get_tolerance(rel_tol)
         self._abs_tol = self._abs_tol if abs_tol is None else self._get_tolerance(abs_tol)
 
-    def _get_tolerance(self, tol: Union[float, DynamicTolerance]) -> float:
+    def _get_tolerance(self, tol: float | DynamicTolerance) -> float:
         result = tol(self._mesh.points, self._mesh.points) if isinstance(tol, DynamicTolerance) else tol
         assert isinstance(result, float)
         return result
 
-    def _make_inverse_point_permutation(self) -> Optional[Array]:
+    def _make_inverse_point_permutation(self) -> Array | None:
         if self._point_permutation is None:
             return None
         index_map = self._point_permutation

@@ -4,7 +4,6 @@
 """Domain implementation for tabular data."""
 
 from __future__ import annotations
-from typing import Optional
 
 from .._numpy_utils import Array, ArrayLike, as_array, is_index_array
 from ..predicates import PredicateResult
@@ -20,7 +19,7 @@ class Table:
         idx_map: The index map with which to reorder/filter the tabular data (optional).
     """
 
-    def __init__(self, num_rows: Optional[int] = None, idx_map: Optional[ArrayLike] = None) -> None:
+    def __init__(self, num_rows: int | None = None, idx_map: ArrayLike | None = None) -> None:
         self._idx_map = as_array(idx_map) if idx_map is not None else idx_map
         if self._idx_map is not None:
             self._num_rows = len(self._idx_map)
@@ -39,7 +38,7 @@ class Table:
         return self._num_rows
 
     @property
-    def indices(self) -> Optional[Array]:
+    def indices(self) -> Array | None:
         """Return the index map used for filtering the data columns."""
         return self._idx_map
 

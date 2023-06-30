@@ -6,7 +6,7 @@
 from __future__ import annotations
 from itertools import chain
 from numpy import nan
-from typing import Iterator, Iterable, Dict, List, Tuple, Callable, Protocol, runtime_checkable
+from typing import Iterator, Iterable, Callable, Protocol, runtime_checkable
 
 from .._numpy_utils import Array, as_array, make_array
 from .._field import Field
@@ -44,7 +44,7 @@ class MeshFields(fc_protocols.FieldData):
     """
 
     def __init__(
-        self, mesh: protocols.Mesh, point_data: Dict[str, Array] = {}, cell_data: Dict[str, List[Array]] = {}
+        self, mesh: protocols.Mesh, point_data: dict[str, Array] = {}, cell_data: dict[str, list[Array]] = {}
     ) -> None:
         self._mesh = mesh
         self._point_data = {name: self._make_point_values(data) for name, data in point_data.items()}
@@ -76,7 +76,7 @@ class MeshFields(fc_protocols.FieldData):
         return (_tup[0] for _tup in self.cell_fields_types)
 
     @property
-    def cell_fields_types(self) -> Iterable[Tuple[Field, CellType]]:
+    def cell_fields_types(self) -> Iterable[tuple[Field, CellType]]:
         """Return a range over cell fields + associated cell type."""
         return (
             (Field(make_cell_type_field_name(cell_type, name), self._cell_data[name][cell_type]), cell_type)
@@ -160,7 +160,7 @@ class TransformedMeshFields(fc_protocols.FieldData):
         return (_tup[0] for _tup in self.cell_fields_types)
 
     @property
-    def cell_fields_types(self) -> Iterable[Tuple[Field, CellType]]:
+    def cell_fields_types(self) -> Iterable[tuple[Field, CellType]]:
         """Return a range over cell field / cell type tuples"""
         return (
             (self._get_permuted_cell_field(cell_type, field), cell_type)
@@ -183,7 +183,7 @@ def _subtract(fields1: protocols.MeshFields, fields2: protocols.MeshFields) -> M
         raise RuntimeError("Can only subtract mesh fields defined on the same mesh")
 
     point_field_matches = find_matches_by_name(list(fields1.point_fields), list(fields2.point_fields))
-    point_data: Dict[str, Array] = {}
+    point_data: dict[str, Array] = {}
     for field1, field2 in point_field_matches.matches:
         if field1.values.shape != field2.values.shape:
             raise RuntimeError("Cannot subtract arrays with differing shape")
@@ -196,7 +196,7 @@ def _subtract(fields1: protocols.MeshFields, fields2: protocols.MeshFields) -> M
         point_data[field2.name].fill(nan)
 
     cell_field_matches = find_matches_by_name(list(fields1.cell_fields), list(fields2.cell_fields))
-    cell_data: Dict[str, Dict[CellType, Array]] = {}
+    cell_data: dict[str, dict[CellType, Array]] = {}
     for field1, field2 in cell_field_matches.matches:
         if field1.values.shape != field2.values.shape:
             raise RuntimeError("Cannot subtract arrays with differing shape")

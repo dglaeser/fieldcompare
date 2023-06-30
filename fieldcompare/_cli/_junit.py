@@ -3,7 +3,7 @@
 
 """Helper function to write junit test reports"""
 
-from typing import Optional
+from __future__ import annotations
 from xml.etree.ElementTree import Element, SubElement
 
 from .._format import remove_color_codes
@@ -56,7 +56,7 @@ def _add_test_case(test_suite: Element, test: TestResult, classname: str) -> Non
         stderr.text = stdout.text
 
 
-def _set_with_message(test_case: Element, child: str, msg: str, stdout: Optional[str] = None) -> None:
+def _set_with_message(test_case: Element, child: str, msg: str, stdout: str | None = None) -> None:
     test_case = SubElement(test_case, child)
     test_case.set("message", msg)
     if stdout is not None:

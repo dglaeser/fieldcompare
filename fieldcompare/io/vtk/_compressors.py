@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: 2023 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from __future__ import annotations
+
 import abc
 import zlib
 import lzma
@@ -55,7 +57,7 @@ class CompressorBase(abc.ABC):
             raw_block_size=raw_block_size,
         )
 
-    def _read_header(self, data: bytes, encoder: Encoder) -> typing.Tuple[np.ndarray, int]:
+    def _read_header(self, data: bytes, encoder: Encoder) -> tuple[np.ndarray, int]:
         decoded_header_bytes = int(self._header_type.itemsize) * 3
         encoded_header_bytes = encoder.encoded_bytes(decoded_header_bytes)
         header = np.frombuffer(

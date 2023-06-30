@@ -3,7 +3,8 @@
 
 """Array representing field values and associated helper functions"""
 
-from typing import Iterable, Sequence, Tuple, Optional, Union, SupportsIndex
+from __future__ import annotations
+from typing import Iterable, Sequence, SupportsIndex, Union
 
 import numpy as np
 from numpy import ndarray
@@ -13,7 +14,7 @@ from numpy.lib.index_tricks import ndindex
 
 Array = ndarray
 ArrayLike = np_arraylike
-ArrayTolerance = Union[float, Array]
+ArrayTolerance = Union[float, Array]  # Union required for compatibility with 3.8
 
 
 def make_uninitialized_array(size: int, dtype=None) -> Array:
@@ -26,7 +27,7 @@ def make_initialized_array(size: int, init_value, dtype=None) -> Array:
     return result
 
 
-def make_zeros(shape: Tuple[int, ...], dtype=None) -> Array:
+def make_zeros(shape: tuple[int, ...], dtype=None) -> Array:
     return np.zeros(shape, dtype)
 
 
@@ -35,7 +36,7 @@ def make_array(input_array: ArrayLike, dtype=None) -> Array:
     return np.array(input_array, dtype=dtype)
 
 
-def as_array(input_array: Union[Array, ArrayLike]) -> Array:
+def as_array(input_array: Array | ArrayLike) -> Array:
     """Return an array with the values of the given input sequence"""
     if isinstance(input_array, Array):
         return input_array
@@ -77,7 +78,7 @@ def is_index_array(input_array: Array) -> bool:
     return input_array.dtype in [np.int8, np.int16, np.int32, np.int64]
 
 
-def as_string(input: ArrayLike, digits: Optional[int] = None) -> str:
+def as_string(input: ArrayLike, digits: int | None = None) -> str:
     """Return the string representation of the given array-like value"""
     if digits is not None:
         with np.printoptions(floatmode="fixed", precision=digits):
@@ -104,7 +105,7 @@ def get_adjacent_fuzzy_equal_indices(values: Array, abs_tol: float, rel_tol: flo
     return append_to_array(result, False)
 
 
-def any_true(input_array: Array, axis: Optional[SupportsIndex] = None):
+def any_true(input_array: Array, axis: SupportsIndex | None = None):
     """Check whether any entry of a boolean array is true along the given axis."""
     return np.any(input_array, axis=axis)
 
@@ -135,7 +136,7 @@ def get_fuzzy_lex_sorting_index_map(input_array: Array, abs_tol: float, rel_tol:
     return idx_map
 
 
-def walk_adjacent_true_index_ranges(bool_array: Array, include_upper_edge: bool = True) -> Iterable[Tuple[int, int]]:
+def walk_adjacent_true_index_ranges(bool_array: Array, include_upper_edge: bool = True) -> Iterable[tuple[int, int]]:
     """Get an iterable over index chunks for which the given boolean array is true"""
     begin, end, in_true_block = 0, 0, False
     for i in range(len(bool_array)):
@@ -151,7 +152,7 @@ def get_sorting_index_map(input_array: Array) -> Array:
     return np.argsort(input_array)
 
 
-def max_element(input_array: Array) -> Union[np.number, Array]:
+def max_element(input_array: Array) -> np.number | Array:
     """Return an array of shape `input_array.shape[1:]` with the maximum entries of the given array."""
     if len(input_array.shape) < 2:
         return input_array[np.argmax(input_array)]
@@ -163,7 +164,7 @@ def max_element(input_array: Array) -> Union[np.number, Array]:
     return result
 
 
-def max_abs_element(input_array: Array) -> Union[np.number, Array]:
+def max_abs_element(input_array: Array) -> np.number | Array:
     """Return an array of shape `input_array.shape[1:]` with the maximum absolute entries of the given array."""
     return max_element(np.abs(input_array))
 
@@ -209,7 +210,7 @@ def abs_diff(first: Array, second: Array) -> Array:
     return abs_array(second - first)
 
 
-def find_first_unequal(first: Array, second: Array) -> Optional[Tuple]:
+def find_first_unequal(first: Array, second: Array) -> tuple | None:
     """Search for the first unequal pair of values in the given array."""
     try:
         # this only works for single-type arrays (but is fast)
@@ -258,7 +259,7 @@ def fuzzy_equal(first: Array, second: Array, rel_tol: ArrayTolerance, abs_tol: A
 
 def find_first_fuzzy_unequal(
     first: Array, second: Array, rel_tol: ArrayTolerance, abs_tol: ArrayTolerance
-) -> Optional[Tuple]:
+) -> tuple | None:
     """Search for the first fuzzy-unequal pair of values in the given array."""
     try:
         # this works if all entries have the same shape store fuzzy-comparable types
@@ -282,7 +283,7 @@ def find_first_fuzzy_unequal(
     return None
 
 
-def _get_first_false_pair(bool_array: Array, first: Array, second: Array) -> Tuple:
+def _get_first_false_pair(bool_array: Array, first: Array, second: Array) -> tuple:
     for idx, predicate_result in enumerate(bool_array):
         if not np.all(predicate_result):
             return first[idx], second[idx]

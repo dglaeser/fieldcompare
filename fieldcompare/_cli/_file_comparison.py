@@ -3,8 +3,9 @@
 
 """Class to compare two files using the CLI options"""
 
+from __future__ import annotations
 from pathlib import Path
-from typing import Union, List, Callable, Optional
+from typing import Callable
 from dataclasses import dataclass
 
 from ..predicates import DefaultEquality
@@ -31,17 +32,14 @@ from .. import protocols
 from ..mesh import protocols as mesh_protocols
 
 
-Tolerance = Union[float, DynamicTolerance]
-
-
 @dataclass
 class FileComparisonOptions:
     ignore_missing_source_fields: bool = False
     ignore_missing_reference_fields: bool = False
     ignore_missing_sequence_steps: bool = False
     force_sequence_comparison: bool = False
-    relative_tolerances: Callable[[str], Optional[Tolerance]] = lambda _: _default_base_tolerance()
-    absolute_tolerances: Callable[[str], Optional[Tolerance]] = lambda _: 0.0
+    relative_tolerances: Callable[[str], float | DynamicTolerance | None] = lambda _: _default_base_tolerance()
+    absolute_tolerances: Callable[[str], float | DynamicTolerance | None] = lambda _: 0.0
     field_inclusion_filter: Callable[[str], bool] = lambda _: True
     field_exclusion_filter: Callable[[str], bool] = lambda _: False
     disable_unconnected_points_removal: bool = False
@@ -82,12 +80,12 @@ class FileComparison:
         except Exception as e:
             self._logger.log(f"Error when computing diff: '{e}'")
 
-    def _get_diff_filename(self, res_file: str) -> Optional[str]:
+    def _get_diff_filename(self, res_file: str) -> str | None:
         if not self._write_diff:
             return None
         return str(Path(res_file).parent / f"diff_{Path(res_file).name}")
 
-    def _read(self, filename: str) -> Union[protocols.FieldData, protocols.FieldDataSequence]:
+    def _read(self, filename: str) -> protocols.FieldData | protocols.FieldDataSequence:
         try:
             file_type_with_opts = self._opts.file_type_map(filename)
             log_suffix = f" as '{file_type_with_opts[0]}'" if file_type_with_opts is not None else ""
@@ -103,9 +101,9 @@ class FileComparison:
 
     def _compare_fields(
         self,
-        res_fields: Union[protocols.FieldData, protocols.FieldDataSequence],
-        ref_fields: Union[protocols.FieldData, protocols.FieldDataSequence],
-        diff_filename: Optional[str] = None,
+        res_fields: protocols.FieldData | protocols.FieldDataSequence,
+        ref_fields: protocols.FieldData | protocols.FieldDataSequence,
+        diff_filename: str | None = None,
     ) -> TestSuite:
         if isinstance(res_fields, protocols.FieldData) and isinstance(ref_fields, protocols.FieldData):
             result = self._compare_field_data(res_fields, ref_fields)
@@ -128,9 +126,9 @@ class FileComparison:
         self,
         res_sequence: protocols.FieldDataSequence,
         ref_sequence: protocols.FieldDataSequence,
-        diff_basefilename: Optional[str] = None,
+        diff_basefilename: str | None = None,
     ) -> TestSuite:
-        num_steps_check: Optional[TestStatus] = None
+        num_steps_check: TestStatus | None = None
         num_steps_check_fail_msg = "Sequences have differing lengths"
         if res_sequence.number_of_steps != ref_sequence.number_of_steps:
             if not self._opts.ignore_missing_sequence_steps:
@@ -142,7 +140,7 @@ class FileComparison:
                 self._logger.log(f"{as_warning('Warning')}: {num_steps_check_fail_msg}, comparing only common steps\n")
 
         def _merge_test_suites(s1: TestSuite, s2: TestSuite, i: int) -> TestSuite:
-            def _merged_result(r1: Optional[TestStatus], r2: Optional[TestStatus]) -> Optional[TestStatus]:
+            def _merged_result(r1: TestStatus | None, r2: TestStatus | None) -> TestStatus | None:
                 if any(r == TestStatus.failed for r in [r1, r2]):
                     return TestStatus.failed
                 if any(r == TestStatus.error for r in [r1, r2]):
@@ -303,7 +301,7 @@ class FileComparison:
 
 
 def _make_test_suite(
-    tests: List[TestResult], status: Optional[TestStatus], name: Optional[str] = None, shortlog: str = ""
+    tests: list[TestResult], status: TestStatus | None, name: str | None = None, shortlog: str = ""
 ) -> TestSuite:
     return TestSuite(name=name, tests=tests, status=status, shortlog=shortlog)
 

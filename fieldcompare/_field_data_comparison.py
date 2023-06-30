@@ -3,8 +3,10 @@
 
 """Functionality for field data comparisons"""
 
+from __future__ import annotations
+
 import sys
-from typing import Callable, Optional, List, Tuple, Iterator, Any, TextIO
+from typing import Callable, Iterator, Any, TextIO
 from dataclasses import dataclass
 from enum import Enum, auto
 from itertools import chain
@@ -58,7 +60,7 @@ class FieldComparison:
     status: FieldComparisonStatus
     predicate: str
     report: str
-    cpu_time: Optional[float] = None
+    cpu_time: float | None = None
 
     def __bool__(self) -> bool:
         """Return true if the field comparison is considered successful."""
@@ -79,11 +81,11 @@ class FieldComparisonSuite:
         comparisons: Results of all performed field comparisons.
     """
 
-    def __init__(self, domain_eq_check: PredicateResult, comparisons: List[FieldComparison] = []) -> None:
+    def __init__(self, domain_eq_check: PredicateResult, comparisons: list[FieldComparison] = []) -> None:
         self._domain_eq_check = domain_eq_check
-        self._passed: List[FieldComparison] = []
-        self._failed: List[FieldComparison] = []
-        self._skipped: List[FieldComparison] = []
+        self._passed: list[FieldComparison] = []
+        self._failed: list[FieldComparison] = []
+        self._skipped: list[FieldComparison] = []
         for c in comparisons:
             if c.status == FieldComparisonStatus.passed:
                 self._passed.append(c)
@@ -134,17 +136,17 @@ class FieldComparisonSuite:
         return self._domain_eq_check
 
     @property
-    def passed(self) -> List[FieldComparison]:
+    def passed(self) -> list[FieldComparison]:
         """Return a range over all passed comparisons."""
         return self._passed
 
     @property
-    def failed(self) -> List[FieldComparison]:
+    def failed(self) -> list[FieldComparison]:
         """Return a range over all failed comparisons."""
         return self._failed
 
     @property
-    def skipped(self) -> List[FieldComparison]:
+    def skipped(self) -> list[FieldComparison]:
         """Return a range over all skipped comparisons."""
         return self._skipped
 
@@ -275,7 +277,7 @@ class FieldDataComparator:
         comparisons.extend(self._filtered_comparisons(filtered))
         return FieldComparisonSuite(domain_eq_check=domain_eq_check, comparisons=comparisons)
 
-    def _filter_matches(self, query: MatchResult) -> Tuple[MatchResult, List[Field]]:
+    def _filter_matches(self, query: MatchResult) -> tuple[MatchResult, list[Field]]:
         filtered = []
         matching_pairs = []
         for _, (source, target) in enumerate(query.matches):
@@ -290,7 +292,7 @@ class FieldDataComparator:
 
     def _compare_matches(
         self, query: MatchResult, predicate_selector: PredicateSelector, fieldcomp_callback: FieldComparisonCallback
-    ) -> List[FieldComparison]:
+    ) -> list[FieldComparison]:
         comparisons = []
         for source, reference in query.matches:
             predicate = predicate_selector(self._without_annotation(source), self._without_annotation(reference))
@@ -324,7 +326,7 @@ class FieldDataComparator:
             cpu_time=None,
         )
 
-    def _missing_source_comparisons(self, query: MatchResult) -> List[FieldComparison]:
+    def _missing_source_comparisons(self, query: MatchResult) -> list[FieldComparison]:
         return [
             FieldComparison(
                 name=field.name,
@@ -335,7 +337,7 @@ class FieldDataComparator:
             for field in query.orphans_in_reference
         ]
 
-    def _missing_reference_comparisons(self, query: MatchResult) -> List[FieldComparison]:
+    def _missing_reference_comparisons(self, query: MatchResult) -> list[FieldComparison]:
         return [
             FieldComparison(
                 name=field.name,
@@ -346,7 +348,7 @@ class FieldDataComparator:
             for field in query.orphans_in_source
         ]
 
-    def _filtered_comparisons(self, filtered: List[Field]) -> List[FieldComparison]:
+    def _filtered_comparisons(self, filtered: list[Field]) -> list[FieldComparison]:
         return [
             FieldComparison(
                 name=field.name,
