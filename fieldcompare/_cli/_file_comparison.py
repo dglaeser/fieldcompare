@@ -88,7 +88,7 @@ class FileComparison:
             diff = res_fields.diff_to(ref_fields)
             diff_filename = write(diff, diff_basefilename)
             self._logger.log(f"Wrote diff into '{highlighted(diff_filename)}'\n", verbosity_level=1)
-        except RuntimeError as e:
+        except Exception as e:
             self._logger.log(f"Error when computing diff: '{e}'")
 
     def _get_diff_filename(self, res_file: str) -> Optional[str]:
