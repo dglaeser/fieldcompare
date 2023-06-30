@@ -11,6 +11,13 @@ def vtk_type_to_dtype(vtk_type: str) -> np.dtype:
     return np.dtype(_VTK_TYPE_TO_DTYPE[vtk_type])
 
 
+def dtype_to_vtk_type(dtype) -> str:
+    for name, _dtype in _VTK_TYPE_TO_DTYPE.items():
+        if _dtype == dtype:
+            return name
+    raise RuntimeError("Could not determine vtk data type for" + str(dtype))
+
+
 def vtk_cell_type_index_to_cell_type(vtk_cell_type: int) -> CellType:
     return CellType.from_name(_VTK_CELL_TYPE_TO_STR[vtk_cell_type])
 

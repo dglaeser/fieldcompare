@@ -9,7 +9,9 @@ from shutil import rmtree, copytree, copy
 from pathlib import Path
 from io import StringIO
 from xml.etree import ElementTree
+from time import sleep
 
+from fieldcompare.io import read
 from fieldcompare._cli import main
 from fieldcompare._cli._logger import CLILogger
 from data.generate_test_meshes import _make_test_mesh, _perturb_mesh
@@ -27,6 +29,26 @@ def test_cli_file_mode_pass():
         str(TEST_DATA_PATH / Path("test_mesh.vtu")),
         str(TEST_DATA_PATH / Path("test_mesh.vtu"))
     ]) == 0
+
+
+def test_cli_file_mode_with_diff_output():
+    assert main([
+        "file",
+        str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+        str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+        "--diff",
+    ]) == 0
+    assert main([
+        "file",
+        str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+        str(TEST_DATA_PATH / Path("test_mesh.vtu")),
+        "--diff",
+    ]) == 0
+    diff_files = list(f for f in listdir(TEST_DATA_PATH) if "diff_test_mesh" in f)
+    assert len(diff_files) == 1
+    diff_file_path = str(Path(TEST_DATA_PATH) / diff_files[0])
+    _ = read(diff_file_path)
+    remove(diff_file_path)
 
 
 def test_cli_file_mode_reader_selection():
@@ -447,6 +469,26 @@ def test_cli_file_mode_missing_sequences_steps_force_comparison():
 
 def test_cli_directory_mode_pass():
     assert main(["dir", str(TEST_DATA_PATH), str(TEST_DATA_PATH)]) == 0
+
+
+def test_cli_directory_with_diff_output():
+    tmp_results_path = TEST_DATA_PATH.resolve().parent / Path("test_cli_directory_with_diff_output_results_data")
+    rmtree(tmp_results_path, ignore_errors=True)
+    makedirs(tmp_results_path)
+    for file in filter(lambda f: splitext(f) in [".vtu", ".csv"], listdir(TEST_DATA_PATH)):
+        copy(TEST_DATA_PATH / file, tmp_results_path / file)
+
+    num_files = sum(1 for _ in listdir(tmp_results_path))
+    assert main([
+        "dir",
+        str(tmp_results_path),
+        str(tmp_results_path),
+        "--diff"
+    ]) == 0
+
+    diff_files = list(f for f in listdir(tmp_results_path) if splitext(f)[0].startswith("diff_"))
+    rmtree(tmp_results_path)
+    assert len(diff_files) == num_files
 
 
 def test_cli_directory_mode_arg_is_not_a_directory():

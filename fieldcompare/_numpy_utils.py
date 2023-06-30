@@ -91,6 +91,10 @@ def flatten(input_array) -> Array:
     return input_array.flatten()
 
 
+def to_bytes(input_array: Array) -> bytes:
+    return input_array.tobytes()
+
+
 def accumulate(input_array: Array, axis: SupportsIndex = 0) -> Array:
     return np.sum(input_array, axis=axis)
 

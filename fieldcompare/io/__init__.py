@@ -12,6 +12,9 @@ from . import vtk
 from ._csv_reader import CSVFieldReader
 from ._mesh_io import _read as _meshio_read, _is_supported as _supported_by_meshio, _HAVE_MESHIO
 
+from ..tabular import TabularFields
+from ..mesh.protocols import MeshFields
+
 
 __all__ = ["read_field_data", "read", "read_as", "is_supported"]
 
@@ -30,6 +33,22 @@ def read_field_data(filename: str, options: Dict[str, dict] = {}) -> protocols.F
     result = read(filename, options)
     assert isinstance(result, protocols.FieldData)
     return result
+
+
+def write(fields: protocols.FieldData, filename: str) -> str:
+    """
+    Write the given field data into a file with the given base name and return the name of the written file.
+
+    Args:
+        fields: The fields to be written out
+        filename: The name of the file in which to write the fields (without file extension).
+    """
+    if isinstance(fields, MeshFields):
+        return _write_mesh(fields, filename)
+    elif isinstance(fields, TabularFields):
+        return _write_table(fields, filename)
+    else:
+        raise NotImplementedError("no write function implemented for given field data type")
 
 
 def read(filename: str, options: Dict[str, dict] = {}) -> Union[protocols.FieldData, protocols.FieldDataSequence]:
@@ -73,7 +92,7 @@ def is_supported(filename: str) -> bool:
     Args:
         filename: Path to the file for which to check if it is supported.
     """
-    return vtk.is_supported(filename) or splitext(filename)[1] == ".csv" or _supported_by_meshio(filename)
+    return splitext(filename)[1] == ".csv" or _is_supported_mesh_file(filename)
 
 
 def _unsupported_file_error_message(filename: str) -> str:
@@ -104,3 +123,17 @@ def _read_mesh_file(filename: str, **kwargs) -> Union[protocols.FieldData, proto
 
 def _read_dsv_file(filename: str, **kwargs) -> protocols.FieldData:
     return CSVFieldReader(**kwargs).read(filename)
+
+
+def _write_mesh(fields: MeshFields, filename: str) -> str:
+    return vtk.VTUWriter(fields).write(filename)
+
+
+def _write_table(fields: TabularFields, filename: str) -> str:
+    filename_with_ext = f"{filename}.csv"
+    with open(filename_with_ext, "w") as csv_file:
+        field_map = {f.name: f.values for f in fields}
+        csv_file.write(",".join(field_map.keys()) + "\n")
+        for row in range(fields.domain.number_of_rows):
+            csv_file.write(",".join(str(field_map[key][row]) for key in field_map) + "\n")
+    return filename_with_ext

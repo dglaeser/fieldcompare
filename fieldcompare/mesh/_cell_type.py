@@ -50,7 +50,10 @@ class CellType:
         Args:
             name: The cell type name.
         """
-        return CellType(_CELL_TYPE_STR_TO_INDEX[name])
+        try:
+            return CellType(_CELL_TYPE_STR_TO_INDEX[name])
+        except KeyError:
+            raise ValueError(f"Unknown cell type with name '{name}'")
 
 
 class CellTypes:

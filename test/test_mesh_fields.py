@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from os import remove
-from numpy import array
+from numpy import array, isnan
+from pytest import approx
 
 try:
     import meshio
@@ -116,6 +117,28 @@ def test_merge_mesh_fields():
         as_meshio = meshio.read(tmp_file_name)
         as_fields = meshio_utils.from_meshio(as_meshio)
         comparator = FieldDataComparator(as_fields, result)
-        print(comparator().domain_equality_check)
         assert comparator()
         remove(tmp_file_name)
+
+
+def test_mesh_fields_diff():
+    mesh = Mesh(
+        points=[[float(i), 0.0] for i in range(3)],
+        connectivity=([(CellTypes.line, [[0, 1], [1, 2]])])
+    )
+    mesh_fields1 = MeshFields(
+        mesh=mesh,
+        point_data={"pd": [42.0, 43.0, 44.0]},
+        cell_data={"cd": [[42.0, 43.0]]}
+    )
+    mesh_fields2 = MeshFields(
+        mesh=mesh,
+        point_data={"pd": [41.0, 43.0, 44.0]}
+    )
+    diff_fields = mesh_fields1.diff_to(mesh_fields2)
+    point_fields = {f.name: f.values for f in diff_fields.point_fields}
+    cell_fields = {f.name: f.values for f in diff_fields.cell_fields}
+    assert len(point_fields) == 1
+    assert len(cell_fields) == 1
+    assert list(point_fields.values())[0] == approx([-1.0, 0.0, 0.0])
+    assert all(isnan(value) for value in list(cell_fields.values())[0])

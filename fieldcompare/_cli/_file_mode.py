@@ -35,6 +35,7 @@ def _add_arguments(parser: ArgumentParser):
     _add_mesh_reorder_options_args(parser)
     _add_junit_export_arg(parser)
     _add_reader_selection_options_args(parser)
+    _add_diff_output_options_args(parser)
 
 
 def _run(args: dict, in_logger: CLILogger) -> int:
@@ -56,7 +57,7 @@ def _run(args: dict, in_logger: CLILogger) -> int:
     )
 
     try:
-        comparator = FileComparison(opts, logger)
+        comparator = FileComparison(opts, logger, args["diff"])
         cpu_time, test_suite = _measure_time(comparator)(args["source"], args["reference"])
         passed = bool(test_suite)
         logger.log("\n")
@@ -202,4 +203,15 @@ def _add_reader_selection_options_args(parser: ArgumentParser) -> None:
 def _add_junit_export_arg(parser: ArgumentParser) -> None:
     parser.add_argument(
         "--junit-xml", required=False, help="Pass the filename into which a junit report should be written"
+    )
+
+
+def _add_diff_output_options_args(parser: ArgumentParser) -> None:
+    parser.add_argument(
+        "-d",
+        "--diff",
+        required=False,
+        action="store_true",
+        help="If set to true, the differences between fields in compared files are written to disk next to the source "
+        "fields file (with suffix `_diff`). The differences are computed as `reference - source`",
     )
