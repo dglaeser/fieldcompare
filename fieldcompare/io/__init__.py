@@ -92,7 +92,7 @@ def is_supported(filename: str) -> bool:
     Args:
         filename: Path to the file for which to check if it is supported.
     """
-    return vtk.is_supported(filename) or splitext(filename)[1] == ".csv" or _supported_by_meshio(filename)
+    return splitext(filename)[1] == ".csv" or _is_supported_mesh_file(filename)
 
 
 def _unsupported_file_error_message(filename: str) -> str:
