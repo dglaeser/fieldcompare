@@ -6,7 +6,7 @@
 ## Features
 
 - __I/O__: output capabilities for tabular and mesh field data was added. The former is written into `.csv` files, while for the latter a writer for the `.vtu` file format was added.
-- __FieldData__: The `FieldData` protocol was enhanced by a `diff_to` function that computes the difference to given data. That is, `my_field_data.diff_to(reference)` returns a `FieldData` object that contains the differences `reference_${FIELD} - my_data_${FIELD}`.
+- __FieldData__: The `FieldData` protocol was enhanced by a `diff_to` function that computes the difference to given data. That is, `my_field_data.diff_to(reference)` returns a `FieldData` object that contains the differences `reference_${FIELD} - my_field_data_${FIELD}`.
 Both `MeshFields` and `TabularFields` have been enhanced by corresponding implementations. An example for computing and writing the diff between to `FieldData` instances may look like this:
 ```py
 from fieldcompare.io import write, read_field_data
