@@ -12,7 +12,7 @@ from .._common import _measure_time
 
 from ._junit import as_junit_xml_element
 from ._logger import CLILogger
-from ._file_comparison import FileComparison, FileComparisonOptions, DiffOutputOptions
+from ._file_comparison import FileComparison, FileComparisonOptions
 
 from ._common import (
     PatternFilter,
@@ -57,9 +57,7 @@ def _run(args: dict, in_logger: CLILogger) -> int:
     )
 
     try:
-        comparator = FileComparison(
-            opts, logger, DiffOutputOptions((args["diff"] or args["diff_overwrite"]), args["diff_overwrite"])
-        )
+        comparator = FileComparison(opts, logger, args["diff"])
         cpu_time, test_suite = _measure_time(comparator)(args["source"], args["reference"])
         passed = bool(test_suite)
         logger.log("\n")
@@ -214,14 +212,6 @@ def _add_diff_output_options_args(parser: ArgumentParser) -> None:
         "--diff",
         required=False,
         action="store_true",
-        help="If set to true, the differences between fields are written to disk. "
-        "The filenames for the diffs are made unique by incorporating the current timestamp. "
-        "The differences are computed as `reference - source`",
-    )
-    parser.add_argument(
-        "-dx",
-        "--diff-overwrite",
-        required=False,
-        action="store_true",
-        help="Same as '--diff', but uses non-unique filenames and thus may overwrite diff files from previous runs.",
+        help="If set to true, the differences between fields in compared files are written to disk next to the source "
+        "fields file (with suffix `_diff`). The differences are computed as `reference - source`",
     )

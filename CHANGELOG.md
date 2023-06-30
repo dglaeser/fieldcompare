@@ -19,4 +19,4 @@ reference = read_field_data("../test/data/test_mesh_permutated_perturbed.vtu")
 diff = sort(source).diff(sort(reference))
 write(diff, "diff_file")
 ```
-- __CLI__: The cli (both `file` and `dir` mode) was enhanced to take a `--diff` flag. If used, the difference between the fields for each pair of compared files is written to disk into files with unique filenames. A second flag `--diff-overwrite` was added, which does the same but overwrites diffs written in previous runs.
+- __CLI__: The cli (both `file` and `dir` mode) was enhanced to take a `--diff` flag. If used, the difference between the fields for each pair of compared files is written to disk next to the source fields file (with suffix `_diff`).

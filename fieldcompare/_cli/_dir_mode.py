@@ -39,7 +39,7 @@ from ._file_mode import (
 )
 
 from ._test_suite import TestSuite, TestResult, TestStatus
-from ._file_comparison import FileComparisonOptions, FileComparison, DiffOutputOptions, _suite_name
+from ._file_comparison import FileComparisonOptions, FileComparison, _suite_name
 
 
 def _add_arguments(parser: ArgumentParser):
@@ -196,11 +196,7 @@ def _do_file_comparisons(args, filenames: Iterable[str], logger: CLILogger) -> F
         )
         try:
             sub_logger = logger.with_prefix("  ")
-            comparator = FileComparison(
-                opts,
-                sub_logger.with_modified_verbosity(-1),
-                DiffOutputOptions((args["diff"] or args["diff_overwrite"]), args["diff_overwrite"]),
-            )
+            comparator = FileComparison(opts, sub_logger.with_modified_verbosity(-1), args["diff"])
             cpu_time, test_suite = _measure_time(comparator)(res_file, ref_file)
             file_comparisons.append(
                 (

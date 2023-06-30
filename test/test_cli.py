@@ -38,33 +38,11 @@ def test_cli_file_mode_with_diff_output():
         str(TEST_DATA_PATH / Path("test_mesh.vtu")),
         "--diff",
     ]) == 0
-    sleep(2)
     assert main([
         "file",
         str(TEST_DATA_PATH / Path("test_mesh.vtu")),
         str(TEST_DATA_PATH / Path("test_mesh.vtu")),
         "--diff",
-    ]) == 0
-    diff_files = list(f for f in listdir(TEST_DATA_PATH) if "test_mesh_vtu_diff_" in f)
-    assert len(diff_files) == 2
-    for diff_file in diff_files:
-        diff_file_path = str(Path(TEST_DATA_PATH) / diff_file)
-        _ = read(diff_file_path)
-        remove(diff_file_path)
-
-
-def test_cli_file_mode_with_overwritten_diff_output():
-    assert main([
-        "file",
-        str(TEST_DATA_PATH / Path("test_mesh.vtu")),
-        str(TEST_DATA_PATH / Path("test_mesh.vtu")),
-        "--diff-overwrite",
-    ]) == 0
-    assert main([
-        "file",
-        str(TEST_DATA_PATH / Path("test_mesh.vtu")),
-        str(TEST_DATA_PATH / Path("test_mesh.vtu")),
-        "--diff-overwrite",
     ]) == 0
     diff_files = list(f for f in listdir(TEST_DATA_PATH) if "test_mesh_vtu_diff" in f)
     assert len(diff_files) == 1
@@ -508,7 +486,7 @@ def test_cli_directory_with_diff_output():
         "--diff"
     ]) == 0
 
-    diff_files = list(f for f in listdir(tmp_results_path) if "_diff_" in f)
+    diff_files = list(f for f in listdir(tmp_results_path) if splitext(f)[0].endswith("_diff"))
     rmtree(tmp_results_path)
     assert len(diff_files) == num_files
 

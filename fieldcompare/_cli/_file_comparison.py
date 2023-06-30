@@ -6,7 +6,6 @@
 from pathlib import Path
 from typing import Union, List, Callable, Optional
 from dataclasses import dataclass
-from datetime import datetime
 
 from ..predicates import DefaultEquality
 from ..protocols import DynamicTolerance
@@ -51,19 +50,11 @@ class FileComparisonOptions:
     file_type_map: FileTypeMap = FileTypeMap()
 
 
-@dataclass
-class DiffOutputOptions:
-    enable: bool = False
-    overwrite: bool = False
-
-
 class FileComparison:
-    def __init__(
-        self, opts: FileComparisonOptions, logger: CLILogger, diff_opts: DiffOutputOptions = DiffOutputOptions()
-    ) -> None:
+    def __init__(self, opts: FileComparisonOptions, logger: CLILogger, write_diff: bool = False) -> None:
         self._opts = opts
         self._logger = logger
-        self._diff_opts = diff_opts
+        self._write_diff = write_diff
 
     def __call__(self, res_file: str, ref_file: str) -> TestSuite:
         try:
@@ -92,14 +83,12 @@ class FileComparison:
             self._logger.log(f"Error when computing diff: '{e}'")
 
     def _get_diff_filename(self, res_file: str) -> Optional[str]:
-        if not self._diff_opts.enable:
+        if not self._write_diff:
             return None
         folder = Path(res_file).parent
         ext = str(Path(res_file).suffix).strip(".")
         ext_suffix = f"_{ext}" if ext else ""
         diff_filename = f"{Path(res_file).stem}{ext_suffix}_diff"
-        if not self._diff_opts.overwrite:
-            diff_filename += f"_{datetime.now().strftime('%d_%b_%Y_%H_%M_%S')}"
         return str(folder / diff_filename)
 
     def _read(self, filename: str) -> Union[protocols.FieldData, protocols.FieldDataSequence]:
