@@ -85,11 +85,7 @@ class FileComparison:
     def _get_diff_filename(self, res_file: str) -> Optional[str]:
         if not self._write_diff:
             return None
-        folder = Path(res_file).parent
-        ext = str(Path(res_file).suffix).strip(".")
-        ext_suffix = f"_{ext}" if ext else ""
-        diff_filename = f"{Path(res_file).stem}{ext_suffix}_diff"
-        return str(folder / diff_filename)
+        return str(Path(res_file).parent / f"diff_{Path(res_file).name}")
 
     def _read(self, filename: str) -> Union[protocols.FieldData, protocols.FieldDataSequence]:
         try:

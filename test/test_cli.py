@@ -44,7 +44,7 @@ def test_cli_file_mode_with_diff_output():
         str(TEST_DATA_PATH / Path("test_mesh.vtu")),
         "--diff",
     ]) == 0
-    diff_files = list(f for f in listdir(TEST_DATA_PATH) if "test_mesh_vtu_diff" in f)
+    diff_files = list(f for f in listdir(TEST_DATA_PATH) if "diff_test_mesh" in f)
     assert len(diff_files) == 1
     diff_file_path = str(Path(TEST_DATA_PATH) / diff_files[0])
     _ = read(diff_file_path)
@@ -486,7 +486,7 @@ def test_cli_directory_with_diff_output():
         "--diff"
     ]) == 0
 
-    diff_files = list(f for f in listdir(tmp_results_path) if splitext(f)[0].endswith("_diff"))
+    diff_files = list(f for f in listdir(tmp_results_path) if splitext(f)[0].startswith("diff_"))
     rmtree(tmp_results_path)
     assert len(diff_files) == num_files
 
