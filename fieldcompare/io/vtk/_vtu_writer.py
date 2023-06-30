@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2023 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from __future__ import annotations
 from typing import Union, Sequence, Iterable, Tuple, Optional
 from xml.etree.ElementTree import ElementTree, SubElement, Element as XMLElement
 
@@ -56,13 +57,34 @@ class VTUWriter:
 
         cells = SubElement(piece, "Cells")
         self._make_data_array_element(
-            cells, "connectivity", values=[index for (_, corners) in self._cells() for index in corners]
+            cells,
+            "connectivity",
+            values=(
+                [index for (_, corners) in self._cells() for index in corners]
+                if self._has_cells()
+                else make_array([], dtype=uint64)
+            ),
+            num_components=1,
         )
         self._make_data_array_element(
-            cells, "offsets", values=[v for v in accumulate(len(corners) for (_, corners) in self._cells())]
+            cells,
+            "offsets",
+            values=(
+                [v for v in accumulate(len(corners) for (_, corners) in self._cells())]
+                if self._has_cells()
+                else make_array([], dtype=uint64)
+            ),
+            num_components=1,
         )
         self._make_data_array_element(
-            cells, "types", values=[cell_type_to_vtk_cell_type_index(ct) for (ct, _) in self._cells()]
+            cells,
+            "types",
+            values=(
+                [cell_type_to_vtk_cell_type_index(ct) for (ct, _) in self._cells()]
+                if self._has_cells()
+                else make_array([], dtype=uint64)
+            ),
+            num_components=1,
         )
 
         filename_with_ext = f"{filename}.vtu"
@@ -71,9 +93,11 @@ class VTUWriter:
         tree.write(filename_with_ext, xml_declaration=False, encoding="ascii")
         return filename_with_ext
 
-    def _make_data_array_element(self, parent: XMLElement, name: str, values: Union[Sequence, Array]) -> XMLElement:
+    def _make_data_array_element(
+        self, parent: XMLElement, name: str, values: Union[Sequence, Array], num_components: int | None = None
+    ) -> XMLElement:
         values = make_array(values)
-        ncomps = self._array_num_components(values)
+        ncomps = self._array_num_components(values) if num_components is None else num_components
         elem = SubElement(
             parent,
             "DataArray",
@@ -100,6 +124,11 @@ class VTUWriter:
     @property
     def _num_points(self) -> int:
         return len(self._fields.domain.points)
+
+    def _has_cells(self) -> bool:
+        for _ in self._cells():
+            return True
+        return False
 
     def _cells(self) -> Iterable[Tuple[CellType, Array]]:
         return (
