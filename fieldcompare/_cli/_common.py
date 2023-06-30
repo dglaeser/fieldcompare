@@ -3,7 +3,7 @@
 
 """Common functionality used in the command-line interface"""
 
-from typing import List, Dict, Tuple, Optional, Union
+from __future__ import annotations
 from fnmatch import fnmatch
 from json import loads
 
@@ -18,7 +18,7 @@ from ._test_suite import TestStatus
 class PatternFilter:
     """Predicate that returns true if a string matches any of the given patterns."""
 
-    def __init__(self, patterns: List[str]) -> None:
+    def __init__(self, patterns: list[str]) -> None:
         self._patterns = patterns
 
     def __call__(self, name: str) -> bool:
@@ -36,36 +36,36 @@ def _exclude_all() -> PatternFilter:
 class FieldToleranceMap:
     def __init__(
         self,
-        tolerances: Dict[str, Union[float, DynamicTolerance]] = {},
-        default_tol: Optional[Union[float, DynamicTolerance]] = None,
+        tolerances: dict[str, float | DynamicTolerance] = {},
+        default_tol: float | DynamicTolerance | None = None,
     ) -> None:
         self._field_tolerances = tolerances
         self._default = default_tol
 
-    def __call__(self, field_name: str) -> Optional[Union[float, DynamicTolerance]]:
+    def __call__(self, field_name: str) -> float | DynamicTolerance | None:
         tol = self._field_tolerances.get(field_name)
         return tol if tol is not None else self._default
 
 
 def _parse_field_tolerances(
-    tolerance_strings: Optional[List[str]] = None,
+    tolerance_strings: list[str] | None = None,
     allow_dynamic_tolerances: bool = False,
 ) -> FieldToleranceMap:
     def _is_field_tolerance_string(tol_string: str) -> bool:
         return ":" in tol_string
 
-    def _get_field_name_tolerance_str_pair(tol_string: str) -> Tuple[str, str]:
+    def _get_field_name_tolerance_str_pair(tol_string: str) -> tuple[str, str]:
         name, tol_string = tol_string.split(":")
         return name, tol_string
 
-    def _make_tolerance(tol_string: str) -> Union[float, DynamicTolerance]:
+    def _make_tolerance(tol_string: str) -> float | DynamicTolerance:
         if allow_dynamic_tolerances and tol_string.endswith("*max"):
             return ScaledTolerance(base_tolerance=float(tol_string.rsplit("*max")[0]))
         return float(tol_string)
 
     if tolerance_strings is not None:
         field_tols = {}
-        default_tol: Optional[Union[float, DynamicTolerance]] = None
+        default_tol: float | DynamicTolerance | None = None
         for tol_string in tolerance_strings:
             if _is_field_tolerance_string(tol_string):
                 name, value_str = _get_field_name_tolerance_str_pair(tol_string)
@@ -77,16 +77,16 @@ def _parse_field_tolerances(
 
 
 class FileTypeMap:
-    def __init__(self, mapping: List[Tuple[str, PatternFilter]] = []) -> None:
+    def __init__(self, mapping: list[tuple[str, PatternFilter]] = []) -> None:
         self._mapping = mapping
 
-    def __call__(self, filename: str) -> Optional[Tuple[str, dict]]:
+    def __call__(self, filename: str) -> tuple[str, dict] | None:
         for file_type_with_opts, regex in self._mapping:
             if regex(filename):
                 return self._split_file_type_and_opts(file_type_with_opts)
         return None
 
-    def _split_file_type_and_opts(self, file_type_with_opts: str) -> Tuple[str, dict]:
+    def _split_file_type_and_opts(self, file_type_with_opts: str) -> tuple[str, dict]:
         if file_type_with_opts.endswith("}") and "{" in file_type_with_opts:
             file_type, opts_string = file_type_with_opts.split("{", maxsplit=1)
             return file_type, self._parse_options("{" + opts_string)
@@ -103,7 +103,7 @@ class FileTypeMap:
             )
 
 
-def _make_file_type_map(map_args: Optional[List[str]]) -> FileTypeMap:
+def _make_file_type_map(map_args: list[str] | None) -> FileTypeMap:
     if map_args is None:
         return FileTypeMap()
 
@@ -112,7 +112,7 @@ def _make_file_type_map(map_args: Optional[List[str]]) -> FileTypeMap:
         colon_pos = mapping.find(":") if ":" in mapping else len(mapping)
         return brace_pos < colon_pos
 
-    def _split_regex(mapping: str) -> Tuple[str, str]:
+    def _split_regex(mapping: str) -> tuple[str, str]:
         if _has_opts(mapping):
             if mapping.endswith("}"):
                 return mapping, "*"
@@ -124,8 +124,8 @@ def _make_file_type_map(map_args: Optional[List[str]]) -> FileTypeMap:
         result = mapping.split(":", maxsplit=1)
         return (result[0], "*") if len(result) == 1 else (result[0], result[1])
 
-    file_types_with_opts: List[str] = []
-    regexes: List[List[str]] = []
+    file_types_with_opts: list[str] = []
+    regexes: list[list[str]] = []
     for mapping in map_args:
         ft_with_opts, regex = _split_regex(mapping)
         if not any(_t == ft_with_opts for _t in file_types_with_opts):

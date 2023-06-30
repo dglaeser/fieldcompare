@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Tuple, Optional, Union
 
 from .._common import _default_base_tolerance
 from ..protocols import DynamicTolerance
@@ -38,8 +37,8 @@ class ScaledTolerance(DynamicTolerance):
 
     def __init__(
         self,
-        base_tolerance: Optional[ArrayTolerance] = None,
-        use_component_magnitudes: Optional[bool] = False,
+        base_tolerance: ArrayTolerance | None = None,
+        use_component_magnitudes: bool | None = False,
     ) -> None:
         self._base_tol = as_array(base_tolerance) if base_tolerance is not None else base_tolerance
         self._use_component_magnitudes = use_component_magnitudes
@@ -122,21 +121,21 @@ class FuzzyEquality:
 
     def __init__(
         self,
-        rel_tol: Union[DynamicTolerance, ArrayTolerance] = _default_base_tolerance(),
-        abs_tol: Union[DynamicTolerance, ArrayTolerance] = 0.0,
+        rel_tol: DynamicTolerance | ArrayTolerance = _default_base_tolerance(),
+        abs_tol: DynamicTolerance | ArrayTolerance = 0.0,
     ) -> None:
         self._rel_tol = rel_tol
         self._abs_tol = abs_tol
-        self._last_used_rel_tol: Optional[ArrayTolerance] = None
-        self._last_used_abs_tol: Optional[ArrayTolerance] = None
+        self._last_used_rel_tol: ArrayTolerance | None = None
+        self._last_used_abs_tol: ArrayTolerance | None = None
 
     @property
-    def relative_tolerance(self) -> Union[DynamicTolerance, ArrayTolerance]:
+    def relative_tolerance(self) -> DynamicTolerance | ArrayTolerance:
         """Return the relative tolerance used for fuzzy comparisons."""
         return self._rel_tol
 
     @relative_tolerance.setter
-    def relative_tolerance(self, value: Union[DynamicTolerance, ArrayTolerance]) -> None:
+    def relative_tolerance(self, value: DynamicTolerance | ArrayTolerance) -> None:
         """
         Set the relative tolerance to be used for fuzzy comparisons.
 
@@ -146,12 +145,12 @@ class FuzzyEquality:
         self._rel_tol = value
 
     @property
-    def absolute_tolerance(self) -> Union[DynamicTolerance, ArrayTolerance]:
+    def absolute_tolerance(self) -> DynamicTolerance | ArrayTolerance:
         """Return the absolute tolerance used for fuzzy comparisons."""
         return self._abs_tol
 
     @absolute_tolerance.setter
-    def absolute_tolerance(self, value: Union[DynamicTolerance, ArrayTolerance]) -> None:
+    def absolute_tolerance(self, value: DynamicTolerance | ArrayTolerance) -> None:
         """
         Set the absolute tolerance to be used for fuzzy comparisons.
 
@@ -187,7 +186,7 @@ class FuzzyEquality:
             f"rel_tol: {_tolinfo(self._rel_tol, self._last_used_rel_tol)}"
         )
 
-    def _get_tol(self, tol: Union[ArrayTolerance, DynamicTolerance], first: Array, second: Array) -> ArrayTolerance:
+    def _get_tol(self, tol: ArrayTolerance | DynamicTolerance, first: Array, second: Array) -> ArrayTolerance:
         if isinstance(tol, DynamicTolerance):
             return tol(first, second)
         return tol
@@ -264,7 +263,7 @@ def _success_result(first: Array, second: Array) -> PredicateResult:
     return PredicateResult(True, report="All values have compared equal")
 
 
-def _reshape(arr1: ArrayLike, arr2: ArrayLike) -> Tuple[Array, Array]:
+def _reshape(arr1: ArrayLike, arr2: ArrayLike) -> tuple[Array, Array]:
     arr1 = as_array(arr1)
     arr2 = as_array(arr2)
     dim1 = len(arr1.shape)

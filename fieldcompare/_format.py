@@ -3,7 +3,7 @@
 
 """Logging output formatting helpers"""
 
-from typing import Optional, Tuple
+from __future__ import annotations
 from enum import Enum
 
 import colorama
@@ -70,7 +70,7 @@ class TextStyle(Enum):
         return str(self.value)
 
 
-def make_colored(text: str, color: Optional[TextColor] = None, style: Optional[TextStyle] = None) -> str:
+def make_colored(text: str, color: TextColor | None = None, style: TextStyle | None = None) -> str:
     return _COLOR_BACKEND.make_colored(text, color, style)  # type: ignore
 
 
@@ -108,7 +108,7 @@ def remove_annotation(text: str) -> str:
     return split_annotation(text)[0]
 
 
-def split_annotation(text: str) -> Tuple[str, str]:
+def split_annotation(text: str) -> tuple[str, str]:
     result = text.rsplit(_ANNOTATION_SEPARATOR, 1)
     assert len(result) <= 2
     return (result[0], result[1] if len(result) > 1 else "")

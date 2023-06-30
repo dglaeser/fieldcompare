@@ -4,7 +4,7 @@
 """FieldData implementation for tabular data."""
 
 from __future__ import annotations
-from typing import Iterator, Dict, Callable
+from typing import Iterator, Callable
 
 from numpy import nan
 
@@ -24,7 +24,7 @@ class TabularFields(FieldData):
         fields: The fields defined on the given table.
     """
 
-    def __init__(self, domain: Table, fields: Dict[str, Array]) -> None:
+    def __init__(self, domain: Table, fields: dict[str, Array]) -> None:
         self._domain = domain
         self._fields = fields
         assert all(len(values) == domain.number_of_rows for values in fields.values())

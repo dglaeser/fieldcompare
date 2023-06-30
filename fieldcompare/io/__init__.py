@@ -3,8 +3,8 @@
 
 """I/O facilities to read field data from files."""
 
+from __future__ import annotations
 from os.path import splitext
-from typing import Union, Dict
 from warnings import warn
 
 from .. import protocols
@@ -22,7 +22,7 @@ __all__ = ["read_field_data", "read", "read_as", "is_supported"]
 _AVAILABLE_FILE_TYPES = ["mesh", "dsv"]
 
 
-def read_field_data(filename: str, options: Dict[str, dict] = {}) -> protocols.FieldData:
+def read_field_data(filename: str, options: dict[str, dict] = {}) -> protocols.FieldData:
     """
     Read the field data from the given file
 
@@ -51,7 +51,7 @@ def write(fields: protocols.FieldData, filename: str) -> str:
         raise NotImplementedError("no write function implemented for given field data type")
 
 
-def read(filename: str, options: Dict[str, dict] = {}) -> Union[protocols.FieldData, protocols.FieldDataSequence]:
+def read(filename: str, options: dict[str, dict] = {}) -> protocols.FieldData | protocols.FieldDataSequence:
     """
     Read the field data or field data sequence from the given file
 
@@ -69,7 +69,7 @@ def read(filename: str, options: Dict[str, dict] = {}) -> Union[protocols.FieldD
     raise IOError(_unsupported_file_error_message(filename))
 
 
-def read_as(file_type: str, filename: str, **kwargs) -> Union[protocols.FieldData, protocols.FieldDataSequence]:
+def read_as(file_type: str, filename: str, **kwargs) -> protocols.FieldData | protocols.FieldDataSequence:
     """
     Read the field data or field data sequence from the given file, specifying its type.
 
@@ -107,7 +107,7 @@ def _is_supported_mesh_file(filename: str) -> bool:
     return vtk.is_supported(filename) or (_HAVE_MESHIO and _supported_by_meshio(filename))
 
 
-def _read_mesh_file(filename: str, **kwargs) -> Union[protocols.FieldData, protocols.FieldDataSequence]:
+def _read_mesh_file(filename: str, **kwargs) -> protocols.FieldData | protocols.FieldDataSequence:
     if kwargs:
         warn("Options are ignored when reading from mesh file")
 

@@ -3,9 +3,9 @@
 
 """Command-line interface for comparing a pair of folders"""
 
-from typing import Iterable, Optional
+from __future__ import annotations
+from typing import Iterable, List, Tuple
 from argparse import ArgumentParser
-from typing import List, Tuple
 from os.path import join, isdir
 from datetime import datetime
 from dataclasses import dataclass
@@ -133,11 +133,11 @@ def _run(args: dict, in_logger: CLILogger) -> int:
 
 @dataclass
 class CategorizedFiles:
-    files_to_compare: List[str]
-    missing_sources: List[str]
-    missing_references: List[str]
-    filtered_files: List[str]
-    unsupported_files: List[str]
+    files_to_compare: list[str]
+    missing_sources: list[str]
+    missing_references: list[str]
+    filtered_files: list[str]
+    unsupported_files: list[str]
 
 
 def _categorize_files(args: dict, res_dir: str, ref_dir: str) -> CategorizedFiles:
@@ -165,7 +165,7 @@ def _categorize_files(args: dict, res_dir: str, ref_dir: str) -> CategorizedFile
     )
 
 
-FileComparisons = List[Tuple[str, str, TestSuite]]
+FileComparisons = List[Tuple[str, str, TestSuite]]  # we have to use list/tuple for compatibility with py3.8
 
 
 def _do_file_comparisons(args, filenames: Iterable[str], logger: CLILogger) -> FileComparisons:
@@ -241,7 +241,7 @@ def _do_file_comparisons(args, filenames: Iterable[str], logger: CLILogger) -> F
     return file_comparisons
 
 
-def _get_failing_field_test_names(test_suite: TestSuite) -> Optional[str]:
+def _get_failing_field_test_names(test_suite: TestSuite) -> str | None:
     names = [t.name for t in test_suite if not t.status]
     if not names:
         return None
@@ -268,7 +268,7 @@ def _add_unhandled_comparisons(args: dict, categories: CategorizedFiles, compari
 
 
 def _add_skipped_file_comparisons(
-    comparisons: FileComparisons, names: List[str], reason: str, treat_as_failure: bool = False
+    comparisons: FileComparisons, names: list[str], reason: str, treat_as_failure: bool = False
 ):
     status = TestStatus.failed if treat_as_failure else TestStatus.skipped
     for name in names:

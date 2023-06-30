@@ -3,7 +3,8 @@
 
 """Common functions and types"""
 
-from typing import Callable, TypeVar, Tuple
+from __future__ import annotations
+from typing import Callable, TypeVar
 from time import time
 from functools import wraps
 from numpy import finfo, promote_types, issubdtype, floating, integer
@@ -33,9 +34,9 @@ def _default_base_tolerance() -> DynamicTolerance:
 T = TypeVar("T")
 
 
-def _measure_time(action: Callable[..., T]) -> Callable[..., Tuple[float, T]]:
+def _measure_time(action: Callable[..., T]) -> Callable[..., tuple[float, T]]:
     @wraps(action)
-    def _wrapper_measure_time(*args, **kwargs) -> Tuple[float, T]:
+    def _wrapper_measure_time(*args, **kwargs) -> tuple[float, T]:
         before = time()
         result = action(*args, **kwargs)
         after = time()

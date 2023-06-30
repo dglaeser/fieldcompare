@@ -4,7 +4,7 @@
 """Class to represent computational meshes"""
 
 from __future__ import annotations
-from typing import Iterable, Tuple, Optional, Union
+from typing import Iterable
 
 from ..predicates import PredicateResult
 from ..protocols import DynamicTolerance
@@ -30,7 +30,7 @@ class Mesh:
         connectivity: The connectivity of the grid cells, specified separately for each cell type.
     """
 
-    def __init__(self, points: ArrayLike, connectivity: Iterable[Tuple[CellType, ArrayLike]]) -> None:
+    def __init__(self, points: ArrayLike, connectivity: Iterable[tuple[CellType, ArrayLike]]) -> None:
         self._points = as_array(points)
         self._corners = {_get_assert_cell_type(cell_type): as_array(corners) for cell_type, corners in connectivity}
         self._rel_tol = default_mesh_relative_tolerance()
@@ -76,8 +76,8 @@ class Mesh:
 
     def set_tolerances(
         self,
-        abs_tol: Optional[Union[float, DynamicTolerance]] = None,
-        rel_tol: Optional[Union[float, DynamicTolerance]] = None,
+        abs_tol: float | DynamicTolerance | None = None,
+        rel_tol: float | DynamicTolerance | None = None,
     ) -> None:
         """
         Set the tolerances to be used for equality checks against other meshes.
@@ -89,7 +89,7 @@ class Mesh:
         self._rel_tol = self._rel_tol if rel_tol is None else self._get_tolerance(rel_tol)
         self._abs_tol = self._abs_tol if abs_tol is None else self._get_tolerance(abs_tol)
 
-    def _get_tolerance(self, tol: Union[float, DynamicTolerance]) -> float:
+    def _get_tolerance(self, tol: float | DynamicTolerance) -> float:
         result = tol(self._points, self._points) if isinstance(tol, DynamicTolerance) else tol
         assert isinstance(result, float)
         return result

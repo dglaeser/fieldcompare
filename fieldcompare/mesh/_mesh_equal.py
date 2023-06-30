@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """Equality check for computational meshes"""
-from typing import Optional
+from __future__ import annotations
 
 from .._numpy_utils import Array, make_array, get_sorting_index_map
 from ..predicates import FuzzyEquality, ExactEquality, PredicateResult
@@ -12,8 +12,8 @@ from .protocols import Mesh as MeshInterface
 def mesh_equal(
     source: MeshInterface,
     target: MeshInterface,
-    rel_tol: Optional[float] = None,
-    abs_tol: Optional[float] = None,
+    rel_tol: float | None = None,
+    abs_tol: float | None = None,
 ) -> PredicateResult:
     """Check whether two meshes are equal"""
     rel_tol = min(source.relative_tolerance, target.relative_tolerance) if rel_tol is None else rel_tol

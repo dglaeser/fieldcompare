@@ -2,14 +2,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
-from typing import Union, Sequence, Iterable, Tuple, Optional
+from typing import Sequence, Iterable
 from xml.etree.ElementTree import ElementTree, SubElement, Element as XMLElement
 
 try:  # indent came in 3.9
     from xml.etree.ElementTree import indent  # type: ignore
 except ImportError:
 
-    def indent(tree: Union[XMLElement, ElementTree], space: str = ..., level: int = ...) -> None:
+    def indent(tree: XMLElement | ElementTree, space: str = ..., level: int = ...) -> None:
         pass
 
 
@@ -94,7 +94,7 @@ class VTUWriter:
         return filename_with_ext
 
     def _make_data_array_element(
-        self, parent: XMLElement, name: str, values: Union[Sequence, Array], num_components: int | None = None
+        self, parent: XMLElement, name: str, values: Sequence | Array, num_components: int | None = None
     ) -> XMLElement:
         values = make_array(values)
         ncomps = self._array_num_components(values) if num_components is None else num_components
@@ -130,19 +130,19 @@ class VTUWriter:
             return True
         return False
 
-    def _cells(self) -> Iterable[Tuple[CellType, Array]]:
+    def _cells(self) -> Iterable[tuple[CellType, Array]]:
         return (
             (ct, connectivity)
             for ct in self._fields.domain.cell_types
             for connectivity in self._fields.domain.connectivity(ct)
         )
 
-    def _cell_fields(self) -> Iterable[Tuple[str, Array]]:
+    def _cell_fields(self) -> Iterable[tuple[str, Array]]:
         names = set(remove_cell_type_suffix(ct, field.name) for field, ct in self._fields.cell_fields_types)
         return ((name, self._get_cell_field_values(name)) for name in names)
 
     def _get_cell_field_values(self, name: str) -> Array:
-        values: Optional[Array] = None
+        values: Array | None = None
         for ct in self._fields.domain.cell_types:
             for field, fct in self._fields.cell_fields_types:
                 if fct == ct and remove_cell_type_suffix(fct, field.name) == name:
