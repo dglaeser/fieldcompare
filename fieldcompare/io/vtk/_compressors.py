@@ -117,7 +117,7 @@ class LZMACompressor(CompressorBase):
 
 class LZ4Compressor(CompressorBase):
     def __init__(self, header_type: np.dtype) -> None:
-        assert _HAVE_LZ4 and "LZ4 module required for uncompression"
+        assert _HAVE_LZ4, "LZ4 module required for uncompression"
         super().__init__(header_type)
 
     def _decompress(self, data: bytes, uncompressed_size: int) -> bytes:
