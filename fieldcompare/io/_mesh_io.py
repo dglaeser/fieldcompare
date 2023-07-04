@@ -8,11 +8,12 @@ from os.path import splitext
 from xml.etree import ElementTree
 
 try:
+    from meshio import extension_to_filetypes as _meshio_extension_to_filetypes
     from meshio import read as _meshio_read, Mesh as _MeshIOMesh
-    from meshio import extension_to_filetypes as _MESHIO_SUPPORTED_EXTENSIONS
     from meshio.xdmf import TimeSeriesReader as _MeshioTimeSeriesReader
     from ..mesh import meshio_utils
 
+    _MESHIO_SUPPORTED_EXTENSIONS = _meshio_extension_to_filetypes
     _HAVE_MESHIO = True
 except ImportError:
     _HAVE_MESHIO = False

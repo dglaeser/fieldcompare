@@ -8,12 +8,12 @@ from typing import Iterable, Sequence, SupportsIndex, Union
 
 import numpy as np
 from numpy import ndarray
-from numpy.typing import ArrayLike as np_arraylike
+from numpy.typing import ArrayLike as NumpyArrayLike
 from numpy.lib.index_tricks import ndindex
 
 
 Array = ndarray
-ArrayLike = np_arraylike
+ArrayLike = NumpyArrayLike
 ArrayTolerance = Union[float, Array]  # Union required for compatibility with 3.8
 
 

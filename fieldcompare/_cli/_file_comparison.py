@@ -31,6 +31,7 @@ from ._test_suite import TestSuite, TestResult, TestStatus
 from .. import protocols
 from ..mesh import protocols as mesh_protocols
 
+
 def _default_base_tolerance_callable(*_):
     return _default_base_tolerance()
 
@@ -56,7 +57,7 @@ class FileComparisonOptions:
     relative_tolerances: Callable[[str], float | DynamicTolerance | None] = _default_base_tolerance_callable
     absolute_tolerances: Callable[[str], float | DynamicTolerance | None] = _default_abs_tolerance_callable
     field_inclusion_filter: Callable[[str], bool] = _always_true_callable
-    field_exclusion_filter: Callable[[str], bool] =  _always_false_callable
+    field_exclusion_filter: Callable[[str], bool] = _always_false_callable
     disable_unconnected_points_removal: bool = False
     disable_mesh_space_dimension_matching: bool = False
     disable_mesh_reordering: bool = False
