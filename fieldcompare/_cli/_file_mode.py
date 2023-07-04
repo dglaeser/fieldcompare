@@ -50,9 +50,9 @@ def _run(args: dict, in_logger: CLILogger) -> int:
         absolute_tolerances=_parse_field_tolerances(args.get("absolute_tolerance"), allow_dynamic_tolerances=True),
         field_inclusion_filter=PatternFilter(args["include_fields"]) if args["include_fields"] else _include_all(),
         field_exclusion_filter=PatternFilter(args["exclude_fields"]) if args["exclude_fields"] else _exclude_all(),
-        disable_mesh_reordering=True if args["disable_mesh_reordering"] else False,
-        disable_mesh_space_dimension_matching=True if args["disable_mesh_space_dimension_matching"] else False,
-        disable_unconnected_points_removal=True if args["disable_mesh_orphan_point_removal"] else False,
+        disable_mesh_reordering=bool(args["disable_mesh_reordering"]),
+        disable_mesh_space_dimension_matching=bool(args["disable_mesh_space_dimension_matching"]),
+        disable_unconnected_points_removal=bool(args["disable_mesh_orphan_point_removal"]),
         file_type_map=_make_file_type_map(args.get("read_as", [])),
     )
 

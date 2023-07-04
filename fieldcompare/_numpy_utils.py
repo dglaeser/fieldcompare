@@ -221,9 +221,8 @@ def find_first_unequal(first: Array, second: Array) -> tuple | None:
             return _get_first_false_pair(bitset, first, second)
     except Exception:
         # handle case of scalars
-        if not first.shape and not second.shape:
-            if not np.array_equal(first, second):
-                return (first, second)
+        if not first.shape and not second.shape and not np.array_equal(first, second):
+            return (first, second)
 
         # this works also for mixed-type arrays (slower)
         for val1, val2 in zip(first, second):
@@ -245,9 +244,8 @@ def fuzzy_equal(first: Array, second: Array, rel_tol: ArrayTolerance, abs_tol: A
     """
 
     def _check_valid_tolerance(tol: ArrayTolerance) -> None:
-        if isinstance(tol, Array):
-            if any(_op.shape[1:] != tol.shape for _op in [first, second]):
-                raise ValueError("Given tolerance shape does not match array value shapes")
+        if isinstance(tol, Array) and any(_op.shape[1:] != tol.shape for _op in [first, second]):
+            raise ValueError("Given tolerance shape does not match array value shapes")
 
     _check_valid_tolerance(rel_tol)
     _check_valid_tolerance(abs_tol)

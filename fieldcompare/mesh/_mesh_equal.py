@@ -21,7 +21,7 @@ def mesh_equal(
     points_equal = FuzzyEquality(rel_tol=rel_tol, abs_tol=abs_tol)(source.points, target.points)
     if not points_equal:
         return PredicateResult(False, report=f"Differing points - '{points_equal.report}'")
-    if not set(source.cell_types) == set(target.cell_types):
+    if set(source.cell_types) != set(target.cell_types):
         return PredicateResult(False, report="Differing grid cell types detected")
     for cell_type in source.cell_types:
         if len(source.connectivity(cell_type)) != len(target.connectivity(cell_type)):

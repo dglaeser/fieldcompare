@@ -32,7 +32,8 @@ class VTKXMLReader(ABC):
                     content=elem.text.strip("_ \n").encode(self._text_encoding), encoding=elem.attrib["encoding"]
                 )
         except ElementTree.ParseError:
-            content = open(filename, "rb").read()
+            with open(filename, "rb") as xml_file:
+                content = xml_file.read()
             app_begin, app_end = _find_appendix_positions(content)
             self._appendix = VTKXMLAppendix(
                 content=content[app_begin:app_end], encoding=_determine_encoding(content[app_begin - 100 :])

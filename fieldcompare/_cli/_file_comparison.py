@@ -83,11 +83,15 @@ class FileComparison:
         )
 
     def _write_diff_file(self, diff_basefilename: str, res_fields, ref_fields):
-        if isinstance(res_fields, mesh_protocols.MeshFields) and isinstance(ref_fields, mesh_protocols.MeshFields):
-            if not res_fields.domain.equals(ref_fields.domain) and not self._opts.disable_mesh_reordering:
-                self._logger.log("Sorting mesh fields for diff output\n", verbosity_level=2)
-                res_fields = sort(res_fields)
-                ref_fields = sort(ref_fields)
+        if (
+            isinstance(res_fields, mesh_protocols.MeshFields)
+            and isinstance(ref_fields, mesh_protocols.MeshFields)
+            and not res_fields.domain.equals(ref_fields.domain)
+            and not self._opts.disable_mesh_reordering
+        ):
+            self._logger.log("Sorting mesh fields for diff output\n", verbosity_level=2)
+            res_fields = sort(res_fields)
+            ref_fields = sort(ref_fields)
 
         try:
             diff = res_fields.diff_to(ref_fields)
