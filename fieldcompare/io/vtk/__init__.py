@@ -50,3 +50,15 @@ def _sniff_vtk_flavor(filename: str, max_bytes_read: int = 1024) -> str | None:
             return None
         vtk_type = vtk_type[1:].split(b'"', maxsplit=1)[0]
         return _VTK_TYPE_TO_EXTENSION.get(vtk_type.decode())
+
+
+__all__ = [
+    "PVDReader",
+    "PVTPReader",
+    "PVTUReader",
+    "VTPReader",
+    "VTUReader",
+    "VTUWriter",
+    "read",
+    "is_supported",
+]

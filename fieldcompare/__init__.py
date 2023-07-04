@@ -21,4 +21,13 @@ from ._field_data_comparison import (
     field_comparison_report,
 )
 
-__all__ = ["FieldDataComparator", "FieldComparisonSuite", "FieldComparison", "FieldComparisonStatus", "__version__"]
+__all__ = [
+    "DefaultFieldComparisonCallback",
+    "FieldDataComparator",
+    "FieldComparisonSuite",
+    "FieldComparison",
+    "FieldComparisonStatus",
+    "FieldDataSequence",
+    "field_comparison_report",
+    "__version__",
+]
