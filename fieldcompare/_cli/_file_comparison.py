@@ -126,9 +126,7 @@ class FileComparison:
             if diff_filename is not None:
                 self._write_diff_file(diff_filename, res_fields, ref_fields)
             return result
-        elif isinstance(res_fields, protocols.FieldDataSequence) and isinstance(
-            ref_fields, protocols.FieldDataSequence
-        ):
+        if isinstance(res_fields, protocols.FieldDataSequence) and isinstance(ref_fields, protocols.FieldDataSequence):
             return self._compare_field_sequences(res_fields, ref_fields, diff_filename)
 
         def _is_unknown(fields) -> bool:

@@ -66,7 +66,7 @@ def has_floats(input_array: Array) -> bool:
             return "float" in input_array.dtype.name
         if np.isscalar(value):
             return isinstance(value, (float, np.floating))
-        elif isinstance(value, Iterable):
+        if isinstance(value, Iterable):
             return any(_has_floats(v) for v in value)
         raise ValueError("Could not determine if array has floats")
 

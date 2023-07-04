@@ -116,11 +116,10 @@ def _make_file_type_map(map_args: list[str] | None) -> FileTypeMap:
         if _has_opts(mapping):
             if mapping.endswith("}"):
                 return mapping, "*"
-            else:
-                result = mapping.split("}:")
-                if len(result) != 2:  # noqa: PLR2004
-                    raise IOError(f"Could not parse reader mapping '{mapping}'.")
-                return result[0] + "}", result[1]
+            result = mapping.split("}:")
+            if len(result) != 2:  # noqa: PLR2004
+                raise IOError(f"Could not parse reader mapping '{mapping}'.")
+            return result[0] + "}", result[1]
         result = mapping.split(":", maxsplit=1)
         return (result[0], "*") if len(result) == 1 else (result[0], result[1])
 

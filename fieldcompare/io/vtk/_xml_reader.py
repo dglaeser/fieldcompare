@@ -155,10 +155,9 @@ class VTKXMLReader(ABC):
     def _get_data_array_values(self, xml: ElementTree.Element) -> np.ndarray:
         if xml.attrib["format"] == "ascii":
             return self._get_inline_ascii_data_array_values(xml)
-        elif xml.attrib["format"] == "binary":
+        if xml.attrib["format"] == "binary":
             return self._get_inline_binary_data_array_values(xml)
-        else:
-            return self._get_appended_data_array_values(xml)
+        return self._get_appended_data_array_values(xml)
 
     def _get_inline_ascii_data_array_values(self, xml: ElementTree.Element) -> np.ndarray:
         assert xml.text is not None
@@ -223,7 +222,7 @@ def _find_enclosed_content_range(
             close_count += 1
             if open_count == close_count and (_is_end(next_open_pos) or next_close_pos < next_open_pos):
                 return start_pos, next_close_pos
-            elif not _is_end(next_open_pos):
+            if not _is_end(next_open_pos):
                 open_count += 1
         cur_pos = max(next_open_pos, next_close_pos)
     return None

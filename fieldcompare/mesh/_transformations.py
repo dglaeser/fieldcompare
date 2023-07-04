@@ -173,8 +173,7 @@ def _unconnected_points_filter_map(mesh: protocols.Mesh) -> Array:
     num_unconnected = accumulate(is_unconnected)
     first_unconnected_after_sort = int(len(is_unconnected) - num_unconnected)
     unconnected_filter_map = get_sorting_index_map(is_unconnected)
-    unconnected_filter_map = sub_array(unconnected_filter_map, 0, first_unconnected_after_sort)
-    return unconnected_filter_map
+    return sub_array(unconnected_filter_map, 0, first_unconnected_after_sort)
 
 
 def _get_cell_corners_sorting_index_map(corners_array: Array) -> Array:

@@ -45,10 +45,9 @@ def write(fields: protocols.FieldData, filename: str) -> str:
     """
     if isinstance(fields, MeshFields):
         return _write_mesh(fields, filename)
-    elif isinstance(fields, TabularFields):
+    if isinstance(fields, TabularFields):
         return _write_table(fields, filename)
-    else:
-        raise NotImplementedError("no write function implemented for given field data type")
+    raise NotImplementedError("no write function implemented for given field data type")
 
 
 def read(filename: str, options: dict[str, dict] = {}) -> protocols.FieldData | protocols.FieldDataSequence:
