@@ -54,7 +54,7 @@ python_classes = "*Test"
 line-length = 120
 
 [tool.ruff]
-select = ["E","F","W","N","PL"]
+select = ["E","F","W","N","PL","NPY","PERF"]
 line-length = 120
 
 [tool.tox]

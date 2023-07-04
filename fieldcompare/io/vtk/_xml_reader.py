@@ -81,10 +81,8 @@ class VTKXMLReader(ABC):
     def _make_cell_data_array(
         self, element: ElementTree.Element, mesh: Mesh, index_map: CellTypeToCellIndices
     ) -> list[np.ndarray]:
-        result: list[np.ndarray] = []
         entire_data_array = self._make_data_array(element)
-        for cell_type in mesh.cell_types:
-            result.append(entire_data_array[index_map[cell_type]])
+        result: list[np.ndarray] = [entire_data_array[index_map[cell_type]] for cell_type in mesh.cell_types]
         return result
 
     def _make_data_array(self, xml_element: ElementTree.Element) -> np.ndarray:

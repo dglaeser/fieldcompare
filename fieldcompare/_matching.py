@@ -34,7 +34,6 @@ def find_matches(
 ) -> MatchResult:
     """Find matches and orphans in the two ranges using the given equality predicate"""
     matches = []
-    orphans_source = []
     orphans_target = list(v for v in reference)
 
     def _find_and_add(s) -> bool:
@@ -45,10 +44,7 @@ def find_matches(
                 return True
         return False
 
-    for s in source:
-        if not _find_and_add(s):
-            orphans_source.append(s)
-
+    orphans_source = [s for s in source if not _find_and_add(s)]
     return MatchResult(matches, orphans_source, orphans_target)
 
 

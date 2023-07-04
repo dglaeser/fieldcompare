@@ -106,8 +106,7 @@ def _run(args: dict, in_logger: CLILogger) -> int:
 
     if args["junit_xml"] is not None:
         suites = Element("testsuites")
-        for _, timestamp, suite in comparisons:
-            suites.append(as_junit_xml_element(suite, timestamp))
+        suites.extend([as_junit_xml_element(suite, timestamp) for _, timestamp, suite in comparisons])
         ElementTree(suites).write(args["junit_xml"], xml_declaration=True)
 
     # create a test suite of test suites for printing a summary
@@ -173,6 +172,7 @@ def _do_file_comparisons(args, filenames: Iterable[str], logger: CLILogger) -> F
     _abs_tol_map = _parse_field_tolerances(args.get("absolute_tolerance"), allow_dynamic_tolerances=True)
 
     file_comparisons = []
+    # ruff: noqa: PERF203
     for i, filename in enumerate(filenames):
         timestamp = datetime.now().isoformat()
         res_file = join(args["source-dir"], filename)

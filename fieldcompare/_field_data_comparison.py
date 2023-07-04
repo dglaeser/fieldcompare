@@ -296,6 +296,7 @@ class FieldDataComparator:
         self, query: MatchResult, predicate_selector: PredicateSelector, fieldcomp_callback: FieldComparisonCallback
     ) -> list[FieldComparison]:
         comparisons = []
+        # ruff: noqa: PERF203
         for source, reference in query.matches:
             predicate = predicate_selector(self._without_annotation(source), self._without_annotation(reference))
             try:

@@ -27,9 +27,9 @@ class _AnsiiColorBackend:
         return text
 
     def remove_color_codes(self, text: str) -> str:
-        for _, code in self._color_map.items():
+        for code in self._color_map.values():
             text = text.replace(code, "")
-        for _, code in self._style_map.items():
+        for code in self._style_map.values():
             text = text.replace(code, "")
         return text
 

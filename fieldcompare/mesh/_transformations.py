@@ -221,11 +221,7 @@ def _sorting_points_indices(points, cells, rel_tol: float, abs_tol: float) -> Ar
 
 def _get_points_to_cell_indices_map(cells, num_points) -> dict[CellType, list]:
     def _get_cells_around_points(_cells) -> list:
-        result: list = [[] for _ in range(num_points)]
-        for cell_idx, _corners in enumerate(_cells):
-            for _corner_idx in _corners:
-                result[_corner_idx].append(cell_idx)
-        return result
+        return [[cell for cell, corners in enumerate(_cells) if corner in corners] for corner in range(num_points)]
 
     return {cell_type: _get_cells_around_points(corners) for cell_type, corners in cells.items()}
 
