@@ -110,7 +110,7 @@ def remove_annotation(text: str) -> str:
 
 def split_annotation(text: str) -> tuple[str, str]:
     result = text.rsplit(_ANNOTATION_SEPARATOR, 1)
-    assert len(result) <= 2
+    assert len(result) <= 2  # noqa: PLR2004
     return (result[0], result[1] if len(result) > 1 else "")
 
 

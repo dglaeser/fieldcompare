@@ -33,7 +33,7 @@ class MeshFieldsComparator:
         field_exclusion_filter: Filter to exclude fields from being compared (optional).
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         source: mesh_protocols.MeshFields,
         reference: mesh_protocols.MeshFields,

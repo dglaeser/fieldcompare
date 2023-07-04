@@ -175,6 +175,8 @@ def field_comparison_report(comparison: FieldComparison, use_colors: bool = True
         use_colors: Switch on/off colors.
         verbosity: Control the verbosity of the report.
     """
+    _verbosity_level_info = 1
+    _verbosity_level_detail = 2
 
     def _get_indented(message: str, indentation_level: int = 0) -> str:
         if indentation_level > 0:
@@ -185,11 +187,11 @@ def field_comparison_report(comparison: FieldComparison, use_colors: bool = True
 
     status_string = as_error("FAILED") if not comparison else as_success("PASSED")
     report = ""
-    if verbosity >= 1:
+    if verbosity >= _verbosity_level_info:
         report += _get_indented(
             f"Comparing the field '{highlighted(comparison.name)}': {status_string}", indentation_level=1
         )
-    if verbosity >= 2 or (verbosity >= 1 and not comparison):
+    if verbosity >= _verbosity_level_detail or (verbosity >= _verbosity_level_info and not comparison):
         report += "\n"
         report += _get_indented(
             f"Report: {comparison.report if comparison.report else 'n/a'}\n"

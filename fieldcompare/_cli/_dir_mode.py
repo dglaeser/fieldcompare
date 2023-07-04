@@ -249,10 +249,10 @@ def _get_failing_field_test_names(test_suite: TestSuite) -> str | None:
     names_string = ""
     max_num_characters = 30
     for n in names:
-        n = f"'{n}'"
-        if len(names_string) + len(n) > max_num_characters:
+        quoted_name = f"'{n}'"
+        if len(names_string) + len(quoted_name) > max_num_characters:
             return names_string
-        names_string = n if not names_string else ";".join([names_string, n])
+        names_string = quoted_name if not names_string else ";".join([names_string, quoted_name])
     return names_string
 
 

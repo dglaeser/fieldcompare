@@ -16,6 +16,8 @@ Array = ndarray
 ArrayLike = NumpyArrayLike
 ArrayTolerance = Union[float, Array]  # Union required for compatibility with 3.8
 
+_ARRAY_DIM_2D = 2
+
 
 def make_uninitialized_array(size: int, dtype=None) -> Array:
     return Array(shape=(size,), dtype=dtype)
@@ -63,7 +65,7 @@ def has_floats(input_array: Array) -> bool:
         if isinstance(value, Array) and value.dtype.name != "object":
             return "float" in input_array.dtype.name
         if np.isscalar(value):
-            return isinstance(value, np.floating) or isinstance(value, float)
+            return isinstance(value, (float, np.floating))
         elif isinstance(value, Iterable):
             return any(_has_floats(v) for v in value)
         raise ValueError("Could not determine if array has floats")
@@ -123,7 +125,7 @@ def get_lex_sorting_index_map(input_array: Array) -> Array:
 
 def get_fuzzy_lex_sorting_index_map(input_array: Array, abs_tol: float, rel_tol: float) -> Array:
     """Get the list of indices for fuzzy-sorting the array lexicographically. Expects 2d arrays."""
-    if len(input_array.shape) != 2:
+    if len(input_array.shape) != _ARRAY_DIM_2D:
         raise ValueError("Implementation only works for 2d arrays")
     idx_map = np.argsort(input_array[:, 0])
     sorted = input_array[idx_map]
@@ -154,7 +156,7 @@ def get_sorting_index_map(input_array: Array) -> Array:
 
 def max_element(input_array: Array) -> np.number | Array:
     """Return an array of shape `input_array.shape[1:]` with the maximum entries of the given array."""
-    if len(input_array.shape) < 2:
+    if len(input_array.shape) < _ARRAY_DIM_2D:
         return input_array[np.argmax(input_array)]
     result = np.zeros(shape=input_array.shape[1:], dtype=input_array.dtype)
     max_indices = np.argmax(input_array, axis=0)

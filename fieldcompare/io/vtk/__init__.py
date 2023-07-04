@@ -40,10 +40,10 @@ def _sniff_vtk_flavor(filename: str, max_bytes_read: int = 1024) -> str | None:
     with open(filename, "rb") as vtk_file:
         sniffed_content = vtk_file.read(max_bytes_read)
         split_content = sniffed_content.split(b"<VTKFile", maxsplit=1)
-        if len(split_content) < 2:
+        if len(split_content) < 2:  # noqa: PLR2004
             return None
         split_content = split_content[1].split(b"type=", maxsplit=1)
-        if len(split_content) < 2:
+        if len(split_content) < 2:  # noqa: PLR2004
             return None
         vtk_type = split_content[1].strip(b" ")
         if not vtk_type.startswith(b'"'):

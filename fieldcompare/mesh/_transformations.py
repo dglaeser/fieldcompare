@@ -230,6 +230,7 @@ def _get_points_to_cell_indices_map(cells, num_points) -> dict[CellType, list]:
     return {cell_type: _get_cells_around_points(corners) for cell_type, corners in cells.items()}
 
 
+# ruff: noqa: PLR0912
 def _merge(
     fields1: protocols.MeshFields, fields2: protocols.MeshFields, remove_duplicate_points: bool
 ) -> protocols.MeshFields:
@@ -364,12 +365,16 @@ def _map_external_indices(num_values: int, external_indices_map: dict[int, int],
 
 
 def _is_scalar_field(field: Array) -> bool:
-    return len(field.shape) == 1 or (len(field.shape) == 2 and field.shape[1] == 1)
+    _scalar_dim = 1
+    _vec_dim = 2
+    return len(field.shape) == _scalar_dim or (len(field.shape) == _vec_dim and field.shape[1] == _scalar_dim)
 
 
 def _is_vector_field(field: Array) -> bool:
-    return len(field.shape) == 2
+    _vec_dim = 2
+    return len(field.shape) == _vec_dim
 
 
 def _is_tensor_field(field: Array) -> bool:
-    return len(field.shape) == 3
+    _tensor_dim = 3
+    return len(field.shape) == _tensor_dim

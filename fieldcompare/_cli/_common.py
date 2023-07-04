@@ -118,7 +118,7 @@ def _make_file_type_map(map_args: list[str] | None) -> FileTypeMap:
                 return mapping, "*"
             else:
                 result = mapping.split("}:")
-                if len(result) != 2:
+                if len(result) != 2:  # noqa: PLR2004
                     raise IOError(f"Could not parse reader mapping '{mapping}'.")
                 return result[0] + "}", result[1]
         result = mapping.split(":", maxsplit=1)
