@@ -12,7 +12,7 @@ colorama.init()
 
 
 class _AnsiiColorBackend:
-    def __init__(self, use_colors=True, use_styles=True):
+    def __init__(self, use_colors=True, use_styles=True) -> None:
         self._reset_key = "reset_all"
         self._setup_color_map(use_colors)
         self._setup_style_map(use_styles)

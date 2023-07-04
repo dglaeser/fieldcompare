@@ -281,7 +281,7 @@ def find_first_fuzzy_unequal(
                 if not fuzzy_equal(as_array(val1), as_array(val2), rel_tol=rel_tol, abs_tol=abs_tol).all():
                     return (val1, val2)
         except Exception:
-            raise ValueError("Could not fuzzy-compare the given arrays.")
+            raise ValueError("Could not fuzzy-compare the given arrays.") from None
     return None
 
 

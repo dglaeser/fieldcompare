@@ -28,7 +28,7 @@ class Status(Enum):
         """Return true if the status is considered successful."""
         return self not in (Status.failed,)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Use uppercase string representation without class name prefix"""
         return f"{self.name.upper()}"
 
@@ -47,7 +47,7 @@ class FieldComparisonStatus(Enum):
         """Return true if the status is considered successful."""
         return self not in [FieldComparisonStatus.failed, FieldComparisonStatus.error]
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Use uppercase string representation without class name prefix"""
         return f"{self.name.upper()}"
 
@@ -81,18 +81,19 @@ class FieldComparisonSuite:
         comparisons: Results of all performed field comparisons.
     """
 
-    def __init__(self, domain_eq_check: PredicateResult, comparisons: list[FieldComparison] = []) -> None:
+    def __init__(self, domain_eq_check: PredicateResult, comparisons: list[FieldComparison] | None = None) -> None:
         self._domain_eq_check = domain_eq_check
         self._passed: list[FieldComparison] = []
         self._failed: list[FieldComparison] = []
         self._skipped: list[FieldComparison] = []
-        for c in comparisons:
-            if c.status == FieldComparisonStatus.passed:
-                self._passed.append(c)
-            elif not c:
-                self._failed.append(c)
-            else:
-                self._skipped.append(c)
+        if comparisons is not None:
+            for c in comparisons:
+                if c.status == FieldComparisonStatus.passed:
+                    self._passed.append(c)
+                elif not c:
+                    self._failed.append(c)
+                else:
+                    self._skipped.append(c)
 
     def __bool__(self) -> bool:
         """Return true if the suite is considered to have passed successfully."""
@@ -253,8 +254,8 @@ class FieldDataComparator:
 
     def __call__(
         self,
-        predicate_selector: PredicateSelector = lambda _, __: DefaultEquality(),
-        fieldcomp_callback: FieldComparisonCallback = DefaultFieldComparisonCallback(),
+        predicate_selector: PredicateSelector | None = None,
+        fieldcomp_callback: FieldComparisonCallback | None = None,
     ) -> FieldComparisonSuite:
         """
         Compare all fields in the field data objects using the given predicates.
@@ -267,6 +268,12 @@ class FieldDataComparator:
                                 field comparison results as soon as they are available (e.g. to
                                 print intermediate output). Defaults to :class:`.DefaultFieldComparisonCallback`.
         """
+
+        def _default_predicate_selector(*_, **__):
+            return DefaultEquality()
+
+        predicate_selector = predicate_selector or _default_predicate_selector
+        fieldcomp_callback = fieldcomp_callback or DefaultFieldComparisonCallback()
         domain_eq_check = self._source.domain.equals(self._reference.domain)
         if not domain_eq_check:
             return FieldComparisonSuite(domain_eq_check=domain_eq_check)

@@ -36,10 +36,10 @@ def _exclude_all() -> PatternFilter:
 class FieldToleranceMap:
     def __init__(
         self,
-        tolerances: dict[str, float | DynamicTolerance] = {},
+        tolerances: dict[str, float | DynamicTolerance] | None = None,
         default_tol: float | DynamicTolerance | None = None,
     ) -> None:
-        self._field_tolerances = tolerances
+        self._field_tolerances = tolerances or {}
         self._default = default_tol
 
     def __call__(self, field_name: str) -> float | DynamicTolerance | None:
@@ -77,8 +77,8 @@ def _parse_field_tolerances(
 
 
 class FileTypeMap:
-    def __init__(self, mapping: list[tuple[str, PatternFilter]] = []) -> None:
-        self._mapping = mapping
+    def __init__(self, mapping: list[tuple[str, PatternFilter]] | None = None) -> None:
+        self._mapping = mapping or []
 
     def __call__(self, filename: str) -> tuple[str, dict] | None:
         for file_type_with_opts, regex in self._mapping:
@@ -100,7 +100,7 @@ class FileTypeMap:
                 f"Could not parse reader options '{opts_string}'. '{opts_string}' has to be valid JSON. "
                 "Note that JSON only interprets lower-case false and true as boolean values, and all keys "
                 f"have to be wrapped in double quotes. Exception: '{e}'"
-            )
+            ) from None
 
 
 def _make_file_type_map(map_args: list[str] | None) -> FileTypeMap:

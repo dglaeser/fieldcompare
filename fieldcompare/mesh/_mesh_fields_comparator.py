@@ -3,7 +3,7 @@
 
 """Comparator for mesh field data"""
 
-from typing import Callable
+from typing import Callable, Optional
 
 from ..predicates import DefaultEquality
 from . import protocols as mesh_protocols
@@ -53,8 +53,8 @@ class MeshFieldsComparator:
 
     def __call__(
         self,
-        predicate_selector: PredicateSelector = lambda _, __: DefaultEquality(),
-        fieldcomp_callback: FieldComparisonCallback = DefaultFieldComparisonCallback(),
+        predicate_selector: Optional[PredicateSelector] = None,
+        fieldcomp_callback: Optional[FieldComparisonCallback] = None,
         reordering_callback: Callable[[str], None] = lambda _: None,
     ) -> FieldComparisonSuite:
         """
@@ -70,6 +70,12 @@ class MeshFieldsComparator:
             reordering_callback: Function that is invoked with status messages about the reordering
                                  steps that are performed. Default: no-op lambda.
         """
+
+        def _default_predicate_selector(*_, **__):
+            return DefaultEquality()
+
+        predicate_selector = predicate_selector or _default_predicate_selector
+        fieldcomp_callback = fieldcomp_callback or DefaultFieldComparisonCallback()
         suite = self._run_comparison(predicate_selector, fieldcomp_callback)
         if suite.domain_equality_check:
             return suite

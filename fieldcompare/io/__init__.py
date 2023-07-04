@@ -22,7 +22,7 @@ __all__ = ["read_field_data", "read", "read_as", "is_supported"]
 _AVAILABLE_FILE_TYPES = ["mesh", "dsv"]
 
 
-def read_field_data(filename: str, options: dict[str, dict] = {}) -> protocols.FieldData:
+def read_field_data(filename: str, options: dict[str, dict] | None = None) -> protocols.FieldData:
     """
     Read the field data from the given file
 
@@ -30,7 +30,7 @@ def read_field_data(filename: str, options: dict[str, dict] = {}) -> protocols.F
         filename: Path to the file from which to read.
         options: further options (see :meth:`.read`)
     """
-    result = read(filename, options)
+    result = read(filename, options or {})
     assert isinstance(result, protocols.FieldData)
     return result
 
@@ -50,7 +50,7 @@ def write(fields: protocols.FieldData, filename: str) -> str:
     raise NotImplementedError("no write function implemented for given field data type")
 
 
-def read(filename: str, options: dict[str, dict] = {}) -> protocols.FieldData | protocols.FieldDataSequence:
+def read(filename: str, options: dict[str, dict] | None = None) -> protocols.FieldData | protocols.FieldDataSequence:
     """
     Read the field data or field data sequence from the given file
 
@@ -61,6 +61,7 @@ def read(filename: str, options: dict[str, dict] = {}) -> protocols.FieldData | 
                  associated reader are extracted from `options` by accessing it via the file type
                  key ("mesh", "dsv", ...).
     """
+    options = options or {}
     if _is_supported_mesh_file(filename):
         return _read_mesh_file(filename, **options["mesh"]) if "mesh" in options else _read_mesh_file(filename)
     if splitext(filename)[1] in [".csv", ".dsv"]:
@@ -108,15 +109,15 @@ def _is_supported_mesh_file(filename: str) -> bool:
 
 def _read_mesh_file(filename: str, **kwargs) -> protocols.FieldData | protocols.FieldDataSequence:
     if kwargs:
-        warn("Options are ignored when reading from mesh file")
+        warn("Options are ignored when reading from mesh file", stacklevel=3)
 
     if vtk.is_supported(filename):
         return vtk.read(filename)
     if _HAVE_MESHIO and _supported_by_meshio(filename):
         try:
             return _meshio_read(filename)
-        except Exception as e:
-            raise IOError(f"Error reading with meshio: '{e}'")
+        except Exception as err:
+            raise IOError("Error reading with meshio") from err
     raise IOError(f"Could not read '{filename}' as mesh file{_meshio_info_message()}")
 
 

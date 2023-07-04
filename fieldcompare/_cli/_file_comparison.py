@@ -113,7 +113,7 @@ class FileComparison:
             )
         except IOError as e:
             self._logger.log(f"Error: '{e}'\n", verbosity_level=1)
-            raise IOError(e)
+            raise e
 
     def _compare_fields(
         self,
