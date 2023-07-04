@@ -31,6 +31,21 @@ from ._test_suite import TestSuite, TestResult, TestStatus
 from .. import protocols
 from ..mesh import protocols as mesh_protocols
 
+def _default_base_tolerance_callable(*_):
+    return _default_base_tolerance()
+
+
+def _default_abs_tolerance_callable(*_):
+    return 0.0
+
+
+def _always_true_callable(*_):
+    return True
+
+
+def _always_false_callable(*_):
+    return False
+
 
 @dataclass
 class FileComparisonOptions:
@@ -38,10 +53,10 @@ class FileComparisonOptions:
     ignore_missing_reference_fields: bool = False
     ignore_missing_sequence_steps: bool = False
     force_sequence_comparison: bool = False
-    relative_tolerances: Callable[[str], float | DynamicTolerance | None] = lambda _: _default_base_tolerance()
-    absolute_tolerances: Callable[[str], float | DynamicTolerance | None] = lambda _: 0.0
-    field_inclusion_filter: Callable[[str], bool] = lambda _: True
-    field_exclusion_filter: Callable[[str], bool] = lambda _: False
+    relative_tolerances: Callable[[str], float | DynamicTolerance | None] = _default_base_tolerance_callable
+    absolute_tolerances: Callable[[str], float | DynamicTolerance | None] = _default_abs_tolerance_callable
+    field_inclusion_filter: Callable[[str], bool] = _always_true_callable
+    field_exclusion_filter: Callable[[str], bool] =  _always_false_callable
     disable_unconnected_points_removal: bool = False
     disable_mesh_space_dimension_matching: bool = False
     disable_mesh_reordering: bool = False

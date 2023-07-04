@@ -53,6 +53,10 @@ python_classes = "*Test"
 [tool.black]
 line-length = 120
 
+[tool.ruff]
+select = ["E", "W"]
+line-length = 120
+
 [tool.tox]
 legacy_tox_ini = """
 
@@ -63,9 +67,9 @@ isolated_build = True
 [testenv]
 deps = -rrequirements.txt
 commands =
-  pytest --verbose --junit-xml test_report.xml
-  flake8
   black --check --verbose -- fieldcompare
+  ruff check -- fieldcompare
+  pytest --verbose --junit-xml test_report.xml
   mypy fieldcompare
 
 [testenv:coverage]
