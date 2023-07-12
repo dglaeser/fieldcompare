@@ -6,6 +6,7 @@ from typing import Iterable, Iterator
 from random import Random
 from pathlib import Path
 from io import StringIO
+from functools import partial
 
 from pytest import raises
 
@@ -142,6 +143,10 @@ def test_field_data_comparison():
 def test_mesh_field_data_comparison():
     source = MockMeshFields(4, space_dimension=2)
     reference = MockMeshFields(4, space_dimension=3)
+    suite, _ = compare_and_stream_output(
+        source, reference, partial(MeshFieldsComparator, disable_space_dimension_matching=True)
+    )
+    assert not suite
     suite, _ = compare_and_stream_output(source, reference, MeshFieldsComparator)
 
     assert suite
