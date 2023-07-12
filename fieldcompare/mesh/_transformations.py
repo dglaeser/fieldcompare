@@ -173,8 +173,7 @@ def _unconnected_points_filter_map(mesh: protocols.Mesh) -> Array:
     num_unconnected = accumulate(is_unconnected)
     first_unconnected_after_sort = int(len(is_unconnected) - num_unconnected)
     unconnected_filter_map = get_sorting_index_map(is_unconnected)
-    unconnected_filter_map = sub_array(unconnected_filter_map, 0, first_unconnected_after_sort)
-    return unconnected_filter_map
+    return sub_array(unconnected_filter_map, 0, first_unconnected_after_sort)
 
 
 def _get_cell_corners_sorting_index_map(corners_array: Array) -> Array:
@@ -221,15 +220,12 @@ def _sorting_points_indices(points, cells, rel_tol: float, abs_tol: float) -> Ar
 
 def _get_points_to_cell_indices_map(cells, num_points) -> dict[CellType, list]:
     def _get_cells_around_points(_cells) -> list:
-        result: list = [[] for _ in range(num_points)]
-        for cell_idx, _corners in enumerate(_cells):
-            for _corner_idx in _corners:
-                result[_corner_idx].append(cell_idx)
-        return result
+        return [[cell for cell, corners in enumerate(_cells) if corner in corners] for corner in range(num_points)]
 
     return {cell_type: _get_cells_around_points(corners) for cell_type, corners in cells.items()}
 
 
+# ruff: noqa: PLR0912
 def _merge(
     fields1: protocols.MeshFields, fields2: protocols.MeshFields, remove_duplicate_points: bool
 ) -> protocols.MeshFields:
@@ -364,12 +360,16 @@ def _map_external_indices(num_values: int, external_indices_map: dict[int, int],
 
 
 def _is_scalar_field(field: Array) -> bool:
-    return len(field.shape) == 1 or (len(field.shape) == 2 and field.shape[1] == 1)
+    _scalar_dim = 1
+    _vec_dim = 2
+    return len(field.shape) == _scalar_dim or (len(field.shape) == _vec_dim and field.shape[1] == _scalar_dim)
 
 
 def _is_vector_field(field: Array) -> bool:
-    return len(field.shape) == 2
+    _vec_dim = 2
+    return len(field.shape) == _vec_dim
 
 
 def _is_tensor_field(field: Array) -> bool:
-    return len(field.shape) == 3
+    _tensor_dim = 3
+    return len(field.shape) == _tensor_dim

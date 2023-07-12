@@ -12,7 +12,7 @@ colorama.init()
 
 
 class _AnsiiColorBackend:
-    def __init__(self, use_colors=True, use_styles=True):
+    def __init__(self, use_colors=True, use_styles=True) -> None:
         self._reset_key = "reset_all"
         self._setup_color_map(use_colors)
         self._setup_style_map(use_styles)
@@ -27,9 +27,9 @@ class _AnsiiColorBackend:
         return text
 
     def remove_color_codes(self, text: str) -> str:
-        for _, code in self._color_map.items():
+        for code in self._color_map.values():
             text = text.replace(code, "")
-        for _, code in self._style_map.items():
+        for code in self._style_map.values():
             text = text.replace(code, "")
         return text
 
@@ -110,7 +110,7 @@ def remove_annotation(text: str) -> str:
 
 def split_annotation(text: str) -> tuple[str, str]:
     result = text.rsplit(_ANNOTATION_SEPARATOR, 1)
-    assert len(result) <= 2
+    assert len(result) <= 2  # noqa: PLR2004
     return (result[0], result[1] if len(result) > 1 else "")
 
 

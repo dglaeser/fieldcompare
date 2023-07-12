@@ -28,7 +28,7 @@ class Status(Enum):
         """Return true if the status is considered successful."""
         return self not in (Status.failed,)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Use uppercase string representation without class name prefix"""
         return f"{self.name.upper()}"
 
@@ -47,7 +47,7 @@ class FieldComparisonStatus(Enum):
         """Return true if the status is considered successful."""
         return self not in [FieldComparisonStatus.failed, FieldComparisonStatus.error]
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Use uppercase string representation without class name prefix"""
         return f"{self.name.upper()}"
 
@@ -81,18 +81,19 @@ class FieldComparisonSuite:
         comparisons: Results of all performed field comparisons.
     """
 
-    def __init__(self, domain_eq_check: PredicateResult, comparisons: list[FieldComparison] = []) -> None:
+    def __init__(self, domain_eq_check: PredicateResult, comparisons: list[FieldComparison] | None = None) -> None:
         self._domain_eq_check = domain_eq_check
         self._passed: list[FieldComparison] = []
         self._failed: list[FieldComparison] = []
         self._skipped: list[FieldComparison] = []
-        for c in comparisons:
-            if c.status == FieldComparisonStatus.passed:
-                self._passed.append(c)
-            elif not c:
-                self._failed.append(c)
-            else:
-                self._skipped.append(c)
+        if comparisons is not None:
+            for c in comparisons:
+                if c.status == FieldComparisonStatus.passed:
+                    self._passed.append(c)
+                elif not c:
+                    self._failed.append(c)
+                else:
+                    self._skipped.append(c)
 
     def __bool__(self) -> bool:
         """Return true if the suite is considered to have passed successfully."""
@@ -175,6 +176,8 @@ def field_comparison_report(comparison: FieldComparison, use_colors: bool = True
         use_colors: Switch on/off colors.
         verbosity: Control the verbosity of the report.
     """
+    _verbosity_level_info = 1
+    _verbosity_level_detail = 2
 
     def _get_indented(message: str, indentation_level: int = 0) -> str:
         if indentation_level > 0:
@@ -185,11 +188,11 @@ def field_comparison_report(comparison: FieldComparison, use_colors: bool = True
 
     status_string = as_error("FAILED") if not comparison else as_success("PASSED")
     report = ""
-    if verbosity >= 1:
+    if verbosity >= _verbosity_level_info:
         report += _get_indented(
             f"Comparing the field '{highlighted(comparison.name)}': {status_string}", indentation_level=1
         )
-    if verbosity >= 2 or (verbosity >= 1 and not comparison):
+    if verbosity >= _verbosity_level_detail or (verbosity >= _verbosity_level_info and not comparison):
         report += "\n"
         report += _get_indented(
             f"Report: {comparison.report if comparison.report else 'n/a'}\n"
@@ -251,8 +254,8 @@ class FieldDataComparator:
 
     def __call__(
         self,
-        predicate_selector: PredicateSelector = lambda _, __: DefaultEquality(),
-        fieldcomp_callback: FieldComparisonCallback = DefaultFieldComparisonCallback(),
+        predicate_selector: PredicateSelector | None = None,
+        fieldcomp_callback: FieldComparisonCallback | None = None,
     ) -> FieldComparisonSuite:
         """
         Compare all fields in the field data objects using the given predicates.
@@ -265,6 +268,12 @@ class FieldDataComparator:
                                 field comparison results as soon as they are available (e.g. to
                                 print intermediate output). Defaults to :class:`.DefaultFieldComparisonCallback`.
         """
+
+        def _default_predicate_selector(*_, **__):
+            return DefaultEquality()
+
+        predicate_selector = predicate_selector or _default_predicate_selector
+        fieldcomp_callback = fieldcomp_callback or DefaultFieldComparisonCallback()
         domain_eq_check = self._source.domain.equals(self._reference.domain)
         if not domain_eq_check:
             return FieldComparisonSuite(domain_eq_check=domain_eq_check)
@@ -294,6 +303,7 @@ class FieldDataComparator:
         self, query: MatchResult, predicate_selector: PredicateSelector, fieldcomp_callback: FieldComparisonCallback
     ) -> list[FieldComparison]:
         comparisons = []
+        # ruff: noqa: PERF203
         for source, reference in query.matches:
             predicate = predicate_selector(self._without_annotation(source), self._without_annotation(reference))
             try:

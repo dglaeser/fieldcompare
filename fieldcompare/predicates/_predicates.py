@@ -17,6 +17,9 @@ from .._numpy_utils import rel_diff, abs_diff
 from .._numpy_utils import max_column_elements, max_abs_element, max_abs_value, select_max_values
 
 
+_DEFAULT_BASE_TOLERANCE_FUNCTOR = _default_base_tolerance()
+
+
 class PredicateError(Exception):
     """Exception raised for errors during predicate evaluation"""
 
@@ -55,7 +58,7 @@ class ScaledTolerance(DynamicTolerance):
     def _get_base_tol(self, first: Array, second: Array) -> ArrayTolerance:
         if self._base_tol is not None:
             return self._base_tol
-        return as_array(_default_base_tolerance()(first, second))
+        return as_array(_DEFAULT_BASE_TOLERANCE_FUNCTOR(first, second))
 
 
 @dataclass
@@ -84,7 +87,7 @@ class ExactEquality:
         try:
             return self._check(first, second)
         except Exception as e:
-            raise PredicateError(f"Exact equality check failed with exception: {e}\n")
+            raise PredicateError(f"Exact equality check failed with exception: {e}\n") from None
 
     def __str__(self) -> str:
         return "ExactEquality"
@@ -121,7 +124,7 @@ class FuzzyEquality:
 
     def __init__(
         self,
-        rel_tol: DynamicTolerance | ArrayTolerance = _default_base_tolerance(),
+        rel_tol: DynamicTolerance | ArrayTolerance = _DEFAULT_BASE_TOLERANCE_FUNCTOR,
         abs_tol: DynamicTolerance | ArrayTolerance = 0.0,
     ) -> None:
         self._rel_tol = rel_tol
@@ -170,7 +173,7 @@ class FuzzyEquality:
         try:
             return self._check(first, second)
         except Exception as e:
-            raise PredicateError(f"Fuzzy comparison failed with exception: {e}")
+            raise PredicateError(f"Fuzzy comparison failed with exception: {e}") from None
 
     def __str__(self) -> str:
         return f"FuzzyEquality ({self._tolerance_info()})"

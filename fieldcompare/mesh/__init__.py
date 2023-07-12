@@ -14,6 +14,8 @@ __all__ = [
     "CellType",
     "CellTypes",
     "MeshFields",
+    "MeshFieldsComparator",
+    "extend_space_dimension_to",
     "strip_orphan_points",
     "sort_points",
     "sort_cells",

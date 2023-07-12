@@ -2,3 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from ._main import main
+
+__all__ = [
+    "main",
+]

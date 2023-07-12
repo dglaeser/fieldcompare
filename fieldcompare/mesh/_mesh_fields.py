@@ -44,17 +44,26 @@ class MeshFields(fc_protocols.FieldData):
     """
 
     def __init__(
-        self, mesh: protocols.Mesh, point_data: dict[str, Array] = {}, cell_data: dict[str, list[Array]] = {}
+        self,
+        mesh: protocols.Mesh,
+        point_data: dict[str, Array] | None = None,
+        cell_data: dict[str, list[Array]] | None = None,
     ) -> None:
         self._mesh = mesh
-        self._point_data = {name: self._make_point_values(data) for name, data in point_data.items()}
-        self._cell_data = {
-            name: {
-                cell_type: self._make_cell_values(cell_type, cell_values)
-                for cell_type, cell_values in zip(mesh.cell_types, cell_data[name])
+        self._point_data = (
+            {} if point_data is None else {name: self._make_point_values(data) for name, data in point_data.items()}
+        )
+        self._cell_data = (
+            {}
+            if cell_data is None
+            else {
+                name: {
+                    cell_type: self._make_cell_values(cell_type, cell_values)
+                    for cell_type, cell_values in zip(mesh.cell_types, cell_data[name])
+                }
+                for name in cell_data
             }
-            for name in cell_data
-        }
+        )
 
     @property
     def domain(self) -> protocols.Mesh:

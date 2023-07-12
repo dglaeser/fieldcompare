@@ -32,16 +32,32 @@ from .. import protocols
 from ..mesh import protocols as mesh_protocols
 
 
+def _default_base_tolerance_callable(*_):
+    return _default_base_tolerance()
+
+
+def _default_abs_tolerance_callable(*_):
+    return 0.0
+
+
+def _always_true_callable(*_):
+    return True
+
+
+def _always_false_callable(*_):
+    return False
+
+
 @dataclass
 class FileComparisonOptions:
     ignore_missing_source_fields: bool = False
     ignore_missing_reference_fields: bool = False
     ignore_missing_sequence_steps: bool = False
     force_sequence_comparison: bool = False
-    relative_tolerances: Callable[[str], float | DynamicTolerance | None] = lambda _: _default_base_tolerance()
-    absolute_tolerances: Callable[[str], float | DynamicTolerance | None] = lambda _: 0.0
-    field_inclusion_filter: Callable[[str], bool] = lambda _: True
-    field_exclusion_filter: Callable[[str], bool] = lambda _: False
+    relative_tolerances: Callable[[str], float | DynamicTolerance | None] = _default_base_tolerance_callable
+    absolute_tolerances: Callable[[str], float | DynamicTolerance | None] = _default_abs_tolerance_callable
+    field_inclusion_filter: Callable[[str], bool] = _always_true_callable
+    field_exclusion_filter: Callable[[str], bool] = _always_false_callable
     disable_unconnected_points_removal: bool = False
     disable_mesh_space_dimension_matching: bool = False
     disable_mesh_reordering: bool = False
@@ -67,11 +83,15 @@ class FileComparison:
         )
 
     def _write_diff_file(self, diff_basefilename: str, res_fields, ref_fields):
-        if isinstance(res_fields, mesh_protocols.MeshFields) and isinstance(ref_fields, mesh_protocols.MeshFields):
-            if not res_fields.domain.equals(ref_fields.domain) and not self._opts.disable_mesh_reordering:
-                self._logger.log("Sorting mesh fields for diff output\n", verbosity_level=2)
-                res_fields = sort(res_fields)
-                ref_fields = sort(ref_fields)
+        if (
+            isinstance(res_fields, mesh_protocols.MeshFields)
+            and isinstance(ref_fields, mesh_protocols.MeshFields)
+            and not res_fields.domain.equals(ref_fields.domain)
+            and not self._opts.disable_mesh_reordering
+        ):
+            self._logger.log("Sorting mesh fields for diff output\n", verbosity_level=2)
+            res_fields = sort(res_fields)
+            ref_fields = sort(ref_fields)
 
         try:
             diff = res_fields.diff_to(ref_fields)
@@ -97,7 +117,7 @@ class FileComparison:
             )
         except IOError as e:
             self._logger.log(f"Error: '{e}'\n", verbosity_level=1)
-            raise IOError(e)
+            raise e
 
     def _compare_fields(
         self,
@@ -110,9 +130,7 @@ class FileComparison:
             if diff_filename is not None:
                 self._write_diff_file(diff_filename, res_fields, ref_fields)
             return result
-        elif isinstance(res_fields, protocols.FieldDataSequence) and isinstance(
-            ref_fields, protocols.FieldDataSequence
-        ):
+        if isinstance(res_fields, protocols.FieldDataSequence) and isinstance(ref_fields, protocols.FieldDataSequence):
             return self._compare_field_sequences(res_fields, ref_fields, diff_filename)
 
         def _is_unknown(fields) -> bool:

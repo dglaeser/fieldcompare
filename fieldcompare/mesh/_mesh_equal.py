@@ -21,7 +21,7 @@ def mesh_equal(
     points_equal = FuzzyEquality(rel_tol=rel_tol, abs_tol=abs_tol)(source.points, target.points)
     if not points_equal:
         return PredicateResult(False, report=f"Differing points - '{points_equal.report}'")
-    if not set(source.cell_types) == set(target.cell_types):
+    if set(source.cell_types) != set(target.cell_types):
         return PredicateResult(False, report="Differing grid cell types detected")
     for cell_type in source.cell_types:
         if len(source.connectivity(cell_type)) != len(target.connectivity(cell_type)):
@@ -34,10 +34,14 @@ def mesh_equal(
     return PredicateResult(True)
 
 
+_FIXED_SIZE_CORNER_DIM = 2
+_DYNAMIC_SIZE_CORNER_DIM = 1
+
+
 def _get_sorted_corner_indices(corners: Array) -> Array:
-    if len(corners.shape) == 2:
+    if len(corners.shape) == _FIXED_SIZE_CORNER_DIM:
         return _get_fixed_size_corner_indices_sorted(corners)
-    elif len(corners.shape) == 1:
+    if len(corners.shape) == _DYNAMIC_SIZE_CORNER_DIM:
         return _get_dynamic_size_corner_indices_sorted(corners)
     raise ValueError("Unsupported connectivity array shape")
 

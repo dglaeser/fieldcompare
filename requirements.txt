@@ -6,6 +6,6 @@ black~=22.0
 colorama
 tox
 pytest
-flake8
+ruff
 mypy
 lz4

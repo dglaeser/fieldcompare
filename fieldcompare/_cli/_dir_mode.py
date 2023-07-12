@@ -106,8 +106,7 @@ def _run(args: dict, in_logger: CLILogger) -> int:
 
     if args["junit_xml"] is not None:
         suites = Element("testsuites")
-        for _, timestamp, suite in comparisons:
-            suites.append(as_junit_xml_element(suite, timestamp))
+        suites.extend([as_junit_xml_element(suite, timestamp) for _, timestamp, suite in comparisons])
         ElementTree(suites).write(args["junit_xml"], xml_declaration=True)
 
     # create a test suite of test suites for printing a summary
@@ -173,6 +172,7 @@ def _do_file_comparisons(args, filenames: Iterable[str], logger: CLILogger) -> F
     _abs_tol_map = _parse_field_tolerances(args.get("absolute_tolerance"), allow_dynamic_tolerances=True)
 
     file_comparisons = []
+    # ruff: noqa: PERF203
     for i, filename in enumerate(filenames):
         timestamp = datetime.now().isoformat()
         res_file = join(args["source-dir"], filename)
@@ -189,9 +189,9 @@ def _do_file_comparisons(args, filenames: Iterable[str], logger: CLILogger) -> F
             absolute_tolerances=_abs_tol_map,
             field_inclusion_filter=PatternFilter(args["include_fields"]) if args["include_fields"] else _include_all(),
             field_exclusion_filter=PatternFilter(args["exclude_fields"]) if args["exclude_fields"] else _exclude_all(),
-            disable_mesh_reordering=True if args["disable_mesh_reordering"] else False,
-            disable_mesh_space_dimension_matching=True if args["disable_mesh_space_dimension_matching"] else False,
-            disable_unconnected_points_removal=True if args["disable_mesh_orphan_point_removal"] else False,
+            disable_mesh_reordering=bool(args["disable_mesh_reordering"]),
+            disable_mesh_space_dimension_matching=bool(args["disable_mesh_space_dimension_matching"]),
+            disable_unconnected_points_removal=bool(args["disable_mesh_orphan_point_removal"]),
             file_type_map=_make_file_type_map(args.get("read_as", [])),
         )
         try:
@@ -249,10 +249,10 @@ def _get_failing_field_test_names(test_suite: TestSuite) -> str | None:
     names_string = ""
     max_num_characters = 30
     for n in names:
-        n = f"'{n}'"
-        if len(names_string) + len(n) > max_num_characters:
+        quoted_name = f"'{n}'"
+        if len(names_string) + len(quoted_name) > max_num_characters:
             return names_string
-        names_string = n if not names_string else ";".join([names_string, n])
+        names_string = quoted_name if not names_string else ";".join([names_string, quoted_name])
     return names_string
 
 

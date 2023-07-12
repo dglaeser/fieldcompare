@@ -8,6 +8,7 @@ from datetime import datetime
 from argparse import ArgumentParser
 
 from fieldcompare import __version__
+from typing import Optional
 
 from ._logger import CLILogger
 from ._file_mode import _add_arguments as _file_mode_add_arguments
@@ -17,7 +18,8 @@ from ._dir_mode import _add_arguments as _dir_mode_add_arguments
 from ._dir_mode import _run as _run_dir_mode
 
 
-def main(argv=None, logger: CLILogger = CLILogger()):
+def main(argv=None, logger: Optional[CLILogger] = None):
+    logger = logger or CLILogger()
     parser = ArgumentParser(description="Compare fields in files of various formats")
     parser.add_argument(
         "--version",

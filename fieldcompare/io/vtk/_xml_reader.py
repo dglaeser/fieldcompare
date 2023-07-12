@@ -32,7 +32,8 @@ class VTKXMLReader(ABC):
                     content=elem.text.strip("_ \n").encode(self._text_encoding), encoding=elem.attrib["encoding"]
                 )
         except ElementTree.ParseError:
-            content = open(filename, "rb").read()
+            with open(filename, "rb") as xml_file:
+                content = xml_file.read()
             app_begin, app_end = _find_appendix_positions(content)
             self._appendix = VTKXMLAppendix(
                 content=content[app_begin:app_end], encoding=_determine_encoding(content[app_begin - 100 :])
@@ -81,10 +82,8 @@ class VTKXMLReader(ABC):
     def _make_cell_data_array(
         self, element: ElementTree.Element, mesh: Mesh, index_map: CellTypeToCellIndices
     ) -> list[np.ndarray]:
-        result: list[np.ndarray] = []
         entire_data_array = self._make_data_array(element)
-        for cell_type in mesh.cell_types:
-            result.append(entire_data_array[index_map[cell_type]])
+        result: list[np.ndarray] = [entire_data_array[index_map[cell_type]] for cell_type in mesh.cell_types]
         return result
 
     def _make_data_array(self, xml_element: ElementTree.Element) -> np.ndarray:
@@ -157,10 +156,9 @@ class VTKXMLReader(ABC):
     def _get_data_array_values(self, xml: ElementTree.Element) -> np.ndarray:
         if xml.attrib["format"] == "ascii":
             return self._get_inline_ascii_data_array_values(xml)
-        elif xml.attrib["format"] == "binary":
+        if xml.attrib["format"] == "binary":
             return self._get_inline_binary_data_array_values(xml)
-        else:
-            return self._get_appended_data_array_values(xml)
+        return self._get_appended_data_array_values(xml)
 
     def _get_inline_ascii_data_array_values(self, xml: ElementTree.Element) -> np.ndarray:
         assert xml.text is not None
@@ -225,7 +223,7 @@ def _find_enclosed_content_range(
             close_count += 1
             if open_count == close_count and (_is_end(next_open_pos) or next_close_pos < next_open_pos):
                 return start_pos, next_close_pos
-            elif not _is_end(next_open_pos):
+            if not _is_end(next_open_pos):
                 open_count += 1
         cur_pos = max(next_open_pos, next_close_pos)
     return None

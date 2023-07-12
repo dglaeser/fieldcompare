@@ -25,6 +25,8 @@ from ..._numpy_utils import Array, make_array, concatenate, flatten, to_bytes
 
 from ._helpers import cell_type_to_vtk_cell_type_index, dtype_to_vtk_type
 
+_DIM_POINT_3D = 3
+
 
 class VTUWriter:
     def __init__(self, fields: protocols.MeshFields) -> None:
@@ -155,7 +157,7 @@ class VTUWriter:
         return self._fields.domain.points
 
     def _make_3d(self, point: Array) -> Array:
-        if len(point) == 3:
+        if len(point) == _DIM_POINT_3D:
             return point
         result: Array = Array(shape=(3,))
         result.fill(0.0)
@@ -166,8 +168,7 @@ class VTUWriter:
     def _array_num_components(self, values: Array) -> int:
         if len(values) == 0:
             raise RuntimeError("Cannot deduce number of components from empty array")
-        result = self._num_components(values[0])
-        return result
+        return self._num_components(values[0])
 
     def _num_components(self, array_entry) -> int:
         if not isinstance(array_entry, Iterable):
