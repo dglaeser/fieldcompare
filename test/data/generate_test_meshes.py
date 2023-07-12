@@ -3,9 +3,12 @@
 
 """Generate the mesh files used in the tests"""
 
+from __future__ import annotations
+
 import random
 import numpy as np
 
+from os.path import splitext
 from copy import deepcopy
 from meshio import Mesh
 from meshio.xdmf import TimeSeriesWriter
@@ -13,6 +16,10 @@ from meshio.xdmf import TimeSeriesWriter
 
 def _test_function(coord) -> float:
     return (1.0 - coord[0])*(1.0 - coord[1])
+
+
+def _test_vector(coord, dim: int = 3) -> list[float]:
+    return [_test_function(coord) for _ in range(dim)]
 
 
 def _add_ghost_points(mesh, use_preexisting_points=True):
@@ -88,14 +95,19 @@ def _make_test_mesh():
         cells,
         point_data={
             "point_index": list(range(len(points))),
-            "function": [_test_function(x) for x in points]
+            "function": [_test_function(x) for x in points],
+            "pvector": [_test_vector(x, 3) for x in points],
         },
         cell_data={
             "cell_index": [[0, 1, 2, 3], [4]],
             "cell_func_values": [
                 [_test_function(_get_cell_center(cell, points)) for cell in corners]
                 for _, corners in cells
-            ]
+            ],
+            "cvector": [
+                [_test_vector(_get_cell_center(cell, points)) for cell in corners]
+                for _, corners in cells
+            ],
         }
     )
 
@@ -221,15 +233,41 @@ def _write_time_series(filename, mesh, point_data, cell_data, num_time_steps):
         writer.write_points_cells(mesh.points, mesh.cells)
         for ts in range(num_time_steps):
             writer.write_data(ts, point_data[ts], cell_data[ts])
+    _add_license_header(filename)
+
+
+def _write_mesh(filename, mesh):
+    mesh.write(filename, binary=False)
+    _add_license_header(filename)
+
+
+def _add_license_header(filename) -> None:
+    license_text = """
+<!--SPDX-FileCopyrightText: 2023 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>-->
+<!--SPDX-License-Identifier: GPL-3.0-or-later-->
+"""
+    if splitext(filename)[1] == ".vtu":
+        xml_version_string = '<?xml version="1.0"?>'
+        content = open(filename).read()
+        content = content.split(xml_version_string)[1]
+        content = f"{xml_version_string}{license_text}{content}"
+        with open(filename, "w") as vtu_file:
+            vtu_file.write(content)
+    elif splitext(filename)[1] == ".xdmf":
+        content = open(filename).read()
+        with open(filename, "w") as xdmf_file:
+            xdmf_file.write(f"{license_text}{content}")
+    else:
+        raise NotImplementedError(f"Unknown file format for '{filename}'")
 
 
 if __name__ == "__main__":
     test_mesh = _make_test_mesh()
-    test_mesh.write("test_mesh.vtu", binary=False)
+    _write_mesh("test_mesh.vtu", test_mesh)
     permutated_mesh = _permutate_mesh(test_mesh)
-    permutated_mesh.write("test_mesh_permutated.vtu", binary=False)
+    _write_mesh("test_mesh_permutated.vtu", permutated_mesh)
     disturbed_mesh = _perturb_mesh(permutated_mesh)
-    disturbed_mesh.write("test_mesh_permutated_perturbed.vtu", binary=False)
+    _write_mesh("test_mesh_permutated_perturbed.vtu", disturbed_mesh)
 
     point_values = _get_time_series_point_data_values(test_mesh, 3)
     cell_values = _get_time_series_cell_data_values(test_mesh, 3)
@@ -244,20 +282,20 @@ if __name__ == "__main__":
     _write_time_series("test_time_series_perturbed.xdmf", test_mesh, point_values, cell_values, 3)
 
     non_conforming = _make_non_conforming_test_mesh()
-    non_conforming.write("test_non_conforming_mesh.vtu", binary=False)
+    _write_mesh("test_non_conforming_mesh.vtu", non_conforming)
     non_conforming_permuted = _permutate_mesh(non_conforming)
-    non_conforming_permuted.write("test_non_conforming_mesh_permutated.vtu", binary=False)
+    _write_mesh("test_non_conforming_mesh_permutated.vtu", non_conforming_permuted)
     non_conforming_permuted_perturbed = _perturb_mesh(non_conforming_permuted)
-    non_conforming_permuted_perturbed.write("test_non_conforming_mesh_permutated_perturbed.vtu", binary=False)
+    _write_mesh("test_non_conforming_mesh_permutated_perturbed.vtu", non_conforming_permuted_perturbed)
 
     non_conforming_with_ghosts = _add_ghost_points(non_conforming)
-    non_conforming_with_ghosts.write("test_non_conforming_mesh_with_ghost_points.vtu", binary=False)
+    _write_mesh("test_non_conforming_mesh_with_ghost_points.vtu", non_conforming_with_ghosts)
 
     non_conforming_with_ghosts = _add_ghost_points(non_conforming, use_preexisting_points=False)
-    non_conforming_with_ghosts.write("test_non_conforming_mesh_with_non_overlapping_ghost_points.vtu", binary=False)
+    _write_mesh("test_non_conforming_mesh_with_non_overlapping_ghost_points.vtu", non_conforming_with_ghosts)
 
     non_conforming_with_ghosts = _add_ghost_points(non_conforming_permuted, use_preexisting_points=False)
-    non_conforming_with_ghosts.write(
+    _write_mesh(
         "test_non_conforming_mesh_with_non_overlapping_ghost_points_permutated.vtu",
-        binary=False
+        non_conforming_with_ghosts
     )

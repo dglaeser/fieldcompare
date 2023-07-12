@@ -2,10 +2,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
-from typing import Iterator
+from typing import Iterable, Iterator
 from random import Random
 from pathlib import Path
 from io import StringIO
+from functools import partial
 
 from pytest import raises
 
@@ -14,9 +15,9 @@ from fieldcompare import protocols
 
 from fieldcompare.io import read
 from fieldcompare.mesh import protocols as mesh_protocols
-from fieldcompare.mesh import sort, sort_cells, sort_points
+from fieldcompare.mesh import sort, sort_cells, sort_points, MeshFieldsComparator, Mesh, CellTypes, CellType
 from fieldcompare.predicates import DefaultEquality, FuzzyEquality
-from fieldcompare._numpy_utils import Array, make_array
+from fieldcompare._numpy_utils import Array, make_array, make_zeros
 from fieldcompare._field import Field
 
 TEST_DATA_PATH = Path(__file__).resolve().parent / Path("data")
@@ -48,47 +49,77 @@ def _compare_vtk_files(file1,
     return bool(result)
 
 
-class MockDomain:
-    def equals(self, other: MockDomain):
-        return True
-
-
-class MockFieldData(protocols.FieldData):
+class MockMeshFields(mesh_protocols.MeshFields):
     def __init__(self,
                  num_fields: int = 1,
-                 perturbation: float = 0.0) -> None:
+                 perturbation: float = 0.0,
+                 space_dimension: int = 2) -> None:
+        assert space_dimension >= 2
         self._random_instance = Random(1234)
         self._perturbation = perturbation
+        self._space_dimension = space_dimension
+        self._num_points = 3
         self._fields = list(
-            Field(f"f_{i}", self._test_array())
+            Field(f"f_{i}", self._test_array(i))
             for i in range(num_fields)
         )
 
     @property
-    def domain(self) -> MockDomain:
-        return MockDomain()
+    def domain(self) -> Mesh:
+        return Mesh(
+            points=make_array([
+                [float(i), float(i)] + [0.0 for _ in range(self._space_dimension - 2)]
+                for i in range(self._num_points)
+            ]),
+            connectivity=[(
+                CellTypes.line, [[i, i+1] for i in range(self._num_points - 1)]
+            )]
+        )
+
+    @property
+    def point_fields(self) -> Iterable[Field]:
+        return self._fields
+
+    @property
+    def cell_fields(self) -> Iterable[Field]:
+        return make_array([])
+
+    @property
+    def cell_fields_types(self) -> Iterable[tuple[Field, CellType]]:
+        return make_array([])
 
     def __iter__(self) -> Iterator[Field]:
         return iter(self._fields)
 
-    def transformed(self, permutation) -> MockDomain:
+    def transformed(self, _) -> Mesh:
         raise NotImplementedError("Permutation of mock field data")
 
-    def _test_array(self) -> Array:
-        return make_array([
-            42.0 + self._random_instance.uniform(0.0, self._perturbation),
-            43.0,
-            44.0
-        ])
+    def diff_to(self, _: MockMeshFields) -> protocols.FieldData:
+        raise NotImplementedError("Diff computation")
+
+    def _test_array(self, i: int) -> Array:
+        def _random(base_value: float) -> float:
+            return base_value + self._random_instance.uniform(0.0, self._perturbation)
+
+        if i % 3 == 0:  # make scalar field
+            return make_array([_random(42.0 + float(i)) for i in range(self._num_points)])
+        if i % 3 == 1:  # make vector field
+            result = make_zeros(shape=(self._num_points, self._space_dimension), dtype=float)
+            result[:, :2] = _random(42.0)
+            return result
+        # make tensor field
+        result = make_zeros(shape=(self._num_points, self._space_dimension, self._space_dimension), dtype=float)
+        result[:, :2, :2] = _random(42.0)
+        return result
 
 
 def get_number_of_lines(msg: str) -> int:
     return len(list(msg.strip("\n").split("\n")))
 
 
-def compare_and_stream_output(source, reference):
+def compare_and_stream_output(source, reference, comparator=FieldDataComparator):
     out_stream = StringIO()
-    comparison = FieldDataComparator(source, reference)
+    comparison = comparator(source, reference)
     suite = comparison(
         predicate_selector=lambda _, __: DefaultEquality(),
         fieldcomp_callback=lambda p: out_stream.write("--\n")
@@ -97,8 +128,8 @@ def compare_and_stream_output(source, reference):
 
 
 def test_field_data_comparison():
-    source = MockFieldData()
-    reference = MockFieldData()
+    source = MockMeshFields()
+    reference = MockMeshFields()
     suite, stdout = compare_and_stream_output(source, reference)
 
     assert suite
@@ -109,9 +140,25 @@ def test_field_data_comparison():
     assert get_number_of_lines(stdout) == 1
 
 
+def test_mesh_field_data_comparison():
+    source = MockMeshFields(4, space_dimension=2)
+    reference = MockMeshFields(4, space_dimension=3)
+    suite, _ = compare_and_stream_output(
+        source, reference, partial(MeshFieldsComparator, disable_space_dimension_matching=True)
+    )
+    assert not suite
+    suite, _ = compare_and_stream_output(source, reference, MeshFieldsComparator)
+
+    assert suite
+    assert len(list(suite)) == 4
+    assert len(list(suite.passed)) == 4
+    assert len(list(suite.failed)) == 0
+    assert len(list(suite.skipped)) == 0
+
+
 def test_field_data_comparison_missing_source():
-    source = MockFieldData()
-    reference = MockFieldData(num_fields=2)
+    source = MockMeshFields()
+    reference = MockMeshFields(num_fields=2)
     suite, stdout = compare_and_stream_output(source, reference)
 
     assert suite
@@ -123,8 +170,8 @@ def test_field_data_comparison_missing_source():
 
 
 def test_field_data_comparison_missing_reference():
-    source = MockFieldData(num_fields=2)
-    reference = MockFieldData(num_fields=1)
+    source = MockMeshFields(num_fields=2)
+    reference = MockMeshFields(num_fields=1)
     suite, stdout = compare_and_stream_output(source, reference)
 
     assert suite
@@ -136,8 +183,8 @@ def test_field_data_comparison_missing_reference():
 
 
 def test_failing_field_data_comparison():
-    source = MockFieldData(num_fields=1)
-    reference = MockFieldData(num_fields=1, perturbation=0.01)
+    source = MockMeshFields(num_fields=1)
+    reference = MockMeshFields(num_fields=1, perturbation=0.01)
     suite, stdout = compare_and_stream_output(source, reference)
 
     assert not suite
