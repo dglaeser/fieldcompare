@@ -33,34 +33,41 @@ from . import protocols
 
 
 def extend_space_dimension_to(space_dimension: int, mesh_fields: protocols.MeshFields) -> protocols.MeshFields:
+    """
+    Extend the space dimension of the grid by appending zeroes. Extends vector/tensor fields whose dimensions are
+    smaller than `space_dimension`.
+
+    Args:
+        space_dimension: the target space dimension.
+        mesh_fields: the mesh fields to be transformed.
+    """
     mesh_space_dim = mesh_fields.domain.points.shape[1]
     if space_dimension == mesh_space_dim:
         return mesh_fields
     if space_dimension < mesh_space_dim:
         raise ValueError("Given space dimension smaller than that of the mesh")
 
-    def _resized_vector(vector: Array) -> list:
-        assert len(vector.shape) == 1
-        assert vector.shape[0] <= mesh_space_dim
-        result = [vector.dtype.type(0) for _ in range(space_dimension)]
-        result[: len(vector)] = vector
-        return result
+    def _resized_vector_field_values(values: Array) -> Array:
+        if values.shape[1] < space_dimension:
+            result = make_zeros(shape=(values.shape[0], space_dimension), dtype=values.dtype)
+            result[:, :mesh_space_dim] = values
+            return result
+        return values
 
-    def _resize_vector_field_values(values: Array) -> Array:
-        return make_array([_resized_vector(v) for v in values])
-
-    def _resize_tensor_field_values(values: Array) -> Array:
-        assert len(values.shape) == 2
-        return make_array([[_resized_vector(row) for row in tensor] for tensor in values])
+    def _resized_tensor_field_values(values: Array) -> Array:
+        if values.shape[1] < space_dimension and values.shape[2] < space_dimension:
+            result = make_zeros(shape=(values.shape[0], space_dimension, space_dimension), dtype=values.dtype)
+            result[:, :mesh_space_dim, :mesh_space_dim] = values
+            return result
+        return values
 
     def _resized_field_values(values: Array) -> Array:
-        dim = len(values.shape)
-        if dim == 1 or (dim == 2 and values.shape[1] == 1):  # scalars
+        if _is_scalar_field(values):
             return values
-        if dim == 2:  # vectors
-            return _resize_vector_field_values(values)
-        if dim == 3:  # tensors
-            return _resize_tensor_field_values(values)
+        if _is_vector_field(values):
+            return _resized_vector_field_values(values)
+        if _is_tensor_field(values):
+            return _resized_tensor_field_values(values)
         raise ValueError(f"Unsupported field shape: {values.shape}")
 
     def _resized_cell_fields():
@@ -74,7 +81,7 @@ def extend_space_dimension_to(space_dimension: int, mesh_fields: protocols.MeshF
         return cell_fields
 
     extended_mesh = Mesh(
-        points=_resize_vector_field_values(mesh_fields.domain.points),
+        points=_resized_vector_field_values(mesh_fields.domain.points),
         connectivity=[
             (cell_type, mesh_fields.domain.connectivity(cell_type)) for cell_type in mesh_fields.domain.cell_types
         ],
@@ -354,3 +361,15 @@ def _map_external_indices(num_values: int, external_indices_map: dict[int, int],
         else:
             result[i] = result[i] + external_indices_offset - mapped_index_offset
     return result
+
+
+def _is_scalar_field(field: Array) -> bool:
+    return len(field.shape) == 1 or (len(field.shape) == 2 and field.shape[1] == 1)
+
+
+def _is_vector_field(field: Array) -> bool:
+    return len(field.shape) == 2
+
+
+def _is_tensor_field(field: Array) -> bool:
+    return len(field.shape) == 3
