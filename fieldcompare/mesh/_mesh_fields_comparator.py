@@ -7,6 +7,7 @@ from typing import Callable, Optional
 
 from ..predicates import DefaultEquality
 from . import protocols as mesh_protocols
+from ._structured_mesh import StructuredMesh
 from ._transformations import strip_orphan_points, sort_points, sort_cells, extend_space_dimension_to
 from .._field_data_comparison import (
     FieldDataComparator,
@@ -93,7 +94,13 @@ class MeshFieldsComparator:
                 return suite
 
         # (maybe) retry with sorted meshes
-        if not self._disable_mesh_reordering:
+        if (
+            not self._disable_mesh_reordering
+            and isinstance(self._source.domain, StructuredMesh)
+            and isinstance(self._reference.domain, StructuredMesh)
+        ):
+            reordering_callback("Skipping mesh reordering because both meshes are structured")
+        elif not self._disable_mesh_reordering:
             # sorted points
             reordering_callback(self._mesh_fail_msg(suite.domain_equality_check.report, "sorted points"))
 
