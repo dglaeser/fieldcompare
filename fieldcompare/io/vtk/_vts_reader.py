@@ -7,9 +7,12 @@ from operator import mul
 
 import numpy as np
 
-from ...mesh import Mesh, CellTypes
+from ...mesh import StructuredMesh, CellTypes
 from ._xml_reader import VTKXMLReader, CellTypeToCellIndices
 from ._reader_map import _VTK_EXTENSION_TO_READER, _VTK_TYPE_TO_EXTENSION
+
+
+_VTK_SPACE_DIM = 3
 
 
 class VTSReader(VTKXMLReader):
@@ -22,40 +25,17 @@ class VTSReader(VTKXMLReader):
         self._cells = list(map(lambda i: self._extents[i][1] - self._extents[i][0], range(3)))
         self._num_cells = list(accumulate(map(lambda c: max(c, 1), self._cells), mul, initial=1))[-1]
         self._num_points = list(accumulate(map(lambda c: c + 1, self._cells), mul, initial=1))[-1]
+        if len(self._cells) != _VTK_SPACE_DIM:
+            raise ValueError(f"Expected three-dimensional extents, read {self._cells}")
 
     def _get_field_data_path(self) -> str:
         return "StructuredGrid/Piece"
 
-    def _make_mesh(self) -> tuple[Mesh, CellTypeToCellIndices]:
-        nonzero_extents = [c for c in self._cells if c > 0]
-        dimension = sum(map(lambda e: 1 if e > 0 else 0, nonzero_extents))
-
-        cells = []
+    def _make_mesh(self) -> tuple[StructuredMesh, CellTypeToCellIndices]:
         points = self._get_data_array_values(self._get_element("StructuredGrid/Piece/Points/DataArray")).reshape(
             self._num_points, 3
         )
-
-        if dimension == 1:  # noqa: PLR2004
-            cells = [[i, i + 1] for i in range(self._num_cells)]
-        elif dimension == 2:  # noqa: PLR2004
-            xoffset = nonzero_extents[0] + 1
-            for j in range(nonzero_extents[1]):
-                for i in range(nonzero_extents[0]):
-                    p0 = j * xoffset + i
-                    cells.append([p0, p0 + 1, p0 + xoffset + 1, p0 + xoffset])
-        elif dimension == 3:  # noqa: PLR2004
-            xoffset = nonzero_extents[0] + 1
-            xyoffset = xoffset * (nonzero_extents[1] + 1)
-            for k in range(nonzero_extents[2]):
-                for j in range(nonzero_extents[1]):
-                    for i in range(nonzero_extents[0]):
-                        p0 = k * xyoffset + j * xoffset + i
-                        base_quad = [p0, p0 + 1, p0 + xoffset + 1, p0 + xoffset]
-                        cells.append(base_quad + [i + xyoffset for i in base_quad])
-        else:
-            raise ValueError("Dimension must be > 0 and < 3")
-
-        return Mesh(points=points, connectivity=[(CellTypes.quad, cells)]), {
+        return StructuredMesh((self._cells[0], self._cells[1], self._cells[2]), points), {
             CellTypes.quad: np.array(range(self._num_cells))
         }
 
