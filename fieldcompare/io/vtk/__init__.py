@@ -9,6 +9,7 @@ from os.path import splitext
 from .. import protocols
 
 from ._vtp_reader import VTPReader
+from ._vts_reader import VTSReader
 from ._vtu_reader import VTUReader
 from ._pvtk_readers import PVTPReader, PVTUReader
 from ._pvd_reader import PVDReader
@@ -58,6 +59,7 @@ __all__ = [
     "PVTUReader",
     "VTPReader",
     "VTUReader",
+    "VTSReader",
     "VTUWriter",
     "read",
     "is_supported",

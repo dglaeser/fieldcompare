@@ -8,7 +8,8 @@ from xml.etree import ElementTree
 
 import numpy as np
 
-from ...mesh import Mesh, MeshFields, CellType
+from ...mesh import MeshFields, CellType
+from ...mesh.protocols import Mesh
 from ._appendix import VTKXMLAppendix
 from ._helpers import vtk_type_to_dtype
 from ._encoders import Base64Encoder
