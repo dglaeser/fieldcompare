@@ -1,6 +1,10 @@
 # SPDX-FileCopyrightText: 2023 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from typing import List, Tuple
+from itertools import accumulate
+from operator import mul
+
 import numpy as np
 
 from ...mesh._cell_type import CellType
@@ -24,6 +28,27 @@ def vtk_cell_type_index_to_cell_type(vtk_cell_type: int) -> CellType:
 
 def cell_type_to_vtk_cell_type_index(cell_type: CellType) -> int:
     return _VTK_CELL_TYPE_STR_TO_INDEX[cell_type.name]
+
+
+def vtk_extents_to_cells_per_direction(extents: List[int]) -> Tuple[int, int, int]:
+    num_expected_extent_entries = 6
+    if len(extents) != num_expected_extent_entries:
+        raise ValueError(f"Expected vtk extents to contain 6 integers, got {extents}")
+    cells = (extents[1] - extents[0], extents[3] - extents[2], extents[5] - extents[4])
+    if any(c < 0 for c in cells):
+        raise ValueError(f"Number of cells must be >= 0 in all directions, got {cells}")
+    return cells
+
+
+def number_of_total_cells_from_cells_per_direction(cells: Tuple[int, int, int]) -> int:
+    return list(accumulate(map(lambda c: max(c, 1), cells), mul, initial=1))[-1]
+
+
+def number_of_total_points_from_cells_per_direction(cells: Tuple[int, int, int]) -> int:
+    return list(accumulate(map(lambda c: c + 1, cells), mul, initial=1))[-1]
+
+
+_VTK_SPACE_DIM = 3  # noqa: PLR2004
 
 
 _VTK_TYPE_TO_DTYPE = {

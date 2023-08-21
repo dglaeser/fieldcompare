@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
-from typing import Literal, Dict
+from typing import Literal, Dict, List
 from abc import ABC, abstractmethod
 from xml.etree import ElementTree
 
@@ -110,6 +110,12 @@ class VTKXMLReader(ABC):
 
     def _get_element(self, path: str) -> ElementTree.Element:
         elem = self._xml_element.find(path)
+        if elem is not None:
+            return elem
+        raise ValueError("Path not found in vtk file")
+
+    def _get_elements(self, path: str) -> List[ElementTree.Element]:
+        elem = self._xml_element.findall(path)
         if elem is not None:
             return elem
         raise ValueError("Path not found in vtk file")

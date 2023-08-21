@@ -10,6 +10,7 @@ from .. import protocols
 
 from ._vtp_reader import VTPReader
 from ._vts_reader import VTSReader
+from ._vtr_reader import VTRReader
 from ._vtu_reader import VTUReader
 from ._pvtk_readers import PVTPReader, PVTUReader, PVTSReader
 from ._pvd_reader import PVDReader
@@ -61,6 +62,7 @@ __all__ = [
     "VTPReader",
     "VTUReader",
     "VTSReader",
+    "VTRReader",
     "VTUWriter",
     "read",
     "is_supported",
