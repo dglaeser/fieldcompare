@@ -12,6 +12,7 @@ from ._vtu_reader import VTUReader
 from ._vtp_reader import VTPReader
 from ._vts_reader import VTSReader
 from ._vtr_reader import VTRReader
+from ._vti_reader import VTIReader
 from ._reader_map import _VTKReader, _VTK_EXTENSION_TO_READER, _VTK_TYPE_TO_EXTENSION
 
 
@@ -80,12 +81,21 @@ class PVTRReader(_PVTKReader):
         super().__init__("RectilinearGrid", VTRReader, *args, **kwargs)
 
 
+class PVTIReader(_PVTKReader):
+    """Reads meshes from the VTK file format for parallel image grids"""
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__("ImageData", VTIReader, *args, **kwargs)
+
+
 _VTK_EXTENSION_TO_READER[".pvtu"] = PVTUReader
 _VTK_EXTENSION_TO_READER[".pvtp"] = PVTPReader
 _VTK_EXTENSION_TO_READER[".pvts"] = PVTSReader
 _VTK_EXTENSION_TO_READER[".pvtr"] = PVTRReader
+_VTK_EXTENSION_TO_READER[".pvti"] = PVTIReader
 
 _VTK_TYPE_TO_EXTENSION["PUnstructuredGrid"] = ".pvtu"
 _VTK_TYPE_TO_EXTENSION["PPolyData"] = ".pvtp"
 _VTK_TYPE_TO_EXTENSION["PStructuredGrid"] = ".pvts"
 _VTK_TYPE_TO_EXTENSION["PRectilinearGrid"] = ".pvtr"
+_VTK_TYPE_TO_EXTENSION["PImageData"] = ".pvti"

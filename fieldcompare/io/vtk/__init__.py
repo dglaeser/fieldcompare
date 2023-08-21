@@ -13,7 +13,7 @@ from ._vts_reader import VTSReader
 from ._vtr_reader import VTRReader
 from ._vti_reader import VTIReader
 from ._vtu_reader import VTUReader
-from ._pvtk_readers import PVTPReader, PVTUReader, PVTSReader, PVTRReader
+from ._pvtk_readers import PVTPReader, PVTUReader, PVTSReader, PVTRReader, PVTIReader
 from ._pvd_reader import PVDReader
 
 from ._reader_map import _VTK_EXTENSION_TO_READER, _VTK_TYPE_TO_EXTENSION
@@ -61,6 +61,7 @@ __all__ = [
     "PVTUReader",
     "PVTSReader",
     "PVTRReader",
+    "PVTIReader",
     "VTPReader",
     "VTUReader",
     "VTSReader",
