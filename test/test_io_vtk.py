@@ -59,6 +59,7 @@ PVD_FILES = _find("pvd_", ".pvd", [""])
 PVTU_FILES = _find("pvtu_", ".pvtu", [""])
 PVTP_FILES = _find("pvtp_", ".pvtp", [""])
 PVTS_FILES = _find("pvts_", ".pvts", [""])
+PVTR_FILES = _find("pvtr_", ".pvtr", [""])
 
 
 def test_parallel_against_sequential_vtk_file():
@@ -76,7 +77,7 @@ def test_parallel_against_sequential_vtk_file_fails_without_duplicates_removal()
     chdir(cwd)
 
 
-@pytest.mark.parametrize("filename", PVTU_FILES + PVTP_FILES + PVTS_FILES)
+@pytest.mark.parametrize("filename", PVTU_FILES + PVTP_FILES + PVTS_FILES + PVTR_FILES)
 def test_parallel_vtk_files(filename: str):
     cwd = getcwd()
     chdir(VTK_TEST_DATA_PATH)

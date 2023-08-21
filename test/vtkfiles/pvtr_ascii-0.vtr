@@ -1,0 +1,87 @@
+<?xml version="1.0"?>
+<VTKFile type="RectilinearGrid" version="2.2" byte_order="LittleEndian" header_type="UInt64">
+  <RectilinearGrid WholeExtent="0 4 0 4 0 0">
+    <FieldData>
+      <DataArray Name="literal" format="ascii" type="String" NumberOfTuples="1">
+          115 111 109 101 95 108 105 116 101 114 97 108 95 116 101 
+          120 116 0 
+      </DataArray>
+      <DataArray Name="numbers" format="ascii" NumberOfTuples="4" type="Int32" NumberOfComponents="1">
+          1 2 3 4 
+      </DataArray>
+      <DataArray Name="string" format="ascii" type="String" NumberOfTuples="1">
+          115 111 109 101 95 115 116 114 105 110 103 95 116 101 120 
+          116 0 
+      </DataArray>
+    </FieldData>
+    <Piece Extent="0 2 0 2 0 0">
+      <PointData>
+        <DataArray Name="pscalar" type="Float64" NumberOfComponents="1" format="ascii">
+          0 4.79425538604203 8.41470984807897 0 4.20735492403948 7.38460262604129 0 2.59034723999926 4.54648713412841 
+        </DataArray>
+        <DataArray Name="pscalar_custom_prec" type="Float32" NumberOfComponents="1" format="ascii">
+          0 4.79426 8.41471 0 4.20736 7.3846 0 2.59035 4.54649 
+        </DataArray>
+        <DataArray Name="ptensor" type="Float64" NumberOfComponents="9" format="ascii">
+          0 0 0 0 0 0 0 0 0 4.79425538604203 4.79425538604203 0 4.79425538604203 4.79425538604203 0 
+          0 0 0 8.41470984807897 8.41470984807897 0 8.41470984807897 8.41470984807897 0 0 0 0 0 0 0 
+          0 0 0 0 0 0 4.20735492403948 4.20735492403948 0 4.20735492403948 4.20735492403948 0 0 0 0 
+          7.38460262604129 7.38460262604129 0 7.38460262604129 7.38460262604129 0 0 0 0 0 0 0 0 0 0 
+          0 0 0 2.59034723999926 2.59034723999926 0 2.59034723999926 2.59034723999926 0 0 0 0 4.54648713412841 4.54648713412841 0 
+          4.54648713412841 4.54648713412841 0 0 0 0 
+        </DataArray>
+        <DataArray Name="ptensor_custom_prec" type="Float32" NumberOfComponents="9" format="ascii">
+          0 0 0 0 0 0 0 0 0 4.79426 4.79426 0 4.79426 4.79426 0 
+          0 0 0 8.41471 8.41471 0 8.41471 8.41471 0 0 0 0 0 0 0 
+          0 0 0 0 0 0 4.20736 4.20736 0 4.20736 4.20736 0 0 0 0 
+          7.3846 7.3846 0 7.3846 7.3846 0 0 0 0 0 0 0 0 0 0 
+          0 0 0 2.59035 2.59035 0 2.59035 2.59035 0 0 0 0 4.54649 4.54649 0 
+          4.54649 4.54649 0 0 0 0 
+        </DataArray>
+        <DataArray Name="pvector" type="Float64" NumberOfComponents="3" format="ascii">
+          0 0 0 4.79425538604203 4.79425538604203 0 8.41470984807897 8.41470984807897 0 0 0 0 4.20735492403948 4.20735492403948 0 
+          7.38460262604129 7.38460262604129 0 0 0 0 2.59034723999926 2.59034723999926 0 4.54648713412841 4.54648713412841 0 
+        </DataArray>
+        <DataArray Name="pvector_custom_prec" type="Float32" NumberOfComponents="3" format="ascii">
+          0 0 0 4.79426 4.79426 0 8.41471 8.41471 0 0 0 0 4.20736 4.20736 0 
+          7.3846 7.3846 0 0 0 0 2.59035 2.59035 0 4.54649 4.54649 0 
+        </DataArray>
+      </PointData>
+      <CellData>
+        <DataArray Name="cscalar" type="Float64" NumberOfComponents="1" format="ascii">
+          2.39712769302101 6.6044826170605 1.81022723101847 4.98747493302027 
+        </DataArray>
+        <DataArray Name="cscalar_custom_prec" type="Float32" NumberOfComponents="1" format="ascii">
+          2.39713 6.60448 1.81023 4.98747 
+        </DataArray>
+        <DataArray Name="ctensor" type="Float64" NumberOfComponents="9" format="ascii">
+          2.39712769302101 2.39712769302101 0 2.39712769302101 2.39712769302101 0 0 0 0 6.6044826170605 6.6044826170605 0 6.6044826170605 6.6044826170605 0 
+          0 0 0 1.81022723101847 1.81022723101847 0 1.81022723101847 1.81022723101847 0 0 0 0 4.98747493302027 4.98747493302027 0 
+          4.98747493302027 4.98747493302027 0 0 0 0 
+        </DataArray>
+        <DataArray Name="ctensor_custom_prec" type="Float32" NumberOfComponents="9" format="ascii">
+          2.39713 2.39713 0 2.39713 2.39713 0 0 0 0 6.60448 6.60448 0 6.60448 6.60448 0 
+          0 0 0 1.81023 1.81023 0 1.81023 1.81023 0 0 0 0 4.98747 4.98747 0 
+          4.98747 4.98747 0 0 0 0 
+        </DataArray>
+        <DataArray Name="cvector" type="Float64" NumberOfComponents="3" format="ascii">
+          2.39712769302101 2.39712769302101 0 6.6044826170605 6.6044826170605 0 1.81022723101847 1.81022723101847 0 4.98747493302027 4.98747493302027 0 
+        </DataArray>
+        <DataArray Name="cvector_custom_prec" type="Float32" NumberOfComponents="3" format="ascii">
+          2.39713 2.39713 0 6.60448 6.60448 0 1.81023 1.81023 0 4.98747 4.98747 0 
+        </DataArray>
+      </CellData>
+      <Coordinates>
+        <DataArray Name="X_0" type="Float64" NumberOfComponents="1" format="ascii">
+          0 0.5 1 
+        </DataArray>
+        <DataArray Name="X_1" type="Float64" NumberOfComponents="1" format="ascii">
+          0 0.5 1 
+        </DataArray>
+        <DataArray Name="X_2" type="Float64" NumberOfComponents="1" format="ascii">
+
+        </DataArray>
+      </Coordinates>
+    </Piece>
+  </RectilinearGrid>
+</VTKFile>
