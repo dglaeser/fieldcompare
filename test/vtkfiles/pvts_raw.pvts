@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<VTKFile type="PStructuredGrid">
+  <PStructuredGrid WholeExtent="0 4 0 4 0 0">
+    <PPointData Scalars="pscalar" Vectors="pvector" Tensors="ptensor">
+      <PDataArray Name="pscalar" type="Float64" format="appended" NumberOfComponents="1"/>
+      <PDataArray Name="pscalar_custom_prec" type="Float32" format="appended" NumberOfComponents="1"/>
+      <PDataArray Name="ptensor" type="Float64" format="appended" NumberOfComponents="9"/>
+      <PDataArray Name="ptensor_custom_prec" type="Float32" format="appended" NumberOfComponents="9"/>
+      <PDataArray Name="pvector" type="Float64" format="appended" NumberOfComponents="3"/>
+      <PDataArray Name="pvector_custom_prec" type="Float32" format="appended" NumberOfComponents="3"/>
+    </PPointData>
+    <PCellData Scalars="cscalar" Vectors="cvector" Tensors="ctensor">
+      <PDataArray Name="cscalar" type="Float64" format="appended" NumberOfComponents="1"/>
+      <PDataArray Name="cscalar_custom_prec" type="Float32" format="appended" NumberOfComponents="1"/>
+      <PDataArray Name="ctensor" type="Float64" format="appended" NumberOfComponents="9"/>
+      <PDataArray Name="ctensor_custom_prec" type="Float32" format="appended" NumberOfComponents="9"/>
+      <PDataArray Name="cvector" type="Float64" format="appended" NumberOfComponents="3"/>
+      <PDataArray Name="cvector_custom_prec" type="Float32" format="appended" NumberOfComponents="3"/>
+    </PCellData>
+    <PPoints>
+      <PDataArray NumberOfComponents="3" Name="Coordinates" format="appended" type="Float64"/>
+    </PPoints>
+    <Piece Extent="0 2 0 2 0 0" Source="pvts_raw-0.vts"/>
+    <Piece Extent="2 4 0 2 0 0" Source="pvts_raw-1.vts"/>
+    <Piece Extent="0 2 2 4 0 0" Source="pvts_raw-2.vts"/>
+    <Piece Extent="2 4 2 4 0 0" Source="pvts_raw-3.vts"/>
+  </PStructuredGrid>
+</VTKFile>

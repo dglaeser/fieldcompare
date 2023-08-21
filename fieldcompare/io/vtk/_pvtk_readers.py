@@ -10,6 +10,7 @@ from ...mesh import merge, protocols as mesh_protocols
 
 from ._vtu_reader import VTUReader
 from ._vtp_reader import VTPReader
+from ._vts_reader import VTSReader
 from ._reader_map import _VTKReader, _VTK_EXTENSION_TO_READER, _VTK_TYPE_TO_EXTENSION
 
 
@@ -64,8 +65,17 @@ class PVTPReader(_PVTKReader):
         super().__init__("PolyData", VTPReader, *args, **kwargs)
 
 
+class PVTSReader(_PVTKReader):
+    """Reads meshes from the VTK file format for parallel structured grids"""
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__("StructuredGrid", VTSReader, *args, **kwargs)
+
+
 _VTK_EXTENSION_TO_READER[".pvtu"] = PVTUReader
 _VTK_EXTENSION_TO_READER[".pvtp"] = PVTPReader
+_VTK_EXTENSION_TO_READER[".pvts"] = PVTSReader
 
 _VTK_TYPE_TO_EXTENSION["PUnstructuredGrid"] = ".pvtu"
 _VTK_TYPE_TO_EXTENSION["PPolyData"] = ".pvtp"
+_VTK_TYPE_TO_EXTENSION["PStructuredGrid"] = ".pvts"
