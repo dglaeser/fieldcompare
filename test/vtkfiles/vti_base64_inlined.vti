@@ -1,4 +1,7 @@
 <?xml version="1.0"?>
+<!--SPDX-FileCopyrightText: 2023 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>-->
+<!--SPDX-License-Identifier: GPL-3.0-or-later-->
+
 <VTKFile type="ImageData" version="2.2" byte_order="LittleEndian" header_type="UInt64">
   <ImageData WholeExtent="0 2 0 2 0 0" Origin="0.000000 0.000000 0" Spacing="0.500000 0.500000 0" Direction="1.000000 0.000000 0 0.000000 1.000000 0 0 0 0">
     <FieldData>
