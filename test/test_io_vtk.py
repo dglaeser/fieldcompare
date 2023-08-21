@@ -55,6 +55,7 @@ VTU_APPENDED_RAW_LZ4_COMPRESSION = _find("vtu_", ".vtu", ["raw", "appended", "lz
 VTP_FILES = _find("vtp_", ".vtp", [""])
 VTS_FILES = _find("vts_", ".vts", [""])
 VTR_FILES = _find("vtr_", ".vtr", [""])
+VTI_FILES = _find("vti_", ".vti", [""])
 PVD_FILES = _find("pvd_", ".pvd", [""])
 PVTU_FILES = _find("pvtu_", ".pvtu", [""])
 PVTP_FILES = _find("pvtp_", ".pvtp", [""])
@@ -109,6 +110,11 @@ def test_vts_files(filename: str):
 
 @pytest.mark.parametrize("filename", VTR_FILES)
 def test_vtr_files(filename: str):
+    _test(filename)
+
+
+@pytest.mark.parametrize("filename", VTI_FILES)
+def test_vti_files(filename: str):
     _test(filename)
 
 
