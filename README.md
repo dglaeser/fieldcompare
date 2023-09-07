@@ -12,7 +12,7 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![REUSE status](https://api.reuse.software/badge/git.fsfe.org/reuse/api)](https://api.reuse.software/info/git.fsfe.org/reuse/api)
 [![JOSS paper](https://joss.theoj.org/papers/10.21105/joss.04905/status.svg)](https://doi.org/10.21105/joss.04905)
-
+[![PyPI version](https://badge.fury.io/py/fieldcompare.svg)](https://pypi.org/project/fieldcompare/)
 
 `fieldcompare` is a Python package with command-line interface (CLI) that can be used to compare
 datasets for (fuzzy) equality. It was designed mainly to serve as a tool to realize regression tests
