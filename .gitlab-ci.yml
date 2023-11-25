@@ -92,8 +92,8 @@ file_mode_junit_report:
   extends: .install_dependencies
   image: python:3.10
   script:
-    - python -m pip install -r requirements.txt
-    - python -m pip install .
+    - pip install -r requirements.txt
+    - pip install .
     - fieldcompare file test/data/test_mesh.vtu test/data/test_mesh.vtu --exclude-fields "function" --junit-xml file_mode_junit.xml
   artifacts:
     reports:
@@ -104,8 +104,8 @@ dir_mode_junit_report:
   extends: .install_dependencies
   image: python:3.10
   script:
-    - python -m pip install -r requirements.txt
-    - python -m pip install .
+    - pip install -r requirements.txt
+    - pip install .
     - fieldcompare dir test/data/ test/data/ --include-files "*.vtu" --junit-xml dir_mode_junit.xml
   artifacts:
     reports:
