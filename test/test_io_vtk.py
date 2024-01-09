@@ -9,8 +9,10 @@ from os.path import splitext
 from pathlib import Path
 from typing import List
 from shutil import copyfile
+from itertools import product
 
 import pytest
+import numpy
 from meshio import read as meshio_read, Mesh as MeshioMesh
 
 from fieldcompare import FieldDataComparator, protocols
@@ -131,7 +133,17 @@ def test_vti_files(filename: str):
 
 @pytest.mark.parametrize("filename", VTI_FILES)
 def test_vti_unit(filename: str):
-    _check_extents(_read_mesh_fields(filename).domain, filename)
+    fields = _read_mesh_fields(filename)
+    _check_extents(fields.domain, filename)
+    with open(filename) as vti_file:
+        extents = _get_extents(filename)
+        origin = _get_origin(filename)
+        dx = _get_spacing(filename)
+    ordinates = [
+        [origin[direction] + i*dx[direction] for i in range(extents[direction*2 + 1] + 1)]
+        for direction in range(len(dx))
+    ]
+    _check_point_coordinates(fields.domain, ordinates)
 
 
 @pytest.mark.parametrize("filename", VTU_ASCII_FILES)
@@ -277,11 +289,39 @@ def _read_mesh_fields(filename: str) -> mesh_protocols.MeshFields:
     return mesh_fields
 
 
-def _check_extents(structured_mesh, filename: str) -> None:
-    file_extents = [
-        int(c) for c in
-        open(filename).read().split('WholeExtent="')[1].split('"')[0].split(" ")
+def _check_point_coordinates(structured_mesh, ordinates: List[List[float]]) -> None:
+    expected_points = [
+        list(reversed(p))
+        for p in product(*list(reversed(ordinates)))
     ]
+    assert(len(ordinates) == 3)
+    assert(len(expected_points) == len(structured_mesh.points))
+    for mesh_point, expected_point in zip(structured_mesh.points, expected_points):
+        print(mesh_point, expected_point)
+        assert(numpy.allclose(mesh_point, numpy.array(expected_point)))
+
+
+def _check_extents(structured_mesh, filename: str) -> None:
+    file_extents = _get_extents(filename)
     assert(structured_mesh.extents[0] == file_extents[1] - file_extents[0])
     assert(structured_mesh.extents[1] == file_extents[3] - file_extents[2])
     assert(structured_mesh.extents[2] == file_extents[5] - file_extents[4])
+
+
+def _get_extents(filename: str) -> List[int]:
+        return _get("WholeExtent", filename, int)
+
+
+def _get_origin(filename: str) -> List[float]:
+        return _get("Origin", filename, float)
+
+
+def _get_spacing(filename: str) -> List[float]:
+    return _get("Spacing", filename, float)
+
+
+def _get(keyword: str, filename: str, dtype):
+    return [
+        dtype(c) for c in
+        open(filename).read().split(f'{keyword}="')[1].split('"')[0].split(" ")
+    ]
