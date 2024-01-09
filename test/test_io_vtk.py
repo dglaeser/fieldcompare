@@ -11,6 +11,8 @@ from pathlib import Path
 from typing import List
 from shutil import copyfile
 from itertools import product
+from functools import reduce
+from operator import mul
 
 import pytest
 import numpy
@@ -113,23 +115,28 @@ def test_vts_files(filename: str):
 
 
 @pytest.mark.parametrize("filename", VTS_FILES)
-def test_vts_unit(filename: str):
-    fields = _read_mesh_fields(filename)
-    _check_extents(fields.domain, filename)
+def test_vts_extents(filename: str):
+    _check_extents(_read_mesh_fields(filename).domain, filename)
 
-    # test cell type
+
+@pytest.mark.parametrize("filename", VTS_FILES)
+def test_vts_cell_type(filename: str):
+    fields = _read_mesh_fields(filename)
     dim = _get_mesh_dimension(filename)
     expected_cell_type = [CellTypes.line, CellTypes.quad, CellTypes.hexahedron][dim - 1]
     assert(sum(1 for _ in fields.domain.cell_types) == 1)
     assert(fields.domain.cell_types == [expected_cell_type])
 
-    # test connectivity (assumes constant spacing between points)
+
+@pytest.mark.parametrize("filename", VTS_FILES)
+def test_vts_connectivity(filename: str):
+    # assumes constant spacing between points
+    fields = _read_mesh_fields(filename)
     extents = _get_extents(filename)
     extents = [extents[direction*2 + 1] - extents[direction*2] for direction in range(3)]
     dx = (fields.domain.points[-1] - fields.domain.points[0])/numpy.array([max(e, 1) for e in extents])
-    for corners in fields.domain.connectivity(CellTypes.quad):
-        diagonal = fields.domain.points[corners[-2]] - fields.domain.points[corners[0]]
-        assert(numpy.allclose(diagonal, numpy.array(dx)))
+    _check_point_coordinates(fields.domain, dx)
+
 
 @pytest.mark.parametrize("filename", VTR_FILES)
 def test_vtr_files(filename: str):
@@ -137,35 +144,36 @@ def test_vtr_files(filename: str):
 
 
 @pytest.mark.parametrize("filename", VTR_FILES)
-def test_vtr_unit(filename: str):
+def test_vtr_extents(filename: str):
+    _check_extents(_read_mesh_fields(filename).domain, filename)
+
+
+@pytest.mark.parametrize("filename", VTR_FILES)
+def test_vtr_coordinates(filename: str):
+    # assumes constant spacing
+    ordinates = _get_vtr_ordinates(filename)
+    dx = [(ords[1] - ords[0] if len(ords) > 1 else 0.0) for ords in ordinates]
+    _check_point_coordinates(_read_mesh_fields(filename).domain, dx)
+
+
+@pytest.mark.parametrize("filename", VTR_FILES)
+def test_vtr_cell_types(filename: str):
     fields = _read_mesh_fields(filename)
-    _check_extents(fields.domain, filename)
-    if "ascii" in filename:
-        dom = ElementTree.parse(filename)
-        coords_element = dom.find("./RectilinearGrid/Piece/Coordinates")
-        assert(coords_element is not None)
-        assert(len(coords_element.findall("DataArray")) == 3)
+    dim = _get_mesh_dimension(filename)
+    expected_cell_type = [CellTypes.line, CellTypes.quad, CellTypes.hexahedron][dim - 1]
+    assert(sum(1 for _ in fields.domain.cell_types) == 1)
+    assert(fields.domain.cell_types == [expected_cell_type])
 
-        def _to_ordinates(ordinate_string):
-            ordinate_string = ordinate_string.strip(" \n")
-            if ordinate_string == "":
-                return [0.0]
-            return [float(c) for c in ordinate_string.split(" ")]
 
-        ordinates = [_to_ordinates(ords.text) for ords in coords_element.findall("DataArray")]
-        _check_point_coordinates(fields.domain, ordinates)
 
-        # test cell type
-        dim = _get_mesh_dimension(filename)
-        expected_cell_type = [CellTypes.line, CellTypes.quad, CellTypes.hexahedron][dim - 1]
-        assert(sum(1 for _ in fields.domain.cell_types) == 1)
-        assert(fields.domain.cell_types == [expected_cell_type])
-
-        # test connectivity (assumes constant dx along ordinates)
-        dx = [(ords[1] - ords[0] if len(ords) > 1 else 0.) for ords in ordinates]
-        for corners in fields.domain.connectivity(CellTypes.quad):
-            diagonal = fields.domain.points[corners[-2]] - fields.domain.points[corners[0]]
-            assert(numpy.allclose(diagonal, numpy.array(dx)))
+@pytest.mark.parametrize("filename", VTR_FILES)
+def test_vtr_connectivity(filename: str):
+    # assumes constant spacing along axes
+    fields = _read_mesh_fields(filename)
+    dx = [(ords[1] - ords[0] if len(ords) > 1 else 0.) for ords in _get_vtr_ordinates(filename)]
+    for corners in fields.domain.connectivity(CellTypes.quad):
+        diagonal = fields.domain.points[corners[-2]] - fields.domain.points[corners[0]]
+        assert(numpy.allclose(diagonal, numpy.array(dx)))
 
 
 @pytest.mark.parametrize("filename", VTI_FILES)
@@ -174,25 +182,29 @@ def test_vti_files(filename: str):
 
 
 @pytest.mark.parametrize("filename", VTI_FILES)
-def test_vti_unit(filename: str):
-    fields = _read_mesh_fields(filename)
-    _check_extents(fields.domain, filename)
-    extents = _get_extents(filename)
-    origin = _get_origin(filename)
-    dx = _get_spacing(filename)
-    ordinates = [
-        [origin[direction] + i*dx[direction] for i in range(extents[direction*2 + 1] + 1)]
-        for direction in range(len(dx))
-    ]
-    _check_point_coordinates(fields.domain, ordinates)
+def test_vti_extents(filename: str):
+    _check_extents(_read_mesh_fields(filename).domain, filename)
 
-    # test cell type
+
+@pytest.mark.parametrize("filename", VTI_FILES)
+def test_vti_coordinates(filename: str):
+    dx = _get_spacing(filename)
+    _check_point_coordinates(_read_mesh_fields(filename).domain, dx)
+
+
+@pytest.mark.parametrize("filename", VTI_FILES)
+def test_vti_cell_types(filename: str):
+    fields = _read_mesh_fields(filename)
     dim = _get_mesh_dimension(filename)
     expected_cell_type = [CellTypes.line, CellTypes.quad, CellTypes.hexahedron][dim - 1]
     assert(sum(1 for _ in fields.domain.cell_types) == 1)
     assert(fields.domain.cell_types == [expected_cell_type])
 
-    # test connectivity
+
+@pytest.mark.parametrize("filename", VTI_FILES)
+def test_vti_connectivity(filename: str):
+    fields = _read_mesh_fields(filename)
+    dx = _get_spacing(filename)
     for corners in fields.domain.connectivity(CellTypes.quad):
         diagonal = fields.domain.points[corners[-2]] - fields.domain.points[corners[0]]
         assert(numpy.allclose(diagonal, numpy.array(dx)))
@@ -341,15 +353,15 @@ def _read_mesh_fields(filename: str) -> mesh_protocols.MeshFields:
     return mesh_fields
 
 
-def _check_point_coordinates(structured_mesh, ordinates: List[List[float]]) -> None:
-    expected_points = [
-        list(reversed(p))
-        for p in product(*list(reversed(ordinates)))
+def _check_point_coordinates(structured_mesh, _dx: List[float]) -> None:
+    assert(len(_dx) == 3)
+    expected_points = [  # reverse extents to get expected point ordering
+        numpy.array(_dx)*numpy.array([i for i in reversed(ituple)])
+        for ituple in product(*list(reversed(list(range(e + 1) for e in structured_mesh.extents))))
     ]
-    assert(len(ordinates) == 3)
     assert(len(expected_points) == len(structured_mesh.points))
     for mesh_point, expected_point in zip(structured_mesh.points, expected_points):
-        assert(numpy.allclose(mesh_point, numpy.array(expected_point)))
+        assert(numpy.allclose(mesh_point, expected_point))
 
 
 def _check_extents(structured_mesh, filename: str) -> None:
@@ -361,10 +373,6 @@ def _check_extents(structured_mesh, filename: str) -> None:
 
 def _get_extents(filename: str) -> List[int]:
         return _get("WholeExtent", filename, int)
-
-
-def _get_origin(filename: str) -> List[float]:
-        return _get("Origin", filename, float)
 
 
 def _get_spacing(filename: str) -> List[float]:
@@ -382,3 +390,20 @@ def _get_mesh_dimension(filename: str) -> int:
     print(filename)
     before, _ = filename.split("d_in_")
     return int(before[-1])
+
+
+def _get_vtr_ordinates(filename: str) -> List[List[float]]:
+    if "ascii" in filename:
+        dom = ElementTree.parse(filename)
+        coords_element = dom.find("./RectilinearGrid/Piece/Coordinates")
+        assert(coords_element is not None)
+        assert(len(coords_element.findall("DataArray")) == 3)
+
+        def _to_ordinates(ordinate_string):
+            ordinate_string = ordinate_string.strip(" \n")
+            if ordinate_string == "":
+                return [0.0]
+            return [float(c) for c in ordinate_string.split(" ")]
+
+        return [_to_ordinates(ords.text) for ords in coords_element.findall("DataArray")]
+    raise RuntimeError("Can only read ordinates from ascii vtr files")
