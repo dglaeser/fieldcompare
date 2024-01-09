@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 from typing import Iterable, Tuple, List
-from itertools import accumulate
+from functools import reduce
 from operator import mul
 
 from ..predicates import FuzzyEquality, PredicateResult
@@ -153,4 +153,4 @@ class StructuredMesh:
         return list([e for e in self._extents if e > 0])
 
     def _accumulate(self, extents: Iterable[int]) -> int:
-        return list(accumulate(extents, mul, initial=1))[-1]
+        return reduce(mul, extents, 1)

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from typing import List, Tuple
-from itertools import accumulate
+from functools import reduce
 from operator import mul
 
 import numpy as np
@@ -41,11 +41,11 @@ def vtk_extents_to_cells_per_direction(extents: List[int]) -> Tuple[int, int, in
 
 
 def number_of_total_cells_from_cells_per_direction(cells: Tuple[int, int, int]) -> int:
-    return list(accumulate(map(lambda c: max(c, 1), cells), mul, initial=1))[-1]
+    return reduce(mul, (max(c, 1) for c in cells), 1)
 
 
 def number_of_total_points_from_cells_per_direction(cells: Tuple[int, int, int]) -> int:
-    return list(accumulate(map(lambda c: c + 1, cells), mul, initial=1))[-1]
+    return reduce(mul, (c + 1 for c in cells), 1)
 
 
 _VTK_SPACE_DIM = 3  # noqa: PLR2004
