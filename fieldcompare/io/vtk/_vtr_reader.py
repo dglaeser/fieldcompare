@@ -46,7 +46,7 @@ class VTRReader(VTKXMLReader):
                     i += 1
 
         return StructuredMesh((self._cells[0], self._cells[1], self._cells[2]), points), {
-            CellTypes.quad: np.array(range(self._num_cells))
+            CellTypes.quad: np.arange(self._num_cells)
         }
 
 
