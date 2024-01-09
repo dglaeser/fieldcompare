@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import numpy as np
+from itertools import product
+from xml.etree import ElementTree
 
 from ..._numpy_utils import make_zeros
 from ...mesh import StructuredMesh, CellTypes
@@ -36,18 +38,19 @@ class VTRReader(VTKXMLReader):
         if len(coord_elements) != _VTK_SPACE_DIM:
             raise IOError(f"Expected three coordinate elements, found {len(coord_elements)}")
 
-        i = 0
         points = make_zeros(shape=(self._num_points, 3))
-        coords = [self._get_data_array_values(coord_elements[i]) for i in range(_VTK_SPACE_DIM)]
-        for z in range(len(coords[2])):
-            for y in range(len(coords[1])):
-                for x in range(len(coords[0])):
-                    points[i] = [x, y, z]
-                    i += 1
+        # go over ordinates from 3 to 0 to have points ordered as follows:
+        # ([x0, y0, z0], [x1, y0, z0], ..., [xn, y0, z0], [x0, y1, z0], ...)
+        for i, p in enumerate(product(*list(self._get_ordinates(e) for e in reversed(coord_elements)))):
+            points[i] = np.flip(p)
 
         return StructuredMesh((self._cells[0], self._cells[1], self._cells[2]), points), {
             CellTypes.quad: np.arange(self._num_cells)
         }
+
+    def _get_ordinates(self, element: ElementTree.Element) -> np.ndarray:
+        raw_ordinates = self._get_data_array_values(element)
+        return np.array([0.0]) if raw_ordinates.shape[0] == 0 else raw_ordinates
 
 
 _VTK_EXTENSION_TO_READER[".vtr"] = VTRReader
