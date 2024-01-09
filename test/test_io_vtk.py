@@ -3,6 +3,7 @@
 
 """Tests for the I/O facilities for vtk files"""
 
+from xml.etree import ElementTree
 from os import chdir, getcwd
 from os import walk, remove
 from os.path import splitext
@@ -123,7 +124,22 @@ def test_vtr_files(filename: str):
 
 @pytest.mark.parametrize("filename", VTR_FILES)
 def test_vtr_unit(filename: str):
-    _check_extents(_read_mesh_fields(filename).domain, filename)
+    fields = _read_mesh_fields(filename)
+    _check_extents(fields.domain, filename)
+    if "ascii" in filename:
+        dom = ElementTree.parse(filename)
+        coords_element = dom.find("./RectilinearGrid/Piece/Coordinates")
+        assert(coords_element is not None)
+        assert(len(coords_element.findall("DataArray")) == 3)
+
+        def _to_ordinates(ordinate_string):
+            ordinate_string = ordinate_string.strip(" \n")
+            if ordinate_string == "":
+                return [0.0]
+            return [float(c) for c in ordinate_string.split(" ")]
+
+        ordinates = [_to_ordinates(ords.text) for ords in coords_element.findall("DataArray")]
+        _check_point_coordinates(fields.domain, ordinates)
 
 
 @pytest.mark.parametrize("filename", VTI_FILES)
@@ -297,7 +313,6 @@ def _check_point_coordinates(structured_mesh, ordinates: List[List[float]]) -> N
     assert(len(ordinates) == 3)
     assert(len(expected_points) == len(structured_mesh.points))
     for mesh_point, expected_point in zip(structured_mesh.points, expected_points):
-        print(mesh_point, expected_point)
         assert(numpy.allclose(mesh_point, numpy.array(expected_point)))
 
 
