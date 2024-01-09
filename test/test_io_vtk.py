@@ -17,7 +17,7 @@ import numpy
 from meshio import read as meshio_read, Mesh as MeshioMesh
 
 from fieldcompare import FieldDataComparator, protocols
-from fieldcompare.mesh import meshio_utils, protocols as mesh_protocols
+from fieldcompare.mesh import CellTypes, meshio_utils, protocols as mesh_protocols
 from fieldcompare.io.vtk import read, PVTUReader, VTUWriter
 from fieldcompare.io import read_as
 
@@ -114,8 +114,22 @@ def test_vts_files(filename: str):
 
 @pytest.mark.parametrize("filename", VTS_FILES)
 def test_vts_unit(filename: str):
-    _check_extents(_read_mesh_fields(filename).domain, filename)
+    fields = _read_mesh_fields(filename)
+    _check_extents(fields.domain, filename)
 
+    # test cell type
+    dim = _get_mesh_dimension(filename)
+    expected_cell_type = [CellTypes.line, CellTypes.quad, CellTypes.hexahedron][dim - 1]
+    assert(sum(1 for _ in fields.domain.cell_types) == 1)
+    assert(fields.domain.cell_types == [expected_cell_type])
+
+    # test connectivity (assumes constant spacing between points)
+    extents = _get_extents(filename)
+    extents = [extents[direction*2 + 1] - extents[direction*2] for direction in range(3)]
+    dx = (fields.domain.points[-1] - fields.domain.points[0])/numpy.array([max(e, 1) for e in extents])
+    for corners in fields.domain.connectivity(CellTypes.quad):
+        diagonal = fields.domain.points[corners[-2]] - fields.domain.points[corners[0]]
+        assert(numpy.allclose(diagonal, numpy.array(dx)))
 
 @pytest.mark.parametrize("filename", VTR_FILES)
 def test_vtr_files(filename: str):
@@ -141,6 +155,18 @@ def test_vtr_unit(filename: str):
         ordinates = [_to_ordinates(ords.text) for ords in coords_element.findall("DataArray")]
         _check_point_coordinates(fields.domain, ordinates)
 
+        # test cell type
+        dim = _get_mesh_dimension(filename)
+        expected_cell_type = [CellTypes.line, CellTypes.quad, CellTypes.hexahedron][dim - 1]
+        assert(sum(1 for _ in fields.domain.cell_types) == 1)
+        assert(fields.domain.cell_types == [expected_cell_type])
+
+        # test connectivity (assumes constant dx along ordinates)
+        dx = [(ords[1] - ords[0] if len(ords) > 1 else 0.) for ords in ordinates]
+        for corners in fields.domain.connectivity(CellTypes.quad):
+            diagonal = fields.domain.points[corners[-2]] - fields.domain.points[corners[0]]
+            assert(numpy.allclose(diagonal, numpy.array(dx)))
+
 
 @pytest.mark.parametrize("filename", VTI_FILES)
 def test_vti_files(filename: str):
@@ -151,15 +177,25 @@ def test_vti_files(filename: str):
 def test_vti_unit(filename: str):
     fields = _read_mesh_fields(filename)
     _check_extents(fields.domain, filename)
-    with open(filename) as vti_file:
-        extents = _get_extents(filename)
-        origin = _get_origin(filename)
-        dx = _get_spacing(filename)
+    extents = _get_extents(filename)
+    origin = _get_origin(filename)
+    dx = _get_spacing(filename)
     ordinates = [
         [origin[direction] + i*dx[direction] for i in range(extents[direction*2 + 1] + 1)]
         for direction in range(len(dx))
     ]
     _check_point_coordinates(fields.domain, ordinates)
+
+    # test cell type
+    dim = _get_mesh_dimension(filename)
+    expected_cell_type = [CellTypes.line, CellTypes.quad, CellTypes.hexahedron][dim - 1]
+    assert(sum(1 for _ in fields.domain.cell_types) == 1)
+    assert(fields.domain.cell_types == [expected_cell_type])
+
+    # test connectivity
+    for corners in fields.domain.connectivity(CellTypes.quad):
+        diagonal = fields.domain.points[corners[-2]] - fields.domain.points[corners[0]]
+        assert(numpy.allclose(diagonal, numpy.array(dx)))
 
 
 @pytest.mark.parametrize("filename", VTU_ASCII_FILES)
@@ -340,3 +376,9 @@ def _get(keyword: str, filename: str, dtype):
         dtype(c) for c in
         open(filename).read().split(f'{keyword}="')[1].split('"')[0].split(" ")
     ]
+
+
+def _get_mesh_dimension(filename: str) -> int:
+    print(filename)
+    before, _ = filename.split("d_in_")
+    return int(before[-1])
