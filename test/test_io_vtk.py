@@ -109,14 +109,29 @@ def test_vts_files(filename: str):
     _test(filename)
 
 
+@pytest.mark.parametrize("filename", VTS_FILES)
+def test_vts_unit(filename: str):
+    _check_extents(_read_mesh_fields(filename).domain, filename)
+
+
 @pytest.mark.parametrize("filename", VTR_FILES)
 def test_vtr_files(filename: str):
     _test(filename)
 
 
+@pytest.mark.parametrize("filename", VTR_FILES)
+def test_vtr_unit(filename: str):
+    _check_extents(_read_mesh_fields(filename).domain, filename)
+
+
 @pytest.mark.parametrize("filename", VTI_FILES)
 def test_vti_files(filename: str):
     _test(filename)
+
+
+@pytest.mark.parametrize("filename", VTI_FILES)
+def test_vti_unit(filename: str):
+    _check_extents(_read_mesh_fields(filename).domain, filename)
 
 
 @pytest.mark.parametrize("filename", VTU_ASCII_FILES)
@@ -260,3 +275,13 @@ def _read_mesh_fields(filename: str) -> mesh_protocols.MeshFields:
     mesh_fields = read(filename)
     assert isinstance(mesh_fields, mesh_protocols.MeshFields)
     return mesh_fields
+
+
+def _check_extents(structured_mesh, filename: str) -> None:
+    file_extents = [
+        int(c) for c in
+        open(filename).read().split('WholeExtent="')[1].split('"')[0].split(" ")
+    ]
+    assert(structured_mesh.extents[0] == file_extents[1] - file_extents[0])
+    assert(structured_mesh.extents[1] == file_extents[3] - file_extents[2])
+    assert(structured_mesh.extents[2] == file_extents[5] - file_extents[4])
