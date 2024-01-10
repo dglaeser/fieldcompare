@@ -154,10 +154,9 @@ class StructuredMesh(_StructuredMeshBase):
         if not isinstance(other, StructuredMesh):
             return mesh_equal(self, other)
 
-        if self._extents != other._extents:
-            return PredicateResult(False, report=f"Different structured grid extents: {self.extents} - {other.extents}")
-        if self._dimension != other._dimension:
-            return PredicateResult(False, report=f"Different grid dimension {self._dimension} - {other._dimension}")
+        basic_check = _test_basic_grid_equality(self, other)
+        if not basic_check:
+            return basic_check
 
         points_equal = FuzzyEquality(rel_tol=self.relative_tolerance, abs_tol=self.absolute_tolerance)(
             self.points, other.points
@@ -219,10 +218,9 @@ class RectilinearMesh(_StructuredMeshBase):
         if not isinstance(other, RectilinearMesh):
             return mesh_equal(self, other)
 
-        if self._extents != other._extents:
-            return PredicateResult(False, report=f"Different structured grid extents: {self.extents} - {other.extents}")
-        if self._dimension != other._dimension:
-            return PredicateResult(False, report=f"Different grid dimension {self._dimension} - {other._dimension}")
+        basic_check = _test_basic_grid_equality(self, other)
+        if not basic_check:
+            return basic_check
 
         for direction in range(self._dimension):
             if not FuzzyEquality(rel_tol=self.relative_tolerance, abs_tol=self.absolute_tolerance)(
@@ -239,3 +237,100 @@ class RectilinearMesh(_StructuredMeshBase):
 
     def _cell_type(self) -> CellType:
         return [CellTypes.line, CellTypes.pixel, CellTypes.voxel][self._dimension - 1]
+
+
+class ImageMesh(_StructuredMeshBase):
+    """
+    Represents an image mesh.
+
+    Args:
+        extents: The number of cells per coordinate direction
+        origin: The origin (lower left corner) of the mesh
+        spacing: The spacing in each coordinate direction
+        basis: The basis vectors for each coordinate direction (optional)
+    """
+
+    def __init__(
+        self,
+        extents: Tuple[int, int, int],
+        origin: Tuple[float, float, float],
+        spacing: Tuple[float, float, float],
+        basis: Tuple[Tuple[float, float, float], Tuple[float, float, float], Tuple[float, float, float]] = (
+            (1.0, 0.0, 0.0),
+            (0.0, 1.0, 0.0),
+            (0.0, 0.0, 1.0),
+        ),
+    ) -> None:
+        super().__init__(
+            extents, max_coordinate=max(max(abs(origin[d]), abs(origin[d] + spacing[d] * extents[d])) for d in range(3))
+        )
+
+        self._origin = origin
+        self._spacing = spacing
+        self._basis = make_zeros((3, 3))
+        for i, v in enumerate(basis):
+            self._basis[i] = v
+
+        self._points: Array | None = None
+        self._num_points = self._compute_number_of_entities(map(lambda e: e + 1, self._extents))
+
+    @property
+    def points(self) -> Array:
+        """Return the points of this mesh."""
+        if self._points is None:
+            self._points = make_zeros((self._num_points, 3))
+            # go over directions from 3 to 0 to have points ordered as follows:
+            # ([x0, y0, z0], [x1, y0, z0], ..., [xn, y0, z0], [x0, y1, z0], ...)
+            for i, rev_ituple in enumerate(product(*list(range(e + 1) for e in reversed(self._extents)))):
+                ituple = tuple(reversed(rev_ituple))
+                self._points[i] = [
+                    self._origin[0] + self._spacing[0] * float(ituple[0]),
+                    self._origin[1] + self._spacing[1] * float(ituple[1]),
+                    self._origin[2] + self._spacing[2] * float(ituple[2]),
+                ]
+        return self._points
+
+    def equals(self, other: protocols.Mesh) -> PredicateResult:
+        """
+        Check whether this mesh is equal to the given one.
+
+        Args:
+            other: mesh against with to check equality.
+        """
+        if not isinstance(other, ImageMesh):
+            return mesh_equal(self, other)
+
+        basic_check = _test_basic_grid_equality(self, other)
+        if not basic_check:
+            return basic_check
+
+        if not FuzzyEquality(rel_tol=self.relative_tolerance, abs_tol=self.absolute_tolerance)(
+            self._origin, other._origin
+        ):
+            return PredicateResult(False, report=f"Different grid origin {self._origin} - {other._origin}")
+        if not FuzzyEquality(rel_tol=self.relative_tolerance, abs_tol=self.absolute_tolerance)(
+            self._spacing, other._spacing
+        ):
+            return PredicateResult(False, report=f"Different grid origin {self._spacing} - {other._spacing}")
+        if not FuzzyEquality(rel_tol=self.relative_tolerance, abs_tol=self.absolute_tolerance)(
+            self._basis, other._basis
+        ):
+            return PredicateResult(False, report=f"Different grid orientation {self._basis} - {other._basis}")
+        return PredicateResult(True)
+
+    def _compute_tolerance_from(self, tol: float | DynamicTolerance) -> float:
+        points = self.points
+        result = tol(points, points) if isinstance(tol, DynamicTolerance) else tol
+        assert isinstance(result, float)
+        return result
+
+    def _cell_type(self) -> CellType:
+        return [CellTypes.line, CellTypes.pixel, CellTypes.voxel][self._dimension - 1]
+
+
+def _test_basic_grid_equality(grid1, grid2) -> PredicateResult:
+    if grid1._extents != grid2._extents:
+        return PredicateResult(False, report=f"Different structured grid extents: {grid1.extents} - {grid2.extents}")
+    if grid1._dimension != grid2._dimension:
+        return PredicateResult(False, report=f"Different grid dimension {grid1._dimension} - {grid2._dimension}")
+    return PredicateResult(True)
