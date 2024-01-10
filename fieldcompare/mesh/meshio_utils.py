@@ -14,7 +14,7 @@ from meshio._vtk_common import vtk_to_meshio_type, meshio_to_vtk_type  # type: i
 from ..io.vtk._helpers import vtk_cell_type_index_to_cell_type, cell_type_to_vtk_cell_type_index
 
 from ._mesh import Mesh
-from ._cell_type import CellType
+from ._cell_type import CellType, CellTypes
 from ._mesh_fields import MeshFields, remove_cell_type_suffix
 from . import protocols
 
@@ -53,4 +53,9 @@ def _from_meshio_cell_type(cell_type: str) -> CellType:
 def _to_meshio_cell_type(cell_type: CellType) -> str:
     if cell_type.name in meshio_to_vtk_type:
         return str(cell_type)
+
+    # meshio does not support pixels/voxels
+    cell_type = cell_type if cell_type != CellTypes.pixel else CellTypes.quad
+    cell_type = cell_type if cell_type != CellTypes.voxel else CellTypes.hexahedron
+
     return vtk_to_meshio_type[cell_type_to_vtk_cell_type_index(cell_type)]
