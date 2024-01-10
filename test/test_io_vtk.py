@@ -116,7 +116,9 @@ def test_vts_files(filename: str):
 
 @pytest.mark.parametrize("filename", VTS_FILES)
 def test_vts_extents(filename: str):
-    _check_extents(_read_mesh_fields(filename).domain, filename)
+    domain = _read_mesh_fields(filename).domain
+    assert isinstance(domain, mesh_protocols.StructuredMesh)
+    _check_extents(domain, filename)
 
 
 @pytest.mark.parametrize("filename", VTS_FILES)
@@ -145,7 +147,9 @@ def test_vtr_files(filename: str):
 
 @pytest.mark.parametrize("filename", VTR_FILES)
 def test_vtr_extents(filename: str):
-    _check_extents(_read_mesh_fields(filename).domain, filename)
+    domain = _read_mesh_fields(filename).domain
+    assert isinstance(domain, mesh_protocols.StructuredMesh)
+    _check_extents(domain, filename)
 
 
 @pytest.mark.parametrize("filename", VTR_FILES)
@@ -183,7 +187,9 @@ def test_vti_files(filename: str):
 
 @pytest.mark.parametrize("filename", VTI_FILES)
 def test_vti_extents(filename: str):
-    _check_extents(_read_mesh_fields(filename).domain, filename)
+    domain = _read_mesh_fields(filename).domain
+    assert isinstance(domain, mesh_protocols.StructuredMesh)
+    _check_extents(domain, filename)
 
 
 @pytest.mark.parametrize("filename", VTI_FILES)
