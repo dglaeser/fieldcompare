@@ -19,7 +19,7 @@ import numpy
 from meshio import read as meshio_read, Mesh as MeshioMesh
 
 from fieldcompare import FieldDataComparator, protocols
-from fieldcompare.mesh import CellTypes, meshio_utils, protocols as mesh_protocols
+from fieldcompare.mesh import CellTypes, meshio_utils, sort, protocols as mesh_protocols
 from fieldcompare.io.vtk import read, PVTUReader, VTUWriter
 from fieldcompare.io import read_as
 
@@ -88,7 +88,7 @@ def test_parallel_against_sequential_vtk_file_fails_without_duplicates_removal()
 def test_parallel_vtk_files(filename: str):
     cwd = getcwd()
     chdir(VTK_TEST_DATA_PATH)
-    _test(filename)
+    assert _test(filename)
     chdir(cwd)
 
 
@@ -100,18 +100,18 @@ def test_pvd_files(filename: str):
     chdir(VTK_TEST_DATA_PATH)
     for step in sequence:
         assert isinstance(step, mesh_protocols.MeshFields)
-        _test_from_mesh(step)
+        assert _test_from_mesh(step)
     chdir(cwd)
 
 
 @pytest.mark.parametrize("filename", VTP_FILES)
 def test_vtp_files(filename: str):
-    _test(filename)
+    assert _test(filename)
 
 
 @pytest.mark.parametrize("filename", VTS_FILES)
 def test_vts_files(filename: str):
-    _test(filename)
+    assert _test(filename)
 
 
 @pytest.mark.parametrize("filename", VTS_FILES)
@@ -142,7 +142,7 @@ def test_vts_connectivity(filename: str):
 
 @pytest.mark.parametrize("filename", VTR_FILES)
 def test_vtr_files(filename: str):
-    _test(filename)
+    assert _test(filename)
 
 
 @pytest.mark.parametrize("filename", VTR_FILES)
@@ -182,7 +182,7 @@ def test_vtr_connectivity(filename: str):
 
 @pytest.mark.parametrize("filename", VTI_FILES)
 def test_vti_files(filename: str):
-    _test(filename)
+    assert _test(filename)
 
 
 @pytest.mark.parametrize("filename", VTI_FILES)
@@ -218,12 +218,12 @@ def test_vti_connectivity(filename: str):
 
 @pytest.mark.parametrize("filename", VTU_ASCII_FILES)
 def test_vtu_ascii_files(filename: str):
-    _test(filename)
+    assert _test(filename)
 
 
 @pytest.mark.parametrize("filename", VTU_INLINE_BASE64)
 def test_vtu_inline_base64_files(filename: str):
-    _test(filename)
+    assert _test(filename)
 
 
 @pytest.mark.parametrize("filename", VTU_INLINE_BASE64_LZ4_COMPRESSION)
@@ -231,12 +231,12 @@ def test_vtu_inline_base64_files_lz4_compressed(filename: str):
     if not _HAVE_LZ4:
         pytest.skip("LZ4 not found. Skipping tests...")
     else:
-        _test(filename)
+        assert _test(filename)
 
 
 @pytest.mark.parametrize("filename", VTU_APPENDED_BASE64)
 def test_vtu_appended_base64_files(filename: str):
-    _test(filename)
+    assert _test(filename)
 
 
 @pytest.mark.parametrize("filename", VTU_APPENDED_BASE64_LZ4_COMPRESSION)
@@ -244,12 +244,12 @@ def test_vtu_appended_base64_files_lz4_compressed(filename: str):
     if not _HAVE_LZ4:
         pytest.skip("LZ4 not found. Skipping tests...")
     else:
-        _test(filename)
+        assert _test(filename)
 
 
 @pytest.mark.parametrize("filename", VTU_APPENDED_RAW)
 def test_vtu_appended_raw_files(filename: str):
-    _test(filename)
+    assert _test(filename)
 
 
 @pytest.mark.parametrize("filename", VTU_APPENDED_RAW_LZ4_COMPRESSION)
@@ -257,7 +257,7 @@ def test_vtu_appended_raw_files_lz4_compressed(filename: str):
     if not _HAVE_LZ4:
         pytest.skip("LZ4 not found. Skipping tests...")
     else:
-        _test(filename)
+        assert _test(filename)
 
 
 def test_vtu_reading_from_different_extension():
@@ -287,7 +287,7 @@ def test_pvd_reading_from_different_extension():
     sequence = read(new_filename)
     for step in sequence:
         assert isinstance(step, mesh_protocols.MeshFields)
-        _test_from_mesh(step)
+        assert _test_from_mesh(step)
     remove(new_filename)
 
 
