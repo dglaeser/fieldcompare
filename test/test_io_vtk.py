@@ -196,7 +196,7 @@ def test_vti_coordinates(filename: str):
 def test_vti_cell_types(filename: str):
     fields = _read_mesh_fields(filename)
     dim = _get_mesh_dimension(filename)
-    expected_cell_type = [CellTypes.line, CellTypes.quad, CellTypes.hexahedron][dim - 1]
+    expected_cell_type = [CellTypes.line, CellTypes.pixel, CellTypes.voxel][dim - 1]
     assert(sum(1 for _ in fields.domain.cell_types) == 1)
     assert(fields.domain.cell_types == [expected_cell_type])
 
