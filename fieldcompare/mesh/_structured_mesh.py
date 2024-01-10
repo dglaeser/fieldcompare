@@ -8,6 +8,7 @@ from typing import Iterable, Tuple, List
 from itertools import accumulate, product
 from functools import reduce
 from operator import mul
+from numpy import flip
 
 from ..predicates import FuzzyEquality, PredicateResult
 from ..protocols import DynamicTolerance
@@ -29,6 +30,11 @@ class _StructuredMeshBase:
         self._dimension = len(self._nonzero_extents())
         self._rel_tol = default_mesh_relative_tolerance()
         self._abs_tol = max_coordinate * default_mesh_relative_tolerance()
+
+    @property
+    def cell_types(self) -> Iterable[CellType]:
+        """Return the cell types present in this mesh."""
+        return [self._cell_type()]
 
     @property
     def extents(self) -> Tuple[int, int, int]:
@@ -104,12 +110,12 @@ class _StructuredMeshBase:
         raise RuntimeError("Mesh implementation does not implement _cell_type()")
 
     def _num_cells(self) -> int:
-        return self._accumulate(self._nonzero_extents())
+        return self._compute_number_of_entities(self._nonzero_extents())
 
     def _nonzero_extents(self) -> List[int]:
         return list([e for e in self._extents if e > 0])
 
-    def _accumulate(self, extents: Iterable[int]) -> int:
+    def _compute_number_of_entities(self, extents: Iterable[int]) -> int:
         return reduce(mul, extents, 1)
 
 
@@ -126,7 +132,7 @@ class StructuredMesh(_StructuredMeshBase):
         self._points = as_array(points)
         super().__init__(extents, max_coordinate=max_abs_value(self._points))
 
-        expected_num_points = self._accumulate(map(lambda e: e + 1, extents))
+        expected_num_points = self._compute_number_of_entities(map(lambda e: e + 1, extents))
         if len(self._points) != expected_num_points:
             raise ValueError(
                 f"Number of points, computed from the given extents ({extents}), "
@@ -137,11 +143,6 @@ class StructuredMesh(_StructuredMeshBase):
     def points(self) -> Array:
         """Return the points of this mesh."""
         return self._points
-
-    @property
-    def cell_types(self) -> Iterable[CellType]:
-        """Return the cell types present in this mesh."""
-        return [[CellTypes.line, CellTypes.quad, CellTypes.hexahedron][self._dimension - 1]]
 
     def equals(self, other: protocols.Mesh) -> PredicateResult:
         """
@@ -155,6 +156,8 @@ class StructuredMesh(_StructuredMeshBase):
 
         if self._extents != other._extents:
             return PredicateResult(False, report=f"Different structured grid extents: {self.extents} - {other.extents}")
+        if self._dimension != other._dimension:
+            return PredicateResult(False, report=f"Different grid dimension {self._dimension} - {other._dimension}")
 
         points_equal = FuzzyEquality(rel_tol=self.relative_tolerance, abs_tol=self.absolute_tolerance)(
             self.points, other.points
@@ -169,4 +172,70 @@ class StructuredMesh(_StructuredMeshBase):
         return result
 
     def _cell_type(self) -> CellType:
-        return CellTypes.quad
+        return [CellTypes.line, CellTypes.quad, CellTypes.hexahedron][self._dimension - 1]
+
+
+class RectilinearMesh(_StructuredMeshBase):
+    """
+    Represents a rectilinear computational mesh.
+
+    Args:
+        extents: The number of cells per coordinate direction
+        ordinates: The ordinates of the points per coordinate direction
+    """
+
+    def __init__(self, extents: Tuple[int, int, int], ordinates: Tuple[ArrayLike, ArrayLike, ArrayLike]) -> None:
+        self._points: Array | None = None
+        self._ordinates = [as_array(ords) for ords in ordinates]
+        self._ordinates = [arr if len(arr) > 0 else make_array([0.0]) for arr in self._ordinates]
+        super().__init__(extents, max_coordinate=max(max_abs_value(o) for o in self._ordinates))
+
+        self._num_points = self._compute_number_of_entities(map(lambda c: max(len(c), 1), self._ordinates))
+        expected_num_points = self._compute_number_of_entities(map(lambda e: e + 1, extents))
+        if self._num_points != expected_num_points:
+            raise ValueError(
+                f"Number of points, computed from the given extents ({extents}), "
+                f"is {expected_num_points}, but the given ordinates yield {self._num_points}"
+            )
+
+    @property
+    def points(self) -> Array:
+        """Return the points of this mesh."""
+        if self._points is None:
+            self._points = make_zeros((self._num_points, 3))
+            # go over directions from 3 to 0 to have points ordered as follows:
+            # ([x0, y0, z0], [x1, y0, z0], ..., [xn, y0, z0], [x0, y1, z0], ...)
+            for i, p in enumerate(product(*list(ords for ords in reversed(self._ordinates)))):
+                self._points[i] = flip(p)
+        return self._points
+
+    def equals(self, other: protocols.Mesh) -> PredicateResult:
+        """
+        Check whether this mesh is equal to the given one.
+
+        Args:
+            other: mesh against with to check equality.
+        """
+        if not isinstance(other, RectilinearMesh):
+            return mesh_equal(self, other)
+
+        if self._extents != other._extents:
+            return PredicateResult(False, report=f"Different structured grid extents: {self.extents} - {other.extents}")
+        if self._dimension != other._dimension:
+            return PredicateResult(False, report=f"Different grid dimension {self._dimension} - {other._dimension}")
+
+        for direction in range(self._dimension):
+            if not FuzzyEquality(rel_tol=self.relative_tolerance, abs_tol=self.absolute_tolerance)(
+                self._ordinates[direction], other._ordinates[direction]
+            ):
+                return PredicateResult(False, report=f"Differing ordinates in direction {direction}")
+        return PredicateResult(True)
+
+    def _compute_tolerance_from(self, tol: float | DynamicTolerance) -> float:
+        points = self.points
+        result = tol(points, points) if isinstance(tol, DynamicTolerance) else tol
+        assert isinstance(result, float)
+        return result
+
+    def _cell_type(self) -> CellType:
+        return [CellTypes.line, CellTypes.pixel, CellTypes.voxel][self._dimension - 1]
