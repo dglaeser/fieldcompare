@@ -4,11 +4,9 @@
 from __future__ import annotations
 
 import numpy as np
-from itertools import product
 from xml.etree import ElementTree
 
-from ..._numpy_utils import make_zeros
-from ...mesh import StructuredMesh, CellTypes
+from ...mesh import RectilinearMesh
 from ._xml_reader import VTKXMLReader, CellTypeToCellIndices
 from ._reader_map import _VTK_EXTENSION_TO_READER, _VTK_TYPE_TO_EXTENSION
 from ._helpers import (
@@ -33,20 +31,22 @@ class VTRReader(VTKXMLReader):
     def _get_field_data_path(self) -> str:
         return "RectilinearGrid/Piece"
 
-    def _make_mesh(self) -> tuple[StructuredMesh, CellTypeToCellIndices]:
+    def _make_mesh(self) -> tuple[RectilinearMesh, CellTypeToCellIndices]:
         coord_elements = self._get_elements("RectilinearGrid/Piece/Coordinates/DataArray")
         if len(coord_elements) != _VTK_SPACE_DIM:
             raise IOError(f"Expected three coordinate elements, found {len(coord_elements)}")
 
-        points = make_zeros(shape=(self._num_points, 3))
-        # go over ordinates from 3 to 0 to have points ordered as follows:
-        # ([x0, y0, z0], [x1, y0, z0], ..., [xn, y0, z0], [x0, y1, z0], ...)
-        for i, p in enumerate(product(*list(self._get_ordinates(e) for e in reversed(coord_elements)))):
-            points[i] = np.flip(p)
-
-        return StructuredMesh((self._cells[0], self._cells[1], self._cells[2]), points), {
-            CellTypes.quad: np.arange(self._num_cells)
-        }
+        mesh = RectilinearMesh(
+            (self._cells[0], self._cells[1], self._cells[2]),
+            (
+                self._get_ordinates(coord_elements[0]),
+                self._get_ordinates(coord_elements[1]),
+                self._get_ordinates(coord_elements[2]),
+            ),
+        )
+        types = list(mesh.cell_types)
+        assert len(types) == 1
+        return mesh, {types[0]: np.arange(self._num_cells)}
 
     def _get_ordinates(self, element: ElementTree.Element) -> np.ndarray:
         raw_ordinates = self._get_data_array_values(element)
