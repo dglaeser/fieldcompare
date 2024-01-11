@@ -4,7 +4,7 @@
 """Classes and functions related to fields defined on computational meshes."""
 
 from ._mesh import Mesh
-from ._structured_mesh import StructuredMesh, RectilinearMesh, ImageMesh
+from ._structured_mesh import StructuredMesh, RectilinearMesh, ImageMesh, StructuredFieldMerger
 from ._cell_type import CellType, CellTypes
 from ._mesh_fields import MeshFields
 from ._mesh_fields_comparator import MeshFieldsComparator
@@ -15,6 +15,7 @@ __all__ = [
     "StructuredMesh",
     "RectilinearMesh",
     "ImageMesh",
+    "StructuredFieldMerger",
     "CellType",
     "CellTypes",
     "MeshFields",

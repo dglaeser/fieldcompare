@@ -1,14 +1,14 @@
 # SPDX-FileCopyrightText: 2023 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""Class to represent structured computational meshes"""
+"""Classes to represent structured computational meshes"""
 
 from __future__ import annotations
-from typing import Iterable, Tuple, List
+from typing import Iterable, Tuple, List, Callable
 from itertools import accumulate, product
 from functools import reduce
 from operator import mul
-from numpy import flip
+from numpy import flip, int64
 
 from ..predicates import FuzzyEquality, PredicateResult
 from ..protocols import DynamicTolerance
@@ -328,9 +328,120 @@ class ImageMesh(_StructuredMeshBase):
         return [CellTypes.line, CellTypes.pixel, CellTypes.voxel][self._dimension - 1]
 
 
+class StructuredFieldMerger:
+    """
+    Merges the fields defined on the pieces of a larger structured grid into a single fields.
+    For point data, it uses the data from only one of the pieces i.e. no duplicate points exist.
+
+    Args:
+        decomposition: tuple with n entries, where n is the dimension of the grid. Each entry is
+                       a tuple describing the number of cells per piece along that coordinate direction.
+                       For example: ((1, 2), (3)) describes a 2 x 1 decomposition of a 2d grid, where
+                       (1, 2) are the number of cells along the x-axis, and (3) the number of cells
+                       along the y-axis:
+
+                                     -------  -------
+                                    | 1 x 3 || 2 x 3 |
+                                    | cells || cells |
+                                     -------  -------
+
+    """
+
+    _MIN_DIM = 1
+    _MAX_DIM = 3
+    IndexTuple = tuple[int, ...]
+
+    def __init__(self, decomposition: tuple[tuple[int, ...]]) -> None:
+        assert self._MIN_DIM <= len(decomposition) <= self._MAX_DIM
+        self._decomposition = decomposition
+        self._dimension = len(decomposition)
+        self._pieces_shape = tuple([len(n) for n in decomposition])
+        self._merged_cell_shape = tuple(
+            [sum(n for n in decomposition[direction]) for direction in range(self._dimension)]
+        )
+        self._merged_point_shape = tuple(s + 1 for s in self._merged_cell_shape)
+
+    def merge_point_fields(self, field_callback: Callable[[IndexTuple], Array]) -> Array:
+        """
+        Merge the fields defined on the points of the decomposition.
+
+        Args:
+            field_callback: is called with the piece locations, i.e. (0, 0) for the lower-left
+                            piece in a 2d decomposition, and should return the field values on that piece.
+        """
+        return self._merge(field_callback, is_point_field=True)
+
+    def merge_cell_fields(self, field_callback: Callable[[IndexTuple], Array]) -> Array:
+        """
+        Merge the fields defined on the cells of the decomposition.
+
+        Args:
+            field_callback: is called with the piece locations, i.e. (0, 0) for the lower-left
+                            piece in a 2d decomposition, and should return the field values on that piece.
+        """
+        return self._merge(field_callback, is_point_field=False)
+
+    def _merge(self, field_callback: Callable[[IndexTuple], Array], is_point_field: bool) -> Array:
+        merged_shape = self._merged_point_shape if is_point_field else self._merged_cell_shape
+        num_merged_values = reduce(mul, merged_shape)
+        merged_values = make_zeros(shape=(num_merged_values,))
+        for i, loc in enumerate(self._piece_locations()):
+            field_values = field_callback(loc)
+            if i == 0 and len(field_values.shape) > 1:
+                merged_values_shape = tuple(list(merged_shape) + list(field_values.shape[1:]))
+                merged_values = make_zeros(shape=merged_values_shape)
+            piece_shape = (
+                self._piece_shape(loc)
+                if not is_point_field
+                else self._add_tuples(self._piece_shape(loc), tuple([1 for _ in range(self._dimension)]))
+            )
+            assert reduce(mul, piece_shape) == field_values.shape[0]
+            merged_values[self._piece_entity_indices(loc, piece_shape, merged_shape)] = field_values
+        return merged_values
+
+    def _piece_locations(self) -> Iterable[IndexTuple]:
+        return _locations_in(self._pieces_shape)
+
+    def _piece_shape(self, location: IndexTuple) -> IndexTuple:
+        return tuple([self._decomposition[direction][location[direction]] for direction in range(self._dimension)])
+
+    def _piece_entity_indices(
+        self, piece_location: IndexTuple, piece_shape: IndexTuple, merged_shape: IndexTuple
+    ) -> Array:
+        origin_index_offsets = self._compute_piece_index_offsets(piece_location)
+        merged_index_multipliers = list(accumulate(merged_shape, mul))
+        merged_index_multipliers.insert(0, 1)
+        merged_index_multipliers.pop()
+
+        def _to_flat_merged_index(ituple) -> int64:
+            with_offset = self._add_tuples(ituple, origin_index_offsets)
+            return int64(sum(with_offset[i] * merged_index_multipliers[i] for i in range(self._dimension)))
+
+        return make_array([_to_flat_merged_index(ituple) for ituple in _locations_in(piece_shape)])
+
+    def _compute_piece_index_offsets(self, piece_location: IndexTuple) -> IndexTuple:
+        offset: list[int] = []
+        for direction in range(self._dimension):
+            offset.insert(direction, 0)
+            for dir_position_below in range(piece_location[direction]):
+                other_location = tuple(
+                    [(dir_position_below if i == direction else piece_location[i]) for i in range(self._dimension)]
+                )
+                other_shape = self._piece_shape(other_location)
+                offset[direction] += other_shape[direction]
+        return tuple(offset)
+
+    def _add_tuples(self, a: IndexTuple, b: IndexTuple) -> IndexTuple:
+        return tuple(ai + bi for ai, bi in zip(a, b))
+
+
 def _test_basic_grid_equality(grid1, grid2) -> PredicateResult:
     if grid1._extents != grid2._extents:
         return PredicateResult(False, report=f"Different structured grid extents: {grid1.extents} - {grid2.extents}")
     if grid1._dimension != grid2._dimension:
         return PredicateResult(False, report=f"Different grid dimension {grid1._dimension} - {grid2._dimension}")
     return PredicateResult(True)
+
+
+def _locations_in(shape: tuple[int, ...]) -> Iterable[tuple[int, ...]]:
+    return (tuple(reversed(ituple)) for ituple in product(*list(range(n) for n in reversed(shape))))
