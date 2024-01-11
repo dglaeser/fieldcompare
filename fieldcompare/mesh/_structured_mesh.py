@@ -8,7 +8,7 @@ from typing import Iterable, Tuple, List, Callable
 from itertools import accumulate, product
 from functools import reduce
 from operator import mul
-from numpy import flip, int64
+from numpy import flip, ravel, int64
 
 from ..predicates import FuzzyEquality, PredicateResult
 from ..protocols import DynamicTolerance
@@ -388,8 +388,8 @@ class StructuredFieldMerger:
         for i, loc in enumerate(self._piece_locations()):
             field_values = field_callback(loc)
             if i == 0 and len(field_values.shape) > 1:
-                merged_values_shape = tuple(list(merged_shape) + list(field_values.shape[1:]))
-                merged_values = make_zeros(shape=merged_values_shape)
+                field_values_shape = list(field_values.shape[1:])
+                merged_values = make_zeros(shape=tuple([num_merged_values] + field_values_shape))
             piece_shape = (
                 self._piece_shape(loc)
                 if not is_point_field
