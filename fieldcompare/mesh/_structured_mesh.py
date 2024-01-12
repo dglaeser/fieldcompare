@@ -8,7 +8,7 @@ from typing import Iterable, Tuple, List, Callable
 from itertools import accumulate, product
 from functools import reduce
 from operator import mul
-from numpy import flip, int64
+from numpy import flip, int64, eye
 
 from ..predicates import FuzzyEquality, PredicateResult
 from ..protocols import DynamicTolerance
@@ -19,6 +19,11 @@ from ._mesh_equal import mesh_equal
 from ._cell_type import CellType, CellTypes
 
 from . import protocols
+
+
+def standard_basis() -> Array:
+    """Return the standard basis used for structured meshes"""
+    return eye(3, 3)
 
 
 class _StructuredMeshBase:
@@ -255,21 +260,16 @@ class ImageMesh(_StructuredMeshBase):
         extents: Tuple[int, int, int],
         origin: Tuple[float, float, float],
         spacing: Tuple[float, float, float],
-        basis: Tuple[Tuple[float, float, float], Tuple[float, float, float], Tuple[float, float, float]] = (
-            (1.0, 0.0, 0.0),
-            (0.0, 1.0, 0.0),
-            (0.0, 0.0, 1.0),
-        ),
+        basis: Array | None = None,
     ) -> None:
         super().__init__(
             extents, max_coordinate=max(max(abs(origin[d]), abs(origin[d] + spacing[d] * extents[d])) for d in range(3))
         )
-
-        self._origin = origin
-        self._spacing = spacing
-        self._basis = make_zeros((3, 3))
-        for i, v in enumerate(basis):
-            self._basis[i] = v
+        basis = basis if basis is not None else standard_basis()
+        assert basis.shape == (3, 3)
+        self._basis = basis
+        self._origin = make_array(origin)
+        self._spacing = make_array(spacing)
 
         self._points: Array | None = None
         self._num_points = self._compute_number_of_entities(map(lambda e: e + 1, self._extents))
@@ -283,11 +283,7 @@ class ImageMesh(_StructuredMeshBase):
             # ([x0, y0, z0], [x1, y0, z0], ..., [xn, y0, z0], [x0, y1, z0], ...)
             for i, rev_ituple in enumerate(product(*list(range(e + 1) for e in reversed(self._extents)))):
                 ituple = tuple(reversed(rev_ituple))
-                self._points[i] = [
-                    self._origin[0] + self._spacing[0] * float(ituple[0]),
-                    self._origin[1] + self._spacing[1] * float(ituple[1]),
-                    self._origin[2] + self._spacing[2] * float(ituple[2]),
-                ]
+                self._points[i] = self._origin + self._basis.dot(self._spacing * make_array(ituple))
         return self._points
 
     def equals(self, other: protocols.Mesh) -> PredicateResult:

@@ -5,10 +5,12 @@ from __future__ import annotations
 from itertools import product
 from functools import reduce
 from operator import mul
+from math import pi, sin, cos
 
+from fieldcompare.predicates import FuzzyEquality
 from fieldcompare.mesh._structured_mesh import _locations_in
-from fieldcompare.mesh import StructuredFieldMerger as Merger
-from numpy import ndarray, array, all as np_all
+from fieldcompare.mesh import ImageMesh, StructuredFieldMerger as Merger
+from numpy import ndarray, array, eye, all as np_all
 
 import pytest
 
@@ -20,6 +22,29 @@ TEST_LATTICE_SIZES = [
     (2, 1), (1, 2), (3, 3),
     (1, 2, 3), (3, 1, 2), (2, 2, 2)
 ]
+
+
+@pytest.mark.parametrize("rotation_angle", [0.0, pi/4.0, -pi/4.0])
+def test_rotated_image_mesh(rotation_angle):
+    sinangle, cosangle = sin(rotation_angle), cos(rotation_angle)
+    rot = array([[cosangle, -sinangle, 0], [sinangle, cosangle, 0], [0, 0, 1]])
+    basis = eye(3, 3)*rot
+    mesh = ImageMesh(
+        extents=(1, 1, 1),
+        origin=(0., 0., 0.),
+        spacing=(1., 1., 1.),
+        basis=basis
+    )
+    assert FuzzyEquality()(mesh.points, array([
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0],
+        [1.0, 1.0, 0.0],
+        [0.0, 0.0, 1.0],
+        [1.0, 0.0, 1.0],
+        [0.0, 1.0, 1.0],
+        [1.0, 1.0, 1.0],
+    ]).dot(basis))
 
 
 @pytest.mark.parametrize("field_dim", FIELD_DIMENSIONS)
