@@ -13,16 +13,12 @@
         </Points>
         <PointData Scalars="my_scalars">
             <DataArray type="Float32" Name="my_scalars" format="ascii">
-            0 1 2 3 4 5 6 7
+              0 8.41471 4.54649 0 0 16.8294 9.09297 0
             </DataArray>
         </PointData>
         <CellData Scalars="cell_scalars" Normals="cell_normals">
-            <DataArray type="Int32" Name="cell_scalars" format="ascii">
-            0 1 2 3 4 5
-            </DataArray>
-            <DataArray type="Float32" Name="cell_normals"
-                        NumberOfComponents="3" format="ascii">
-            0 0 -1 0 0 1 0 -1 0 0 1 0 -1 0 0 1 0 0
+            <DataArray type="Float64" Name="cell_scalars" format="ascii">
+               4.20735 8.41471 7.19138 3.88552 0 11.0769
             </DataArray>
         </CellData>
         <Polys>

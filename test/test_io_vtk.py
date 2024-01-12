@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import List
 from shutil import copyfile
 from itertools import product
+from math import sin, cos
 
 import pytest
 import numpy
@@ -95,10 +96,11 @@ def test_pvd_files(filename: str):
     cwd = getcwd()
     sequence = read(filename)
     assert isinstance(sequence, protocols.FieldDataSequence)
+    times = _read_pvd_timesteps(filename)
     chdir(VTK_TEST_DATA_PATH)
-    for step in sequence:
+    for i, step in enumerate(sequence):
         assert isinstance(step, mesh_protocols.MeshFields)
-        assert _test_from_mesh(step, filename)
+        assert _test_from_mesh(step, filename, step_multiplier=times[i])
     chdir(cwd)
 
 
@@ -283,15 +285,15 @@ def test_pvd_reading_from_different_extension():
     new_filename = f"{splitext(filename)[0]}.wrongext"
     copyfile(filename, new_filename)
     sequence = read(new_filename)
-    for step in sequence:
+    times = _read_pvd_timesteps(filename)
+    for i, step in enumerate(sequence):
         assert isinstance(step, mesh_protocols.MeshFields)
-        assert _test_from_mesh(step, new_filename)
+        assert _test_from_mesh(step, new_filename, times[i])
     remove(new_filename)
 
 
 @pytest.mark.parametrize("filename", VTU_INLINE_BASE64)
 def test_vtu_writer(filename: str):
-    print(f"Reading, writing and testing {filename}")
     fields = _read_mesh_fields(filename)
     writer = VTUWriter(fields)
     writer.write("_temp")
@@ -323,11 +325,16 @@ def _test_read_as_mesh(filename: str) -> bool:
     return check
 
 
-def _test(filename: str) -> bool:
-    return _test_from_mesh(_read_mesh_fields(filename), f"{splitext(filename)[0]}_from_meshio.vtk")
+def _test(filename: str, step_multiplier: float = 1.0) -> bool:
+    return _test_from_mesh(
+        _read_mesh_fields(filename),
+        basefilename=f"{splitext(filename)[0]}_from_meshio.vtk",
+        step_multiplier=step_multiplier
+    )
 
 
-def _test_from_mesh(mesh_fields: mesh_protocols.MeshFields, basefilename: str = "") -> bool:
+def _test_from_mesh(mesh_fields: mesh_protocols.MeshFields, basefilename: str = "", step_multiplier: float = 1.0) -> bool:
+    _test_field_functions(mesh_fields, step_multiplier)
     meshio_mesh = _get_alternative_with_meshio(mesh_fields, f"{basefilename}_test_from_meshio.vtk")
     meshio_mesh_fields = meshio_utils.from_meshio(meshio_mesh)
     return bool(FieldDataComparator(mesh_fields, meshio_mesh_fields)())
@@ -346,6 +353,13 @@ def _get_alternative_with_meshio(mesh_fields: mesh_protocols.MeshFields, tmp_fil
         meshio_read_mesh = meshio_read(tmp_filename)
         remove(tmp_filename)
         return meshio_read_mesh
+
+
+def _read_pvd_timesteps(filename: str) -> list[float]:
+    return [
+        float(e.attrib["timestep"])
+        for e in ElementTree.parse(filename).find("Collection").findall("DataSet")
+    ]
 
 
 def _read_mesh_fields(filename: str) -> mesh_protocols.MeshFields:
@@ -388,7 +402,6 @@ def _get(keyword: str, filename: str, dtype):
 
 
 def _get_mesh_dimension(filename: str) -> int:
-    print(filename)
     before, _ = filename.split("d_in_")
     return int(before[-1])
 
@@ -408,3 +421,45 @@ def _get_vtr_ordinates(filename: str) -> List[List[float]]:
 
         return [_to_ordinates(ords.text) for ords in coords_element.findall("DataArray")]
     raise RuntimeError("Can only read ordinates from ascii vtr files")
+
+
+def _test_field_functions(mesh_fields: mesh_protocols.MeshFields, step_multiplier: float = 1.0) -> None:
+    _test_point_field_functions(mesh_fields, step_multiplier)
+    _test_cell_field_functions(mesh_fields, step_multiplier)
+
+
+def _test_point_field_functions(mesh_fields: mesh_protocols.MeshFields, step_multiplier: float = 1.0) -> None:
+    for field in mesh_fields.point_fields:
+        for i, point in enumerate(mesh_fields.domain.points):
+            expected = _evaluate_test_function(point, step_multiplier)
+            found = _extract_first_entry(field.values[i])
+            assert numpy.isclose(expected, found)
+
+
+def _test_cell_field_functions(mesh_fields: mesh_protocols.MeshFields, step_multiplier: float = 1.0) -> None:
+    for field, ct in mesh_fields.cell_fields_types:
+        points = mesh_fields.domain.points
+        assert len(mesh_fields.domain.connectivity(ct)) == len(field.values)
+        for cell_idx, connectivity in enumerate(mesh_fields.domain.connectivity(ct)):
+            center = sum(points[c] for c in connectivity)/float(len(connectivity))
+            assert isinstance(center, numpy.ndarray)
+            expected = _evaluate_test_function(center, step_multiplier)
+            found = _extract_first_entry(field.values[cell_idx])
+            assert numpy.isclose(expected, found)
+
+
+def _extract_first_entry(entry):
+    if isinstance(entry, numpy.ndarray):
+        if len(entry.shape) > 0:
+            return _extract_first_entry(entry[0])
+    return entry
+
+
+# all point/cell fields in the vtk test files represent this function
+def _evaluate_test_function(point: list[float] | numpy.ndarray, step_multiplier: float = 1.0) -> float:
+    result = 10.0*sin(point[0])
+    if len(point) > 1:
+        result *= cos(point[1])
+    if len(point) > 2:
+        result *= point[2] + 1.0
+    return result*step_multiplier

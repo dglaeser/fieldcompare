@@ -7,12 +7,12 @@
     <Piece NumberOfPoints="4" NumberOfCells="1">
       <PointData>
         <DataArray Name="pscalar" type="Float64" format="ascii" NumberOfComponents="1">
-          1 4 5 2
+          8.41471 9.09297 4.91295 4.54649
         </DataArray>
       </PointData>
       <CellData>
         <DataArray Name="cscalar" type="Float64" format="ascii" NumberOfComponents="1">
-          1
+          8.75384
         </DataArray>
       </CellData>
       <Points>
