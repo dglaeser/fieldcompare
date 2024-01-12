@@ -94,6 +94,12 @@ class VTKXMLReader(ABC):
         ncomps = int(xml_element.attrib.get("NumberOfComponents", 1))
         return values if ncomps <= 1 else values.reshape(int(len(values) / ncomps), ncomps)
 
+    def _has_attribute(self, path: str, key: str) -> bool:
+        elem = self._xml_element.find(path)
+        if elem is None:
+            return False
+        return key in elem.attrib
+
     def _get_attribute(self, path: str, key: str) -> str:
         return self._get_attribute_from(self._get_element(path), key)
 
