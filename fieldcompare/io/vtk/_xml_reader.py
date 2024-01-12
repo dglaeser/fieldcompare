@@ -11,7 +11,7 @@ import numpy as np
 from ...mesh import MeshFields, CellType
 from ...mesh.protocols import Mesh
 from ._appendix import VTKXMLAppendix
-from ._helpers import vtk_type_to_dtype
+from ._helpers import vtk_type_to_dtype, vtk_extents_to_cells_per_direction
 from ._encoders import Base64Encoder
 from ._compressors import Compressor, NoCompressor, ZLIBCompressor, LZ4Compressor, LZMACompressor
 
@@ -186,6 +186,18 @@ class VTKXMLReader(ABC):
             ),
             vtk_type_to_dtype(xml.attrib["type"]).newbyteorder(self._byte_order),
         )
+
+
+class VTKXMLStructuredReader(VTKXMLReader):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._extents = [int(e) for e in self._get_attribute(self._get_field_data_path(), "Extent").split()]
+        self._cells = vtk_extents_to_cells_per_direction(self._extents)
+
+    @property
+    def extents(self) -> list[int]:
+        """Return the extents as specified in the VTK XML file"""
+        return self._extents
 
 
 def _find_appendix_positions(content: bytes) -> tuple[int, int]:

@@ -6,27 +6,31 @@ from __future__ import annotations
 import numpy as np
 
 from ...mesh import ImageMesh
-from ._xml_reader import VTKXMLReader, CellTypeToCellIndices
+from ._xml_reader import VTKXMLStructuredReader, CellTypeToCellIndices
 from ._reader_map import _VTK_EXTENSION_TO_READER, _VTK_TYPE_TO_EXTENSION
 from ._helpers import (
-    vtk_extents_to_cells_per_direction,
     number_of_total_cells_from_cells_per_direction,
     number_of_total_points_from_cells_per_direction,
 )
 
 
-class VTIReader(VTKXMLReader):
+class VTIReader(VTKXMLStructuredReader):
     """Reads meshes from the image grid variant of the VTK file formats"""
 
     def __init__(self, filename: str) -> None:
         super().__init__(filename)
-        self._cells = vtk_extents_to_cells_per_direction(
-            [int(e) for e in self._get_attribute("ImageData/Piece", "Extent").split()]
-        )
         self._origin = [float(x) for x in self._get_attribute("ImageData", "Origin").split()]
         self._spacing = [float(dx) for dx in self._get_attribute("ImageData", "Spacing").split()]
         self._num_cells = number_of_total_cells_from_cells_per_direction(self._cells)
         self._num_points = number_of_total_points_from_cells_per_direction(self._cells)
+
+    @property
+    def origin(self) -> list[float]:
+        return self._origin
+
+    @property
+    def spacing(self) -> list[float]:
+        return self._spacing
 
     def _get_field_data_path(self) -> str:
         return "ImageData/Piece"
