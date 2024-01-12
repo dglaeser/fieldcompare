@@ -11,15 +11,13 @@ from pathlib import Path
 from typing import List
 from shutil import copyfile
 from itertools import product
-from functools import reduce
-from operator import mul
 
 import pytest
 import numpy
 from meshio import read as meshio_read, Mesh as MeshioMesh
 
 from fieldcompare import FieldDataComparator, protocols
-from fieldcompare.mesh import CellTypes, meshio_utils, sort, protocols as mesh_protocols
+from fieldcompare.mesh import CellTypes, meshio_utils, protocols as mesh_protocols
 from fieldcompare.io.vtk import read, PVTUReader, VTUWriter
 from fieldcompare.io import read_as
 
@@ -100,7 +98,7 @@ def test_pvd_files(filename: str):
     chdir(VTK_TEST_DATA_PATH)
     for step in sequence:
         assert isinstance(step, mesh_protocols.MeshFields)
-        assert _test_from_mesh(step)
+        assert _test_from_mesh(step, filename)
     chdir(cwd)
 
 
@@ -287,7 +285,7 @@ def test_pvd_reading_from_different_extension():
     sequence = read(new_filename)
     for step in sequence:
         assert isinstance(step, mesh_protocols.MeshFields)
-        assert _test_from_mesh(step)
+        assert _test_from_mesh(step, new_filename)
     remove(new_filename)
 
 
@@ -317,7 +315,7 @@ def _test_read_as_mesh(filename: str) -> bool:
     try:
         fields = read_as("mesh", new_filename)
         assert isinstance(fields, mesh_protocols.MeshFields)
-        check = _test_from_mesh(fields)
+        check = _test_from_mesh(fields, filename)
     except Exception as e:
         check = False
         print(f"Exception raised: {e}")
@@ -326,14 +324,11 @@ def _test_read_as_mesh(filename: str) -> bool:
 
 
 def _test(filename: str) -> bool:
-    mesh_fields = _read_mesh_fields(filename)
-    meshio_mesh = _get_alternative_with_meshio(mesh_fields, f"{splitext(filename)[0]}_from_meshio.vtk")
-    meshio_mesh_fields = meshio_utils.from_meshio(meshio_mesh)
-    return bool(FieldDataComparator(mesh_fields, meshio_mesh_fields)())
+    return _test_from_mesh(_read_mesh_fields(filename), f"{splitext(filename)[0]}_from_meshio.vtk")
 
 
-def _test_from_mesh(mesh_fields: mesh_protocols.MeshFields) -> bool:
-    meshio_mesh = _get_alternative_with_meshio(mesh_fields, "_test_from_meshio.vtk")
+def _test_from_mesh(mesh_fields: mesh_protocols.MeshFields, basefilename: str = "") -> bool:
+    meshio_mesh = _get_alternative_with_meshio(mesh_fields, f"{basefilename}_test_from_meshio.vtk")
     meshio_mesh_fields = meshio_utils.from_meshio(meshio_mesh)
     return bool(FieldDataComparator(mesh_fields, meshio_mesh_fields)())
 
