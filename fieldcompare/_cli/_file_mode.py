@@ -7,7 +7,7 @@ from argparse import ArgumentParser
 from datetime import datetime
 from xml.etree.ElementTree import ElementTree
 
-from ..io import _AVAILABLE_FILE_TYPES
+from ..io import _FILE_TYPES_TO_READER
 from .._common import _measure_time
 
 from ._junit import as_junit_xml_element
@@ -196,7 +196,7 @@ def _add_reader_selection_options_args(parser: ArgumentParser) -> None:
         "options to be passed to the reader in json notation after the reader name. For example, use "
         '`--read-as \'dsv{"delimiter":","}:*.dat\'` to read all `.dat` files as comma-separated data dsv files. '
         "Note that this syntax requires you to wrap the entire argument in single quotes (''). "
-        f"Available readers: {', '.join(_AVAILABLE_FILE_TYPES)}",
+        f"Available readers: {', '.join(_FILE_TYPES_TO_READER.keys())}",
     )
 
 
