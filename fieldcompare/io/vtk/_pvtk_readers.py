@@ -252,17 +252,17 @@ class PVTIReader(_PVTKReader):
         piece_fields: list[mesh_protocols.MeshFields],
         merger: StructuredFieldMerger,
     ) -> ImageMesh:
-        # these attributes must be the same for all pieces
         first_reader = piece_readers[0]
         assert isinstance(first_reader, VTIReader)
+
         origin = first_reader.origin
         spacing = first_reader.spacing
-
         extents = decomposition.merged_extents()
         return ImageMesh(
             extents=(extents[0], extents[1], extents[2]),
             origin=(origin[0], origin[1], origin[2]),
             spacing=(spacing[0], spacing[1], spacing[2]),
+            basis=first_reader.basis,
         )
 
 

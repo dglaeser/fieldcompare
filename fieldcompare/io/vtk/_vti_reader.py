@@ -39,6 +39,10 @@ class VTIReader(VTKXMLStructuredReader):
     def spacing(self) -> list[float]:
         return self._spacing
 
+    @property
+    def basis(self) -> np.ndarray:
+        return self._basis
+
     def _get_field_data_path(self) -> str:
         return "ImageData/Piece"
 
