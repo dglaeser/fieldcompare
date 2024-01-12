@@ -8,7 +8,7 @@ from typing import Iterable, Tuple, List, Callable
 from itertools import accumulate, product
 from functools import reduce
 from operator import mul
-from numpy import flip, ravel, int64
+from numpy import flip, int64
 
 from ..predicates import FuzzyEquality, PredicateResult
 from ..protocols import DynamicTolerance
@@ -61,7 +61,7 @@ class _StructuredMeshBase:
         if cell_type != self._cell_type():
             return make_array([])
 
-        extents = self._nonzero_extents()
+        extents = tuple(self._nonzero_extents())
         offsets = list(accumulate((e + 1 for e in extents), mul))[:-1]
         num_cell_corners = pow(self._dimension, 2)
 
@@ -70,16 +70,16 @@ class _StructuredMeshBase:
 
         connectivity = make_zeros(shape=(self._num_cells(), num_cell_corners), dtype=int)
         if self._dimension == 1:  # noqa: PLR2004
-            for cell_idx, ituple in enumerate(product(*list(range(e) for e in extents))):
+            for cell_idx, ituple in enumerate(_locations_in(extents)):
                 p0 = _get_p0(ituple)
                 connectivity[cell_idx] = [p0, p0 + 1]
         elif self._dimension == 2:  # noqa: PLR2004
-            for cell_idx, ituple in enumerate(product(*list(range(e) for e in extents))):
+            for cell_idx, ituple in enumerate(_locations_in(extents)):
                 p0 = _get_p0(ituple)
                 p2 = p0 + offsets[0]
                 connectivity[cell_idx] = [p0, p0 + 1, p2 + 1, p2]
         elif self._dimension == 3:  # noqa: PLR2004
-            for cell_idx, ituple in enumerate(product(*list(range(e) for e in extents))):
+            for cell_idx, ituple in enumerate(_locations_in(extents)):
                 p0 = _get_p0(ituple)
                 p2 = p0 + offsets[0]
                 p5 = p0 + offsets[1]
@@ -351,7 +351,7 @@ class StructuredFieldMerger:
     _MAX_DIM = 3
     IndexTuple = tuple[int, ...]
 
-    def __init__(self, decomposition: tuple[tuple[int, ...]]) -> None:
+    def __init__(self, decomposition: tuple[tuple[int, ...], ...]) -> None:
         assert self._MIN_DIM <= len(decomposition) <= self._MAX_DIM
         self._decomposition = decomposition
         self._dimension = len(decomposition)
