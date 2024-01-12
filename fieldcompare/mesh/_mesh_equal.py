@@ -32,7 +32,8 @@ def mesh_equal(
     for cell_type in source.cell_types:
         tct = cell_type if cell_type in target_ct else _find_compatible(target_ct, cell_type)
         if len(source.connectivity(cell_type)) != len(target.connectivity(tct)):
-            return PredicateResult(False, report=f"Differing number of cells of types '{cell_type.name}/{tct}'")
+            message_end = f"type '{tct.name}'" if tct == cell_type else f"types '{cell_type.name}/{tct.name}'"
+            return PredicateResult(False, report=f"Differing number of cells of {message_end}")
         if not ExactEquality()(
             _get_sorted_corner_indices(source.connectivity(cell_type)),
             _get_sorted_corner_indices(target.connectivity(tct)),
