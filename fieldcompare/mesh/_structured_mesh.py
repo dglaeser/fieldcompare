@@ -349,7 +349,6 @@ class StructuredFieldMerger:
 
     _MIN_DIM = 1
     _MAX_DIM = 3
-    IndexTuple = tuple[int, ...]
 
     def __init__(self, decomposition: tuple[tuple[int, ...], ...]) -> None:
         assert self._MIN_DIM <= len(decomposition) <= self._MAX_DIM
@@ -361,7 +360,7 @@ class StructuredFieldMerger:
         )
         self._merged_point_shape = tuple(s + 1 for s in self._merged_cell_shape)
 
-    def merge_point_fields(self, field_callback: Callable[[IndexTuple], Array]) -> Array:
+    def merge_point_fields(self, field_callback: Callable[[tuple[int, ...]], Array]) -> Array:
         """
         Merge the fields defined on the points of the decomposition.
 
@@ -371,7 +370,7 @@ class StructuredFieldMerger:
         """
         return self._merge(field_callback, is_point_field=True)
 
-    def merge_cell_fields(self, field_callback: Callable[[IndexTuple], Array]) -> Array:
+    def merge_cell_fields(self, field_callback: Callable[[tuple[int, ...]], Array]) -> Array:
         """
         Merge the fields defined on the cells of the decomposition.
 
@@ -381,7 +380,7 @@ class StructuredFieldMerger:
         """
         return self._merge(field_callback, is_point_field=False)
 
-    def _merge(self, field_callback: Callable[[IndexTuple], Array], is_point_field: bool) -> Array:
+    def _merge(self, field_callback: Callable[[tuple[int, ...]], Array], is_point_field: bool) -> Array:
         merged_shape = self._merged_point_shape if is_point_field else self._merged_cell_shape
         num_merged_values = reduce(mul, merged_shape)
         merged_values = make_zeros(shape=(num_merged_values,))
@@ -399,14 +398,14 @@ class StructuredFieldMerger:
             merged_values[self._piece_entity_indices(loc, piece_shape, merged_shape)] = field_values
         return merged_values
 
-    def _piece_locations(self) -> Iterable[IndexTuple]:
+    def _piece_locations(self) -> Iterable[tuple[int, ...]]:
         return _locations_in(self._pieces_shape)
 
-    def _piece_shape(self, location: IndexTuple) -> IndexTuple:
+    def _piece_shape(self, location: tuple[int, ...]) -> tuple[int, ...]:
         return tuple([self._decomposition[direction][location[direction]] for direction in range(self._dimension)])
 
     def _piece_entity_indices(
-        self, piece_location: IndexTuple, piece_shape: IndexTuple, merged_shape: IndexTuple
+        self, piece_location: tuple[int, ...], piece_shape: tuple[int, ...], merged_shape: tuple[int, ...]
     ) -> Array:
         origin_index_offsets = self._compute_piece_index_offsets(piece_location)
         merged_index_multipliers = list(accumulate(merged_shape, mul))
@@ -419,7 +418,7 @@ class StructuredFieldMerger:
 
         return make_array([_to_flat_merged_index(ituple) for ituple in _locations_in(piece_shape)])
 
-    def _compute_piece_index_offsets(self, piece_location: IndexTuple) -> IndexTuple:
+    def _compute_piece_index_offsets(self, piece_location: tuple[int, ...]) -> tuple[int, ...]:
         offset: list[int] = []
         for direction in range(self._dimension):
             offset.insert(direction, 0)
@@ -431,7 +430,7 @@ class StructuredFieldMerger:
                 offset[direction] += other_shape[direction]
         return tuple(offset)
 
-    def _add_tuples(self, a: IndexTuple, b: IndexTuple) -> IndexTuple:
+    def _add_tuples(self, a: tuple[int, ...], b: tuple[int, ...]) -> tuple[int, ...]:
         return tuple(ai + bi for ai, bi in zip(a, b))
 
 

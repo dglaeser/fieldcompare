@@ -33,7 +33,7 @@ def test_structured_point_field_merge(field_dim, lattice_size):
     )
 
     merger = Merger(piece_sizes_along_axes)
-    merged = merger.merge_point_fields(lambda loc: fields[*loc])
+    merged = merger.merge_point_fields(lambda loc: fields[loc])
 
     num_points_along_axes = [sum(n for n in piece_sizes_along_axes[d]) + 1 for d in range(dimension)]
     num_total_points = reduce(mul, num_points_along_axes)
@@ -45,10 +45,10 @@ def test_structured_point_field_merge(field_dim, lattice_size):
         offsets = [
             sum(piece_sizes_along_axes[d][k] for k in range(loc[d])) for d in range(dimension)
         ]
-        piece_shape = pieces[*loc]
+        piece_shape = pieces[loc]
         for ituple in product(*list(range(1, n) for n in piece_shape)):
             ituple = tuple(it + o for it, o in zip(ituple, offsets))
-            merged_value = merged_non_flat_view[*ituple]
+            merged_value = merged_non_flat_view[ituple]
             expected_value = _to_tensor(field_dim, _value_in_domain(i))
             assert np_all(merged_value == expected_value)
 
@@ -64,7 +64,7 @@ def test_structured_cell_field_merge(field_dim, lattice_size):
     )
 
     merger = Merger(piece_sizes_along_axes)
-    merged = merger.merge_cell_fields(lambda loc: fields[*loc])
+    merged = merger.merge_cell_fields(lambda loc: fields[loc])
 
     num_cells_along_axes = [sum(n for n in piece_sizes_along_axes[d]) for d in range(dimension)]
     num_total_cells = reduce(mul, num_cells_along_axes)
@@ -76,10 +76,10 @@ def test_structured_cell_field_merge(field_dim, lattice_size):
         offsets = [
             sum(piece_sizes_along_axes[d][k] for k in range(loc[d])) for d in range(dimension)
         ]
-        piece_shape = pieces[*loc]
+        piece_shape = pieces[loc]
         for ituple in product(*list(range(1, n) for n in piece_shape)):
             ituple = tuple(it + o for it, o in zip(ituple, offsets))
-            merged_value = merged_non_flat_view[*ituple]
+            merged_value = merged_non_flat_view[ituple]
             expected_value = _to_tensor(field_dim, _value_in_domain(i))
             assert np_all(merged_value == expected_value)
 
@@ -95,8 +95,8 @@ def _make_pieces_and_fields(
     for i, loc in enumerate(_locations_in(lattice_size)):
         this_shape = tuple([piece_sizes_along_axes[d][loc[d]] for d in range(len(loc))])
         num_values = reduce(mul, (n + (1 if make_point_fields else 0) for n in this_shape))
-        pieces[*loc] = this_shape
-        fields[*loc] = array([
+        pieces[loc] = this_shape
+        fields[loc] = array([
             _to_tensor(field_dimension, _value_in_domain(i)) for _ in range(num_values)
         ])
     return pieces, fields, piece_sizes_along_axes

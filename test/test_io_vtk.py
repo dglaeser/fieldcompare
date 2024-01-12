@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """Tests for the I/O facilities for vtk files"""
-
+from __future__ import annotations
 from xml.etree import ElementTree
 from os import chdir, getcwd
 from os import walk, remove

@@ -31,7 +31,7 @@ class _PVTKReader:
             return sum(1 for _ in self.meshed_dimensions())
 
         def domain_id(self, location: tuple[int, ...]) -> int:
-            return self._order[*location]
+            return self._order[location]
 
         def decomposition_along(self, direction: int) -> list[int]:
             return self._cells_per_axis[direction]
@@ -171,7 +171,7 @@ class _PVTKReader:
                 for direction in range(_VTK_SPACE_DIM)
                 if has_dimension[direction]
             )
-            order[*piece_location] = i
+            order[piece_location] = i
         return self._StructuredDecomposition(sizes_along_axis, order)
 
 
