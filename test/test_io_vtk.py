@@ -21,6 +21,7 @@ from fieldcompare import FieldDataComparator, protocols
 from fieldcompare.mesh import CellTypes, meshio_utils, protocols as mesh_protocols
 from fieldcompare.io.vtk import read, PVTUReader, VTUWriter
 from fieldcompare.io import read_as
+from fieldcompare.mesh._structured_mesh import standard_basis
 
 
 try:
@@ -195,7 +196,7 @@ def test_vti_extents(filename: str):
 @pytest.mark.parametrize("filename", VTI_FILES)
 def test_vti_coordinates(filename: str):
     dx = _get_spacing(filename)
-    _check_point_coordinates(_read_mesh_fields(filename).domain, dx)
+    _check_point_coordinates(_read_mesh_fields(filename).domain, dx, _get_vti_basis(filename))
 
 
 @pytest.mark.parametrize("filename", VTI_FILES)
@@ -368,10 +369,11 @@ def _read_mesh_fields(filename: str) -> mesh_protocols.MeshFields:
     return mesh_fields
 
 
-def _check_point_coordinates(structured_mesh, _dx: List[float]) -> None:
+def _check_point_coordinates(structured_mesh, _dx: List[float], basis = standard_basis()) -> None:
     assert(len(_dx) == 3)
+    dx = numpy.array(_dx)
     expected_points = [  # reverse extents to get expected point ordering
-        numpy.array(_dx)*numpy.array([i for i in reversed(ituple)])
+        basis.dot(dx * numpy.array([i for i in reversed(ituple)]))
         for ituple in product(*list(reversed(list(range(e + 1) for e in structured_mesh.extents))))
     ]
     assert(len(expected_points) == len(structured_mesh.points))
@@ -392,6 +394,14 @@ def _get_extents(filename: str) -> List[int]:
 
 def _get_spacing(filename: str) -> List[float]:
     return _get("Spacing", filename, float)
+
+
+def _get_vti_basis(filename: str) -> numpy.ndarray:
+    vtk_basis = _get("Direction", filename, float)
+    result = numpy.eye(3, 3)
+    for i in range(3):
+        result[i] = vtk_basis[i * 3 : (i + 1)*3]
+    return result
 
 
 def _get(keyword: str, filename: str, dtype):

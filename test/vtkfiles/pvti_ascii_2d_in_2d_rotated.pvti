@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<!--SPDX-FileCopyrightText: 2024 Dennis Gläser <dennis.a.glaeser@gmail.com>-->
+<!--SPDX-License-Identifier: GPL-3.0-or-later-->
+<VTKFile type="PImageData">
+  <PImageData WholeExtent="0 4 0 2 0 0"
+              Origin="0.000000 0.000000 0"
+              Spacing="0.500000 0.500000 0"
+              Direction="0.7071067811865475 -0.7071067811865475 0 0.7071067811865475 0.7071067811865475 0 0 0 1">
+    <PPointData>
+      <PDataArray Name="pscalar" type="Float64" format="ascii" NumberOfComponents="1"/>
+    </PPointData>
+    <PCellData>
+      <PDataArray Name="cscalar" type="Float64" format="ascii" NumberOfComponents="1"/>
+    </PCellData>
+    <Piece Extent="0 2 0 2 0 0" Source="pvti_ascii_2d_in_2d_rotated-0.vti"/>
+    <Piece Extent="2 4 0 2 0 0" Source="pvti_ascii_2d_in_2d_rotated-1.vti"/>
+  </PImageData>
+</VTKFile>
