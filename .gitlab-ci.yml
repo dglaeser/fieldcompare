@@ -80,7 +80,6 @@ test:
     reports:
       junit: test_report.xml
   script:
-    # TODO: simplify again and turn 3.10.4 -> 3.10 (once the mypy error with numpy is fixed)
     - env=${PY_VERSION//./}
     - tox -e py${env:0:3}
   parallel:
