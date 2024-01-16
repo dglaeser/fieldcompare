@@ -1,9 +1,9 @@
 <!--SPDX-FileCopyrightText: 2023 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>-->
 <!--SPDX-License-Identifier: GPL-3.0-or-later-->
 
-# `fieldcompare` 0.1.4
+# `fieldcompare` 0.2.0
 
-## Features
+## New Features
 
 - __I/O__: output capabilities for tabular and mesh field data was added. The former is written into `.csv` files, while for the latter a writer for the `.vtu` file format was added.
 - __FieldData__: The `FieldData` protocol was enhanced by a `diff_to` function that computes the difference to given data. That is, `my_field_data.diff_to(reference)` returns a `FieldData` object that contains the differences `reference_${FIELD} - my_field_data_${FIELD}`.
