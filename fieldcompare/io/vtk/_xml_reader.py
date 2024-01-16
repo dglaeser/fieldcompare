@@ -2,15 +2,16 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
-from typing import Literal, Dict
+from typing import Literal, Dict, List
 from abc import ABC, abstractmethod
 from xml.etree import ElementTree
 
 import numpy as np
 
-from ...mesh import Mesh, MeshFields, CellType
+from ...mesh import MeshFields, CellType
+from ...mesh.protocols import Mesh
 from ._appendix import VTKXMLAppendix
-from ._helpers import vtk_type_to_dtype
+from ._helpers import vtk_type_to_dtype, vtk_extents_to_cells_per_direction
 from ._encoders import Base64Encoder
 from ._compressors import Compressor, NoCompressor, ZLIBCompressor, LZ4Compressor, LZMACompressor
 
@@ -93,6 +94,12 @@ class VTKXMLReader(ABC):
         ncomps = int(xml_element.attrib.get("NumberOfComponents", 1))
         return values if ncomps <= 1 else values.reshape(int(len(values) / ncomps), ncomps)
 
+    def _has_attribute(self, path: str, key: str) -> bool:
+        elem = self._xml_element.find(path)
+        if elem is None:
+            return False
+        return key in elem.attrib
+
     def _get_attribute(self, path: str, key: str) -> str:
         return self._get_attribute_from(self._get_element(path), key)
 
@@ -109,6 +116,12 @@ class VTKXMLReader(ABC):
 
     def _get_element(self, path: str) -> ElementTree.Element:
         elem = self._xml_element.find(path)
+        if elem is not None:
+            return elem
+        raise ValueError("Path not found in vtk file")
+
+    def _get_elements(self, path: str) -> List[ElementTree.Element]:
+        elem = self._xml_element.findall(path)
         if elem is not None:
             return elem
         raise ValueError("Path not found in vtk file")
@@ -179,6 +192,18 @@ class VTKXMLReader(ABC):
             ),
             vtk_type_to_dtype(xml.attrib["type"]).newbyteorder(self._byte_order),
         )
+
+
+class VTKXMLStructuredReader(VTKXMLReader):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._extents = [int(e) for e in self._get_attribute(self._get_field_data_path(), "Extent").split()]
+        self._cells = vtk_extents_to_cells_per_direction(self._extents)
+
+    @property
+    def extents(self) -> list[int]:
+        """Return the extents as specified in the VTK XML file"""
+        return self._extents
 
 
 def _find_appendix_positions(content: bytes) -> tuple[int, int]:

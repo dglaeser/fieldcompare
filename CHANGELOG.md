@@ -20,3 +20,4 @@ diff = sort(source).diff(sort(reference))
 write(diff, "diff_file")
 ```
 - __CLI__: The cli (both `file` and `dir` mode) was enhanced to take a `--diff` flag. If used, the difference between the fields for each pair of compared files is written to disk next to the source fields file (with prefix `diff_`).
+- __I/O__: readers for the structured grid VTK file formats (`.vti`/`.pvti`, `.vtr`/`.pvtr`, `.vts`/`.pvts`) are now available.

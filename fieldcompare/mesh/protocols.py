@@ -4,7 +4,7 @@
 """Defines the interfaces used by the fieldcompare.mesh module"""
 
 from __future__ import annotations
-from typing import Protocol, Iterable, runtime_checkable
+from typing import Protocol, Iterable, Tuple, runtime_checkable
 
 from ..protocols import FieldData, Field, PredicateResult, DynamicTolerance
 from .._numpy_utils import Array
@@ -66,6 +66,14 @@ class Mesh(Protocol):
             abs_tol: Absolute tolerance to use.
             rel_tol: Relative tolerance to use.
         """
+        ...
+
+
+@runtime_checkable
+class StructuredMesh(Mesh, Protocol):
+    @property
+    def extents(self) -> Tuple[int, int, int]:
+        """Returns number of grid cells per space-dimension"""
         ...
 
 

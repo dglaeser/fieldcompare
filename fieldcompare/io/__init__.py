@@ -19,9 +19,6 @@ from ..mesh.protocols import MeshFields
 __all__ = ["read_field_data", "read", "read_as", "is_supported"]
 
 
-_AVAILABLE_FILE_TYPES = ["mesh", "dsv"]
-
-
 def read_field_data(filename: str, options: dict[str, dict] | None = None) -> protocols.FieldData:
     """
     Read the field data from the given file
@@ -78,11 +75,11 @@ def read_as(file_type: str, filename: str, **kwargs) -> protocols.FieldData | pr
         filename: Path to the file from which to read.
         kwargs: Further arguments to be forwarded to the field readers.
     """
-    if file_type == "mesh":
-        return _read_mesh_file(filename, **kwargs)
-    if file_type == "dsv":
-        return _read_dsv_file(filename, **kwargs)
-    raise ValueError(f"Unknown file type '{file_type}' (available options: {', '.join(_AVAILABLE_FILE_TYPES)})")
+    if file_type not in _FILE_TYPES_TO_READER:
+        raise ValueError(
+            f"Unknown file type '{file_type}' (available options: {', '.join(_FILE_TYPES_TO_READER.keys())})"
+        )
+    return _FILE_TYPES_TO_READER[file_type](filename, **kwargs)
 
 
 def is_supported(filename: str) -> bool:
@@ -137,3 +134,6 @@ def _write_table(fields: TabularFields, filename: str) -> str:
         for row in range(fields.domain.number_of_rows):
             csv_file.write(",".join(str(field_map[key][row]) for key in field_map) + "\n")
     return filename_with_ext
+
+
+_FILE_TYPES_TO_READER = {"mesh": _read_mesh_file, "dsv": _read_dsv_file}

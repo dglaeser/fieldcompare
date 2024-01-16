@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<!--SPDX-FileCopyrightText: 2024 Dennis Gläser <dennis.a.glaeser@gmail.com>-->
+<!--SPDX-License-Identifier: GPL-3.0-or-later-->
+<VTKFile type="ImageData" version="1.0" byte_order="LittleEndian" header_type="UInt64">
+  <ImageData WholeExtent="0 4 0 2 0 0"
+             Origin="0 0 0"
+             Spacing="0.5 0.5 0"
+             Direction="0.7071067811865475 -0.7071067811865475 0 0.7071067811865475 0.7071067811865475 0 0 0 1">
+  <Piece Extent="2 4 0 2 0 0">
+    <PointData>
+      <DataArray type="Float64" Name="pscalar" format="ascii">
+        4.93883 4.26125 1.54036 1.69065 1.01307 -1.70783 0 -0.677577 -3.39847
+      </DataArray>
+    </PointData>
+    <CellData>
+      <DataArray type="Float64" Name="cscalar" format="ascii">
+        3.17215 1.36089 0.539929 -1.27134
+      </DataArray>
+    </CellData>
+  </Piece>
+  </ImageData>
+</VTKFile>

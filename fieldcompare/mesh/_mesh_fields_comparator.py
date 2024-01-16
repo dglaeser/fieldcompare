@@ -93,7 +93,13 @@ class MeshFieldsComparator:
                 return suite
 
         # (maybe) retry with sorted meshes
-        if not self._disable_mesh_reordering:
+        if (
+            not self._disable_mesh_reordering
+            and isinstance(self._source.domain, mesh_protocols.StructuredMesh)
+            and isinstance(self._reference.domain, mesh_protocols.StructuredMesh)
+        ):
+            reordering_callback("Skipping mesh reordering because both meshes are structured")
+        elif not self._disable_mesh_reordering:
             # sorted points
             reordering_callback(self._mesh_fail_msg(suite.domain_equality_check.report, "sorted points"))
 

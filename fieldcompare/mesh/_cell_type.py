@@ -4,6 +4,7 @@
 """Class to represent the type of a mesh cell"""
 
 from __future__ import annotations
+from typing import List
 
 from ._cell_type_maps import _CELL_TYPE_INDEX_TO_STR, _CELL_TYPE_STR_TO_INDEX
 
@@ -30,6 +31,12 @@ class CellType:
     def name(self) -> str:
         """Return the name of this cell type."""
         return _CELL_TYPE_INDEX_TO_STR[self._id]
+
+    def is_compatible_with(self, other: CellType) -> bool:
+        """Return true if the given cell type may be compatible with this one"""
+        if self._id == other._id:
+            return True
+        return other.id in _COMPATIBLES.get(self._id, [])
 
     def __repr__(self) -> str:
         return f"CellType('{self.name}')"
@@ -69,3 +76,18 @@ class CellTypes:
     voxel = CellType.from_name("VOXEL")
     hexahedron = CellType.from_name("HEXAHEDRON")
     pyramid = CellType.from_name("PYRAMID")
+
+
+_COMPATIBLES: dict[int, List[int]] = {}
+
+
+def _insert_compatibles(ct1: CellType, ct2: CellType) -> None:
+    for id1, id2 in [(ct1.id, ct2.id), (ct2.id, ct1.id)]:
+        if id1 not in _COMPATIBLES:
+            _COMPATIBLES[id1] = []
+        if id2 not in _COMPATIBLES[id1]:
+            _COMPATIBLES[id1].append(id2)
+
+
+_insert_compatibles(CellTypes.quad, CellTypes.pixel)
+_insert_compatibles(CellTypes.hexahedron, CellTypes.voxel)
