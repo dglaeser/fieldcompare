@@ -195,8 +195,9 @@ def test_vti_extents(filename: str):
 
 @pytest.mark.parametrize("filename", VTI_FILES)
 def test_vti_coordinates(filename: str):
-    dx = _get_spacing(filename)
-    _check_point_coordinates(_read_mesh_fields(filename).domain, dx, _get_vti_basis(filename))
+    _check_point_coordinates(
+        _read_mesh_fields(filename).domain, _get_spacing(filename), _get_vti_basis(filename), _get_origin(filename)
+    )
 
 
 @pytest.mark.parametrize("filename", VTI_FILES)
@@ -369,11 +370,14 @@ def _read_mesh_fields(filename: str) -> mesh_protocols.MeshFields:
     return mesh_fields
 
 
-def _check_point_coordinates(structured_mesh, _dx: List[float], basis = standard_basis()) -> None:
+def _check_point_coordinates(
+        structured_mesh, _dx: List[float], basis = standard_basis(), _origin: List[float] = [0.0, 0.0, 0.0]
+) -> None:
     assert(len(_dx) == 3)
     dx = numpy.array(_dx)
+    origin = numpy.array(_origin)
     expected_points = [  # reverse extents to get expected point ordering
-        basis.dot(dx * numpy.array([i for i in reversed(ituple)]))
+        origin + basis.dot(dx * numpy.array([i for i in reversed(ituple)]))
         for ituple in product(*list(reversed(list(range(e + 1) for e in structured_mesh.extents))))
     ]
     assert(len(expected_points) == len(structured_mesh.points))
@@ -394,6 +398,10 @@ def _get_extents(filename: str) -> List[int]:
 
 def _get_spacing(filename: str) -> List[float]:
     return _get("Spacing", filename, float)
+
+
+def _get_origin(filename: str) -> List[float]:
+    return _get("Origin", filename, float)
 
 
 def _get_vti_basis(filename: str) -> numpy.ndarray:
