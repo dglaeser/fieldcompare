@@ -68,7 +68,7 @@ class _StructuredMeshBase:
 
         extents = tuple(self._nonzero_extents())
         offsets = list(accumulate((e + 1 for e in extents), mul))[:-1]
-        num_cell_corners = pow(self._dimension, 2)
+        num_cell_corners = pow(2, self._dimension)
 
         def _get_p0(ituple) -> int:
             return sum(ituple[i] * (offsets[i - 1] if i > 0 else 1) for i in range(len(ituple)))
