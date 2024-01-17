@@ -4,6 +4,7 @@
 """Utility functions for interoperability with meshio"""
 
 from __future__ import annotations
+from numpy import ndarray
 from numpy.typing import ArrayLike
 
 from meshio import Mesh as MeshIOMesh
@@ -14,7 +15,7 @@ from meshio._vtk_common import vtk_to_meshio_type, meshio_to_vtk_type  # type: i
 from ..io.vtk._helpers import vtk_cell_type_index_to_cell_type, cell_type_to_vtk_cell_type_index
 
 from ._mesh import Mesh
-from ._cell_type import CellType, CellTypes
+from ._cell_type import CellType, CellTypes, _reorder_hex_voxel, _reorder_quad_pixel
 from ._mesh_fields import MeshFields, remove_cell_type_suffix
 from . import protocols
 
@@ -38,9 +39,16 @@ def to_meshio(mesh_fields: protocols.MeshFields) -> MeshIOMesh:
             cell_data[name] = [[] for _ in range(len(types))]
         cell_data[name][types.index(cell_type)] = [v for v in field.values]
 
+    cells: dict[str, ndarray] = {}
+    for cell_type in types:
+        meshio_ct, meshio_connectivity = _to_meshio_cell_type_and_ordering(
+            cell_type, mesh_fields.domain.connectivity(cell_type)
+        )
+        cells[meshio_ct] = meshio_connectivity
+
     return MeshIOMesh(
         points=mesh_fields.domain.points,
-        cells={_to_meshio_cell_type(ct): mesh_fields.domain.connectivity(ct) for ct in types},
+        cells=cells,
         point_data={field.name: field.values for field in mesh_fields.point_fields},
         cell_data={name: data for name, data in cell_data.items()},
     )
@@ -50,12 +58,19 @@ def _from_meshio_cell_type(cell_type: str) -> CellType:
     return vtk_cell_type_index_to_cell_type(meshio_to_vtk_type[cell_type])
 
 
-def _to_meshio_cell_type(cell_type: CellType) -> str:
+def _to_meshio_cell_type_and_ordering(cell_type: CellType, connectivity: ndarray) -> tuple[str, ndarray]:
+    reordered = connectivity
     if cell_type.name in meshio_to_vtk_type:
-        return str(cell_type)
+        return str(cell_type), reordered
 
-    # meshio does not support pixels/voxels
-    cell_type = cell_type if cell_type != CellTypes.pixel else CellTypes.quad
-    cell_type = cell_type if cell_type != CellTypes.voxel else CellTypes.hexahedron
+    # meshio does not support pixels/voxels -> use quads/hexes
+    if cell_type == CellTypes.pixel:
+        cell_type = CellTypes.quad
+        for i in range(len(connectivity)):
+            reordered[i] = _reorder_quad_pixel(connectivity[i])
+    if cell_type == CellTypes.voxel:
+        cell_type = CellTypes.hexahedron
+        for i in range(len(connectivity)):
+            reordered[i] = _reorder_hex_voxel(connectivity[i])
 
-    return vtk_to_meshio_type[cell_type_to_vtk_cell_type_index(cell_type)]
+    return vtk_to_meshio_type[cell_type_to_vtk_cell_type_index(cell_type)], reordered

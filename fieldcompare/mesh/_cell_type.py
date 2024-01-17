@@ -6,6 +6,7 @@
 from __future__ import annotations
 from typing import List
 
+from .._numpy_utils import Array, make_array
 from ._cell_type_maps import _CELL_TYPE_INDEX_TO_STR, _CELL_TYPE_STR_TO_INDEX
 
 
@@ -76,6 +77,16 @@ class CellTypes:
     voxel = CellType.from_name("VOXEL")
     hexahedron = CellType.from_name("HEXAHEDRON")
     pyramid = CellType.from_name("PYRAMID")
+
+
+def _reorder_quad_pixel(connectivity: Array) -> Array:
+    idx_map = make_array([0, 1, 3, 2])
+    return connectivity[idx_map]
+
+
+def _reorder_hex_voxel(connectivity: Array) -> Array:
+    idx_map = make_array([0, 1, 3, 2, 4, 5, 7, 6])
+    return connectivity[idx_map]
 
 
 _COMPATIBLES: dict[int, List[int]] = {}
