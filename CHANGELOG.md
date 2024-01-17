@@ -1,6 +1,14 @@
 <!--SPDX-FileCopyrightText: 2023 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>-->
 <!--SPDX-License-Identifier: GPL-3.0-or-later-->
 
+
+# `fieldcompare` 0.2.1
+
+## Bugfixes
+
+- __Structured Mesh__: the ordering of corners for pixels and voxels was fixed to be in line with the VTK ordering for these cell types. The previously differing connectivity led to erroneous VTU files when writing out a read structured mesh as unstructured grid.
+- __Structured Mesh__: works in 3d now after fixing the computation of the number of cell corners depending on the grid dimension.
+
 # `fieldcompare` 0.2.0
 
 ## New Features
