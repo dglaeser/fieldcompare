@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath('../..'))
 project = 'fieldcompare'
 copyright = '2022, Dennis Gläser'
 author = 'Dennis Gläser'
-release = '0.2.0'
+release = '0.2.1'
 
 
 # -- General configuration ---------------------------------------------------
