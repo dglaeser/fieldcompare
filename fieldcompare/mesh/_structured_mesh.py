@@ -16,7 +16,7 @@ from .._numpy_utils import Array, ArrayLike, as_array, max_abs_value, make_zeros
 
 from ._mesh import default_mesh_relative_tolerance
 from ._mesh_equal import mesh_equal
-from ._cell_type import CellType, CellTypes
+from ._cell_type import CellType, CellTypes, _reorder_quad_pixel, _reorder_hex_voxel
 
 from . import protocols
 
@@ -68,7 +68,7 @@ class _StructuredMeshBase:
 
         extents = tuple(self._nonzero_extents())
         offsets = list(accumulate((e + 1 for e in extents), mul))[:-1]
-        num_cell_corners = pow(self._dimension, 2)
+        num_cell_corners = pow(2, self._dimension)
 
         def _get_p0(ituple) -> int:
             return sum(ituple[i] * (offsets[i - 1] if i > 0 else 1) for i in range(len(ituple)))
@@ -82,14 +82,22 @@ class _StructuredMeshBase:
             for cell_idx, ituple in enumerate(_locations_in(extents)):
                 p0 = _get_p0(ituple)
                 p2 = p0 + offsets[0]
-                connectivity[cell_idx] = [p0, p0 + 1, p2 + 1, p2]
+                connectivity[cell_idx] = [p0, p0 + 1, p2, p2 + 1]
         elif self._dimension == 3:  # noqa: PLR2004
             for cell_idx, ituple in enumerate(_locations_in(extents)):
                 p0 = _get_p0(ituple)
                 p2 = p0 + offsets[0]
                 p5 = p0 + offsets[1]
                 p7 = p5 + offsets[0]
-                connectivity[cell_idx] = [p0, p0 + 1, p2 + 1, p2, p5, p5 + 1, p7 + 1, p7]
+                connectivity[cell_idx] = [p0, p0 + 1, p2, p2 + 1, p5, p5 + 1, p7, p7 + 1]
+
+        # adjust ordering for in case we use quads/hexes
+        if cell_type == CellTypes.quad:
+            for i in range(len(connectivity)):
+                connectivity[i] = _reorder_quad_pixel(connectivity[i])
+        if cell_type == CellTypes.hexahedron:
+            for i in range(len(connectivity)):
+                connectivity[i] = _reorder_hex_voxel(connectivity[i])
 
         return connectivity
 
