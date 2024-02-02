@@ -107,7 +107,7 @@ class VTKXMLReader(ABC):
         elem = self._xml_element.find(path)
         if elem is None:
             return default
-        return elem.attrib[key] if key in elem.attrib else default
+        return elem.attrib.get(key, default)
 
     def _get_attribute_from(self, elem: ElementTree.Element, key: str) -> str:
         if key not in elem.attrib:
