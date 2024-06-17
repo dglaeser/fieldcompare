@@ -7,9 +7,8 @@ from __future__ import annotations
 from typing import Iterable, Sequence, SupportsIndex, Union
 
 import numpy as np
-from numpy import ndarray
+from numpy import ndarray, ndindex
 from numpy.typing import ArrayLike as NumpyArrayLike
-from numpy.lib.index_tricks import ndindex
 
 
 Array = ndarray
