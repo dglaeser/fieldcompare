@@ -6,6 +6,7 @@
 from __future__ import annotations
 from copy import deepcopy
 
+from numpy import all as np_all
 from .._numpy_utils import (
     Array,
     flatten,
@@ -188,7 +189,9 @@ def _sorting_points_indices(points, cells, rel_tol: float, abs_tol: float) -> Ar
     idx_map = get_fuzzy_lex_sorting_index_map(points, abs_tol=abs_tol, rel_tol=rel_tol)
 
     # find fuzzy equal neighboring points (may happen for non-conforming meshes)
-    zero_diffs = fuzzy_equal(points[idx_map][:-1], points[idx_map][1:], abs_tol=abs_tol, rel_tol=rel_tol).all(axis=1)
+    zero_diffs = np_all(
+        fuzzy_equal(points[idx_map][:-1], points[idx_map][1:], abs_tol=abs_tol, rel_tol=rel_tol), axis=1
+    )
     zero_diffs = append_to_array(zero_diffs, False)
 
     if any_true(zero_diffs):
@@ -338,7 +341,7 @@ def _map_duplicate_points(source: protocols.Mesh, target: protocols.Mesh) -> dic
         equal_candidate_idx = _find_candidate(target.points[pidx_target])
         if equal_candidate_idx is None:
             continue
-        if (source.points[equal_candidate_idx] == target.points[pidx_target]).all():
+        if np_all(source.points[equal_candidate_idx] == target.points[pidx_target]):
             result[equal_candidate_idx] = pidx_target
     return result
 

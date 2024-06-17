@@ -270,12 +270,14 @@ def find_first_fuzzy_unequal(
             # handle case of scalars
             if not first.shape and not second.shape:
                 return (
-                    (first, second) if not fuzzy_equal(first, second, rel_tol=rel_tol, abs_tol=abs_tol).all() else None
+                    (first, second)
+                    if not np.all(fuzzy_equal(first, second, rel_tol=rel_tol, abs_tol=abs_tol))
+                    else None
                 )
 
             # this works also for entries with different shapes but fuzzy-comparable types
             for val1, val2 in zip(first, second):
-                if not fuzzy_equal(as_array(val1), as_array(val2), rel_tol=rel_tol, abs_tol=abs_tol).all():
+                if not np.all(fuzzy_equal(as_array(val1), as_array(val2), rel_tol=rel_tol, abs_tol=abs_tol)):
                     return (val1, val2)
         except Exception:
             raise ValueError("Could not fuzzy-compare the given arrays.") from None
