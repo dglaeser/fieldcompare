@@ -225,7 +225,8 @@ def find_first_unequal(first: Array, second: Array) -> tuple | None:
 
         # this works also for mixed-type arrays (slower)
         for val1, val2 in zip(first, second):
-            if not np.array_equal(val1, val2):
+            # wrap in arrays s.t. the case of scalars works, too
+            if not np.array_equal(as_array([val1]), as_array([val2])):
                 return (val1, val2)
     return None
 
