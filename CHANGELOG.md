@@ -6,6 +6,7 @@
 ## New Features
 
 - __Setup__: the setup configuration was modified such that an upper bound (the next major version) is specified for the dependencies.
+- __Setup__: `fieldcompare` is now compatible with the new major release of `numpy` (v2.0).
 
 # `fieldcompare` 0.2.1
 
