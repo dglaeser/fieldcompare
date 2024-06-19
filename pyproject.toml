@@ -8,7 +8,11 @@ version = "0.2.1"
 readme = "README.md"
 license = {file = "LICENSES/GPL-3.0-or-later.txt"}
 requires-python = ">=3.8"
-dependencies = ["numpy", "colorama"]
+dependencies = [
+    "numpy>=1.26,<3;python_version>='3.12'",
+    "numpy>=1.24,<3;python_version<'3.12'",
+    "colorama>=0.4.3,<1"
+]
 authors = [
   {name = "Dennis Gläser", email = "dennis.glaeser@iws.uni-stuttgart.de"}
 ]
@@ -28,7 +32,7 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-all = ["meshio[all]>=5.3", "lz4"]
+all = ["meshio[all]>=5.3,<6", "lz4<5"]
 
 [project.urls]
 homepage = "https://gitlab.com/dglaeser/fieldcompare"
