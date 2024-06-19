@@ -1,6 +1,11 @@
 <!--SPDX-FileCopyrightText: 2023 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>-->
 <!--SPDX-License-Identifier: GPL-3.0-or-later-->
 
+# `fieldcompare` 0.3.0
+
+## New Features
+
+- __Setup__: the setup configuration was modified such that an upper bound (the next major version) is specified for the dependencies.
 
 # `fieldcompare` 0.2.1
 

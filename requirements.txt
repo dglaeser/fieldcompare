@@ -1,7 +1,8 @@
 # SPDX-FileCopyrightText: 2023 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-meshio[all]>=5.3
+numpy<2
+meshio[all]>=5.3,<6
 black~=22.0
 colorama
 tox
