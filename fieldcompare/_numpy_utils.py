@@ -7,9 +7,8 @@ from __future__ import annotations
 from typing import Iterable, Sequence, SupportsIndex, Union
 
 import numpy as np
-from numpy import ndarray
+from numpy import ndarray, ndindex
 from numpy.typing import ArrayLike as NumpyArrayLike
-from numpy.lib.index_tricks import ndindex
 
 
 Array = ndarray
@@ -226,7 +225,8 @@ def find_first_unequal(first: Array, second: Array) -> tuple | None:
 
         # this works also for mixed-type arrays (slower)
         for val1, val2 in zip(first, second):
-            if not np.array_equal(val1, val2):
+            # wrap in arrays s.t. the case of scalars works, too
+            if not np.array_equal(as_array([val1]), as_array([val2])):
                 return (val1, val2)
     return None
 
@@ -271,12 +271,14 @@ def find_first_fuzzy_unequal(
             # handle case of scalars
             if not first.shape and not second.shape:
                 return (
-                    (first, second) if not fuzzy_equal(first, second, rel_tol=rel_tol, abs_tol=abs_tol).all() else None
+                    (first, second)
+                    if not np.all(fuzzy_equal(first, second, rel_tol=rel_tol, abs_tol=abs_tol))
+                    else None
                 )
 
             # this works also for entries with different shapes but fuzzy-comparable types
             for val1, val2 in zip(first, second):
-                if not fuzzy_equal(as_array(val1), as_array(val2), rel_tol=rel_tol, abs_tol=abs_tol).all():
+                if not np.all(fuzzy_equal(as_array(val1), as_array(val2), rel_tol=rel_tol, abs_tol=abs_tol)):
                     return (val1, val2)
         except Exception:
             raise ValueError("Could not fuzzy-compare the given arrays.") from None
