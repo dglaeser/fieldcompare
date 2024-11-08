@@ -28,7 +28,9 @@ from ._common import (
 def _add_arguments(parser: ArgumentParser):
     parser.add_argument("source", type=str, help="The file which is to be compared against a reference file")
     parser.add_argument("reference", type=str, help="The reference file against which to compare")
-    parser.add_argument("--verbosity", required=False, default=2, type=int, help="Set the verbosity level")
+    parser.add_argument(
+        "--verbosity", required=False, default=2, type=int, help="Set the verbosity level (between 0 and 3; default: 2)"
+    )
     _add_field_options_args(parser)
     _add_tolerance_options_args(parser)
     _add_field_filter_options_args(parser)
