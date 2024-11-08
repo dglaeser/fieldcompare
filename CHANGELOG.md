@@ -7,6 +7,7 @@
 
 - __CLI__: An `--exclude-files` option was added to the cli directory mode, that allows for discarding certain files from the comparisons. In use cases where only a few files should be neglected, this is easier than constructing an inclusion pattern that these files would _not_ match.
 - __CLI__: A final info line was added to the cli directory mode, which displays how many files with missin reference/source files have been discarded due to the given inclusion/exclusion patterns.
+- __CLI__: An intermediate verbosity level has been introduced for the cli directory mode which only prints the directories that are compared and a final summary.
 
 # `fieldcompare` 0.2.2
 
