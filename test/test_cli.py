@@ -663,6 +663,14 @@ def test_cli_directory_mode_file_filters():
     assert not _is_in_log_output(".vtu", cli_args=[
         "dir", str(TEST_DATA_PATH), str(TEST_DATA_PATH), "--include-files", "*.pvtu", "--verbosity=1"
     ])
+    # check that xdmf disappears with an exclusion pattern
+    assert not _is_in_log_output(".xdmf", cli_args=[
+        "dir", str(TEST_DATA_PATH), str(TEST_DATA_PATH), "--exclude-files", "*.xdmf", "--verbosity=1"
+    ])
+    # check that pattern does not affect other files
+    assert _is_in_log_output(".vtu", cli_args=[
+        "dir", str(TEST_DATA_PATH), str(TEST_DATA_PATH), "--exclude-files", "*.xdmf", "--verbosity=1"
+    ])
 
 
 def test_cli_directory_mode_relative_tolerance_definition():
