@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """Test the command-line interface of fieldcompare"""
+from __future__ import annotations
 
 from os import remove, listdir, makedirs
 from os.path import isfile, join, splitext
@@ -645,43 +646,23 @@ def test_cli_directory_mode_missing_reference_file():
     rmtree(tmp_reference_path)
 
 
-def test_cli_directory_mode_file_inclusion_filter():
+def test_cli_directory_mode_file_filters():
     # check that the normal run has xdmf in the output
-    with StringIO() as stream:
-        logger = CLILogger(output_stream=stream)
-        main(["dir", str(TEST_DATA_PATH), str(TEST_DATA_PATH)], logger)
-        assert ".xdmf" in stream.getvalue()
+    assert _is_in_log_output(".xdmf", cli_args=[
+        "dir", str(TEST_DATA_PATH), str(TEST_DATA_PATH)
+    ])
     # check that the normal run has xdmf in the output with verbosity=1 (which should remove filter output)
-    with StringIO() as stream:
-        logger = CLILogger(output_stream=stream)
-        main([
-            "dir",
-            str(TEST_DATA_PATH),
-            str(TEST_DATA_PATH),
-            "--verbosity=1"], logger)
-        assert ".xdmf" in stream.getvalue()
+    assert _is_in_log_output(".xdmf", cli_args=[
+        "dir", str(TEST_DATA_PATH), str(TEST_DATA_PATH), "--verbosity=1"
+    ])
     # check that xdmf disappears with a given pattern
-    with StringIO() as stream:
-        logger = CLILogger(output_stream=stream)
-        main([
-            "dir",
-            str(TEST_DATA_PATH),
-            str(TEST_DATA_PATH),
-            "--include-files",
-            "*.vtu",
-            "--verbosity=1"], logger)
-        assert ".xdmf" not in stream.getvalue()
+    assert not _is_in_log_output(".xdmf", cli_args=[
+        "dir", str(TEST_DATA_PATH), str(TEST_DATA_PATH), "--include-files", "*.vtu", "--verbosity=1"
+    ])
     # check that pattern matches ONLY vtu files
-    with StringIO() as stream:
-        logger = CLILogger(output_stream=stream)
-        main([
-            "dir",
-            str(TEST_DATA_PATH),
-            str(TEST_DATA_PATH),
-            "--include-files",
-            "*.pvtu",
-            "--verbosity=1"], logger)
-        assert ".vtu" not in stream.getvalue()
+    assert not _is_in_log_output(".vtu", cli_args=[
+        "dir", str(TEST_DATA_PATH), str(TEST_DATA_PATH), "--include-files", "*.pvtu", "--verbosity=1"
+    ])
 
 
 def test_cli_directory_mode_relative_tolerance_definition():
@@ -782,3 +763,10 @@ def test_cli_directory_mode_absolute_tolerance_definition():
 
     rmtree(res_dir)
     rmtree(ref_dir)
+
+
+def _is_in_log_output(text: str, cli_args: list[str]) -> bool:
+    with StringIO() as stream:
+        logger = CLILogger(output_stream=stream)
+        main(cli_args, logger)
+        return text in stream.getvalue()
