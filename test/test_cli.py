@@ -651,25 +651,21 @@ def test_cli_directory_mode_file_filters():
     assert _is_in_log_output(".xdmf", cli_args=[
         "dir", str(TEST_DATA_PATH), str(TEST_DATA_PATH)
     ])
-    # check that the normal run has xdmf in the output with verbosity=1 (which should remove filter output)
-    assert _is_in_log_output(".xdmf", cli_args=[
-        "dir", str(TEST_DATA_PATH), str(TEST_DATA_PATH), "--verbosity=1"
-    ])
     # check that xdmf disappears with a given pattern
     assert not _is_in_log_output(".xdmf", cli_args=[
-        "dir", str(TEST_DATA_PATH), str(TEST_DATA_PATH), "--include-files", "*.vtu", "--verbosity=1"
+        "dir", str(TEST_DATA_PATH), str(TEST_DATA_PATH), "--include-files", "*.vtu",
     ])
     # check that pattern matches ONLY vtu files
     assert not _is_in_log_output(".vtu", cli_args=[
-        "dir", str(TEST_DATA_PATH), str(TEST_DATA_PATH), "--include-files", "*.pvtu", "--verbosity=1"
+        "dir", str(TEST_DATA_PATH), str(TEST_DATA_PATH), "--include-files", "*.pvtu",
     ])
     # check that xdmf disappears with an exclusion pattern
     assert not _is_in_log_output(".xdmf", cli_args=[
-        "dir", str(TEST_DATA_PATH), str(TEST_DATA_PATH), "--exclude-files", "*.xdmf", "--verbosity=1"
+        "dir", str(TEST_DATA_PATH), str(TEST_DATA_PATH), "--exclude-files", "*.xdmf",
     ])
     # check that pattern does not affect other files
     assert _is_in_log_output(".vtu", cli_args=[
-        "dir", str(TEST_DATA_PATH), str(TEST_DATA_PATH), "--exclude-files", "*.xdmf", "--verbosity=1"
+        "dir", str(TEST_DATA_PATH), str(TEST_DATA_PATH), "--exclude-files", "*.xdmf",
     ])
 
 

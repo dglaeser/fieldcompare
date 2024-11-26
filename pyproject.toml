@@ -58,8 +58,10 @@ python_classes = "*Test"
 line-length = 120
 
 [tool.ruff]
-select = ["E","F","W","N","PL","NPY","PERF","RET","PT","B","SIM"]
 line-length = 120
+
+[tool.ruff.lint]
+select = ["E","F","W","N","PL","NPY","PERF","RET","PT","B","SIM"]
 
 [tool.tox]
 legacy_tox_ini = """

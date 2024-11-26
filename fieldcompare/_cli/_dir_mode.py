@@ -76,7 +76,9 @@ def _add_arguments(parser: ArgumentParser):
         "be used multiple times. Files that match any of the given patterns are discarded, even if they match "
         "any of the given `--include-files` patterns.",
     )
-    parser.add_argument("--verbosity", required=False, default=2, type=int, help="Set the verbosity level")
+    parser.add_argument(
+        "--verbosity", required=False, default=2, type=int, help="Set the verbosity level (between 0 and 5; default: 2)"
+    )
     _add_field_options_args(parser)
     _add_field_filter_options_args(parser)
     _add_tolerance_options_args(parser)
@@ -132,14 +134,13 @@ def _run(args: dict, in_logger: CLILogger) -> int:
         ]
     )
 
-    logger.log("\n")
-
     info_message: str | None = None
     if categories.discarded_orphan_files:
         info_message = (
             f"{len(categories.discarded_orphan_files)} "
             "missing source/reference files have been filtered out by the given filters."
         )
+    logger.log("\n", verbosity_level=2)
     _log_suite_summary(test_suite, "file", logger, info_message)
 
     passed = all(comp for _, _, comp in comparisons)
@@ -202,8 +203,8 @@ def _do_file_comparisons(args, filenames: Iterable[str], logger: CLILogger) -> F
         res_file = join(args["source-dir"], filename)
         ref_file = join(args["reference-dir"], filename)
 
-        logger.log(("\n" if i > 0 else ""), verbosity_level=1)
-        logger.log(f"Comparing '{highlighted(res_file)}'\n" f"      and '{highlighted(ref_file)}'\n", verbosity_level=1)
+        logger.log(("\n" if i > 0 else ""), verbosity_level=2)
+        logger.log(f"Comparing '{highlighted(res_file)}'\n" f"      and '{highlighted(ref_file)}'\n", verbosity_level=2)
 
         opts = FileComparisonOptions(
             ignore_missing_source_fields=args["ignore_missing_source_fields"],
@@ -220,7 +221,7 @@ def _do_file_comparisons(args, filenames: Iterable[str], logger: CLILogger) -> F
         )
         try:
             sub_logger = logger.with_prefix("  ")
-            comparator = FileComparison(opts, sub_logger.with_modified_verbosity(-1), args["diff"])
+            comparator = FileComparison(opts, sub_logger.with_modified_verbosity(-2), args["diff"])
             cpu_time, test_suite = _measure_time(comparator)(res_file, ref_file)
             file_comparisons.append(
                 (
@@ -235,7 +236,7 @@ def _do_file_comparisons(args, filenames: Iterable[str], logger: CLILogger) -> F
             )
 
             if test_suite.num_tests == 0:
-                sub_logger.log(f"File comparison {get_status_string(bool(test_suite))}\n")
+                sub_logger.log(f"File comparison {get_status_string(bool(test_suite))}\n", verbosity_level=2)
             else:
                 sub_logger.log(
                     "File comparison {} with {} {} / {} {} / {} {}\n".format(
@@ -247,11 +248,11 @@ def _do_file_comparisons(args, filenames: Iterable[str], logger: CLILogger) -> F
                         sum(1 for t in test_suite if t.status and t.status != TestStatus.passed),
                         f"{TestStatus.skipped}",
                     ),
-                    verbosity_level=1,
+                    verbosity_level=2,
                 )
         except Exception as e:
             output = f"Error upon file comparison: {str(e)}"
-            logger.log(output, verbosity_level=1)
+            logger.log(output, verbosity_level=2)
             file_comparisons.append(
                 (
                     filename,
