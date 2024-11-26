@@ -282,9 +282,9 @@ def _merge(
     point_fields1: dict[str, Array] = {f.name: f.values for f in fields1.point_fields}
     point_fields2: dict[str, Array] = {f.name: f.values[points2_filter] for f in fields2.point_fields}
     point_fields: dict[str, Array] = {}
-    for name in point_fields1:
+    for name, pf1 in point_fields1.items():
         if name in point_fields2:
-            point_fields[name] = concatenate((point_fields1[name], point_fields2[name]))
+            point_fields[name] = concatenate((pf1, point_fields2[name]))
         else:
             zero = make_zeros(shape=point_fields1[name].shape[1:], dtype=point_fields1[name].dtype)
             point_fields[name] = concatenate(
