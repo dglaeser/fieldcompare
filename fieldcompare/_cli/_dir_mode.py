@@ -63,9 +63,18 @@ def _add_arguments(parser: ArgumentParser):
         "--include-files",
         required=False,
         action="append",
-        help="Pass a Unix-style wildcard pattern to filter files to be compared. This option can "
-        "be used multiple times. Files that match any of the patterns are considered. "
-        "If this option is not specified, all files found in the directories are considered.",
+        help="Pass a Unix-style pattern to match files to be compared. This option can "
+        "be used multiple times. Only files that match any of the patterns will be considered, but "
+        "may be excluded again by an exclusion pattern specified via the `--exclude-files` option."
+        "If this option is not specified, all files found in the directories are treated as potential candidates.",
+    )
+    parser.add_argument(
+        "--exclude-files",
+        required=False,
+        action="append",
+        help="Pass a Unix-style wildcard pattern to exclude files from being compared. This option can "
+        "be used multiple times. Files that match any of the given patterns are discarded, even if they match "
+        "any of the given `--include-files` patterns.",
     )
     parser.add_argument("--verbosity", required=False, default=2, type=int, help="Set the verbosity level")
     _add_field_options_args(parser)
@@ -124,7 +133,14 @@ def _run(args: dict, in_logger: CLILogger) -> int:
     )
 
     logger.log("\n")
-    _log_suite_summary(test_suite, "file", logger)
+
+    info_message: str | None = None
+    if categories.discarded_orphan_files:
+        info_message = (
+            f"{len(categories.discarded_orphan_files)} "
+            "missing source/reference files have been filtered out by the given filters."
+        )
+    _log_suite_summary(test_suite, "file", logger, info_message)
 
     passed = all(comp for _, _, comp in comparisons)
     return _bool_to_exit_code(passed)
@@ -135,32 +151,40 @@ class CategorizedFiles:
     files_to_compare: list[str]
     missing_sources: list[str]
     missing_references: list[str]
-    filtered_files: list[str]
+    discarded_files: list[str]
     unsupported_files: list[str]
+    discarded_orphan_files: list[str]
 
 
 def _categorize_files(args: dict, res_dir: str, ref_dir: str) -> CategorizedFiles:
     include_filter = PatternFilter(args["include_files"]) if args["include_files"] else _include_all()
+    exclude_filter = PatternFilter(args["exclude_files"]) if args["exclude_files"] else _exclude_all()
     file_type_map = _make_file_type_map(args.get("read_as", []))
+
+    def consider(filename: str) -> bool:
+        return include_filter(filename) and not exclude_filter(filename)
 
     search_result = find_matching_file_names(res_dir, ref_dir)
     matches = list(n for n, _ in search_result.matches)
-    filtered_matches = [m for m in matches if include_filter(m)]
-    missing_sources = [m for m in search_result.orphans_in_reference if include_filter(m)]
-    missing_references = [m for m in search_result.orphans_in_source if include_filter(m)]
+    filtered_matches = [m for m in matches if consider(m)]
+    missing_sources = [m for m in search_result.orphans_in_reference if consider(m)]
+    missing_references = [m for m in search_result.orphans_in_source if consider(m)]
 
-    dropped_matches = list(set(matches).difference(set(filtered_matches)))
+    discarded_matches = list(set(matches).difference(set(filtered_matches)))
     supported_files = list(filter(lambda f: is_supported(join(res_dir, f)), filtered_matches))
     unsupported_files = list(set(filtered_matches).difference(set(supported_files)))
     mapped_unsupported_files = [filename for filename in unsupported_files if file_type_map(filename) is not None]
     unsupported_files = list(set(unsupported_files).difference(set(mapped_unsupported_files)))
+    discarded_missing_sources = set(search_result.orphans_in_reference).difference(missing_sources)
+    discarded_missing_references = set(search_result.orphans_in_source).difference(missing_references)
 
     return CategorizedFiles(
         files_to_compare=supported_files + mapped_unsupported_files,
         missing_sources=missing_sources,
         missing_references=missing_references,
-        filtered_files=dropped_matches,
+        discarded_files=discarded_matches,
         unsupported_files=unsupported_files,
+        discarded_orphan_files=list(discarded_missing_sources.union(discarded_missing_references)),
     )
 
 
@@ -264,7 +288,7 @@ def _add_unhandled_comparisons(args: dict, categories: CategorizedFiles, compari
         comparisons, categories.missing_references, "Missing reference file", not args["ignore_missing_reference_files"]
     )
     _add_skipped_file_comparisons(comparisons, categories.unsupported_files, "Unsupported file format")
-    _add_skipped_file_comparisons(comparisons, categories.filtered_files, "Filtered out by given wildcard patterns")
+    _add_skipped_file_comparisons(comparisons, categories.discarded_files, "Filtered out by given wildcard patterns")
 
 
 def _add_skipped_file_comparisons(

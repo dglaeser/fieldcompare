@@ -1,6 +1,13 @@
 <!--SPDX-FileCopyrightText: 2023 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>-->
 <!--SPDX-License-Identifier: GPL-3.0-or-later-->
 
+# `fieldcompare` 0.3.0
+
+## New features
+
+- __CLI__: An `--exclude-files` option was added to the cli directory mode, that allows for discarding certain files from the comparisons. In use cases where only a few files should be neglected, this is easier than constructing an inclusion pattern that these files would _not_ match.
+- __CLI__: A final info line was added to the cli directory mode, which displays how many files with missin reference/source files have been discarded due to the given inclusion/exclusion patterns.
+
 # `fieldcompare` 0.2.2
 
 ## Bugfixes
