@@ -192,7 +192,7 @@ def _sorting_points_indices(points, cells, rel_tol: float, abs_tol: float) -> Ar
     zero_diffs = np_all(
         fuzzy_equal(points[idx_map][:-1], points[idx_map][1:], abs_tol=abs_tol, rel_tol=rel_tol), axis=1
     )
-    zero_diffs = append_to_array(zero_diffs, False)
+    zero_diffs = append_to_array(zero_diffs, False)  # type: ignore
 
     if any_true(zero_diffs):
         # sort the chunks of equal points by sorting them according
