@@ -106,7 +106,7 @@ def get_adjacent_fuzzy_equal_indices(values: Array, abs_tol: float, rel_tol: flo
     return append_to_array(result, False)
 
 
-def any_true(input_array: Array, axis: SupportsIndex | None = None):
+def any_true(input_array: Array, axis=None):
     """Check whether any entry of a boolean array is true along the given axis."""
     return np.any(input_array, axis=axis)
 
