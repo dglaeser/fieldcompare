@@ -3,6 +3,10 @@
 
 # `fieldcompare` 0.4.0 (unreleased)
 
+## Changes in behaviour
+
+- __FieldComparison__: the `__bool__` operator has been made stricter such that skipped comparisons where the source or reference fields are missing are no longer considered to be successful per default. This can be be tweaked by explicitly setting the field `missing_field_is_failure=False`. The `FieldDataComparator` and/or the `MeshFieldsComparator` classes expose this customization point via  the `missing_sources_is_error` or `missing_references_is_error` options in their constructors. Besides this, the provided field comparison callback is invoked with any filtered or skipped fields when comparing two files.
+
 # `fieldcompare` 0.3.0
 
 ## New features
