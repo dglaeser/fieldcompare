@@ -161,11 +161,11 @@ def test_field_data_comparison_missing_source():
     reference = MockMeshFields(num_fields=2)
     suite, stdout = compare_and_stream_output(source, reference)
 
-    assert suite
+    assert not suite
     assert len(list(suite)) == 2
     assert len(list(suite.passed)) == 1
-    assert len(list(suite.failed)) == 0
-    assert len(list(suite.skipped)) == 1
+    assert len(list(suite.failed)) == 1
+    assert len(list(suite.skipped)) == 0
     assert get_number_of_lines(stdout) == 1
 
 
@@ -174,11 +174,11 @@ def test_field_data_comparison_missing_reference():
     reference = MockMeshFields(num_fields=1)
     suite, stdout = compare_and_stream_output(source, reference)
 
-    assert suite
+    assert not suite
     assert len(list(suite)) == 2
     assert len(list(suite.passed)) == 1
-    assert len(list(suite.failed)) == 0
-    assert len(list(suite.skipped)) == 1
+    assert len(list(suite.failed)) == 1
+    assert len(list(suite.skipped)) == 0
     assert get_number_of_lines(stdout) == 1
 
 

@@ -45,7 +45,7 @@ class FieldComparisonStatus(Enum):
 
     def __bool__(self) -> bool:
         """Return true if the status is considered successful."""
-        return self not in [FieldComparisonStatus.failed, FieldComparisonStatus.error]
+        return self in [FieldComparisonStatus.passed, FieldComparisonStatus.filtered]
 
     def __str__(self) -> str:
         """Use uppercase string representation without class name prefix"""
@@ -64,12 +64,7 @@ class FieldComparison:
 
     def __bool__(self) -> bool:
         """Return true if the field comparison is considered successful."""
-        return not self.is_failure
-
-    @property
-    def is_failure(self) -> bool:
-        """Return true if the field comparison is considered unsuccessful."""
-        return not self.status
+        return bool(self.status)
 
 
 class FieldComparisonSuite:
@@ -99,7 +94,7 @@ class FieldComparisonSuite:
         """Return true if the suite is considered to have passed successfully."""
         if not self._domain_eq_check:
             return False
-        return not len(self._failed)
+        return all(bool(c) for c in self)
 
     def __iter__(self) -> Iterator[FieldComparison]:
         """Return an iterator over all contained field comparison results."""
@@ -186,6 +181,13 @@ def field_comparison_report(comparison: FieldComparison, use_colors: bool = True
             message = "\n".join(lines)
         return message
 
+    if comparison.status == FieldComparisonStatus.filtered:
+        if verbosity >= _verbosity_level_detail:
+            return _get_indented(
+                f"'{highlighted(comparison.name)}' was ignored due to the given filter", indentation_level=1
+            )
+        return ""
+
     status_string = as_error("FAILED") if not comparison else as_success("PASSED")
     report = ""
     if verbosity >= _verbosity_level_info:
@@ -194,11 +196,16 @@ def field_comparison_report(comparison: FieldComparison, use_colors: bool = True
         )
     if verbosity >= _verbosity_level_detail or (verbosity >= _verbosity_level_info and not comparison):
         report += "\n"
-        report += _get_indented(
-            f"Report: {comparison.report if comparison.report else 'n/a'}\n"
-            f"Predicate: {comparison.predicate if comparison.predicate else 'n/a'}",
-            indentation_level=2,
-        )
+        if comparison.status == FieldComparisonStatus.missing_reference:
+            report += _get_indented("Reference field not found", indentation_level=2)
+        elif comparison.status == FieldComparisonStatus.missing_source:
+            report += _get_indented("Source field not found", indentation_level=2)
+        else:
+            report += _get_indented(
+                f"Report: {comparison.report if comparison.report else 'n/a'}\n"
+                f"Predicate: {comparison.predicate if comparison.predicate else 'n/a'}",
+                indentation_level=2,
+            )
     if not use_colors:
         report = remove_color_codes(report)
     return report
@@ -281,9 +288,21 @@ class FieldDataComparator:
         query = find_matches_by_name(self._source, self._reference)
         query, filtered = self._filter_matches(query)
         comparisons = self._compare_matches(query, predicate_selector, fieldcomp_callback)
-        comparisons.extend(self._missing_source_comparisons(query))
-        comparisons.extend(self._missing_reference_comparisons(query))
-        comparisons.extend(self._filtered_comparisons(filtered))
+
+        missing_source_comparisons = self._missing_source_comparisons(query)
+        for c in missing_source_comparisons:
+            fieldcomp_callback(c)
+        comparisons.extend(missing_source_comparisons)
+
+        missing_reference_comparisons = self._missing_reference_comparisons(query)
+        for c in missing_reference_comparisons:
+            fieldcomp_callback(c)
+        comparisons.extend(missing_reference_comparisons)
+
+        filtered_comparisons = self._filtered_comparisons(filtered)
+        for c in filtered_comparisons:
+            fieldcomp_callback(c)
+        comparisons.extend(filtered_comparisons)
         return FieldComparisonSuite(domain_eq_check=domain_eq_check, comparisons=comparisons)
 
     def _filter_matches(self, query: MatchResult) -> tuple[MatchResult, list[Field]]:
