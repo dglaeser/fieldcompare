@@ -45,7 +45,7 @@ class FieldComparisonStatus(Enum):
 
     def __bool__(self) -> bool:
         """Return true if the status is considered successful."""
-        return self in [FieldComparisonStatus.passed, FieldComparisonStatus.filtered]
+        return self == FieldComparisonStatus.passed
 
     def __str__(self) -> str:
         """Use uppercase string representation without class name prefix"""
@@ -61,7 +61,7 @@ class FieldComparison:
     predicate: str
     report: str
     cpu_time: float | None = None
-    skipped_is_error: bool = True
+    missing_field_is_failure: bool = True
 
     def __bool__(self) -> bool:
         """Return true if the field comparison is considered successful."""
@@ -69,12 +69,15 @@ class FieldComparison:
 
     @property
     def is_silently_skipped(self) -> bool:
-        """Return true if this is a skipped field comparison that has been explicitly silenced"""
-        return not self.skipped_is_error and self.status in [
-            FieldComparisonStatus.missing_source,
-            FieldComparisonStatus.missing_reference,
-            FieldComparisonStatus.filtered,
-        ]
+        """Return true if this is a skipped field comparison that is considered successful"""
+        return self.status == FieldComparisonStatus.filtered or (
+            self.status
+            in [
+                FieldComparisonStatus.missing_source,
+                FieldComparisonStatus.missing_reference,
+            ]
+            and not self.missing_field_is_failure
+        )
 
 
 class FieldComparisonSuite:
@@ -181,9 +184,9 @@ def field_comparison_report(comparison: FieldComparison, use_colors: bool = True
         use_colors: Switch on/off colors.
         verbosity: Control the verbosity of the report.
     """
-    is_filtered = comparison.status == FieldComparisonStatus.filtered
-    _verbosity_level_info = 1 if not is_filtered else 2
-    _verbosity_level_detail = 2 if not is_filtered else 3
+    is_passing_skipped = comparison.is_silently_skipped
+    _verbosity_level_info = 1 if not is_passing_skipped else 2
+    _verbosity_level_detail = 2 if not is_passing_skipped else 3
 
     def _get_indented(message: str, indentation_level: int = 0) -> str:
         if indentation_level > 0 and message != "":
@@ -192,9 +195,8 @@ def field_comparison_report(comparison: FieldComparison, use_colors: bool = True
             message = "\n".join(lines)
         return message
 
-    is_skipped = comparison.status == FieldComparisonStatus.filtered or comparison.is_silently_skipped
     status_string = (
-        as_warning("SKIPPED") if is_skipped else as_error("FAILED") if not comparison else as_success("PASSED")
+        as_warning("SKIPPED") if is_passing_skipped else as_error("FAILED") if not comparison else as_success("PASSED")
     )
     report = ""
     if verbosity >= _verbosity_level_info:
@@ -383,7 +385,7 @@ class FieldDataComparator:
                 status=FieldComparisonStatus.missing_source,
                 predicate="",
                 report="Missing source field",
-                skipped_is_error=self._missing_sources_is_error,
+                missing_field_is_failure=self._missing_sources_is_error,
             )
             for field in query.orphans_in_reference
         ]
@@ -395,7 +397,7 @@ class FieldDataComparator:
                 status=FieldComparisonStatus.missing_reference,
                 predicate="",
                 report="Missing reference field",
-                skipped_is_error=self._missing_references_is_error,
+                missing_field_is_failure=self._missing_references_is_error,
             )
             for field in query.orphans_in_source
         ]
