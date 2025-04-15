@@ -226,6 +226,8 @@ class FileComparison:
                 disable_space_dimension_matching=self._opts.disable_mesh_space_dimension_matching,
                 field_inclusion_filter=self._opts.field_inclusion_filter,
                 field_exclusion_filter=self._opts.field_exclusion_filter,
+                missing_references_is_error=(not self._opts.ignore_missing_reference_fields),
+                missing_sources_is_error=(not self._opts.ignore_missing_source_fields),
             ),
             reordering_callback=lambda msg: self._logger.log(f"{msg}\n"),
         )
@@ -234,7 +236,14 @@ class FileComparison:
         self, result: protocols.FieldData, reference: protocols.FieldData
     ) -> FieldComparisonSuite:
         return self._invoke_comparator(
-            FieldDataComparator(result, reference, self._opts.field_inclusion_filter, self._opts.field_exclusion_filter)
+            FieldDataComparator(
+                result,
+                reference,
+                field_inclusion_filter=self._opts.field_inclusion_filter,
+                field_exclusion_filter=self._opts.field_exclusion_filter,
+                missing_sources_is_error=(not self._opts.ignore_missing_source_fields),
+                missing_references_is_error=(not self._opts.ignore_missing_reference_fields),
+            )
         )
 
     def _invoke_comparator(self, comparator, **kwargs) -> FieldComparisonSuite:
@@ -276,38 +285,19 @@ class FileComparison:
         def _get_stdout() -> str:
             return field_comparison_report(comp_result, verbosity=100)
 
-        shortlog = comp_result.report
-        if comp_result.status == FieldComparisonStatus.missing_reference:
-            shortlog = "missing reference field"
-            stdout = shortlog
-        elif comp_result.status == FieldComparisonStatus.missing_source:
-            shortlog = "missing source field"
-            stdout = shortlog
-        elif comp_result.status == FieldComparisonStatus.filtered:
-            shortlog = "filtered out by given wildcard patterns"
-            stdout = shortlog
-        else:
-            stdout = _get_stdout()
-
         return TestResult(
             name=comp_result.name,
-            status=self._parse_status(comp_result.status),
-            shortlog=shortlog,
-            stdout=stdout,
+            status=self._parse_status(comp_result),
+            shortlog=comp_result.report,
+            stdout=_get_stdout(),
             cpu_time=comp_result.cpu_time,
         )
 
-    def _parse_status(self, status: FieldComparisonStatus) -> TestStatus:
-        if status == FieldComparisonStatus.passed:
+    def _parse_status(self, comparison: FieldComparison) -> TestStatus:
+        if not comparison:
+            return TestStatus.failed
+        if comparison.status == FieldComparisonStatus.passed:
             return TestStatus.passed
-        if status == FieldComparisonStatus.failed:
-            return TestStatus.failed
-        if status == FieldComparisonStatus.error:
-            return TestStatus.error
-        if status == FieldComparisonStatus.missing_reference and not self._opts.ignore_missing_reference_fields:
-            return TestStatus.failed
-        if status == FieldComparisonStatus.missing_source and not self._opts.ignore_missing_source_fields:
-            return TestStatus.failed
         return TestStatus.skipped
 
     def _status_string(self, status: TestStatus) -> str:

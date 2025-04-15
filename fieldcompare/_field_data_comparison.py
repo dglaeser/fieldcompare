@@ -61,10 +61,20 @@ class FieldComparison:
     predicate: str
     report: str
     cpu_time: float | None = None
+    skipped_is_error: bool = True
 
     def __bool__(self) -> bool:
         """Return true if the field comparison is considered successful."""
-        return bool(self.status)
+        return bool(self.status) or self.is_silently_skipped
+
+    @property
+    def is_silently_skipped(self) -> bool:
+        """Return true if this is a skipped field comparison that has been explicitly silenced"""
+        return not self.skipped_is_error and self.status in [
+            FieldComparisonStatus.missing_source,
+            FieldComparisonStatus.missing_reference,
+            FieldComparisonStatus.filtered,
+        ]
 
 
 class FieldComparisonSuite:
@@ -182,8 +192,9 @@ def field_comparison_report(comparison: FieldComparison, use_colors: bool = True
             message = "\n".join(lines)
         return message
 
-    status_string = as_warning("SKIPPED") if comparison.status == FieldComparisonStatus.filtered else (
-        as_error("FAILED") if not comparison else as_success("PASSED")
+    is_skipped = comparison.status == FieldComparisonStatus.filtered or comparison.is_silently_skipped
+    status_string = (
+        as_warning("SKIPPED") if is_skipped else as_error("FAILED") if not comparison else as_success("PASSED")
     )
     report = ""
     if verbosity >= _verbosity_level_info:
@@ -241,17 +252,21 @@ class FieldDataComparator:
         field_exclusion_filter: Filter to exclude fields from being compared (optional).
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         source: FieldData,
         reference: FieldData,
         field_inclusion_filter: Callable[[str], bool] = lambda _: True,
         field_exclusion_filter: Callable[[str], bool] = lambda _: False,
+        missing_sources_is_error: bool = True,
+        missing_references_is_error: bool = True,
     ) -> None:
         self._source = source
         self._reference = reference
         self._field_inclusion_filter = field_inclusion_filter
         self._field_exclusion_filter = field_exclusion_filter
+        self._missing_sources_is_error = missing_sources_is_error
+        self._missing_references_is_error = missing_references_is_error
 
     def __call__(
         self,
@@ -368,6 +383,7 @@ class FieldDataComparator:
                 status=FieldComparisonStatus.missing_source,
                 predicate="",
                 report="Missing source field",
+                skipped_is_error=self._missing_sources_is_error,
             )
             for field in query.orphans_in_reference
         ]
@@ -379,6 +395,7 @@ class FieldDataComparator:
                 status=FieldComparisonStatus.missing_reference,
                 predicate="",
                 report="Missing reference field",
+                skipped_is_error=self._missing_references_is_error,
             )
             for field in query.orphans_in_source
         ]
