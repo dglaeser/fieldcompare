@@ -17,7 +17,7 @@ from .protocols import Field, FieldData, Predicate
 from ._matching import MatchResult, find_matches_by_name
 from ._common import _measure_time
 from ._field import Field as FieldImpl
-from ._format import remove_annotation, as_error, as_success, highlighted, remove_color_codes
+from ._format import remove_annotation, as_error, as_success, as_warning, highlighted, remove_color_codes
 
 
 class Status(Enum):
@@ -175,20 +175,15 @@ def field_comparison_report(comparison: FieldComparison, use_colors: bool = True
     _verbosity_level_detail = 2
 
     def _get_indented(message: str, indentation_level: int = 0) -> str:
-        if indentation_level > 0:
+        if indentation_level > 0 and message != "":
             lines = message.rstrip("\n").split("\n")
             lines = [" " + "  " * (indentation_level - 1) + f"-- {line}" for line in lines]
             message = "\n".join(lines)
         return message
 
-    if comparison.status == FieldComparisonStatus.filtered:
-        if verbosity >= _verbosity_level_detail:
-            return _get_indented(
-                f"'{highlighted(comparison.name)}' was ignored due to the given filter", indentation_level=1
-            )
-        return ""
-
-    status_string = as_error("FAILED") if not comparison else as_success("PASSED")
+    status_string = as_warning("SKIPPED") if comparison.status == FieldComparisonStatus.filtered else (
+        as_error("FAILED") if not comparison else as_success("PASSED")
+    )
     report = ""
     if verbosity >= _verbosity_level_info:
         report += _get_indented(
@@ -196,16 +191,14 @@ def field_comparison_report(comparison: FieldComparison, use_colors: bool = True
         )
     if verbosity >= _verbosity_level_detail or (verbosity >= _verbosity_level_info and not comparison):
         report += "\n"
-        if comparison.status == FieldComparisonStatus.missing_reference:
-            report += _get_indented("Reference field not found", indentation_level=2)
-        elif comparison.status == FieldComparisonStatus.missing_source:
-            report += _get_indented("Source field not found", indentation_level=2)
-        else:
+        if comparison.status in [FieldComparisonStatus.failed, FieldComparisonStatus.passed]:
             report += _get_indented(
                 f"Report: {comparison.report if comparison.report else 'n/a'}\n"
                 f"Predicate: {comparison.predicate if comparison.predicate else 'n/a'}",
                 indentation_level=2,
             )
+        else:
+            report += _get_indented(comparison.report, indentation_level=2)
     if not use_colors:
         report = remove_color_codes(report)
     return report
@@ -286,7 +279,7 @@ class FieldDataComparator:
             return FieldComparisonSuite(domain_eq_check=domain_eq_check)
 
         query = find_matches_by_name(self._source, self._reference)
-        query, filtered = self._filter_matches(query)
+        query, filtered = self._filter(query)
         comparisons = self._compare_matches(query, predicate_selector, fieldcomp_callback)
 
         missing_source_comparisons = self._missing_source_comparisons(query)
@@ -305,18 +298,30 @@ class FieldDataComparator:
         comparisons.extend(filtered_comparisons)
         return FieldComparisonSuite(domain_eq_check=domain_eq_check, comparisons=comparisons)
 
-    def _filter_matches(self, query: MatchResult) -> tuple[MatchResult, list[Field]]:
-        filtered = []
-        matching_pairs = []
-        for _, (source, target) in enumerate(query.matches):
-            is_included = self._field_inclusion_filter(self._without_annotation(source).name)
-            is_excluded = self._field_exclusion_filter(self._without_annotation(source).name)
-            if not is_included or is_excluded:
-                filtered.append(source)
+    def _filter(self, query: MatchResult) -> tuple[MatchResult, list[Field]]:
+        def _discard(comp: Field) -> bool:
+            is_included = self._field_inclusion_filter(self._without_annotation(comp).name)
+            is_excluded = self._field_exclusion_filter(self._without_annotation(comp).name)
+            return not is_included or is_excluded
+
+        filtered_result = MatchResult([], [], [])
+        filtered_fields = []
+        for source, target in query.matches:
+            if _discard(source):
+                filtered_fields.append(source)
             else:
-                matching_pairs.append((source, target))
-        query.matches = matching_pairs
-        return query, filtered
+                filtered_result.matches.append((source, target))
+        for source in query.orphans_in_source:
+            if _discard(source):
+                filtered_fields.append(source)
+            else:
+                filtered_result.orphans_in_source.append(source)
+        for ref in query.orphans_in_reference:
+            if _discard(ref):
+                filtered_fields.append(ref)
+            else:
+                filtered_result.orphans_in_reference.append(ref)
+        return filtered_result, filtered_fields
 
     def _compare_matches(
         self, query: MatchResult, predicate_selector: PredicateSelector, fieldcomp_callback: FieldComparisonCallback
