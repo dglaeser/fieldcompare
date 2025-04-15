@@ -171,8 +171,9 @@ def field_comparison_report(comparison: FieldComparison, use_colors: bool = True
         use_colors: Switch on/off colors.
         verbosity: Control the verbosity of the report.
     """
-    _verbosity_level_info = 1
-    _verbosity_level_detail = 2
+    is_filtered = comparison.status == FieldComparisonStatus.filtered
+    _verbosity_level_info = 1 if not is_filtered else 2
+    _verbosity_level_detail = 2 if not is_filtered else 3
 
     def _get_indented(message: str, indentation_level: int = 0) -> str:
         if indentation_level > 0 and message != "":

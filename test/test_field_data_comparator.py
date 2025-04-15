@@ -137,7 +137,7 @@ def test_field_data_comparison():
     assert len(list(suite.passed)) == 1
     assert len(list(suite.failed)) == 0
     assert len(list(suite.skipped)) == 0
-    assert get_number_of_lines(stdout) == 1
+    assert get_number_of_lines(stdout) == len(list(suite))
 
 
 def test_mesh_field_data_comparison():
@@ -166,7 +166,7 @@ def test_field_data_comparison_missing_source():
     assert len(list(suite.passed)) == 1
     assert len(list(suite.failed)) == 1
     assert len(list(suite.skipped)) == 0
-    assert get_number_of_lines(stdout) == 1
+    assert get_number_of_lines(stdout) == len(list(suite))
 
 
 def test_field_data_comparison_missing_reference():
@@ -179,7 +179,7 @@ def test_field_data_comparison_missing_reference():
     assert len(list(suite.passed)) == 1
     assert len(list(suite.failed)) == 1
     assert len(list(suite.skipped)) == 0
-    assert get_number_of_lines(stdout) == 1
+    assert get_number_of_lines(stdout) == len(list(suite))
 
 
 def test_failing_field_data_comparison():
@@ -192,7 +192,7 @@ def test_failing_field_data_comparison():
     assert len(list(suite.passed)) == 0
     assert len(list(suite.failed)) == 1
     assert len(list(suite.skipped)) == 0
-    assert get_number_of_lines(stdout) == 1
+    assert get_number_of_lines(stdout) == len(list(suite))
 
 
 def test_identical_vtk_files():
