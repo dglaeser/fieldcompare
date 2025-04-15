@@ -294,6 +294,8 @@ class FileComparison:
         )
 
     def _parse_status(self, comparison: FieldComparison) -> TestStatus:
+        if comparison.status == FieldComparisonStatus.error:
+            return TestStatus.error
         if not comparison:
             return TestStatus.failed
         if comparison.status == FieldComparisonStatus.passed:
