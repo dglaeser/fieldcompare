@@ -257,7 +257,7 @@ class FileComparison:
                 if result and self._logger.verbosity_level == 1:
                     return
                 msg = field_comparison_report(result, verbosity=max(1, self._logger.verbosity_level - 1))
-                self._logger.log(f"{msg}\n")
+                self._logger.log(f"{msg}\n" if msg else "")
 
         return comparator(
             predicate_selector=lambda res, ref: self._select_predicate(res, ref),
