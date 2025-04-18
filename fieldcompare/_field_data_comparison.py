@@ -20,32 +20,30 @@ from ._field import Field as FieldImpl
 from ._format import remove_annotation, as_error, as_success, as_warning, highlighted, remove_color_codes
 
 
-class Status(Enum):
+class FieldComparisonStatus(Enum):
+    """Represents the status of a field comparison"""
+
     passed = auto()
     failed = auto()
+    skipped = auto()
 
     def __bool__(self) -> bool:
-        """Return true if the status is considered successful."""
-        return self not in (Status.failed,)
+        """This operator raises an exception to avoid accidental misuse"""
+        raise NotImplementedError("FieldComparisonStatus objects are not boolean-testable")
 
     def __str__(self) -> str:
         """Use uppercase string representation without class name prefix"""
         return f"{self.name.upper()}"
 
 
-class FieldComparisonStatus(Enum):
-    """Represents the status of a single field comparison."""
+class FieldComparisonEvent(Enum):
+    """Events that may lead to a field comparison not being executed"""
 
-    passed = auto()
-    failed = auto()
+    none = auto()
     error = auto()
     missing_source = auto()
     missing_reference = auto()
     filtered = auto()
-
-    def __bool__(self) -> bool:
-        """Return true if the status is considered successful."""
-        return self == FieldComparisonStatus.passed
 
     def __str__(self) -> str:
         """Use uppercase string representation without class name prefix"""
@@ -58,26 +56,22 @@ class FieldComparison:
 
     name: str
     status: FieldComparisonStatus
+    event: FieldComparisonEvent
     predicate: str
     report: str
     cpu_time: float | None = None
-    missing_field_is_failure: bool = True
-
-    def __bool__(self) -> bool:
-        """Return true if the field comparison is considered successful."""
-        return bool(self.status) or self.is_silently_skipped
 
     @property
-    def is_silently_skipped(self) -> bool:
-        """Return true if this is a skipped field comparison that is considered successful"""
-        return self.status == FieldComparisonStatus.filtered or (
-            self.status
-            in [
-                FieldComparisonStatus.missing_source,
-                FieldComparisonStatus.missing_reference,
-            ]
-            and not self.missing_field_is_failure
-        )
+    def passed(self) -> bool:
+        return self.status == FieldComparisonStatus.passed
+
+    @property
+    def failed(self) -> bool:
+        return self.status == FieldComparisonStatus.failed
+
+    @property
+    def skipped(self) -> bool:
+        return self.status == FieldComparisonStatus.skipped
 
 
 class FieldComparisonSuite:
@@ -96,9 +90,9 @@ class FieldComparisonSuite:
         self._skipped: list[FieldComparison] = []
         if comparisons is not None:
             for c in comparisons:
-                if c.status == FieldComparisonStatus.passed:
+                if c.passed:
                     self._passed.append(c)
-                elif not c:
+                elif c.failed:
                     self._failed.append(c)
                 else:
                     self._skipped.append(c)
@@ -107,7 +101,7 @@ class FieldComparisonSuite:
         """Return true if the suite is considered to have passed successfully."""
         if not self._domain_eq_check:
             return False
-        return all(bool(c) for c in self)
+        return all(not c.failed for c in self)
 
     def __iter__(self) -> Iterator[FieldComparison]:
         """Return an iterator over all contained field comparison results."""
@@ -127,17 +121,8 @@ class FieldComparisonSuite:
             f"{self.__len__()} field comparisons"
             f" with {self.num_passed} {FieldComparisonStatus.passed}"
             f", {self.num_failed} {FieldComparisonStatus.failed}"
-            f", {self.num_skipped} SKIPPED"
+            f", {self.num_skipped} {FieldComparisonStatus.skipped}"
         )
-
-    @property
-    def status(self) -> Status:
-        """Return combined status performed comparisons."""
-        if not self._domain_eq_check:
-            return Status.failed
-        if self.num_failed > 0:
-            return Status.failed
-        return Status.passed
 
     @property
     def domain_equality_check(self) -> PredicateResult:
@@ -184,9 +169,8 @@ def field_comparison_report(comparison: FieldComparison, use_colors: bool = True
         use_colors: Switch on/off colors.
         verbosity: Control the verbosity of the report.
     """
-    is_passing_skipped = comparison.is_silently_skipped
-    _verbosity_level_info = 1 if not is_passing_skipped else 2
-    _verbosity_level_detail = 2 if not is_passing_skipped else 3
+    _verbosity_level_info = 1 if not comparison.skipped else 2
+    _verbosity_level_detail = 2 if not comparison.skipped else 3
 
     def _get_indented(message: str, indentation_level: int = 0) -> str:
         if indentation_level > 0 and message != "":
@@ -196,16 +180,20 @@ def field_comparison_report(comparison: FieldComparison, use_colors: bool = True
         return message
 
     status_string = (
-        as_warning("SKIPPED") if is_passing_skipped else as_error("FAILED") if not comparison else as_success("PASSED")
+        as_warning(str(comparison.status))
+        if comparison.skipped
+        else as_error(str(comparison.status))
+        if comparison.failed
+        else as_success(str(comparison.status))
     )
     report = ""
     if verbosity >= _verbosity_level_info:
         report += _get_indented(
             f"Comparing the field '{highlighted(comparison.name)}': {status_string}", indentation_level=1
         )
-    if verbosity >= _verbosity_level_detail or (verbosity >= _verbosity_level_info and not comparison):
+    if verbosity >= _verbosity_level_detail or (verbosity >= _verbosity_level_info and comparison.failed):
         report += "\n"
-        if comparison.status in [FieldComparisonStatus.failed, FieldComparisonStatus.passed]:
+        if comparison.event == FieldComparisonEvent.none and not comparison.skipped:
             report += _get_indented(
                 f"Report: {comparison.report if comparison.report else 'n/a'}\n"
                 f"Predicate: {comparison.predicate if comparison.predicate else 'n/a'}",
@@ -364,6 +352,7 @@ class FieldDataComparator:
         return FieldComparison(
             name=source.name,
             status=FieldComparisonStatus.passed if result else FieldComparisonStatus.failed,
+            event=FieldComparisonEvent.none,
             predicate=str(predicate),
             report=result.report,
             cpu_time=runtime,
@@ -372,7 +361,8 @@ class FieldDataComparator:
     def _make_exception_comparison(self, name: str, predicate: Predicate, exception: Exception) -> FieldComparison:
         return FieldComparison(
             name=name,
-            status=FieldComparisonStatus.error,
+            status=FieldComparisonStatus.failed,
+            event=FieldComparisonEvent.error,
             predicate=str(predicate),
             report=f"Exception raised: {exception}",
             cpu_time=None,
@@ -382,10 +372,12 @@ class FieldDataComparator:
         return [
             FieldComparison(
                 name=field.name,
-                status=FieldComparisonStatus.missing_source,
+                status=FieldComparisonStatus.failed
+                if self._missing_sources_is_error
+                else FieldComparisonStatus.skipped,
+                event=FieldComparisonEvent.missing_source,
                 predicate="",
                 report="Missing source field",
-                missing_field_is_failure=self._missing_sources_is_error,
             )
             for field in query.orphans_in_reference
         ]
@@ -394,10 +386,12 @@ class FieldDataComparator:
         return [
             FieldComparison(
                 name=field.name,
-                status=FieldComparisonStatus.missing_reference,
+                status=FieldComparisonStatus.failed
+                if self._missing_references_is_error
+                else FieldComparisonStatus.skipped,
+                event=FieldComparisonEvent.missing_reference,
                 predicate="",
                 report="Missing reference field",
-                missing_field_is_failure=self._missing_references_is_error,
             )
             for field in query.orphans_in_source
         ]
@@ -406,7 +400,8 @@ class FieldDataComparator:
         return [
             FieldComparison(
                 name=field.name,
-                status=FieldComparisonStatus.filtered,
+                status=FieldComparisonStatus.skipped,
+                event=FieldComparisonEvent.filtered,
                 predicate="",
                 report="Filtered out by given rules",
             )
