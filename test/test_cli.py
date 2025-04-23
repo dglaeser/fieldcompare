@@ -469,7 +469,7 @@ def test_cli_file_mode_missing_sequences_steps_force_comparison():
 
 
 def test_cli_directory_mode_pass():
-    assert main(["dir", str(TEST_DATA_PATH), str(TEST_DATA_PATH)]) == 0
+    assert main(["dir", str(TEST_DATA_PATH), str(TEST_DATA_PATH), "--ignore-unsupported-file-formats"]) == 0
 
 
 def test_cli_directory_with_diff_output():
@@ -513,6 +513,7 @@ def test_cli_directory_mode_junit_report():
         "dir",
         str(TEST_DATA_PATH),
         str(tmp_results_path),
+        "--ignore-unsupported-file-formats",
         "--junit-xml", report_filename
     ]) == 0
     assert isfile(report_filename)
@@ -528,6 +529,7 @@ def test_cli_directory_mode_field_filter():
             "dir",
             str(TEST_DATA_PATH),
             str(TEST_DATA_PATH),
+            "--ignore-unsupported-file-formats",
             "--include-fields", "function"
         ]
         assert main(args, logger) == 0
@@ -544,6 +546,7 @@ def test_cli_directory_mode_field_exclusion_filter():
             "dir",
             str(TEST_DATA_PATH),
             str(TEST_DATA_PATH),
+            "--ignore-unsupported-file-formats",
             "--exclude-fields", "function"
         ]
         assert main(args, logger) == 0
@@ -557,7 +560,7 @@ def test_cli_directory_mode_missing_result_file():
     tmp_results_path = TEST_DATA_PATH.resolve().parent / Path("cli_dir_test_results_data")
     rmtree(tmp_results_path, ignore_errors=True)
     copytree(TEST_DATA_PATH, tmp_results_path, dirs_exist_ok=True)
-    assert main(["dir", str(tmp_results_path), str(TEST_DATA_PATH)]) == 0
+    assert main(["dir", str(tmp_results_path), str(TEST_DATA_PATH), "--ignore-unsupported-file-formats"]) == 0
 
     # remove one file from temporary results directory
     for first_vtu_file in filter(
@@ -570,22 +573,38 @@ def test_cli_directory_mode_missing_result_file():
     assert main([
         "dir",
         str(tmp_results_path),
-        str(TEST_DATA_PATH)
+        str(TEST_DATA_PATH),
+        "--ignore-unsupported-file-formats",
     ]) == 1
     assert main([
         "dir",
         str(tmp_results_path),
         str(TEST_DATA_PATH),
+        "--ignore-unsupported-file-formats",
         "--ignore-missing-reference-files"
     ]) == 1
     assert main([
         "dir",
         str(tmp_results_path),
         str(TEST_DATA_PATH),
+        "--ignore-unsupported-file-formats",
         "--ignore-missing-source-files"
     ]) == 0
 
     rmtree(tmp_results_path)
+
+
+def test_cli_directory_mode_ignore_unsupported_files(tmp_path):
+    src = tmp_path / "f1"
+    src.mkdir()
+    ref = tmp_path / "f2"
+    ref.mkdir()
+
+    with open(src / "f1.unspported", "w") as _: pass
+    with open(ref / "f1.unspported", "w") as _: pass
+
+    assert main(["dir", str(src), str(ref)]) == 1
+    assert main(["dir", str(src), str(ref), "--ignore-unsupported-file-formats"]) == 0
 
 
 def test_cli_directory_mode_reader_selection():
@@ -615,7 +634,7 @@ def test_cli_directory_mode_missing_reference_file():
     tmp_reference_path = TEST_DATA_PATH.resolve().parent / Path("cli_dir_test_ref_data")
     rmtree(tmp_reference_path, ignore_errors=True)
     copytree(TEST_DATA_PATH, tmp_reference_path, dirs_exist_ok=True)
-    assert main(["dir", str(TEST_DATA_PATH), str(tmp_reference_path)]) == 0
+    assert main(["dir", str(TEST_DATA_PATH), str(tmp_reference_path), "--ignore-unsupported-file-formats"]) == 0
 
     # remove one file from temporary reference path
     for first_vtu_file in filter(
@@ -628,18 +647,21 @@ def test_cli_directory_mode_missing_reference_file():
     assert main([
         "dir",
         str(TEST_DATA_PATH),
-        str(tmp_reference_path)
+        str(tmp_reference_path),
+        "--ignore-unsupported-file-formats",
     ]) == 1
     assert main([
         "dir",
         str(TEST_DATA_PATH),
         str(tmp_reference_path),
+        "--ignore-unsupported-file-formats",
         "--ignore-missing-source-files"
     ]) == 1
     assert main([
         "dir",
         str(TEST_DATA_PATH),
         str(tmp_reference_path),
+        "--ignore-unsupported-file-formats",
         "--ignore-missing-reference-files"
     ]) == 0
 
