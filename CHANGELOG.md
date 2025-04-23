@@ -3,6 +3,10 @@
 
 # `fieldcompare` 0.4.0 (unreleased)
 
+## New features
+
+- __CLI__: The default behaviour for files that have an unsupported file format has been changed. So far, such file comparisons were treated as skipped, which could lead to unexpected false positives. These files are now treated as failures, and a new option '--ignore-unsupported-file-formats'  has been added to recover the old behaviour.
+
 ## Interface changes
 
 - __FieldComparison__: the `__bool__` operator of `FieldComparisonStatus` has been removed (raises an exception now), and only three states are now distinguished: `failed`, `passed` and `skipped`. The possible reasons for failure or skipping have been moved to a separate data structure. The default behaviour is now also stricter; skipped comparisons where the source or reference fields are missing are no longer considered to be successful per default. The `FieldDataComparator` and/or the `MeshFieldsComparator` classes expose a customization point via  the `missing_sources_is_error` or `missing_references_is_error` options in their constructors. Moreover, the provided field comparison callback is invoked with any filtered or skipped fields when comparing two files.
