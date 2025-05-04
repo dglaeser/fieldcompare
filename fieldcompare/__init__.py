@@ -17,7 +17,7 @@ from ._field_data_comparison import (
     FieldComparisonSuite,
     FieldComparison,
     FieldComparisonStatus,
-    FieldComparisonEvent,
+    FieldComparisonResult,
     DefaultFieldComparisonCallback,
     field_comparison_report,
 )
@@ -28,7 +28,7 @@ __all__ = [
     "FieldComparisonSuite",
     "FieldComparison",
     "FieldComparisonStatus",
-    "FieldComparisonEvent",
+    "FieldComparisonResult",
     "FieldDataSequence",
     "field_comparison_report",
     "__version__",

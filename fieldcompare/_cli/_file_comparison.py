@@ -20,7 +20,7 @@ from .._field_data_comparison import (
     FieldComparisonSuite,
     FieldComparison,
     FieldComparisonStatus,
-    FieldComparisonEvent,
+    FieldComparisonResult,
     field_comparison_report,
 )
 from ..mesh import MeshFieldsComparator, sort
@@ -296,7 +296,7 @@ class FileComparison:
 
     def _parse_status(self, comparison: FieldComparison) -> TestStatus:
         if comparison.status == FieldComparisonStatus.failed:
-            return TestStatus.error if comparison.event == FieldComparisonEvent.error else TestStatus.failed
+            return TestStatus.error if comparison.result == FieldComparisonResult.error else TestStatus.failed
         if comparison.status == FieldComparisonStatus.passed:
             return TestStatus.passed
         if comparison.status == FieldComparisonStatus.skipped:

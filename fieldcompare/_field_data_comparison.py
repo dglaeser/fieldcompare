@@ -36,10 +36,11 @@ class FieldComparisonStatus(Enum):
         return f"{self.name.upper()}"
 
 
-class FieldComparisonEvent(Enum):
-    """Events that may lead to a field comparison not being executed"""
+class FieldComparisonResult(Enum):
+    """The result of a field comparison"""
 
-    none = auto()
+    equal = auto()
+    unequal = auto()
     error = auto()
     missing_source = auto()
     missing_reference = auto()
@@ -56,7 +57,7 @@ class FieldComparison:
 
     name: str
     status: FieldComparisonStatus
-    event: FieldComparisonEvent
+    result: FieldComparisonResult
     predicate: str
     report: str
     cpu_time: float | None = None
@@ -193,7 +194,7 @@ def field_comparison_report(comparison: FieldComparison, use_colors: bool = True
         )
     if verbosity >= _verbosity_level_detail or (verbosity >= _verbosity_level_info and comparison.failed):
         report += "\n"
-        if comparison.event == FieldComparisonEvent.none and not comparison.skipped:
+        if comparison.result in [FieldComparisonResult.equal, FieldComparisonResult.unequal] and not comparison.skipped:
             report += _get_indented(
                 f"Report: {comparison.report if comparison.report else 'n/a'}\n"
                 f"Predicate: {comparison.predicate if comparison.predicate else 'n/a'}",
@@ -352,7 +353,7 @@ class FieldDataComparator:
         return FieldComparison(
             name=source.name,
             status=FieldComparisonStatus.passed if result else FieldComparisonStatus.failed,
-            event=FieldComparisonEvent.none,
+            result=FieldComparisonResult.equal if result else FieldComparisonResult.unequal,
             predicate=str(predicate),
             report=result.report,
             cpu_time=runtime,
@@ -362,7 +363,7 @@ class FieldDataComparator:
         return FieldComparison(
             name=name,
             status=FieldComparisonStatus.failed,
-            event=FieldComparisonEvent.error,
+            result=FieldComparisonResult.error,
             predicate=str(predicate),
             report=f"Exception raised: {exception}",
             cpu_time=None,
@@ -375,7 +376,7 @@ class FieldDataComparator:
                 status=FieldComparisonStatus.failed
                 if self._missing_sources_is_error
                 else FieldComparisonStatus.skipped,
-                event=FieldComparisonEvent.missing_source,
+                result=FieldComparisonResult.missing_source,
                 predicate="",
                 report="Missing source field",
             )
@@ -389,7 +390,7 @@ class FieldDataComparator:
                 status=FieldComparisonStatus.failed
                 if self._missing_references_is_error
                 else FieldComparisonStatus.skipped,
-                event=FieldComparisonEvent.missing_reference,
+                result=FieldComparisonResult.missing_reference,
                 predicate="",
                 report="Missing reference field",
             )
@@ -401,7 +402,7 @@ class FieldDataComparator:
             FieldComparison(
                 name=field.name,
                 status=FieldComparisonStatus.skipped,
-                event=FieldComparisonEvent.filtered,
+                result=FieldComparisonResult.filtered,
                 predicate="",
                 report="Filtered out by given rules",
             )
