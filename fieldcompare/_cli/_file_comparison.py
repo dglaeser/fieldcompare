@@ -255,7 +255,10 @@ class FileComparison:
             def __call__(self, result: FieldComparison) -> None:
                 if self._logger.verbosity_level == 0:
                     return
-                if result and self._logger.verbosity_level == 1:
+                if (
+                    result.status in [FieldComparisonStatus.passed, FieldComparisonStatus.skipped]
+                    and self._logger.verbosity_level == 1
+                ):
                     return
                 msg = field_comparison_report(result, verbosity=max(1, self._logger.verbosity_level - 1))
                 self._logger.log(f"{msg}\n" if msg else "")

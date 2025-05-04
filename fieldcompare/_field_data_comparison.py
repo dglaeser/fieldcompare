@@ -46,6 +46,10 @@ class FieldComparisonResult(Enum):
     missing_reference = auto()
     filtered = auto()
 
+    def __bool__(self) -> bool:
+        """This operator raises an exception to avoid accidental misuse"""
+        raise NotImplementedError("FieldComparisonResult objects are not boolean-testable")
+
     def __str__(self) -> str:
         """Use uppercase string representation without class name prefix"""
         return f"{self.name.upper()}"
@@ -61,6 +65,12 @@ class FieldComparison:
     predicate: str
     report: str
     cpu_time: float | None = None
+
+    def __bool__(self) -> bool:
+        """This operator raises an exception to avoid accidental misuse"""
+        raise NotImplementedError(
+            "FieldComparison objects are not boolean-testable (use the passed/failed/skipped properties instead)"
+        )
 
     @property
     def passed(self) -> bool:
