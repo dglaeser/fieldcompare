@@ -42,6 +42,8 @@ class MeshFieldsComparator:
         disable_space_dimension_matching: bool = False,
         field_inclusion_filter: Callable[[str], bool] = lambda _: True,
         field_exclusion_filter: Callable[[str], bool] = lambda _: False,
+        missing_sources_is_error: bool = True,
+        missing_references_is_error: bool = True,
     ) -> None:
         self._disable_mesh_reordering = disable_mesh_reordering
         self._disable_orphan_point_removal = disable_orphan_point_removal
@@ -50,6 +52,8 @@ class MeshFieldsComparator:
         self._reference = reference
         self._field_inclusion_filter = field_inclusion_filter
         self._field_exclusion_filter = field_exclusion_filter
+        self._missing_sources_is_error = missing_sources_is_error
+        self._missing_references_is_error = missing_references_is_error
 
     def __call__(
         self,
@@ -139,4 +143,6 @@ class MeshFieldsComparator:
             self._reference,
             field_inclusion_filter=self._field_inclusion_filter,
             field_exclusion_filter=self._field_exclusion_filter,
+            missing_sources_is_error=self._missing_sources_is_error,
+            missing_references_is_error=self._missing_references_is_error,
         )

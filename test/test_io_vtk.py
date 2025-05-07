@@ -17,7 +17,7 @@ import pytest
 import numpy
 from meshio import read as meshio_read, Mesh as MeshioMesh
 
-from fieldcompare import FieldDataComparator, protocols
+from fieldcompare import FieldDataComparator, FieldComparisonResult, protocols
 from fieldcompare.mesh import CellTypes, meshio_utils, protocols as mesh_protocols
 from fieldcompare.io.vtk import read, PVTUReader, VTUWriter
 from fieldcompare.io import read_as
@@ -339,7 +339,8 @@ def _test_from_mesh(mesh_fields: mesh_protocols.MeshFields, basefilename: str = 
     _test_field_functions(mesh_fields, step_multiplier)
     meshio_mesh = _get_alternative_with_meshio(mesh_fields, f"{basefilename}_test_from_meshio.vtk")
     meshio_mesh_fields = meshio_utils.from_meshio(meshio_mesh)
-    return bool(FieldDataComparator(mesh_fields, meshio_mesh_fields)())
+    result = FieldDataComparator(mesh_fields, meshio_mesh_fields)()
+    return not any(r.result == FieldComparisonResult.unequal for r in result)
 
 
 def _get_alternative_with_meshio(mesh_fields: mesh_protocols.MeshFields, tmp_filename: str) -> MeshioMesh:
