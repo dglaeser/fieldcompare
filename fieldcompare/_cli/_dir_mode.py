@@ -14,7 +14,7 @@ from xml.etree.ElementTree import ElementTree, Element
 from .._matching import find_matching_file_names
 from .._format import highlighted, get_status_string
 from .._common import _measure_time
-from ..io import is_supported
+from ..io import is_supported, _HAVE_MESHIO
 
 from ._junit import as_junit_xml_element
 from ._common import (
@@ -77,6 +77,12 @@ def _add_arguments(parser: ArgumentParser):
         "any of the given `--include-files` patterns.",
     )
     parser.add_argument(
+        "--ignore-unsupported-file-formats",
+        required=False,
+        action="store_true",
+        help="Skip files that have an unsupported file format instead of treating them as failed file comparisons",
+    )
+    parser.add_argument(
         "--verbosity", required=False, default=2, type=int, help="Set the verbosity level (between 0 and 5; default: 2)"
     )
     _add_field_options_args(parser)
@@ -134,14 +140,21 @@ def _run(args: dict, in_logger: CLILogger) -> int:
         ]
     )
 
-    info_message: str | None = None
+    info_messages: list[str] = []
     if categories.discarded_orphan_files:
-        info_message = (
+        info_messages.append(
             f"{len(categories.discarded_orphan_files)} "
             "missing source/reference files have been filtered out by the given filters."
         )
+    if categories.unsupported_files:
+        msg = "Unsupported file formats detected."
+        if not _HAVE_MESHIO:
+            msg += " Consider installing 'meshio' for access to more file formats."
+        if not args["ignore_unsupported_file_formats"]:
+            msg += " Use '--ignore-unsupported-file-formats' to skip them."
+        info_messages.append(msg)
     logger.log("\n", verbosity_level=2)
-    _log_suite_summary(test_suite, "file", logger, info_message)
+    _log_suite_summary(test_suite, "file", logger, info_messages)
 
     passed = all(comp for _, _, comp in comparisons)
     return _bool_to_exit_code(passed)
@@ -288,7 +301,12 @@ def _add_unhandled_comparisons(args: dict, categories: CategorizedFiles, compari
     _add_skipped_file_comparisons(
         comparisons, categories.missing_references, "Missing reference file", not args["ignore_missing_reference_files"]
     )
-    _add_skipped_file_comparisons(comparisons, categories.unsupported_files, "Unsupported file format")
+    _add_skipped_file_comparisons(
+        comparisons,
+        categories.unsupported_files,
+        "Unsupported file format",
+        treat_as_failure=not args["ignore_unsupported_file_formats"],
+    )
     _add_skipped_file_comparisons(comparisons, categories.discarded_files, "Filtered out by given wildcard patterns")
 
 

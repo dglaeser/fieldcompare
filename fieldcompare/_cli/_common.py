@@ -139,7 +139,7 @@ def _bool_to_exit_code(value: bool) -> int:
     return int(not value)
 
 
-def _log_suite_summary(suite, comparison_type: str, logger: CLILogger, info_msg: str | None = None) -> None:
+def _log_suite_summary(suite, comparison_type: str, logger: CLILogger, info_messages: list[str] | None = None) -> None:
     def _counted(count: int) -> str:
         return f"{count} {comparison_type} {_plural('comparison', count)}"
 
@@ -177,8 +177,9 @@ def _log_suite_summary(suite, comparison_type: str, logger: CLILogger, info_msg:
         for test in failed:
             _log_line(as_error(_padded("FAILED")), f"{highlighted(test.name)}: ({test.shortlog})")
 
-    if info_msg is not None:
-        _log_line(highlighted(_padded("INFO")), info_msg, verbosity_level=2)
+    if info_messages is not None:
+        for info_msg in info_messages:
+            _log_line(highlighted(_padded("INFO")), info_msg, verbosity_level=2)
 
 
 def _plural(word: str, count: int) -> str:
