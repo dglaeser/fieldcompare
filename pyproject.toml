@@ -4,7 +4,7 @@
 [project]
 name = "fieldcompare"
 description = "Read and compare numerical data against reference data using exact, fuzzy or custom comparison operations. Simplify your regression testing pipeline."
-version = "0.3.0"
+version = "0.4.0"
 readme = "README.md"
 license = {file = "LICENSES/GPL-3.0-or-later.txt"}
 requires-python = ">=3.8"

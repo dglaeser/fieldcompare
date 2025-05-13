@@ -1,7 +1,9 @@
 <!--SPDX-FileCopyrightText: 2023 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>-->
 <!--SPDX-License-Identifier: GPL-3.0-or-later-->
 
-# `fieldcompare` 0.4.0 (unreleased)
+# `fieldcompare` 0.5.0 (unreleased)
+
+# `fieldcompare` 0.4.0
 
 ## New features
 
