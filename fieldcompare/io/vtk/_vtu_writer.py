@@ -9,7 +9,7 @@ try:  # indent came in 3.9
     from xml.etree.ElementTree import indent  # type: ignore
 except ImportError:
 
-    def indent(tree: XMLElement | ElementTree, space: str = ..., level: int = ...) -> None:
+    def indent(tree: XMLElement | ElementTree, space: str = ..., level: int = ...) -> None:  # type: ignore
         pass
 
 
