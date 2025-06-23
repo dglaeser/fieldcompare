@@ -286,12 +286,13 @@ def _merge(
         if name in point_fields2:
             point_fields[name] = concatenate((pf1, point_fields2[name]))
         else:
-            zero = make_zeros(shape=point_fields1[name].shape[1:], dtype=point_fields1[name].dtype)
+            zero = make_zeros(shape=pf1.shape[1:], dtype=pf1.dtype)
             point_fields[name] = concatenate(
                 (
-                    make_array(point_fields1[name]),
+                    make_array(pf1),
                     make_array(
-                        [deepcopy(zero) for _ in range(len(fields2.domain.points))], dtype=point_fields1[name].dtype
+                        [deepcopy(zero) for _ in range(len(fields2.domain.points))],
+                        dtype=pf1.dtype,
                     ),
                 )
             )
